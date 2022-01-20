@@ -11,3 +11,6 @@
 
         $ Invoke-Expression (Invoke-Webrequest 'https://xmake.io/psget.text' -UseBasicParsing).Content
 3. Type `M` in installing (which means it will install `xmake` for the current user).
+
+
+        $ xmake -P proj/compilation_tests
