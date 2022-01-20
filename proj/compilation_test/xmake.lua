@@ -1,4 +1,4 @@
-includes("../../src/common")
+includes("src/common")
 
 target("compilation_tests")
     set_kind("binary")
