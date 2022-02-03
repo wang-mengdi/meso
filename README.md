@@ -13,4 +13,8 @@
 3. Type `M` in installing (which means it will install `xmake` for the current user).
 
 
-        $ xmake -P proj/compilation_tests
+        $ λ xmake project -k vsxmake -m "debug,release" -P proj\compilation_tests\
+
+        $  xmake project -k vsxmake -m "Debug,Release,ReleaseWithDebugInfo" -a "x64" -v -F proj\compilation_tests\xmake.lua ..\..\build\compilation_tests
+
+`-P` stands for project.

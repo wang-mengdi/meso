@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdio>
+#include "Common.h"
 int main(){
-    std::printf("hello world!\n");
+    foo();
     return 0;
 }

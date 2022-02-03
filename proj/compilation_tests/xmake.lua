@@ -1,0 +1,8 @@
+add_rules("plugin.vsxmake.autoupdate")
+add_rules("mode.release")
+includes("./../../src/common/xmake.lua")
+target("compilation_tests")
+    set_kind("binary")
+    add_files("*.cpp","*.cu")
+    set_toolset("msvc")
+    add_deps("src-common")

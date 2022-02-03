@@ -1,3 +1,6 @@
-target("common")
+add_rules("plugin.vsxmake.autoupdate")
+target("src-common")
     set_kind("static")
-    add_files("*.h","*.cpp","*.cu")
+    add_headerfiles("*.h")
+    add_files("*.cpp","*.cu")
+    add_includedirs(".",{public=true})
