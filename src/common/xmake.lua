@@ -1,5 +1,5 @@
 add_rules("plugin.vsxmake.autoupdate")
-target("src-common")
+target("common")
     set_kind("static")
     add_headerfiles("*.h")
     add_files("*.cpp","*.cu")

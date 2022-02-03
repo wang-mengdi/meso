@@ -15,6 +15,8 @@
 
         $ λ xmake project -k vsxmake -m "debug,release" -P proj\compilation_tests\
 
-        $  xmake project -k vsxmake -m "Debug,Release,ReleaseWithDebugInfo" -a "x64" -v -F proj\compilation_tests\xmake.lua ..\..\build\compilation_tests
+        $  xmake project -k vsxmake -a "x64" -v -F proj\compilation_tests\xmake.lua ..\..\build\compilation_tests
 
 `-P` stands for project.
+
+ xmake project -k vsxmake -v -m "relwithdbginfo" -a "x64" -F proj\compilation_tests\xmake.lua ..\..\build\compilation_tests
