@@ -1,3 +1,4 @@
 proj/compilation_test/build/
 *.xmake/
 build/
+bin/
