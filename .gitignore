@@ -1,4 +1,5 @@
 proj/compilation_test/build/
+proj/*/build/
 *.xmake/
 build/
 bin/

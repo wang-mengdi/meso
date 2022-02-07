@@ -4,6 +4,12 @@
 
 ### Install Environment
 
+##### Install vcpkg
+
+https://github.com/microsoft/vcpkg
+
+add vcpkg to system PATH
+
 ##### Install xmake
 
 1. Press `Ctrl+R` and type `powershell`, then enter to open `Powershell` terminal. Note that you don't need to run in admin mode.
@@ -20,3 +26,4 @@
 `-P` stands for project.
 
  xmake project -k vsxmake -v -m "relwithdbginfo" -a "x64" -F proj\compilation_tests\xmake.lua ..\..\build\compilation_tests
+ xmake project -k vs -v -a "x64" -F proj\_tests_reservoir\xmake.lua ..\..\build\_tests_reservoir

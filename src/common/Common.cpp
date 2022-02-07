@@ -1,5 +1,7 @@
 #include "Common.h"
 
-void foo(void){
-    std::printf("hello world!\n");
+void Info(const std::string& str)
+{
+	Info(str.c_str());
 }
+
