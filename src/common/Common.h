@@ -1,15 +1,17 @@
 //////////////////////////////////////////////////////////////////////////
 // Common header
-// Copyright (c) (2018-), Bo Zhu, Mengdi Wang
-// This file is part of SimpleX, whose distribution is governed by the LICENSE file.
+// Copyright (c) (2022-), Bo Zhu, Mengdi Wang
+// This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 
 #include "Eigen/Dense"
 #include "Eigen/Geometry"
 #include <fmt/core.h>
+#include <fmt/color.h>
 
 #include <iostream>
+#include <vector>
 
 ////Eigen part
 
@@ -35,9 +37,32 @@ Declare_Eigen_Types(float, f)
 Declare_Eigen_Types(double, d)
 #endif
 
+#define Declare_Eigen_Vector_Types(type,t)		\
+using Vector1##t=Eigen::Matrix<type,1,1>;       \
+using Vector2##t=Eigen::Vector2##t;             \
+using Vector3##t=Eigen::Vector3##t;             \
+using Vector4##t=Eigen::Vector4##t;             \
+using VectorX##t=Eigen::VectorX##t;				
+
+Declare_Eigen_Vector_Types(int,i)
+Declare_Eigen_Vector_Types(float, f)
+Declare_Eigen_Vector_Types(double, d)
+
+using uchar = unsigned char;
+using ushort = unsigned short;
+template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
+template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
+
 #define Typedef_VectorD(d) \
 using VectorD=Vector<real,d>; \
 using VectorDi=Vector<int,d>
+
+
+////Container alias
+
+//Array
+template<class T> using Array = std::vector<T>;
+template<class T> using ArrayPtr = std::shared_ptr<Array<T> >;
 
 //// fmt part
 
@@ -51,9 +76,16 @@ void Assert(const bool flg, const char* fmt = "", const Args &...args) {
 
 template<typename ...Args>
 void Info(const char* fmt, const Args&...args) {
-    std::cout << "#     ";
+    fmt::print("#     ");
     fmt::print(fmt, args...);
-    std::cout << "\n";
+    fmt::print("\n");
 }
-
 void Info(const std::string& str);
+
+template<typename ...Args>
+void Warn(const char* fmt, const Args&...args) {
+    fmt::print(fg(fmt::color::yellow), "#     ");
+    fmt::print(fg(fmt::color::blue), fmt, args...);
+    fmt::print("\n");
+}
+void Warn(const std::string& str);
