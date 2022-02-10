@@ -33,7 +33,10 @@ public:
 	}
 
 	__host__ __device__ int Index(const VectorDi coord) const {
-		if constexpr (d == 3) {
+		if constexpr (d == 2) {
+
+		}
+		else if constexpr (d == 3) {
 			int nbx = counts[0] >> 2, nby = counts[1] >> 2, nbz = counts[2] >> 2;
 			int bx = coord[0] >> 2, by = coord[1] >> 2, bz = coord[2] >> 2;
 			int idx = coord[0] & 0b11, idy = coord[1] & 0b11, idz = coord[2] & 0b11;

@@ -2,10 +2,7 @@ set_project("_tests_reservoir")
 add_rules("plugin.vsxmake.autoupdate")
 --add_rules("mode.releasedbg","mode.release","mode.debug")
 add_rules("mode.debug")
-local targetdir = "../../bin/_tests_reservoir"
-set_targetdir(targetdir)
-set_objectdir(targetdir.."/.objs")--it's like "+" in Python
-set_dependir(targetdir.."/.deps")
+-- set_targetdir("../../bin/_tests_reservoir")
 includes("./../../src/reservoir/xmake.lua")
 target("_tests_reservoir")
     set_kind("binary")
