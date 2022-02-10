@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdio>
+
 #include "Common.h"
 #include "Grid.h"
 #include <fmt/ranges.h>
