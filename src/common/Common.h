@@ -85,7 +85,7 @@ void Info(const std::string& str);
 template<typename ...Args>
 void Warn(const char* fmt, const Args&...args) {
     fmt::print(fg(fmt::color::yellow), "#     ");
-    fmt::print(fg(fmt::color::blue), fmt, args...);
+    fmt::print(fg(fmt::color::yellow), fmt, args...);
     fmt::print("\n");
 }
 void Warn(const std::string& str);
