@@ -20,7 +20,6 @@ public:
 	VectorDi counts;
 	real dx;
 	VectorD pos_min;
-	ArrayPtr<T> data;
 
 	Grid(const VectorDi _counts = VectorDi::Zero(), const real _dx = 0, const VectorD domain_min = VectorD::Zero(), const real init_val = (T)0) :
 		dx(_dx)
