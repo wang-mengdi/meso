@@ -1,6 +1,7 @@
+set_project("my_proj_name")
 option("meso_proj",{default="none", showmenu=true})
-set_project("$(meso_proj)")
 add_rules("plugin.vsxmake.autoupdate")
+
 --add_rules("mode.releasedbg","mode.release","mode.debug")
 add_rules("mode.debug")
 -- set_targetdir("../../bin/_tests_reservoir")

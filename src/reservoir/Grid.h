@@ -28,7 +28,6 @@ public:
 		if (counts != _counts) Warn("Grid size not divisible by {} in dimension {}, automtically round up to {}", block_size, d, counts);
 		if (grid_type == GridType::CELL) pos_min = domain_min;
 		else pos_min = domain_min + VectorFunc::V<d>(0.5, 0.5, 0.5) * dx;
-		data = std::make_shared<Array<T>>(counts.prod(), init_val);
 	}
 
 	__host__ __device__ int Index(const VectorDi coord) const {
