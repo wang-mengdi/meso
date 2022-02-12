@@ -42,14 +42,24 @@ public:
 			int idx = coord[0] & 0b11, idy = coord[1] & 0b11, idz = coord[2] & 0b11;
 			return ((bz * nby + by) * nbx + bx) * 64 + ((idz * 4 + idy) * 4 + idx);
 		}
+		else Assert(false, "Grid::Index: d==2 or d==3");
+	}
+
+	__host__ __device__ VectorDi Coord(const int index)const {
+		if constexpr (d == 2) {
+			
+		}
+		else if constexpr (d == 3) {
+
+		}
 	}
 
 	////parallel iterators
 	template<class Fcell>//Fcell is a (void) function takes a cell index
 	void Exec_Each(Fcell f) const {
-		const int cell_num = Number_Of_Cells();
+		const int dof = Size();
 #pragma omp parallel for
-		for (int c = 0; c < cell_num; c++) {
+		for (int c = 0; c < dof; c++) {
 			const VectorDi cell = Cell_Coord(c);
 			f(cell);
 		}

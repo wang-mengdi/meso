@@ -13,7 +13,7 @@ public:
 	Grid<d, GridType::CELL> grid;
 	Array<T> data;
 	Field() {}
-	Field(const Grid& _grid, const real val = 0):
+	Field(const Grid<d, GridType::CELL>& _grid, const real val = 0) :
 		grid(_grid)
 	{
 		data.resize(grid.Size());

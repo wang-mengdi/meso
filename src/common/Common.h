@@ -69,6 +69,8 @@ template<class T> using ArrayPtr = std::shared_ptr<Array<T> >;
 template <typename... Args>
 void Assert(const bool flg, const char* fmt = "", const Args &...args) {
     if (!flg) {
+        fmt::print(fg(fmt::color::red), "#     ");
+        fmt::print(fg(fmt::color::red), fmt, args...);
         std::cerr << "[Error]" << fmt::format(fmt, args...);
         exit(-1);
     }
