@@ -89,3 +89,73 @@ void Warn(const char* fmt, const Args&...args) {
     fmt::print("\n");
 }
 void Warn(const std::string& str);
+
+//fmt adaptor for eigen vector
+template <class T, int d> struct fmt::formatter<Vector<T, d> > {
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        //https://fmt.dev/latest/api.html#udt
+        auto it = ctx.begin(), end = ctx.end();
+        if (it != end && *it != '}') throw format_error("invalid format");
+
+        // Return an iterator past the end of the parsed range:
+        return it;
+    }
+
+    // Formats the point p using the parsed format specification (presentation)
+    // stored in this formatter.
+    template <typename FormatContext>
+    auto format(const Vector<T, d>& vec, FormatContext& ctx) -> decltype(ctx.out()) {
+        std::stringstream ss;
+        ss << vec.transpose();
+        // ctx.out() is an output iterator to write to.
+        return format_to(
+            ctx.out(),
+            "{}",
+            ss.str());
+    }
+};
+
+////fmt adaptor for eigen vector
+//template <class T> struct fmt::formatter<Eigen::Matrix<T, 3, 3> > {
+//    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+//        //https://fmt.dev/latest/api.html#udt
+//        auto it = ctx.begin(), end = ctx.end();
+//        if (it != end && *it != '}') throw format_error("invalid format");
+//
+//        // Return an iterator past the end of the parsed range:
+//        return it;
+//    }
+//
+//    // Formats the point p using the parsed format specification (presentation)
+//    // stored in this formatter.
+//    template <typename FormatContext>
+//    auto format(const Eigen::Matrix<T, 3, 3>& mat, FormatContext& ctx) -> decltype(ctx.out()) {
+//        std::stringstream ss;
+//        ss << mat;
+//        // ctx.out() is an output iterator to write to.
+//        return format_to(
+//            ctx.out(),
+//            "{}",
+//            ss.str());
+//    }
+//};
+//
+//template<class T> struct fmt::formatter<Eigen::Quaternion<T>> {
+//    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+//        auto it = ctx.begin(), end = ctx.end();
+//        if (it != end && *it != '}') throw format_error("invalid format");
+//
+//        // Return an iterator past the end of the parsed range:
+//        return it;
+//    }
+//    template <typename FormatContext>
+//    auto format(const Eigen::Quaternion<T>& quaternion, FormatContext& ctx) -> decltype(ctx.out()) {
+//        std::stringstream ss;
+//        ss << quaternion.coeffs().transpose();
+//        // ctx.out() is an output iterator to write to.
+//        return format_to(
+//            ctx.out(),
+//            "{}",
+//            ss.str());
+//    }
+//};

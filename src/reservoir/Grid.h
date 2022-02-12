@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// Basic grid data structure
+// Basic grid data representation
 // Copyright (c) (2022-), Bo Zhu, Zangyueyang Xian, Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
@@ -12,7 +12,7 @@
 //Under NODE mode, positions are nodes
 enum GridType { NODE = 0, CELL};
 
-template<class T, int d, GridType grid_type=GridType::CELL>
+template<int d, GridType grid_type=GridType::CELL>
 class Grid {
 	Typedef_VectorD(d);
 public:
@@ -21,7 +21,7 @@ public:
 	real dx;
 	VectorD pos_min;
 
-	Grid(const VectorDi _counts = VectorDi::Zero(), const real _dx = 0, const VectorD domain_min = VectorD::Zero(), const real init_val = (T)0) :
+	Grid(const VectorDi _counts = VectorDi::Zero(), const real _dx = 0, const VectorD domain_min = VectorD::Zero()) :
 		dx(_dx)
 	{
 		counts = VectorFunc::Round_Up_To_Align<d>(_counts, block_size);

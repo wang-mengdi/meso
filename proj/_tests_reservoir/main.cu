@@ -5,10 +5,14 @@
 #include "Grid.h"
 #include <fmt/ranges.h>
 
+void Test_Grid(void) {
+
+}
+
 int main(){
-    fmt::print(fg(fmt::color::red), "wtfwtftwt fwtf");
-    std::cout << "\n";
-    Grid<real, 2> a(Vector2i(2, 5));
+    //fmt::print(fg(fmt::color::red), "wtfwtftwt fwtf");
+    //std::cout << "\n";
+    Grid<2> a(Vector2i(2, 5));
     Info("a size: {}", a.block_size);
     Info("size of vector3i: {}", sizeof(Vector3i));
 
