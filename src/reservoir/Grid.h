@@ -47,10 +47,21 @@ public:
 
 	__host__ __device__ VectorDi Coord(const int index)const {
 		if constexpr (d == 2) {
-			
+			int idx = index & 0b111;
+			int idy = (index & 0b111000) >> 3;
+			int b = index >> 6;
+			int x = ((b % (counts[0] >> 3)) << 3) + idx;
+			int y = ((b / (counts[0] >> 3)) << 3) + idy;
+			return Vector2i(x, y);
 		}
 		else if constexpr (d == 3) {
-
+			int nbx = counts[0] >> 2, nby = counts[1] >> 2, nbz = counts[2] >> 2;
+			int idx = index & 0b11, idy = (index & 0b1100) >> 2, idz = (index & 0b110000) >> 4;
+			int b = index >> 6;
+			int x = ((b % nbx) << 2) + idx;
+			int y = (((b / nbx) % nby) << 2) + idy;
+			int z = ((b / nbx / nby) << 2) + idz;
+			return Vector3i(x, y, z);
 		}
 	}
 
