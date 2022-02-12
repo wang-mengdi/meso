@@ -1,4 +1,4 @@
-set_project("_tests_reservoir")
+-- set_project("_tests_reservoir")
 add_rules("plugin.vsxmake.autoupdate")
 --add_rules("mode.releasedbg","mode.release","mode.debug")
 add_rules("mode.debug")
