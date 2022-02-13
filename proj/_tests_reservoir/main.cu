@@ -13,13 +13,18 @@ void Test_Grid(void) {
     Field<int, 2> F(grid);
     grid.Exec_Each(
         [&](const VectorDi& cell) {
-
+            F(cell) = grid.Index(cell);
         }
     );
+    for (int i = 0; i < grid.counts[0]; i++) {
+        for (int j = 0; j < grid.counts[1]; j++) {
+            fmt::print("{} ", F(Vector2i(i, j)));
+        }
+        fmt::print("\n");
+    }
 }
 
 int main(){
-    Assert(false, "alert");
-    //Test_Grid<2>();
+    Test_Grid<2>();
     return 0;
 }

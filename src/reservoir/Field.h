@@ -16,6 +16,8 @@ public:
 	Field(const Grid<d, GridType::CELL>& _grid, const real val = 0) :
 		grid(_grid)
 	{
-		data.resize(grid.Size());
+		data.resize(grid.DoF());
 	}
+	inline T& operator()(const VectorDi& coord) { return data[grid.Index(coord)]; }
+	inline const T& operator()(const VectorDi& coord) const { return data[grid.Index(coord)]; }
 };

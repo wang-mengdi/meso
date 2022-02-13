@@ -30,7 +30,7 @@ public:
 		else pos_min = domain_min + VectorFunc::V<d>(0.5, 0.5, 0.5) * dx;
 	}
 
-	__host__ __device__ int Size(void) const { return counts.prod(); }
+	__host__ __device__ int DoF(void) const { return counts.prod(); }
 
 	__host__ __device__ int Index(const VectorDi coord) const {
 		if constexpr (d == 2) {
@@ -68,10 +68,10 @@ public:
 	////parallel iterators
 	template<class Fcell>//Fcell is a (void) function takes a cell index
 	void Exec_Each(Fcell f) const {
-		const int dof = Size();
+		const int dof = DoF();
 #pragma omp parallel for
 		for (int c = 0; c < dof; c++) {
-			const VectorDi cell = Cell_Coord(c);
+			const VectorDi cell = Coord(c);
 			f(cell);
 		}
 	}
