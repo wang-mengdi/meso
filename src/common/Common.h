@@ -5,6 +5,10 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#include <vector_functions.h>
+
 #include "Eigen/Dense"
 #include "Eigen/Geometry"
 #include <fmt/core.h>
@@ -61,7 +65,8 @@ using VectorDi=Vector<int,d>
 ////Container alias
 
 //Array
-template<class T> using Array = std::vector<T>;
+//template<class T> using Array = std::vector<T>;
+template<class T> using Array = thrust::host_vector<T>;
 template<class T> using ArrayPtr = std::shared_ptr<Array<T> >;
 
 //// fmt part
