@@ -14,7 +14,7 @@ public:
 	//inner variables
 	ArrayD<T> p, Ap, z;
 
-	Scalar relative_tolerance = (Scalar)1e-5;
+	T relative_tolerance = 1e-5;
 
 	bool verbose = true;
 	int max_iter = 0;
