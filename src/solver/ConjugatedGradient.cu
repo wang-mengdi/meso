@@ -1,31 +1,37 @@
-//#include "ConjugatedGradient.h"
-//#include <memory>
-//#include <iostream>
+#include "ConjugatedGradient.h"
+#include <memory>
+#include <iostream>
 //#include "cuda_runtime_api.h"
 //#include "gpuUtils.h"
-//
-//void ConjugatedGradient::Init(const int _max_iter, const Scalar _relative_tolerance)
-//{
-//	Assert(linear_mapping != nullptr, "ConjugatedGradient::linear_mapping not initialized");
-//	max_iter = _max_iter;
-//	relative_tolerance = _relative_tolerance;
-//	assert(linear_mapping->xDoF() == linear_mapping->yDoF());
-//	if (preconditioner)
-//	{
-//		assert(preconditioner->xDoF() == preconditioner->yDoF());
-//		assert(linear_mapping->xDoF() == preconditioner->xDoF());
-//	}
-//	dof = linear_mapping->xDoF();
-//	cudaMalloc((void**)&b_dev, sizeof(Scalar) * dof);
-//	cudaMalloc((void**)&x_dev, sizeof(Scalar) * dof);
-//
-//	cudaMalloc((void**)&d_p, sizeof(Scalar)*dof);
-//	cudaMalloc((void**)&d_Ap, sizeof(Scalar)*dof);
-//	cudaMalloc((void**)&d_z, sizeof(Scalar)*dof);
-//
-//	cublasCreate(&cublasHandle);
-//}
-//
+
+template<class T>
+void ConjugatedGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T> *_preconditioner, const int _max_iter, const T _relative_tolerance, bool _verbose)
+{
+	linear_mapping = _linear_mapping;
+	preconditioner = _preconditioner;
+	Assert(linear_mapping != nullptr, "ConjugatedGradient::linear_mapping not initialized");
+	if (_max_iter == -1) max_iter = linear_mapping->xDoF() * 2;
+	else max_iter = _max_iter;
+	relative_tolerance = _relative_tolerance;
+	verbose = _verbose;
+
+	assert(linear_mapping->xDoF() == linear_mapping->yDoF());
+	if (preconditioner)
+	{
+		assert(preconditioner->xDoF() == preconditioner->yDoF());
+		assert(linear_mapping->xDoF() == preconditioner->xDoF());
+	}
+	dof = linear_mapping->xDoF();
+	b.resize(dof);
+	x.resize(dof);
+	p.resize(dof);
+	Ap.resize(dof);
+	z.resize(dof);
+
+	if (cublasHandle) cublasDestroy(cublasHandle);
+	cublasCreate(&cublasHandle);
+}
+
 //void ConjugatedGradient::Conjugate_Gradient(Scalar* d_x, Scalar* b_dev, int& iters, Scalar& relative_error)
 //{
 //	//https://flat2010.github.io/2018/10/26/%E5%85%B1%E8%BD%AD%E6%A2%AF%E5%BA%A6%E6%B3%95%E9%80%9A%E4%BF%97%E8%AE%B2%E4%B9%89/
@@ -139,3 +145,6 @@
 //	AuxFuncCPX::Global_Copy_Array(x_host, x_dev, dof, DataHolder::HOST, DataHolder::DEVICE);
 //	cudaDeviceSynchronize();
 //}
+
+template class ConjugatedGradient<float>;
+template class ConjugatedGradient<double>;

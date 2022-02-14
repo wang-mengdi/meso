@@ -67,9 +67,9 @@ using VectorDi=Vector<int,d>
 //Array
 //template<class T> using Array = std::vector<T>;
 template<class T> using Array = thrust::host_vector<T>;
-template<class T> using ArrayD = thrust::device_vector<T>;
+template<class T> using ArrayDv = thrust::device_vector<T>;//device array
 template<class T> using ArrayPtr = std::shared_ptr<Array<T> >;
-template<class T> using ArrayDPtr = std::shared_ptr<ArrayD<T> >;
+template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
 
 //// fmt part
 

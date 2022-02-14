@@ -6,10 +6,10 @@ template<class T>
 class LinearMapping
 {
 public:
-	virtual int xDoF() const = 0;
+	virtual int xDoF() const = 0;//number of cols
 
-	virtual int yDoF() const = 0;
+	virtual int yDoF() const = 0;//number of rows
 
 	//input p, get Ap
-	virtual void applyMapping(ArrayD& Ap, const ArrayD& p) = 0;
+	virtual void applyMapping(ArrayDv<T>& Ap, const ArrayDv<T>& p) = 0;
 };
