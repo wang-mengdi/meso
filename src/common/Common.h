@@ -12,6 +12,7 @@
 #include <vector_functions.h>
 
 #include "Eigen/Dense"
+#include "Eigen/Sparse"
 #include "Eigen/Geometry"
 #include <fmt/core.h>
 #include <fmt/color.h>
@@ -36,6 +37,8 @@ using C=std::complex<real>;             \
 using Quaternion=Eigen::Quaternion##t;  \
 using AngleAxis=Eigen::AngleAxis##t;	\
 
+template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
+template<class T> using SparseMatrix = Eigen::SparseMatrix<T, Eigen::RowMajor, int>;
 
 #ifdef USE_FLOAT
 Declare_Eigen_Types(float, f)

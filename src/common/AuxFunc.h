@@ -29,14 +29,22 @@ namespace VectorFunc {
 }
 
 namespace GPUFunc {
+	template<class T> cudaDataType_t Cuda_Real_Type(void)
+	{
+		int siz = sizeof(T);
+		if (siz == 4) { return CUDA_R_32F; }
+		else if (siz == 8) { return CUDA_R_64F; }
+		else { std::cerr << "[Error] AuxFuncCuda::Cuda_Type: Unknown data type\n"; return cudaDataType_t(); }
+	}
+
 	template<class T>
 	T Dot(const ArrayDv<T>& a, decltype(a) b) {
 		Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
 		return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
 	}
 	//a=b, note it's reverse order of thrust::copy itself
-	template<class T>
-	void Copy(ArrayDv<T>& a, const ArrayDv<T>& b) {
+	template<class T, DataHolder side1, DataHolder side2>
+	void Copy(Array<T, side1>& a, const Array<T, side2>& b) {
 		thrust::copy(b.begin(), b.end(), a.begin());
 	}
 	//y=y+a*x

@@ -2,14 +2,18 @@
 
 #include "Common.h"
 
-template<class T>
-class LinearMapping
-{
-public:
-	virtual int xDoF() const = 0;//number of cols
+namespace LMSolver {
 
-	virtual int yDoF() const = 0;//number of rows
+	template<class T>
+	class LinearMapping
+	{
+	public:
+		virtual int xDoF() const = 0;//number of cols
 
-	//input p, get Ap
-	virtual void applyMapping(ArrayDv<T>& Ap, const ArrayDv<T>& p) = 0;
-};
+		virtual int yDoF() const = 0;//number of rows
+
+		//input p, get Ap
+		virtual void applyMapping(ArrayDv<T>& Ap, const ArrayDv<T>& p) = 0;
+	};
+
+}

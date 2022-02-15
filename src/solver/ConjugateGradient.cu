@@ -5,132 +5,114 @@
 //#include "cuda_runtime_api.h"
 //#include "gpuUtils.h"
 
-template<class T>
-void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T> *_preconditioner, const int _max_iter, const real _relative_tolerance, bool _verbose)
-{
-	linear_mapping = _linear_mapping;
-	preconditioner = _preconditioner;
-	Assert(linear_mapping != nullptr, "[ConjugateGradient] linear_mapping not initialized");
-	if (_max_iter == -1) max_iter = linear_mapping->xDoF() * 2;
-	else max_iter = _max_iter;
-	relative_tolerance = _relative_tolerance;
-	verbose = _verbose;
+namespace LMSolver {
 
-	Assert(linear_mapping->xDoF() == linear_mapping->yDoF(), "[ConjugateGradient] row number and col number must be equal");
-	if (preconditioner)	Assert(
-		preconditioner->xDoF() == preconditioner->yDoF() && linear_mapping->xDoF() == preconditioner->xDoF(),
-		"[ConjugateGradient] preconditioner size must be equal to matrix size"
-	);
-	
-	int dof = linear_mapping->xDoF();
-	b.resize(dof);
-	x.resize(dof);
-	p.resize(dof);
-	Ap.resize(dof);
-	z.resize(dof);
+	template<class T>
+	void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T>* _preconditioner, const int _max_iter, const real _relative_tolerance, bool _verbose)
+	{
+		linear_mapping = _linear_mapping;
+		preconditioner = _preconditioner;
+		Assert(linear_mapping != nullptr, "[ConjugateGradient] linear_mapping not initialized");
+		if (_max_iter == -1) max_iter = linear_mapping->xDoF() * 2;
+		else max_iter = _max_iter;
+		relative_tolerance = _relative_tolerance;
+		verbose = _verbose;
 
-	if (cublasHandle) cublasDestroy(cublasHandle);
-	cublasCreate(&cublasHandle);
-}
+		Assert(linear_mapping->xDoF() == linear_mapping->yDoF(), "[ConjugateGradient] row number and col number must be equal");
+		if (preconditioner)	Assert(
+			preconditioner->xDoF() == preconditioner->yDoF() && linear_mapping->xDoF() == preconditioner->xDoF(),
+			"[ConjugateGradient] preconditioner size must be equal to matrix size"
+		);
 
-template<class T>
-void ConjugateGradient<T>::Solve(ArrayDv<T>& x, ArrayDv<T>& b, int& iters, real& relative_error)
-{
-	//https://flat2010.github.io/2018/10/26/%E5%85%B1%E8%BD%AD%E6%A2%AF%E5%BA%A6%E6%B3%95%E9%80%9A%E4%BF%97%E8%AE%B2%E4%B9%89/
-	//https://zhuanlan.zhihu.com/p/98642663
-	//See: docs/mgpcg-notes-zh.md
-	
-	//Use 0 as initial guess
-	//x0=0
-	x.resize(linear_mapping->xDoF());
-	thrust::fill(x.begin(), x.end(), 0);
-	//initial residual is b
-	
-	auto& r = b;
-	
-	//rhs_norm2=r*r
-	real rhs_norm2 = GPUFunc::Dot(r, r);
-	
-	//if b is zero, just solve to zero
-	if (rhs_norm2 == 0) {
-		//d_x is zero
-		iters = 0;
-		relative_error = 0;
-		return;
+		int dof = linear_mapping->xDoF();
+		b.resize(dof);
+		x.resize(dof);
+		p.resize(dof);
+		Ap.resize(dof);
+		z.resize(dof);
+
+		if (cublasHandle) cublasDestroy(cublasHandle);
+		cublasCreate(&cublasHandle);
 	}
-	//(epsilon*|b|)^2
-	real threshold_norm2 = relative_tolerance * relative_tolerance * rhs_norm2;
 
-	////z0=Minv*r0
-	if (preconditioner) { preconditioner->applyMapping(z, r); }
-	else GPUFunc::Copy(z, r);
+	template<class T>
+	void ConjugateGradient<T>::Solve(ArrayDv<T>& x, ArrayDv<T>& b, int& iters, real& relative_error)
+	{
+		//https://flat2010.github.io/2018/10/26/%E5%85%B1%E8%BD%AD%E6%A2%AF%E5%BA%A6%E6%B3%95%E9%80%9A%E4%BF%97%E8%AE%B2%E4%B9%89/
+		//https://zhuanlan.zhihu.com/p/98642663
+		//See: docs/mgpcg-notes-zh.md
 
-	//p0=z0
-	GPUFunc::Copy(p, z);
+		//Use 0 as initial guess
+		//x0=0
+		x.resize(linear_mapping->xDoF());
+		thrust::fill(x.begin(), x.end(), 0);
+		//initial residual is b
 
-	//gamma0=dot(r0,z0)
-	real gamma = GPUFunc::Dot(z, r);
+		auto& r = b;
 
-	real residual_norm2;//|r_k|^2
-	int i = 0;
-	for (i = 0;i < max_iter;i++) {
-		//Ap_k=A*p_k
-		linear_mapping->applyMapping(Ap, p);
+		//rhs_norm2=r*r
+		real rhs_norm2 = GPUFunc::Dot(r, r);
 
-		//alpha_k=gamma_k/(p_k^T*A*p_k)
-		real fp = GPUFunc::Dot(p, Ap);//fp_k=p_k^T*A*p_k
-		real alpha = gamma / fp;
+		//if b is zero, just solve to zero
+		if (rhs_norm2 == 0) {
+			//d_x is zero
+			iters = 0;
+			relative_error = 0;
+			return;
+		}
+		//(epsilon*|b|)^2
+		real threshold_norm2 = relative_tolerance * relative_tolerance * rhs_norm2;
 
-		//x_{k+1} = x_k + alpha_k * p_k
-		//Axpy means y=y+a*x
-		GPUFunc::Axpy(alpha, p, x);
-
-		//r_{k+1} = r_k - alpha_k * Ap_k
-		GPUFunc::Axpy(-alpha, Ap, r);
-
-		residual_norm2 = GPUFunc::Dot(r, r);
-		if (residual_norm2 < threshold_norm2) break;
-
-		//z_{k+1} = Minv * r_{k+1}
-		if (preconditioner) preconditioner->applyMapping(z, r);
+		////z0=Minv*r0
+		if (preconditioner) { preconditioner->applyMapping(z, r); }
 		else GPUFunc::Copy(z, r);
 
-		//gamma_{k+1} = dot(r_{k+1}, z_{k+1})
-		real gamma_old = gamma;
-		gamma = GPUFunc::Dot(z, r);
+		//p0=z0
+		GPUFunc::Copy(p, z);
 
-		//beta_{k+1} = gamma_{k+1} / gamma_k
-		real beta = gamma / gamma_old;
+		//gamma0=dot(r0,z0)
+		real gamma = GPUFunc::Dot(z, r);
 
-		//p_{k+1} = z_{k+1} + beta_{k+1} * p_{k}
-		GPUFunc::Scal(beta, p);
-		GPUFunc::Axpy(1, z, p);
+		real residual_norm2;//|r_k|^2
+		int i = 0;
+		for (i = 0; i < max_iter; i++) {
+			//Ap_k=A*p_k
+			linear_mapping->applyMapping(Ap, p);
+
+			//alpha_k=gamma_k/(p_k^T*A*p_k)
+			real fp = GPUFunc::Dot(p, Ap);//fp_k=p_k^T*A*p_k
+			real alpha = gamma / fp;
+
+			//x_{k+1} = x_k + alpha_k * p_k
+			//Axpy means y=y+a*x
+			GPUFunc::Axpy(alpha, p, x);
+
+			//r_{k+1} = r_k - alpha_k * Ap_k
+			GPUFunc::Axpy(-alpha, Ap, r);
+
+			residual_norm2 = GPUFunc::Dot(r, r);
+			if (residual_norm2 < threshold_norm2) break;
+
+			//z_{k+1} = Minv * r_{k+1}
+			if (preconditioner) preconditioner->applyMapping(z, r);
+			else GPUFunc::Copy(z, r);
+
+			//gamma_{k+1} = dot(r_{k+1}, z_{k+1})
+			real gamma_old = gamma;
+			gamma = GPUFunc::Dot(z, r);
+
+			//beta_{k+1} = gamma_{k+1} / gamma_k
+			real beta = gamma / gamma_old;
+
+			//p_{k+1} = z_{k+1} + beta_{k+1} * p_{k}
+			GPUFunc::Scal(beta, p);
+			GPUFunc::Axpy(1, z, p);
+		}
+		iters = i;
+		relative_error = sqrt(residual_norm2 / rhs_norm2);
 	}
-	iters = i;
-	relative_error = sqrt(residual_norm2 / rhs_norm2);
+
+	template class ConjugateGradient<float>;
+	template class ConjugateGradient<double>;
+
 }
-
-//void ConjugatedGradient::Solve_Device(Scalar* x_dev, Scalar* b_dev)
-//{
-//	int iters;
-//	Scalar relative_error;
-//	Conjugate_Gradient(x_dev, b_dev, iters, relative_error);
-//	if (verbose) Info("CPX CG take {} iterations with relative error {:.5e}", iters, relative_error);
-//}
-//
-//void ConjugatedGradient::Solve(Scalar* x_host, Scalar const* b_host)
-//{
-//	int iters;
-//	Scalar relative_error;
-//	//AuxFuncCPX::Global_Copy_Array(b_dev, b_host, dof, DataHolder::DEVICE, DataHolder::HOST);
-//	cudaMemcpy(b_dev, b_host, sizeof(Scalar) * dof, cudaMemcpyHostToDevice);
-//	cudaDeviceSynchronize();
-//
-//	Solve_Device(x_dev, b_dev);
-//
-//	AuxFuncCPX::Global_Copy_Array(x_host, x_dev, dof, DataHolder::HOST, DataHolder::DEVICE);
-//	cudaDeviceSynchronize();
-//}
-
-template class ConjugateGradient<float>;
-template class ConjugateGradient<double>;
