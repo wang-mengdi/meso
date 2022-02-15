@@ -6,7 +6,7 @@
 #include "Field.h"
 #include <fmt/ranges.h>
 #include "ConjugateGradient.h"
-#include "SparseMatrix.h"
+#include "SparseMatrixMapping.h"
 
 
 int main(){

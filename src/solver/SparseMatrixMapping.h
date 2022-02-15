@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////
 // Sparse CUDA
 // Copyright (c) (2018-), Bo Zhu, Mengdi Wang
-// This file is part of SimpleX, whose distribution is governed by the LICENSE file.
+// This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Common.h"

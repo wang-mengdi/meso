@@ -6,12 +6,12 @@
 #pragma once
 #include "Grid.h"
 
-template<class T, int d>
+template<class T, int d, DataHolder side=DataHolder::HOST>
 class Field {
 	Typedef_VectorD(d);
 public:
 	Grid<d, GridType::CELL> grid;
-	Array<T> data;
+	Array<T, side> data;
 	Field() {}
 	Field(const Grid<d, GridType::CELL>& _grid, const real val = 0) :
 		grid(_grid)
@@ -21,3 +21,5 @@ public:
 	inline T& operator()(const VectorDi& coord) { return data[grid.Index(coord)]; }
 	inline const T& operator()(const VectorDi& coord) const { return data[grid.Index(coord)]; }
 };
+
+template<class T, int d> using FieldDv = Field<T, d, DataHolder::DEVICE>;
