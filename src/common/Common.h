@@ -64,13 +64,17 @@ using VectorD=Vector<real,d>; \
 using VectorDi=Vector<int,d>
 
 
+// CUDA programming
+enum DataHolder { UNKNOWN = 0, HOST, DEVICE };
+
 ////Container alias
 
 //Array
-//template<class T> using Array = std::vector<T>;
-template<class T> using Array = thrust::host_vector<T>;
+template<class T, DataHolder side=DataHolder::HOST> 
+using Array = typename std::conditional<side == DataHolder::HOST, thrust::host_vector<T>, thrust::device_vector<T>>::type;
+//template<class T> using Array = thrust::host_vector<T>;
 template<class T> using ArrayDv = thrust::device_vector<T>;//device array
-template<class T> using ArrayPtr = std::shared_ptr<Array<T> >;
+template<class T, DataHolder side = DataHolder::HOST> using ArrayPtr = std::shared_ptr<Array<T, side> >;
 template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
 
 //// fmt part
