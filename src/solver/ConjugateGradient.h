@@ -1,10 +1,9 @@
 #pragma once
 #include "LinearMapping.h"
 #include "Eigen/Dense"
-#include "cublas_v2.h"
 
 template<class T>
-class ConjugatedGradient
+class ConjugateGradient
 {
 public:
 	LinearMapping<T>* linear_mapping = nullptr;//doesn't hold this value
@@ -17,14 +16,13 @@ public:
 	ArrayDv<T> b, x;
 	
 	//inner variables
-	int dof;
 	ArrayDv<T> p, Ap, z;
 	
 
 	cublasHandle_t cublasHandle = nullptr;
 
-	ConjugatedGradient() {	}
-	~ConjugatedGradient() {
+	ConjugateGradient() {	}
+	~ConjugateGradient() {
 		if (cublasHandle) cublasDestroy(cublasHandle);
 	}
 

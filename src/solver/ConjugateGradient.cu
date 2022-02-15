@@ -1,27 +1,27 @@
-#include "ConjugatedGradient.h"
+#include "ConjugateGradient.h"
 #include <memory>
 #include <iostream>
 //#include "cuda_runtime_api.h"
 //#include "gpuUtils.h"
 
 template<class T>
-void ConjugatedGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T> *_preconditioner, const int _max_iter, const T _relative_tolerance, bool _verbose)
+void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T> *_preconditioner, const int _max_iter, const T _relative_tolerance, bool _verbose)
 {
 	linear_mapping = _linear_mapping;
 	preconditioner = _preconditioner;
-	Assert(linear_mapping != nullptr, "ConjugatedGradient::linear_mapping not initialized");
+	Assert(linear_mapping != nullptr, "[ConjugateGradient] linear_mapping not initialized");
 	if (_max_iter == -1) max_iter = linear_mapping->xDoF() * 2;
 	else max_iter = _max_iter;
 	relative_tolerance = _relative_tolerance;
 	verbose = _verbose;
 
-	assert(linear_mapping->xDoF() == linear_mapping->yDoF());
-	if (preconditioner)
-	{
-		assert(preconditioner->xDoF() == preconditioner->yDoF());
-		assert(linear_mapping->xDoF() == preconditioner->xDoF());
-	}
-	dof = linear_mapping->xDoF();
+	Assert(linear_mapping->xDoF() == linear_mapping->yDoF(), "[ConjugateGradient] row number and col number must be equal");
+	if (preconditioner)	Assert(
+		preconditioner->xDoF() == preconditioner->yDoF() && linear_mapping->xDoF() == preconditioner->xDoF(),
+		"[ConjugateGradient] preconditioner size must be equal to matrix size"
+	);
+	
+	int dof = linear_mapping->xDoF();
 	b.resize(dof);
 	x.resize(dof);
 	p.resize(dof);
@@ -146,5 +146,5 @@ void ConjugatedGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMappin
 //	cudaDeviceSynchronize();
 //}
 
-template class ConjugatedGradient<float>;
-template class ConjugatedGradient<double>;
+template class ConjugateGradient<float>;
+template class ConjugateGradient<double>;
