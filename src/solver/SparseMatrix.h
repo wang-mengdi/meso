@@ -13,7 +13,7 @@
 template<class T>
 cusparseDnVecDescr_t Create_DnVecDescr_t(T* x, int size) {//x must be on device
 	cusparseDnVecDescr_t vec_t = nullptr;
-	cusparseStatus_t stat = cusparseCreateDnVec(&vec_t, size, x, GPUFunc::Cuda_Real_Type<T>());
+	cusparseStatus_t stat = cusparseCreateDnVec(&vec_t, size, (void*)x, GPUFunc::Cuda_Real_Type<T>());
 	return vec_t;
 }
 
@@ -70,7 +70,7 @@ namespace LMSolver {
 			if constexpr (side == DataHolder::DEVICE) {
 				cusparseSpMatDescr_t matA = nullptr;
 				cusparseStatus_t status = cusparseCreateCsr(&matA, m, n, nnz,
-					ptr, col, val,
+					thrust::raw_pointer_cast(ptr.data()), thrust::raw_pointer_cast(col.data()), thrust::raw_pointer_cast(val.data()),
 					CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I,
 					CUSPARSE_INDEX_BASE_ZERO, GPUFunc::Cuda_Real_Type<T>());
 				return matA;
@@ -98,18 +98,18 @@ namespace LMSolver {
 				//A,x,y must be on device
 				//This function will internally allocate and erase temporary space dBuffer
 				cusparseSpMatDescr_t A_desc = Get_SpMatCescr_t();
-				cusparseDnVecDescr_t x_desc = Create_DnVecDescr_t(p.data(), n);
-				cusparseDnVecDescr_t y_desc = Create_DnVecDescr_t(Ap.data(), m);
+				cusparseDnVecDescr_t x_desc = Create_DnVecDescr_t(thrust::raw_pointer_cast(p.data()), n);
+				cusparseDnVecDescr_t y_desc = Create_DnVecDescr_t(thrust::raw_pointer_cast(Ap.data()), m);
 				size_t buffersize; void* dBuffer = nullptr;
 				cusparseSpMV_bufferSize(
-					handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
+					cusparseHandle, CUSPARSE_OPERATION_NON_TRANSPOSE,
 					alpha, A_desc, x_desc, beta, y_desc, data_type,
 					CUSPARSE_MV_ALG_DEFAULT, &buffersize);
 				cudaMalloc(&dBuffer, buffersize);
-				cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
+				cusparseSpMV(cusparseHandle, CUSPARSE_OPERATION_NON_TRANSPOSE,
 					alpha, A_desc, x_desc, beta, y_desc, data_type,
 					CUSPARSE_MV_ALG_DEFAULT, dBuffer);
-				Global_Free(dBuffer, DEVICE);
+				cudaFree(dBuffer);
 			}
 			else {
 				Assert(false, "[LMSolver::SparseMatrixCPX::applyMapping] can't apply mapping on host");

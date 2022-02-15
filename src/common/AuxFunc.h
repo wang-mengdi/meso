@@ -43,8 +43,8 @@ namespace GPUFunc {
 		return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
 	}
 	//a=b, note it's reverse order of thrust::copy itself
-	template<class T, DataHolder side1, DataHolder side2>
-	void Copy(Array<T, side1>& a, const Array<T, side2>& b) {
+	template<class Array1, class Array2>
+	void Copy(Array1& a, const Array2& b) {
 		thrust::copy(b.begin(), b.end(), a.begin());
 	}
 	//y=y+a*x
