@@ -1,7 +1,7 @@
-add_rules("plugin.vsxmake.autoupdate")
 add_rules("mode.debug")
 includes("./../../src/solver/xmake.lua")
 target("_tests_solver")
+    add_rules("plugin.vsxmake.autoupdate")
     set_kind("binary")
     add_headerfiles("*.h")
     add_files("*.cpp","*.cu","*.cxx")
