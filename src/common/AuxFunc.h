@@ -5,6 +5,11 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Common.h"
+#include <thrust/inner_product.h>
+#include <thrust/transform.h>
+#include <thrust/functional.h>
+using namespace thrust::placeholders;
+
 
 namespace VectorFunc {
 	////create vectors with compatible dimensions
@@ -20,5 +25,28 @@ namespace VectorFunc {
 			v[i] = ((v[i] + bn - 1) / bn) * bn;
 		}
 		return v;
+	}
+}
+
+namespace GPUFunc {
+	template<class T>
+	T Dot(const ArrayDv<T>& a, decltype(a) b) {
+		Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
+		return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
+	}
+	//a=b, note it's reverse order of thrust::copy itself
+	template<class T>
+	void Copy(ArrayDv<T>& a, const ArrayDv<T>& b) {
+		thrust::copy(b.begin(), b.end(), a.begin());
+	}
+	//y=y+a*x
+	template<class T>
+	void Axpy(const real a, const ArrayDv<T>& x, ArrayDv<T>& y) {
+		thrust::transform(x.begin(), x.end(), y.begin(), y.begin(), 2.0 * _1 + _2);
+	}
+	//x*=a
+	template<class T>
+	void Scal(const real a, ArrayDv<T>& x) {
+		thrust::transform(x.begin(), x.end(), x.begin(), a * _1);
 	}
 }

@@ -1,11 +1,12 @@
 #include "ConjugateGradient.h"
+#include "AuxFunc.h"
 #include <memory>
 #include <iostream>
 //#include "cuda_runtime_api.h"
 //#include "gpuUtils.h"
 
 template<class T>
-void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T> *_preconditioner, const int _max_iter, const T _relative_tolerance, bool _verbose)
+void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T> *_preconditioner, const int _max_iter, const real _relative_tolerance, bool _verbose)
 {
 	linear_mapping = _linear_mapping;
 	preconditioner = _preconditioner;
@@ -32,98 +33,83 @@ void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping
 	cublasCreate(&cublasHandle);
 }
 
-//void ConjugatedGradient::Conjugate_Gradient(Scalar* d_x, Scalar* b_dev, int& iters, Scalar& relative_error)
-//{
-//	//https://flat2010.github.io/2018/10/26/%E5%85%B1%E8%BD%AD%E6%A2%AF%E5%BA%A6%E6%B3%95%E9%80%9A%E4%BF%97%E8%AE%B2%E4%B9%89/
-//	//https://zhuanlan.zhihu.com/p/98642663
-//	//See: simplex/docs/conjugate-gradient-notes-zh.md
-//	Scalar one = 1, gamma;
-//
-//	//Use 0 as initial guess
-//	//x0=0
-//	cudaMemset(d_x, 0, sizeof(Scalar) * dof);
-//	//initial residual is b
-//	Scalar* d_r = b_dev;
-//	
-//	//int show_num = 100;
-//	//Scalar* ptr_host = AuxFuncCPX::Global_Malloc<Scalar>(show_num, DataHolder::HOST);
-//	//AuxFuncCPX::Global_Copy_Array(ptr_host, d_r, show_num, DataHolder::HOST, DataHolder::DEVICE);
-//	//cudaDeviceSynchronize();
-//	//std::cout << "value ptr extracted before solve: ";for (int i = 0;i < show_num;i++) std::cout << ptr_host[i] << " ";std::cout << "\n";
-//	//AuxFuncCPX::Global_Free(ptr_host, DataHolder::HOST);
-//
-//
-//	//rhs_norm2=r*r
-//	Scalar rhs_norm2;
-//	Dot(cublasHandle, dof, d_r, 1, d_r, 1, &rhs_norm2);
-//	cudaDeviceSynchronize();
-//	
-//	//if b is zero, just solve to zero
-//	if (rhs_norm2 == 0) {
-//		//d_x is zero
-//		iters = 0;
-//		relative_error = 0;
-//		return;
-//	}
-//	//(epsilon*|b|)^2
-//	Scalar threshold_norm2 = relative_tolerance * relative_tolerance * rhs_norm2;
-//
-//	////z0=Minv*r0
-//	if (preconditioner){preconditioner->applyMapping(d_z, d_r);}
-//	else cudaMemcpy(d_z, d_r, sizeof(Scalar) * dof, cudaMemcpyDeviceToDevice);
-//
-//	//p0=z0
-//	cudaMemcpy(d_p, d_z, sizeof(Scalar) * dof, cudaMemcpyDeviceToDevice);
-//
-//	//gamma0=dot(r0,z0)
-//	Dot(cublasHandle, dof, d_z, 1, d_r, 1, &gamma);
-//	cudaDeviceSynchronize();
-//
-//	Scalar fp;//fp_k=p_k^T*A*p_k
-//	Scalar residual_norm2;//|r_k|^2
-//	int i = 0;
-//	for (i = 0;i < max_iter;i++) {
-//		//Ap_k=A*p_k
-//		linear_mapping->applyMapping(d_Ap, d_p);
-//
-//		//alpha_k=gamma_k/(p_k^T*A*p_k)
-//		Dot(cublasHandle, dof, d_p, 1, d_Ap, 1, &fp);
-//		cudaDeviceSynchronize();
-//		Scalar alpha = gamma / fp;
-//		Scalar neg_alpha = -alpha;
-//
-//		//x_{k+1} = x_k + alpha_k * p_k
-//		//Axpy means y=y+a*x
-//		Axpy(cublasHandle, dof, &alpha, d_p, 1, d_x, 1);
-//
-//		//r_{k+1} = r_k - alpha_k * Ap_k
-//		Axpy(cublasHandle, dof, &neg_alpha, d_Ap, 1, d_r, 1);
-//
-//		Dot(cublasHandle, dof, d_r, 1, d_r, 1, &residual_norm2);
-//		cudaDeviceSynchronize();
-//		if (residual_norm2 < threshold_norm2) break;
-//
-//		//z_{k+1} = Minv * r_{k+1}
-//		if (preconditioner) preconditioner->applyMapping(d_z, d_r);
-//		else cudaMemcpy(d_z, d_r, sizeof(Scalar) * dof, cudaMemcpyDeviceToDevice);
-//
-//		//gamma_{k+1} = dot(r_{k+1}, z_{k+1})
-//		Scalar gamma_old = gamma;
-//		Dot(cublasHandle, dof, d_z, 1, d_r, 1, &gamma);
-//		cudaDeviceSynchronize();
-//		//if (gamma < threshold_norm2) break;
-//
-//		//beta_{k+1} = gamma_{k+1} / gamma_k
-//		Scalar beta = gamma / gamma_old;
-//
-//		//p_{k+1} = z_{k+1} + beta_{k+1} * p_{k}
-//		Scal(cublasHandle, dof, &beta, d_p, 1);
-//		Axpy(cublasHandle, dof, &one, d_z, 1, d_p, 1);
-//	}
-//	iters = i;
-//	relative_error = sqrt(residual_norm2 / rhs_norm2);
-//}
-//
+template<class T>
+void ConjugateGradient<T>::Solve(ArrayDv<T>& x, ArrayDv<T>& b, int& iters, real& relative_error)
+{
+	//https://flat2010.github.io/2018/10/26/%E5%85%B1%E8%BD%AD%E6%A2%AF%E5%BA%A6%E6%B3%95%E9%80%9A%E4%BF%97%E8%AE%B2%E4%B9%89/
+	//https://zhuanlan.zhihu.com/p/98642663
+	//See: docs/mgpcg-notes-zh.md
+	
+	//Use 0 as initial guess
+	//x0=0
+	x.resize(linear_mapping->xDoF());
+	thrust::fill(x.begin(), x.end(), 0);
+	//initial residual is b
+	
+	auto& r = b;
+	
+	//rhs_norm2=r*r
+	real rhs_norm2 = GPUFunc::Dot(r, r);
+	
+	//if b is zero, just solve to zero
+	if (rhs_norm2 == 0) {
+		//d_x is zero
+		iters = 0;
+		relative_error = 0;
+		return;
+	}
+	//(epsilon*|b|)^2
+	real threshold_norm2 = relative_tolerance * relative_tolerance * rhs_norm2;
+
+	////z0=Minv*r0
+	if (preconditioner) { preconditioner->applyMapping(z, r); }
+	else GPUFunc::Copy(z, r);
+
+	//p0=z0
+	GPUFunc::Copy(p, z);
+
+	//gamma0=dot(r0,z0)
+	real gamma = GPUFunc::Dot(z, r);
+
+	real residual_norm2;//|r_k|^2
+	int i = 0;
+	for (i = 0;i < max_iter;i++) {
+		//Ap_k=A*p_k
+		linear_mapping->applyMapping(Ap, p);
+
+		//alpha_k=gamma_k/(p_k^T*A*p_k)
+		real fp = GPUFunc::Dot(p, Ap);//fp_k=p_k^T*A*p_k
+		real alpha = gamma / fp;
+
+		//x_{k+1} = x_k + alpha_k * p_k
+		//Axpy means y=y+a*x
+		GPUFunc::Axpy(alpha, p, x);
+
+		//r_{k+1} = r_k - alpha_k * Ap_k
+		GPUFunc::Axpy(-alpha, Ap, r);
+
+		residual_norm2 = GPUFunc::Dot(r, r);
+		if (residual_norm2 < threshold_norm2) break;
+
+		//z_{k+1} = Minv * r_{k+1}
+		if (preconditioner) preconditioner->applyMapping(z, r);
+		else GPUFunc::Copy(z, r);
+
+		//gamma_{k+1} = dot(r_{k+1}, z_{k+1})
+		real gamma_old = gamma;
+		gamma = GPUFunc::Dot(z, r);
+
+		//beta_{k+1} = gamma_{k+1} / gamma_k
+		real beta = gamma / gamma_old;
+
+		//p_{k+1} = z_{k+1} + beta_{k+1} * p_{k}
+		GPUFunc::Scal(beta, p);
+		GPUFunc::Axpy(1, z, p);
+	}
+	iters = i;
+	relative_error = sqrt(residual_norm2 / rhs_norm2);
+}
+
 //void ConjugatedGradient::Solve_Device(Scalar* x_dev, Scalar* b_dev)
 //{
 //	int iters;
