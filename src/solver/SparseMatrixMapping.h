@@ -10,16 +10,18 @@
 #include <cusparse.h>
 //Note: this header should not include AuxFuncCuda.h
 
-template<class T>
-cusparseDnVecDescr_t Create_DnVecDescr_t(T* x, int size) {//x must be on device
-	cusparseDnVecDescr_t vec_t = nullptr;
-	cusparseStatus_t stat = cusparseCreateDnVec(&vec_t, size, (void*)x, GPUFunc::Cuda_Real_Type<T>());
-	return vec_t;
-}
+namespace Meso {
 
-namespace LMSolver {
+	template<class T>
+	cusparseDnVecDescr_t Create_DnVecDescr_t(T* x, int size) {//x must be on device
+		cusparseDnVecDescr_t vec_t = nullptr;
+		cusparseStatus_t stat = cusparseCreateDnVec(&vec_t, size, (void*)x, GPUFunc::Cuda_Real_Type<T>());
+		return vec_t;
+	}
+
+
 	////The sparse matrix is stored in CRS format
-	template<class T, DataHolder side> class SparseMatrix: public LinearMapping<T>
+	template<class T, DataHolder side> class SparseMatrixMapping : public LinearMapping<T>
 	{
 	public:
 		bool realloc_on_shrink = true;
@@ -31,7 +33,7 @@ namespace LMSolver {
 		Array<T, side> val;
 		cusparseHandle_t cusparseHandle = nullptr;
 
-		SparseMatrix(const Eigen::SparseMatrix<T, Eigen::RowMajor, int>& A) {
+		SparseMatrixMapping(const Eigen::SparseMatrix<T, Eigen::RowMajor, int>& A) {
 			cusparseCreate(&cusparseHandle);
 			m = A.rows(); n = A.cols(); nnz = A.nonZeros();
 
@@ -47,7 +49,7 @@ namespace LMSolver {
 			thrust::copy(A_col, A_col + nnz, col.begin());
 			thrust::copy(A_val, A_val + nnz, val.begin());
 		}
-		~SparseMatrix() {
+		~SparseMatrixMapping() {
 			if (cusparseHandle) cusparseDestroy(cusparseHandle);
 		}
 		////Eigen SparseMatrix interfaces

@@ -2,7 +2,7 @@
 
 #include "Common.h"
 
-namespace LMSolver {
+namespace Meso {
 
 	template<class T>
 	class LinearMapping

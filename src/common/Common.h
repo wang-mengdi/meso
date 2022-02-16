@@ -20,7 +20,9 @@
 #include <iostream>
 #include <vector>
 
-////Eigen part
+namespace Meso {
+
+    ////Eigen part
 
 #define Declare_Eigen_Types(my_type,t)  \
 using real=my_type;                     \
@@ -37,13 +39,13 @@ using C=std::complex<real>;             \
 using Quaternion=Eigen::Quaternion##t;  \
 using AngleAxis=Eigen::AngleAxis##t;	\
 
-template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
-template<class T> using SparseMatrix = Eigen::SparseMatrix<T, Eigen::RowMajor, int>;
+    template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
+    template<class T> using SparseMatrix = Eigen::SparseMatrix<T, Eigen::RowMajor, int>;
 
 #ifdef USE_FLOAT
-Declare_Eigen_Types(float, f)
+    Declare_Eigen_Types(float, f)
 #else
-Declare_Eigen_Types(double, d)
+    Declare_Eigen_Types(double, d)
 #endif
 
 #define Declare_Eigen_Vector_Types(type,t)		\
@@ -53,59 +55,61 @@ using Vector3##t=Eigen::Vector3##t;             \
 using Vector4##t=Eigen::Vector4##t;             \
 using VectorX##t=Eigen::VectorX##t;				
 
-Declare_Eigen_Vector_Types(int,i)
-Declare_Eigen_Vector_Types(float, f)
-Declare_Eigen_Vector_Types(double, d)
+        Declare_Eigen_Vector_Types(int, i)
+        Declare_Eigen_Vector_Types(float, f)
+        Declare_Eigen_Vector_Types(double, d)
 
-using uchar = unsigned char;
-using ushort = unsigned short;
-template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
-template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
+        using uchar = unsigned char;
+    using ushort = unsigned short;
+    template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
+    template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
 
 #define Typedef_VectorD(d) \
 using VectorD=Vector<real,d>; \
 using VectorDi=Vector<int,d>
 
 
-// CUDA programming
-enum DataHolder { UNKNOWN = 0, HOST, DEVICE };
+    // CUDA programming
+    enum DataHolder { HOST = 0, DEVICE };
 
-////Container alias
+    ////Container alias
 
-//Array
-template<class T, DataHolder side=DataHolder::HOST> 
-using Array = typename std::conditional<side == DataHolder::HOST, thrust::host_vector<T>, thrust::device_vector<T>>::type;
-//template<class T> using Array = thrust::host_vector<T>;
-template<class T> using ArrayDv = thrust::device_vector<T>;//device array
-template<class T, DataHolder side = DataHolder::HOST> using ArrayPtr = std::shared_ptr<Array<T, side> >;
-template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
+    //Array
+    template<class T, DataHolder side = DataHolder::HOST>
+    using Array = typename std::conditional<side == DataHolder::HOST, thrust::host_vector<T>, thrust::device_vector<T>>::type;
+    //template<class T> using Array = thrust::host_vector<T>;
+    template<class T> using ArrayDv = thrust::device_vector<T>;//device array
+    template<class T, DataHolder side = DataHolder::HOST> using ArrayPtr = std::shared_ptr<Array<T, side> >;
+    template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
 
-//// fmt part
+    //// fmt part
 
-template <typename... Args>
-void Assert(const bool flg, const char* fmt = "", const Args &...args) {
-    if (!flg) {
-        fmt::print(fg(fmt::color::red), "#     ");
-        fmt::print(fg(fmt::color::red), fmt, args...);
-        exit(-1);
+    template <typename... Args>
+    void Assert(const bool flg, const char* fmt = "", const Args &...args) {
+        if (!flg) {
+            fmt::print(fg(fmt::color::red), "#     ");
+            fmt::print(fg(fmt::color::red), fmt, args...);
+            exit(-1);
+        }
     }
-}
 
-template<typename ...Args>
-void Info(const char* fmt, const Args&...args) {
-    fmt::print("#     ");
-    fmt::print(fmt, args...);
-    fmt::print("\n");
-}
-void Info(const std::string& str);
+    template<typename ...Args>
+    void Info(const char* fmt, const Args&...args) {
+        fmt::print("#     ");
+        fmt::print(fmt, args...);
+        fmt::print("\n");
+    }
+    void Info(const std::string& str);
 
-template<typename ...Args>
-void Warn(const char* fmt, const Args&...args) {
-    fmt::print(fg(fmt::color::yellow), "#     ");
-    fmt::print(fg(fmt::color::yellow), fmt, args...);
-    fmt::print("\n");
+    template<typename ...Args>
+    void Warn(const char* fmt, const Args&...args) {
+        fmt::print(fg(fmt::color::yellow), "#     ");
+        fmt::print(fg(fmt::color::yellow), fmt, args...);
+        fmt::print("\n");
+    }
+    void Warn(const std::string& str);
+
 }
-void Warn(const std::string& str);
 
 ////fmt adaptor for eigen vector
 //template <class T, int d> struct fmt::formatter<Vector<T, d> > {

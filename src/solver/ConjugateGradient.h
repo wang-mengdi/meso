@@ -2,7 +2,7 @@
 #include "LinearMapping.h"
 #include "Eigen/Dense"
 
-namespace LMSolver {
+namespace Meso {
 
 	template<class T>
 	class ConjugateGradient

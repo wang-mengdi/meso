@@ -5,7 +5,7 @@
 //#include "cuda_runtime_api.h"
 //#include "gpuUtils.h"
 
-namespace LMSolver {
+namespace Meso {
 
 	template<class T>
 	void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T>* _preconditioner, const int _max_iter, const real _relative_tolerance, bool _verbose)
