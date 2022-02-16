@@ -8,22 +8,29 @@
 #include "Field.h"
 #include "LambdaHelper.h"
 
-template<class T, int d>
-class PoissonMapping : public LinearMapping<T> {
-	Typedef_VectorD(d);
-public:
-	FieldDv<T, d> vol;
-	FieldDv<bool, d> fixed;
+namespace Meso {
 
-	virtual int xDoF() const {}//number of cols
+	template<class T, int d>
+	class PoissonMapping : public LinearMapping<T> {
+		Typedef_VectorD(d);
+	public:
+		FieldDv<T, d> vol;
+		FieldDv<bool, d> fixed;
 
-	virtual int yDoF() const {}//number of rows
+		virtual int xDoF() const {}//number of cols
 
-	//input p, get Ap
-	virtual void applyMapping(ArrayDv<T>& Ap, const ArrayDv<T>& p) {}
+		virtual int yDoF() const {}//number of rows
 
-	void Init(const Grid<d, GridType::CELL>& grid, IFFunc<T, d> vol_func, CFunc<T, d> is_unknown_func) {
-		int dof = grid.DoF();
+		//input p, get Ap
+		virtual void applyMapping(ArrayDv<T>& Ap, const ArrayDv<T>& p) {}
 
-	}
-};
+		void Init(const Grid<d, GridType::CELL>& grid, IFFunc<T, d> vol_func, CFunc<T, d> is_unknown_func) {
+			int dof = grid.DoF();
+			vol.Calc_Each(vol_func);
+			fixed.Calc_Each(
+				[=](const VectorDi& cell)->bool {return !is_unknown_func(cell); }
+			);
+		}
+	};
+
+}
