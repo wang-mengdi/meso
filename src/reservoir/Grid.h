@@ -67,6 +67,23 @@ namespace Meso {
 			}
 		}
 
+		__host__ __device__ int Face_Index(const int axis, const VectorDi face) const
+		{
+			if constexpr (d == 2) {
+				int x = face[0], y = face[1];
+				int b_ind = (y >> 3) * ((counts[0] >> 3) + (axis == 0)) + (x >> 3);
+				int idx = x & 7, idy = y & 7;
+				return b_ind * 64 + ((axis == 0) * (idx * 8 + idy) + (axis == 1) * (idy * 8 + idx));
+			}
+			else if constexpr (d == 3) {
+				int x = face[0], y = face[1], z = face[2];
+				int nbx = (counts[0] >> 2) + (axis == 0), nby = (counts[1] >> 2) + (axis == 1), nbz = (counts[2] >> 2) + (axis == 2);
+				int bx = x >> 2, by = y >> 2, bz = z >> 2;
+				int idx = x & 0b11, idy = y & 0b11, idz = z & 0b11;
+				return ((bz * nby + by) * nbx + bx) * 64 + (axis == 0) * ((idx * 4 + idz) * 4 + idy) + (axis == 1) * ((idy * 4 + idz) * 4 + idx) + (axis == 2) * ((idz * 4 + idy) * 4 + idx);
+			}
+		}
+
 		////parallel iterators
 		template<class Fcell>//Fcell is a (void) function takes a cell index
 		void Exec_Each(Fcell f) const {

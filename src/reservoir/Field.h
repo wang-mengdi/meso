@@ -34,7 +34,7 @@ namespace Meso {
 		Grid<d, GridType::CELL> grid;
 		Array<T, side> data;
 		Field() {}
-		Field(const Grid<d, GridType::CELL>& _grid, const real val = 0) :
+		Field(const Grid<d, GridType::CELL>& _grid) :
 			grid(_grid)
 		{
 			data.resize(grid.DoF());

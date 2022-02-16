@@ -7,13 +7,11 @@
 #include <fmt/ranges.h>
 #include "ConjugateGradient.h"
 #include "SparseMatrixMapping.h"
+#include "PoissonMapping.h"
 
 using namespace Meso;
 
 int main(){
-    Matrix<real, 3> M;
-    M << 1, 2, 3, 4, 5, 6, 7, 8, 9;
-    auto M_sparse = M.sparseView();
-    SparseMatrixMapping<real, DataHolder::DEVICE> M_dev(M_sparse);
+    PoissonMapping<real, 2> mapping;
     return 0;
 }
