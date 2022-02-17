@@ -17,6 +17,7 @@ namespace Meso {
 		int dof;
 		FieldDv<T, d> vol;
 		FieldDv<bool, d> fixed;
+		ArrayDv<T> temp;
 
 		void Init(const Grid<d, GridType::CELL>& grid, IFFunc<T, d> vol_func, CFunc<T, d> is_unknown_func) {
 			dof = grid.DoF();
@@ -26,13 +27,45 @@ namespace Meso {
 			);
 		}
 
-		virtual int xDoF() const { return dof; }//number of cols
+		virtual int X_DoF() const { return dof; }//number of cols
 
-		virtual int yDoF() const { return dof; }//number of rows
+		virtual int Y_DoF() const { return dof; }//number of rows
 
 		//input p, get Ap
-		virtual void applyMapping(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+			//all data is saved in d_temp. as face data and cell data(p)
+			int face_x_off = 0;
+			int face_y_off = face_x_off + grid.face_size(0);
+			int cell_off = face_y_off + grid.face_size(1);
 
+			temp.resize(p.size());
+			//copy p to temp
+			thrust::copy(p.begin(), p.end(), temp.begin());
+
+
+			cudaMemset(Ap, 0, sizeof(Scalar) * dof);
+
+			auto fix = [=] __device__(Scalar & tv, bool tfixed) { if (tfixed) tv = (Scalar)0; };
+			auto multi = [=] __device__(Scalar & tv, Scalar tvol) { tv *= tvol; };
+			auto neg = [=]__device__(Scalar & tv) { tv = -tv; };
+			//save p in device
+			cudaMemcpy(d_temp + cell_off, p, sizeof(Scalar) * grid.cell_size(), cudaMemcpyDeviceToDevice);
+			cwise_mapping_wrapper(d_temp + cell_off, descr->d_fixed, fix, grid.cell_size());
+
+			grid2DOperator::Cod0Mapping(grid, d_temp + face_x_off, d_temp + face_y_off, d_temp + cell_off);
+
+			cwise_mapping_wrapper(d_temp + face_y_off, neg, grid.face_size(1));
+			cwise_mapping_wrapper(d_temp + face_x_off, descr->d_vol + face_x_off, multi, grid.face_size(0));
+			cwise_mapping_wrapper(d_temp + face_y_off, descr->d_vol + face_y_off, multi, grid.face_size(1));
+
+			grid2DOperator::D1Mapping(grid, Ap, d_temp + face_x_off, d_temp + face_y_off);
+
+			cwise_mapping_wrapper(Ap, descr->d_fixed, fix, grid.cell_size());
+
+			cwise_mapping_wrapper(Ap, neg, grid.cell_size());
+
+			auto cond_add = [=]__device__(Scalar & tv1, Scalar tv2, bool tfixed) { if (tfixed) tv1 += tv2; };
+			cwise_mapping_wrapper(Ap, p, descr->d_fixed, cond_add, grid.cell_size());
 		}
 	};
 
