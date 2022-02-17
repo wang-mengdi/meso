@@ -13,5 +13,10 @@ using namespace Meso;
 
 int main(){
     PoissonMapping<real, 2> mapping;
+    //Array<int, DEVICE> a;
+    //Array<int, DEVICE> b;
+    //Array<int, DEVICE> c;
+    //auto plus = [=](int i, int j)->int {return i + j; };
+    //ArrayFunc::Binary_Transform(plus, a, b, c);
     return 0;
 }

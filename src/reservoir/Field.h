@@ -34,9 +34,12 @@ namespace Meso {
 		Grid<d, GridType::CELL> grid;
 		Array<T, side> data;
 		Field() {}
-		Field(const Grid<d, GridType::CELL>& _grid) :
-			grid(_grid)
+		Field(const Grid<d, GridType::CELL>& _grid)
 		{
+			Init(_grid);
+		}
+		void Init(const Grid<d, GridType::CELL>& _grid) {
+			grid = _grid;
 			data.resize(grid.DoF());
 		}
 		inline T& operator()(const VectorDi& coord) { return data[grid.Index(coord)]; }
@@ -68,6 +71,6 @@ namespace Meso {
 		}
 	};
 
-	template<class T, int d> using FieldDv = Field<T, d, DataHolder::DEVICE>;
+	template<class T, int d> using FieldDv = Field<T, d, DEVICE>;
 
 }

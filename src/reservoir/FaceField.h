@@ -15,11 +15,16 @@ namespace Meso {
 		Grid<d, GridType::CELL> grid;
 		std::array<Array<T, side>, d> face_data;
 		FaceField() {}
-		Field(const Grid<d, GridType::CELL>& _grid) :
-			grid(_grid)
+		FaceField(const Grid<d, GridType::CELL>& _grid)
 		{
+			Init(_grid);
+		}
+		void Init(const Grid<d, GridType::CELL>& _grid) {
+			grid = _grid;
 			for (int axis = 0; axis < d; axis++) face_data[axis].resize(grid.DoF());
 		}
 	};
+
+	template<class T, int d> using FaceFieldDv = FaceField<T, d, DEVICE>;
 
 }

@@ -8,7 +8,7 @@ namespace Meso {
 	class LinearMapping
 	{
 	public:
-		virtual int X_DoF() const = 0;//number of cols
+		virtual int cols() const = 0;//former xdof
 
 		virtual int Y_DoF() const = 0;//number of rows
 

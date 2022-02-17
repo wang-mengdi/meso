@@ -29,15 +29,7 @@ namespace Meso {
 		}
 	}
 
-	namespace GPUFunc {
-		template<class T> cudaDataType_t Cuda_Real_Type(void)
-		{
-			int siz = sizeof(T);
-			if (siz == 4) { return CUDA_R_32F; }
-			else if (siz == 8) { return CUDA_R_64F; }
-			else { std::cerr << "[Error] AuxFuncCuda::Cuda_Type: Unknown data type\n"; return cudaDataType_t(); }
-		}
-
+	namespace ArrayFunc {
 		template<class T>
 		T Dot(const ArrayDv<T>& a, decltype(a) b) {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
@@ -58,6 +50,31 @@ namespace Meso {
 		void Scal(const real a, ArrayDv<T>& x) {
 			thrust::transform(x.begin(), x.end(), x.begin(), a * _1);
 		}
+
+		template<class TTFuncT, class T1, class T2, class T3>
+		class BinaryFunctor {
+			TTFuncT f;
+			BinaryFunctor(TTFuncT _f) :f(_f) {}
+			__host__ __device__ T3 operator () (const T1 a, const T2 b) {
+				return f(a, b);
+			}
+		};
+		template<class TTFuncT, class T1, class T2, class T3>
+		void Binary_Transform(TTFuncT func, const Array<T1, DEVICE>& a, const Array<T2, DEVICE>& b, Array<T3, DEVICE>& c) {
+			BinaryFunctor<TTFuncT, T1, T2, T3> binary_functor(func);
+			//thrust::transform(a.begin(), a.end(), b.begin(), c.begin(), binary_functor);
+		}
+	}
+
+	namespace GPUFunc {
+		template<class T> cudaDataType_t Cuda_Real_Type(void)
+		{
+			int siz = sizeof(T);
+			if (siz == 4) { return CUDA_R_32F; }
+			else if (siz == 8) { return CUDA_R_64F; }
+			else { std::cerr << "[Error] AuxFuncCuda::Cuda_Type: Unknown data type\n"; return cudaDataType_t(); }
+		}
+
 	}
 
 }
