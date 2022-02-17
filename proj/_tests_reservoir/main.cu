@@ -6,6 +6,8 @@
 #include "Field.h"
 #include <fmt/ranges.h>
 
+using namespace Meso;
+
 template<int d>
 void Test_Grid(void) {
     Typedef_VectorD(d);
