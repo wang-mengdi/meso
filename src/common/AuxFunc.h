@@ -50,8 +50,12 @@ namespace Meso {
 		void Scal(const real a, ArrayDv<T>& x) {
 			thrust::transform(x.begin(), x.end(), x.begin(), a * _1);
 		}
+		template<class TFuncT, class Array1, class Array2>
+		void Unary_Transform(const Array1& a, TFuncT func, Array2& b) {
+			thrust::transform(a.begin(), a.end(), b.begin(), func);
+		}
 		template<class TTFuncT, class Array1, class Array2, class Array3>
-		void Binary_Transform(TTFuncT func, const Array1& a, const Array2& b, Array3& c) {
+		void Binary_Transform(const Array1& a, const Array2& b, TTFuncT func, Array3& c) {
 			thrust::transform(a.begin(), a.end(), b.begin(), c.begin(), func);
 		}
 	}

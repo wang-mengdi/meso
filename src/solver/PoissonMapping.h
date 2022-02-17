@@ -8,6 +8,7 @@
 #include "Field.h"
 #include "FaceField.h"
 #include "LambdaHelper.h"
+#include "DifferentialGeometry.h"
 
 namespace Meso {
 
@@ -28,7 +29,7 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		int dof;
-		FieldDv<T, d> vol;
+		FaceFieldDv<T, d> vol;
 		FieldDv<bool, d> fixed;
 
 		FieldDv<T, d> temp_cell;
@@ -58,12 +59,22 @@ namespace Meso {
 			//copy p to temp
 			ArrayFunc::Copy(temp_cell.data, p);
 
-			auto fix = [=] __device__ (T v, bool fixed) ->T {return fixed ? 0 : v; };
+			auto fix_to_zero_func = [=] __device__ (T v, bool fixed) ->T {return fixed ? 0 : v; };
 
-			thrust::transform(temp_cell.data.begin(), temp_cell.data.end(), fixed.data.begin(), temp_cell.data.begin(), fix);
-			//BinaryOp<T, bool, T> my_fix(fix);
-			//ArrayFunc::Binary_Transform(fix, temp_cell.data, fixed.data, temp_cell.data);
+			//set to 0 if fixed
+			ArrayFunc::Binary_Transform(temp_cell.data, fixed.data, fix_to_zero_func, temp_cell.data);
 
+			//temp_face = grad(temp_cell)
+			D_CoCell_Mapping(temp_cell, temp_face);
+
+			ArrayFunc::Unary_Transform(temp_face.face_data[1], thrust::negate<T>(), temp_face.face_data[1]);
+			ArrayFunc::Binary_Transform(temp_face.face_data[0], vol.face_data[0], thrust::multiplies<T>(), temp_face.face_data[0]);
+			ArrayFunc::Binary_Transform(temp_face.face_data[1], vol.face_data[1], thrust::multiplies<T>(), temp_face.face_data[1]);
+
+			D_Face_Mapping(temp_face, Ap);
+
+			ArrayFunc::Binary_Transform(Ap, fixed.data, fix_to_zero_func, Ap);
+			ArrayFunc::Unary_Transform(Ap, thrust::negate<T>(), Ap);
 
 
 			//cudaMemset(Ap, 0, sizeof(Scalar) * dof);

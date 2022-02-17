@@ -17,6 +17,6 @@ int main(){
     Array<int, DEVICE> b;
     Array<int, DEVICE> c;
     auto plus = [=] __device__ (int i, int j)->int {return i + j; };
-    ArrayFunc::Binary_Transform(plus, a, b, c);
+    ArrayFunc::Binary_Transform(a, b, plus, c);
     return 0;
 }

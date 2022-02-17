@@ -13,7 +13,7 @@ namespace Meso {
 	// face_y(i,j)=cell(i,j+1)-cell(i,j)
 	// seems that it behaves like cell(i,j)=0 for outside the boundary
 	template<class T>
-	__global__ void D_CoCell_Mapping_Kernel(Grid<2> grid, T* face_x, T* face_y, T* cell)
+	__global__ void D_CoCell_Mapping_Kernel(Grid<2> grid, T* face_x, T* face_y, const T* cell)
 	{
 		const int nbx = gridDim.x;
 		const int nby = gridDim.y;
@@ -29,7 +29,7 @@ namespace Meso {
 		// 8x8 cell data load
 		// cell coord: bx*8+idx, by*8+idy
 		// like: shared_cell_data[idx,idy]=cell[cell_coord]
-		shared_cell_data[idy * 8 + idx] = cell[grid.cell_ind(bx * 8 + idx, by * 8 + idy)];
+		shared_cell_data[idy * 8 + idx] = cell[grid.Index(Vector2i(bx * 8 + idx, by * 8 + idy))];
 		__syncthreads();
 
 		const T cell_data = shared_cell_data[idy * 8 + idx];
@@ -66,7 +66,7 @@ namespace Meso {
 			int Nx = C.grid.counts[0], Ny = C.grid.counts[1];
 			T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
 			T* face_y = thrust::raw_pointer_cast(F.face_data[1].data());
-			T* cell = thrust::raw_pointer_cast(C.data.data());
+			const T* cell = thrust::raw_pointer_cast(C.data.data());
 
 			D_CoCell_Mapping_Kernel << <dim3((Nx >> 3), (Ny >> 3)), dim3(8, 8) >> > (C.grid, face_x, face_y, cell);
 		}
@@ -77,7 +77,7 @@ namespace Meso {
 	// velocity in face_x, face_y
 	// calculate divergence to cell
 	template<class T>
-	__global__ void D_Face_Mapping_Kernel(Grid<2,GridType::CELL> grid, T* cell, T* face_x, T* face_y)
+	__global__ void D_Face_Mapping_Kernel(Grid<2,GridType::CELL> grid, T* cell, const T* face_x, const T* face_y)
 	{
 		const int nbx = gridDim.x;
 		const int nby = gridDim.y;
@@ -88,7 +88,7 @@ namespace Meso {
 		const int idx = threadIdx.x;
 		const int idy = threadIdx.y;
 
-		__shared__ Scalar shared_face_data[72];
+		__shared__ T shared_face_data[72];
 
 		T div;
 		{
@@ -108,7 +108,7 @@ namespace Meso {
 		{
 			// 8x9 face_y data load
 			shared_face_data[idy * 8 + idx] = face_y[grid.Face_Index(1, Vector2i(bx * 8 + idx, by * 8 + idy))];
-			if (idy == 0) shared_face_data[64 + idx] = face_y[grid.Face_Indx(1, Vector2i(bx * 8 + idx, (by + 1) * 8 + idy))];
+			if (idy == 0) shared_face_data[64 + idx] = face_y[grid.Face_Index(1, Vector2i(bx * 8 + idx, (by + 1) * 8 + idy))];
 			__syncthreads();
 
 			// down y-axis faces
@@ -126,8 +126,8 @@ namespace Meso {
 		if constexpr (d == 2) {
 			int Nx = F.grid.counts[0], Ny = F.grid.counts[1];
 			T* cell = thrust::raw_pointer_cast(C.data.data());
-			T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
-			T* face_y = thrust::raw_pointer_cast(f.face_data[1].data());
+			const T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
+			const T* face_y = thrust::raw_pointer_cast(F.face_data[1].data());
 			D_Face_Mapping_Kernel << <dim3((Nx >> 3), (Ny >> 3)), dim3(8, 8) >> > (F.grid, cell, face_x, face_y);
 		}
 	}
