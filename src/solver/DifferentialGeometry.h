@@ -122,7 +122,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	void D_Face_Mapping(const FaceField<real, d, DEVICE>& F, Field<real, d, DEVICE>& C) {
+	void D_Face_Mapping(const FaceField<T, d, DEVICE>& F, Field<T, d, DEVICE>& C) {
 		if constexpr (d == 2) {
 			int Nx = F.grid.counts[0], Ny = F.grid.counts[1];
 			T* cell = thrust::raw_pointer_cast(C.data.data());

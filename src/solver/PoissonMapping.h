@@ -71,7 +71,7 @@ namespace Meso {
 			ArrayFunc::Binary_Transform(temp_face.face_data[0], vol.face_data[0], thrust::multiplies<T>(), temp_face.face_data[0]);
 			ArrayFunc::Binary_Transform(temp_face.face_data[1], vol.face_data[1], thrust::multiplies<T>(), temp_face.face_data[1]);
 
-			D_Face_Mapping(temp_face, Ap);
+			//D_Face_Mapping(temp_face, Ap);
 
 			ArrayFunc::Binary_Transform(Ap, fixed.data, fix_to_zero_func, Ap);
 			ArrayFunc::Unary_Transform(Ap, thrust::negate<T>(), Ap);
