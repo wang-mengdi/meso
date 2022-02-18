@@ -77,7 +77,7 @@
 //	Clear();
 //
 //	data_side = Copy_Data_Holder(data_side, HOST);//SparseMatrixCPX is always on host
-//	m = copy.rows(); n = copy.cols(); nnz = copy.nonZeros();
+//	m = copy.rows(); n = copy.XDof(); nnz = copy.nonZeros();
 //	int* copy_ptr = const_cast<int*>(copy.outerIndexPtr());
 //	int* copy_col = const_cast<int*>(copy.innerIndexPtr());
 //	T* copy_val = const_cast<T*>(copy.valuePtr());

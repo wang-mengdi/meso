@@ -82,14 +82,14 @@ namespace Meso {
 			}
 		}
 
-		virtual int xDoF() const { return n; }//number of cols
+		virtual int XDof() const { return n; }//number of cols
 
-		virtual int yDoF() const { return m; }//number of rows
+		virtual int YDof() const { return m; }//number of rows
 
 		//input p, get Ap
-		virtual void applyMapping(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
 			if constexpr (side == DataHolder::DEVICE) {
-				Ap.resize(yDoF());
+				Ap.resize(YDof());
 				thrust::fill(Ap.begin(), Ap.end(), (T)0);
 
 				T one = 1;

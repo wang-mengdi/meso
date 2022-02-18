@@ -45,9 +45,9 @@ namespace Meso {
 			temp_face.Init(grid);
 		}
 
-		virtual int cols() const { return dof; }//number of cols
+		virtual int XDof() const { return dof; }//number of cols
 
-		virtual int Y_DoF() const { return dof; }//number of rows
+		virtual int YDof() const { return dof; }//number of rows
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {

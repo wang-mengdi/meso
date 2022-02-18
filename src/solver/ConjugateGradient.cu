@@ -13,18 +13,18 @@ namespace Meso {
 		linear_mapping = _linear_mapping;
 		preconditioner = _preconditioner;
 		Assert(linear_mapping != nullptr, "[ConjugateGradient] linear_mapping not initialized");
-		if (_max_iter == -1) max_iter = linear_mapping->cols() * 2;
+		if (_max_iter == -1) max_iter = linear_mapping->XDof() * 2;
 		else max_iter = _max_iter;
 		relative_tolerance = _relative_tolerance;
 		verbose = _verbose;
 
-		Assert(linear_mapping->cols() == linear_mapping->Y_DoF(), "[ConjugateGradient] row number and col number must be equal");
+		Assert(linear_mapping->XDof() == linear_mapping->YDof(), "[ConjugateGradient] row number and col number must be equal");
 		if (preconditioner)	Assert(
-			preconditioner->cols() == preconditioner->Y_DoF() && linear_mapping->cols() == preconditioner->cols(),
+			preconditioner->XDof() == preconditioner->YDof() && linear_mapping->XDof() == preconditioner->XDof(),
 			"[ConjugateGradient] preconditioner size must be equal to matrix size"
 		);
 
-		int dof = linear_mapping->cols();
+		int dof = linear_mapping->XDof();
 		b.resize(dof);
 		x.resize(dof);
 		p.resize(dof);
@@ -44,7 +44,7 @@ namespace Meso {
 
 		//Use 0 as initial guess
 		//x0=0
-		x.resize(linear_mapping->cols());
+		x.resize(linear_mapping->XDof());
 		thrust::fill(x.begin(), x.end(), 0);
 		//initial residual is b
 
