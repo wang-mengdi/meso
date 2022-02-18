@@ -9,6 +9,7 @@
 #include "FaceField.h"
 #include "LambdaHelper.h"
 #include "DifferentialGeometry.h"
+using namespace thrust::placeholders;
 
 namespace Meso {
 
@@ -51,58 +52,32 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
-			//all data is saved in d_temp. as face data and cell data(p)
-			//int face_x_off = 0;
-			//int face_y_off = face_x_off + grid.face_size(0);
-			//int cell_off = face_y_off + grid.face_size(1);
+			//temp_cell=p, set to 0 if fixed
+			auto identity_except_fixed = [=] __device__(T v, bool fixed) ->T { return fixed ? 0 : v; };
+			ArrayFunc::Binary_Transform(p, fixed.data, identity_except_fixed, temp_cell.data);
 
-			//copy p to temp
-			ArrayFunc::Copy(temp_cell.data, p);
-
-			auto fix_to_zero_func = [=] __device__ (T v, bool fixed) ->T {return fixed ? 0 : v; };
-
-			//set to 0 if fixed
-			ArrayFunc::Binary_Transform(temp_cell.data, fixed.data, fix_to_zero_func, temp_cell.data);
-
-			//temp_face = grad(temp_cell)
+			//temp_face = grad(temp_cell) *. vol
 			D_CoCell_Mapping(temp_cell, temp_face);
-
 			ArrayFunc::Unary_Transform(temp_face.face_data[1], thrust::negate<T>(), temp_face.face_data[1]);
 			ArrayFunc::Binary_Transform(temp_face.face_data[0], vol.face_data[0], thrust::multiplies<T>(), temp_face.face_data[0]);
 			ArrayFunc::Binary_Transform(temp_face.face_data[1], vol.face_data[1], thrust::multiplies<T>(), temp_face.face_data[1]);
 
-			//D_Face_Mapping(temp_face, Ap);
+			//temp_cell = -div(temp_face)
+			D_Face_Mapping(temp_face, temp_cell);
+			ArrayFunc::Unary_Transform(temp_cell.data, thrust::negate<T>(), temp_cell.data);
+			//Ap=temp_cell, set to 0 if fixed
+			ArrayFunc::Binary_Transform(temp_cell.data, fixed.data, identity_except_fixed, Ap);
 
-			ArrayFunc::Binary_Transform(Ap, fixed.data, fix_to_zero_func, Ap);
-			ArrayFunc::Unary_Transform(Ap, thrust::negate<T>(), Ap);
-
-
-			//cudaMemset(Ap, 0, sizeof(Scalar) * dof);
-
-			//auto fix = [=] __device__(Scalar & tv, bool tfixed) { if (tfixed) tv = (Scalar)0; };
-			//auto multi = [=] __device__(Scalar & tv, Scalar tvol) { tv *= tvol; };
-			//auto neg = [=]__device__(Scalar & tv) { tv = -tv; };
-
-
-
-			////save p in device
-			//cudaMemcpy(d_temp + cell_off, p, sizeof(Scalar) * grid.cell_size(), cudaMemcpyDeviceToDevice);
-			//cwise_mapping_wrapper(d_temp + cell_off, descr->d_fixed, fix, grid.cell_size());
-
-			//grid2DOperator::Cod0Mapping(grid, d_temp + face_x_off, d_temp + face_y_off, d_temp + cell_off);
-
-			//cwise_mapping_wrapper(d_temp + face_y_off, neg, grid.face_size(1));
-			//cwise_mapping_wrapper(d_temp + face_x_off, descr->d_vol + face_x_off, multi, grid.face_size(0));
-			//cwise_mapping_wrapper(d_temp + face_y_off, descr->d_vol + face_y_off, multi, grid.face_size(1));
-
-			//grid2DOperator::D1Mapping(grid, Ap, d_temp + face_x_off, d_temp + face_y_off);
-
-			//cwise_mapping_wrapper(Ap, descr->d_fixed, fix, grid.cell_size());
-
-			//cwise_mapping_wrapper(Ap, neg, grid.cell_size());
-
-			//auto cond_add = [=]__device__(Scalar & tv1, Scalar tv2, bool tfixed) { if (tfixed) tv1 += tv2; };
-			//cwise_mapping_wrapper(Ap, p, descr->d_fixed, cond_add, grid.cell_size());
+			//if fixed, add p back
+			thrust::transform_if(
+				Ap.begin(),//first1
+				Ap.end(),//last1
+				p.begin(),//first2
+				fixed.data.begin(),//stencil
+				Ap.begin(),//result
+				_1 + _2,//binary op
+				thrust::identity<bool>()//pred
+			);
 		}
 	};
 
