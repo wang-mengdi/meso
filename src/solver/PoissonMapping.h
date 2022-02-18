@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 // Poisson Linear Mapping
-// Copyright (c) (2018-), Zangyueyang Xian, Mengdi Wang
+// Copyright (c) (2022-), Zangyueyang Xian, Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
@@ -36,7 +36,7 @@ namespace Meso {
 		FieldDv<T, d> temp_cell;
 		FaceFieldDv<T, d> temp_face;
 
-		void Init(const Grid<d, GridType::CELL>& grid, IFFunc<T, d> vol_func, CFunc<T, d> is_unknown_func) {
+		void Init(const Grid<d, GridType::CELL>& _grid, IFFunc<T, d> vol_func, CFunc<T, d> is_unknown_func) {
 			dof = grid.DoF();
 			vol.Calc_Each(vol_func);
 			fixed.Calc_Each(
