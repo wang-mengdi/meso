@@ -23,6 +23,12 @@ namespace Meso {
 			grid = _grid;
 			for (int axis = 0; axis < d; axis++) face_data[axis].resize(grid.DoF());
 		}
+		template<class IFFunc>
+		void Iterate_Faces(IFFunc f) {
+			for (int axis = 0; axis < d; axis++) {
+				//int n=
+			}
+		}
 	};
 
 	template<class T, int d> using FaceFieldDv = FaceField<T, d, DEVICE>;
