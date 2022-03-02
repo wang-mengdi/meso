@@ -35,6 +35,16 @@ namespace Meso {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
 		}
+		//element-wise multiplication, a*.=b
+		template<class T, DataHolder side>
+		void Multiply(Array<T, side>& a, const decltype(a) b) {
+			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), thrust::multiplies<T>());
+		}
+		//element-wise add, a+.=b
+		template<class T, DataHolder side>
+		void Add(Array<T, side>& a, const decltype(a) b) {
+			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), thrust::plus<T>());
+		}
 		//a=b, note it's reverse order of thrust::copy itself
 		template<class Array1, class Array2>
 		void Copy(Array1& a, const Array2& b) {
@@ -43,7 +53,7 @@ namespace Meso {
 		//y=y+a*x
 		template<class T>
 		void Axpy(const real a, const ArrayDv<T>& x, ArrayDv<T>& y) {
-			thrust::transform(x.begin(), x.end(), y.begin(), y.begin(), 2.0 * _1 + _2);
+			thrust::transform(x.begin(), x.end(), y.begin(), y.begin(), a * _1 + _2);
 		}
 		//x*=a
 		template<class T>
