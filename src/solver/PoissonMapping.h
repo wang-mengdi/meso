@@ -12,19 +12,6 @@
 using namespace thrust::placeholders;
 
 namespace Meso {
-
-	template<class T1, class T2, class T3>
-	class BinaryOp {
-		std::function<T3(T1, T2)> f;
-		template<class TTFuncT>
-		BinaryOp(TTFuncT _f) {
-			f = _f;
-		}
-		__host__ __device__ T3 operator () (const T1 a, const T2 b) {
-			return f(t1, t2);
-		}
-	};
-
 	template<class T, int d>
 	class PoissonMapping : public LinearMapping<T> {
 		Typedef_VectorD(d);

@@ -13,6 +13,9 @@
 
         Invoke-Expression (Invoke-Webrequest 'https://xmake.io/psget.text' -UseBasicParsing).Content
 3. Type `M` in installing (which means it will install `xmake` for the current user).
+4. Update xmake to dev version
+
+         xmake update -s github:xq114/xmake#dev
 
 ##### Compile Project
         $ python make_project.py _tests_reservoir
