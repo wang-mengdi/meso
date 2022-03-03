@@ -68,7 +68,6 @@ using VectorX##t=Eigen::VectorX##t;
 using VectorD=Vector<real,d>; \
 using VectorDi=Vector<int,d>
 
-
     // CUDA programming
     enum DataHolder { HOST = 0, DEVICE };
 
@@ -83,7 +82,6 @@ using VectorDi=Vector<int,d>
     template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
 
     //// fmt part
-
     template <typename... Args>
     void Assert(const bool flg, const char* fmt = "", const Args &...args) {
         if (!flg) {
@@ -109,6 +107,21 @@ using VectorDi=Vector<int,d>
     }
     void Warn(const std::string& str);
 
+    template<typename ...Args>
+    void Error(const char* fmt, const Args&...args) {
+        fmt::print(fg(fmt::color::red), "#     ");
+        fmt::print(fg(fmt::color::red), fmt, args...);
+        fmt::print("\n");
+    }
+    void Error(const std::string& str);
+
+    template<typename ...Args>
+    void Pass(const char* fmt, const Args&...args) {
+        fmt::print(fg(fmt::color::green), "#     ");
+        fmt::print(fg(fmt::color::green), fmt, args...);
+        fmt::print("\n");
+    }
+    void Pass(const std::string& str);
 }
 
 ////fmt adaptor for eigen vector
