@@ -62,6 +62,7 @@ namespace Meso {
 		}
 		//(epsilon*|b|)^2
 		real threshold_norm2 = relative_tolerance * relative_tolerance * rhs_norm2;
+		threshold_norm2 = std::max(threshold_norm2, std::numeric_limits<real>::min());
 
 		////z0=Minv*r0
 		if (preconditioner) { preconditioner->Apply(z, r); }

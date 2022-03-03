@@ -31,10 +31,16 @@ namespace Meso {
 
 	namespace ArrayFunc {
 		template<class T>
+		T Dot(const Array<T, HOST>& a, decltype(a) b) {
+			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
+			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
+		}
+		template<class T>
 		T Dot(const ArrayDv<T>& a, decltype(a) b) {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
 		}
+
 		//element-wise multiplication, a*.=b
 		template<class T, DataHolder side>
 		void Multiply(Array<T, side>& a, const decltype(a) b) {
