@@ -30,8 +30,9 @@ void Test_Grid(void) {
 
 int main(){
     //Test_Grid<2>();
-    Test_Grid_Index2<float>(Vector2i(114, 514));
-    Test_Grid_Index2<double>(Vector2i(192, 168));
-
+    Test_Grid_Index<float>(Vector2i(114, 514));
+    Test_Grid_Index<double>(Vector2i(192, 168));
+    Test_Grid_Index<float, 3>(Vector3i(1926, 8, 17));
+    Test_Grid_Index<double>(Vector3i(62, 40, 21));
     return 0;
 }
