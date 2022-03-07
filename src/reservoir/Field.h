@@ -34,13 +34,15 @@ namespace Meso {
 		Grid<d, GridType::CELL> grid;
 		Array<T, side> data;
 		Field() {}
-		Field(const Grid<d, GridType::CELL>& _grid)
-		{
-			Init(_grid);
-		}
+		Field(const Grid<d, GridType::CELL>& _grid) { Init(_grid); }
+		Field(const Grid<d, GridType::CELL>& _grid, const T value) { Init(_grid, value); }
 		void Init(const Grid<d, GridType::CELL>& _grid) {
 			grid = _grid;
 			data.resize(grid.DoF());
+		}
+		void Init(const Grid<d, GridType::CELL>& _grid, const T value) {
+			Init(_grid);
+			ArrayFunc::Fill(data, value);
 		}
 		inline T& operator()(const VectorDi& coord) { return data[grid.Index(coord)]; }
 		inline const T& operator()(const VectorDi& coord) const { return data[grid.Index(coord)]; }

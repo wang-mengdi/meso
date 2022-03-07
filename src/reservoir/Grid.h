@@ -32,7 +32,10 @@ namespace Meso {
 			else pos_min = domain_min + VectorFunc::V<d>(0.5, 0.5, 0.5) * dx;
 		}
 
+		__host__ __device__ VectorDi Counts(void) { return counts; }
+		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += block_size; return fcounts; }
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
+		__host__ __device__ int Face_DoF(int axis) { return Face_Counts(axis).prod(); }
 
 		__host__ __device__ int Index(const VectorDi coord) const {
 			if constexpr (d == 2) {
@@ -82,6 +85,30 @@ namespace Meso {
 				int idx = x & 0b11, idy = y & 0b11, idz = z & 0b11;
 				return ((bz * nby + by) * nbx + bx) * 64 + (axis == 0) * ((idx * 4 + idz) * 4 + idy) + (axis == 1) * ((idy * 4 + idz) * 4 + idx) + (axis == 2) * ((idz * 4 + idy) * 4 + idx);
 			}
+		}
+
+		__host__ __device__ VectorDi Face_Coord(const int axis, const int face_index)const {
+			VectorDi face;
+			if constexpr (d == 2) {
+				int b_ind = face_index >> 6;
+				int i1 = (face_index & 0b111000) >> 3, i0 = face_index & 0b111;
+				int nbx = (counts[0] >> 3) + (axis == 0);
+				int idx, idy;
+				if (axis == 0) idx = i1, idy = i0;
+				else idx = i0, idy = i1;
+				face[0] = ((b_ind % nbx) << 3) + idx;
+				face[1] = ((b_ind / nbx) << 3) + idy;
+			}
+			else if constexpr (d == 3) {
+				int nbx = (counts[0] >> 2) + (axis == 0), nby = (counts[1] >> 2) + (axis == 1), nbz = (counts[2] >> 2) + (axis == 2);
+				int idx = face_index & 0b11, idy = (face_index & 0b1100) >> 2, idz = (face_index & 0b110000) >> 4;
+				int b = face_index >> 6;
+
+				face[0] = ((b % nbx) << 2) + (axis == 0) * idz + (axis == 1) * idx + (axis == 2) * idx;
+				face[1] = (((b / nbx) % nby) << 2) + (axis == 0) * idx + (axis == 1) * idz + (axis == 2) * idy;
+				face[2] = ((b / nbx / nby) << 2) + (axis == 0) * idy + (axis == 1) * idy + (axis == 2) * idz;
+			}
+			return face;
 		}
 
 		////parallel iterators

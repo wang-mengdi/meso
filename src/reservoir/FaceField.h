@@ -15,18 +15,24 @@ namespace Meso {
 		Grid<d, GridType::CELL> grid;
 		std::array<Array<T, side>, d> face_data;
 		FaceField() {}
-		FaceField(const Grid<d, GridType::CELL>& _grid)
-		{
-			Init(_grid);
-		}
+		FaceField(const Grid<d, GridType::CELL>& _grid) { Init(_grid); }
+		FaceField(const Grid<d, GridType::CELL>& _grid, const T value) { Init(_grid); for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(face_data[axis], value); }
 		void Init(const Grid<d, GridType::CELL>& _grid) {
 			grid = _grid;
-			for (int axis = 0; axis < d; axis++) face_data[axis].resize(grid.DoF());
+			for (int axis = 0; axis < d; axis++) face_data[axis].resize(grid.Face_DoF(axis));
 		}
+
+		inline T& operator()(const int axis, const VectorDi face) { return face_data[axis][grid.Face_Index(axis, face)]; }
+		inline const T& operator()(int axis, const VectorDi face) const { return face_data[axis][grid.Face_Index(axis, face)]; }
+
 		template<class IFFunc>
 		void Iterate_Faces(IFFunc f) {
 			for (int axis = 0; axis < d; axis++) {
-				//int n=
+				int n = grid.Face_Dof(axis);
+				for (int i = 0; i < n; i++) {
+					VectorDi face = grid.Face_Coord(axis, i);
+					f(axis, face);
+				}
 			}
 		}
 	};

@@ -82,14 +82,6 @@ using VectorDi=Vector<int,d>
     template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
 
     //// fmt part
-    template <typename... Args>
-    void Assert(const bool flg, const char* fmt = "", const Args &...args) {
-        if (!flg) {
-            fmt::print(fg(fmt::color::red), "#     ");
-            fmt::print(fg(fmt::color::red), fmt, args...);
-            exit(-1);
-        }
-    }
 
     template<typename ...Args>
     void Info(const char* fmt, const Args&...args) {
@@ -122,6 +114,14 @@ using VectorDi=Vector<int,d>
         fmt::print("\n");
     }
     void Pass(const std::string& str);
+
+    template <typename... Args>
+    void Assert(const bool flg, const char* fmt = "", const Args &...args) {
+        if (!flg) {
+            Error(fmt, args...);
+            exit(-1);
+        }
+    }
 }
 
 ////fmt adaptor for eigen vector

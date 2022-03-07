@@ -30,6 +30,10 @@ namespace Meso {
 	}
 
 	namespace ArrayFunc {
+		template<class Array1, class T>
+		void Fill(Array1& a, const T val) {
+			thrust::fill(a.begin(), a.end(), val);
+		}
 		template<class T>
 		T Dot(const Array<T, HOST>& a, decltype(a) b) {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());

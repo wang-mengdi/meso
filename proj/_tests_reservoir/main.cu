@@ -4,6 +4,8 @@
 #include "Common.h"
 #include "Grid.h"
 #include "Field.h"
+#include "GridTests.h"
+
 #include <fmt/ranges.h>
 
 using namespace Meso;
@@ -27,6 +29,9 @@ void Test_Grid(void) {
 }
 
 int main(){
-    Test_Grid<2>();
+    //Test_Grid<2>();
+    Test_Grid_Index2<float>(Vector2i(114, 514));
+    Test_Grid_Index2<double>(Vector2i(192, 168));
+
     return 0;
 }
