@@ -16,7 +16,8 @@ namespace Meso {
 		std::array<Array<T, side>, d> face_data;
 		FaceField() {}
 		FaceField(const Grid<d, GridType::CELL>& _grid) { Init(_grid); }
-		FaceField(const Grid<d, GridType::CELL>& _grid, const T value) { Init(_grid); for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(face_data[axis], value); }
+		FaceField(const Grid<d, GridType::CELL>& _grid, const T value) { Init(_grid);  Fill(value); }
+		void Fill(const T value) { for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(face_data[axis], value); }
 		void Init(const Grid<d, GridType::CELL>& _grid) {
 			grid = _grid;
 			for (int axis = 0; axis < d; axis++) face_data[axis].resize(grid.Face_DoF(axis));

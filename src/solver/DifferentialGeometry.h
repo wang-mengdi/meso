@@ -62,6 +62,7 @@ namespace Meso {
 	template<class T, int d>
 	void D_CoCell_Mapping(const Field<T,d,DataHolder::DEVICE> &C, FaceField<T,d,DataHolder::DEVICE> &F)
 	{
+		F.Fill(0);
 		if constexpr (d == 2) {
 			int Nx = C.grid.counts[0], Ny = C.grid.counts[1];
 			T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
