@@ -113,7 +113,7 @@ namespace Meso {
 
 		////parallel iterators
 		template<class Fcell>//Fcell is a (void) function takes a cell index
-		void Exec_Each(Fcell f) const {
+		void Exec_Cells(Fcell f) const {
 			const int dof = DoF();
 #pragma omp parallel for
 			for (int c = 0; c < dof; c++) {

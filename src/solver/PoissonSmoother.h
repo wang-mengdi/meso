@@ -49,13 +49,13 @@ namespace Meso {
 		//Ap*.=p, masking out black cells
 		ArrayFunc::Multiply(Ap_temp, p_temp);
 		ArrayFunc::Add(diag, Ap_temp);
-		//////black mask
-		////change p_temp from white to black
-		//ArrayFunc::Unary_Transform(p_temp, 1 - thrust::placeholders::_1, p_temp);
-		//mapping.Apply(Ap_temp, p_temp);
-		////Ap*.=p, masking out white cells
-		//ArrayFunc::Multiply(Ap_temp, p_temp);
-		//ArrayFunc::Add(diag, Ap_temp);
+		////black mask
+		//change p_temp from white to black
+		ArrayFunc::Unary_Transform(p_temp, 1 - thrust::placeholders::_1, p_temp);
+		mapping.Apply(Ap_temp, p_temp);
+		//Ap*.=p, masking out white cells
+		ArrayFunc::Multiply(Ap_temp, p_temp);
+		ArrayFunc::Add(diag, Ap_temp);
 	}
 
 }

@@ -18,19 +18,40 @@ namespace Meso {
 		PoissonMapping<T, d> mapping;
 		vol.Iterate_Faces(
 			[&](const int axis, const VectorDi face) {
-				return Random::Uniform(0, 1);
+				vol(axis, face) = Random::Uniform(0, 1);
 			}
 		);
 		fixed.Iterate_Cells(
 			[&](const VectorDi cell) {
-				return !(bool)Random::RandInt(0, 9);
+				fixed(cell) = !(bool)Random::RandInt(0, 9);
 			}
 		);
 		mapping.Init(Grid<d, CELL>(counts), vol, fixed);
 		ArrayDv<T> diag_dev(grid.DoF());
 		Poisson_Diagonal(diag_dev, mapping);
 		Array<T> diag_host = diag_dev;
-		Info("diag {} ", diag_host);
+
+		VectorXd vec_diag_grdt(grid.DoF());
+		grid.Exec_Cells(
+			[&](const VectorDi cell) {
+				int idx = grid.Index(cell);
+				if (fixed(cell)) {
+					vec_diag_grdt[idx] = 1;
+				}
+				else {
+					vec_diag_grdt[idx] = 0;
+					for (int axis = 0; axis < d; axis++) {
+						vec_diag_grdt[idx] += vol(axis, cell);
+						vec_diag_grdt[idx] += vol(axis, cell + VectorDi::Unit(axis));
+					}
+				}
+			}
+		);
+		VectorXd vec_diag_host(grid.DoF());
+		for (int i = 0; i < grid.DoF(); i++) vec_diag_grdt[i] = diag_host[i];
+		if (vec_diag_grdt.isApprox(vec_diag_host)) Pass("Test_Poisson_Diagonal passed for counts={}", counts);
+		else Error("Test_Poisson_Diagonal failed for counts={}", counts);
+		//Info("res: {}", vec_diag_grdt - vec_diag_host);
 	}
 
 }
