@@ -253,7 +253,7 @@ namespace Meso {
 		}
 		__syncthreads();
 
-		cell[grid.Coord(Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + idz))] = div;
+		cell[grid.Index(Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + idz))] = div;
 	}
 
 	template<class T, int d>
