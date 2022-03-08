@@ -11,17 +11,12 @@
 using namespace Meso;
 
 int main(){
-    /*PoissonMapping<real, 2> mapping;
-    Array<int, DEVICE> a;
-    Array<int, DEVICE> b;
-    Array<int, DEVICE> c;
-    auto plus = [=] __device__ (int i, int j)->int {return i + j; };
-    ArrayFunc::Binary_Transform(a, b, plus, c);*/
-
     //Test_Sparse_Matrix();
 
-    //Test_Poisson_Diagonal<real>(Vector2i(14, 53));
-    Test_Poisson_Diagonal<real>(Vector2i(8, 8));
+    Test_Poisson_Diagonal<float>(Vector2i(16, 8));
+    //Test_Poisson_Diagonal<double>(Vector2i(14, 53));
+    //Test_Poisson_Diagonal<float>(Vector3i(16, 44, 23));
+    //Test_Poisson_Diagonal<double>(Vector3i(16, 44, 23));
     
 
     return 0;

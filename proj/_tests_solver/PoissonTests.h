@@ -12,6 +12,7 @@ namespace Meso {
 	template<class T, int d>
 	void Test_Poisson_Diagonal(Vector<int, d> counts) {
 		Typedef_VectorD(d);
+		typedef Eigen::Matrix<T, Eigen::Dynamic, 1> EigenVec;
 		Grid<d> grid(counts);
 		FaceField<T, d> vol(grid);
 		Field<bool, d> fixed(grid);
@@ -26,12 +27,12 @@ namespace Meso {
 				fixed(cell) = !(bool)Random::RandInt(0, 9);
 			}
 		);
-		mapping.Init(Grid<d, CELL>(counts), vol, fixed);
+		mapping.Init(grid, vol, fixed);
 		ArrayDv<T> diag_dev(grid.DoF());
 		Poisson_Diagonal(diag_dev, mapping);
 		Array<T> diag_host = diag_dev;
 
-		VectorXd vec_diag_grdt(grid.DoF());
+		EigenVec vec_diag_grdt(grid.DoF());
 		grid.Exec_Cells(
 			[&](const VectorDi cell) {
 				int idx = grid.Index(cell);
@@ -47,11 +48,13 @@ namespace Meso {
 				}
 			}
 		);
-		VectorXd vec_diag_host(grid.DoF());
-		for (int i = 0; i < grid.DoF(); i++) vec_diag_grdt[i] = diag_host[i];
+		EigenVec vec_diag_host(grid.DoF());
+		for (int i = 0; i < grid.DoF(); i++) vec_diag_host[i] = diag_host[i];
 		if (vec_diag_grdt.isApprox(vec_diag_host)) Pass("Test_Poisson_Diagonal passed for counts={}", counts);
 		else Error("Test_Poisson_Diagonal failed for counts={}", counts);
-		//Info("res: {}", vec_diag_grdt - vec_diag_host);
+		Info("vec_diag_grdt: {}", vec_diag_grdt);
+		Info("vec_diag_host: {}", vec_diag_host);
+		Info("error: {}", vec_diag_host - vec_diag_grdt);
 	}
 
 }
