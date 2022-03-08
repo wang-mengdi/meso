@@ -21,6 +21,9 @@
 #include <vector>
 
 namespace Meso {
+    ////template operations
+    template<bool condition, class T1, class T2> struct If { typedef T1 Type; };
+    template<class T1, class T2> struct If<false, T1, T2> { typedef T2 Type; };
 
     ////Eigen part
 

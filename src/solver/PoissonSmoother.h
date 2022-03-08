@@ -22,7 +22,7 @@ namespace Meso {
 			return (coord[0] ^ coord[1] ^ coord[2] ^ color ^ 0x1) & 0x1;
 		}
 		else {
-			Assert("Meso::Is_Chessboard_Mask undefined for d=={}", d);
+			Assert(false, "Meso::Is_Chessboard_Mask undefined for d=={}", d);
 			return false;
 		}
 	}

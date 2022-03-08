@@ -9,6 +9,7 @@
 #include "FaceField.h"
 #include "LambdaHelper.h"
 #include "DifferentialGeometry.h"
+#include "AuxFunc.h"
 using namespace thrust::placeholders;
 
 namespace Meso {
@@ -22,16 +23,29 @@ namespace Meso {
 
 		FieldDv<T, d> temp_cell;
 		FaceFieldDv<T, d> temp_face;
-
-		void Init(const Grid<d, GridType::CELL>& _grid, IFFunc<T, d> vol_func, CFunc<T, d> is_unknown_func) {
+		
+		void Allocate_Memory(const Grid<d, CELL>& grid) {
 			dof = grid.DoF();
-			vol.Calc_Each(vol_func);
-			fixed.Calc_Each(
-				[=](const VectorDi& cell)->bool {return !is_unknown_func(cell); }
-			);
+			vol.Init(grid);
+			fixed.Init(grid);
 			temp_cell.Init(grid);
 			temp_face.Init(grid);
 		}
+		void Init(const Grid<d, CELL>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
+			Allocate_Memory(grid);
+			vol.Copy(_vol);
+			fixed.Copy(_fixed);
+		}
+		template<class IFFunc, class CFunc>
+		void Init(const Grid<d, GridType::CELL>& grid, IFFunc vol_func, CFunc is_unknown_func) {
+			Allocate_Memory(grid);
+			vol.Calc_Faces(vol_func);
+			fixed.Calc_Cells(
+				[=](const VectorDi& cell)->bool {return !is_unknown_func(cell); }
+			);
+		}
+
+
 
 		virtual int XDof() const { return dof; }//number of cols
 

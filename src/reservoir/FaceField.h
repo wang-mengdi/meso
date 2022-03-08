@@ -22,17 +22,36 @@ namespace Meso {
 			for (int axis = 0; axis < d; axis++) face_data[axis].resize(grid.Face_DoF(axis));
 		}
 
+		template<DataHolder side1> void Copy(const FaceField<T, d, side1> &f1) { for (int i = 0; i < d; i++) { ArrayFunc::Copy(face_data[i], f1.face_data[i]); } }
+
 		inline T& operator()(const int axis, const VectorDi face) { return face_data[axis][grid.Face_Index(axis, face)]; }
 		inline const T& operator()(int axis, const VectorDi face) const { return face_data[axis][grid.Face_Index(axis, face)]; }
 
 		template<class IFFunc>
 		void Iterate_Faces(IFFunc f) {
 			for (int axis = 0; axis < d; axis++) {
-				int n = grid.Face_Dof(axis);
+				int n = grid.Face_DoF(axis);
 				for (int i = 0; i < n; i++) {
 					VectorDi face = grid.Face_Coord(axis, i);
 					f(axis, face);
 				}
+			}
+		}
+
+		template<class IFFuncT>
+		void Calc_Faces(IFFuncT f) {
+			for (int axis = 0; axis < d; axis++) {
+				const int dof = grid.Face_DoF(axis);
+				thrust::counting_iterator<int> idxfirst(0);
+				thrust::counting_iterator<int> idxlast = idxfirst + dof;
+				thrust::transform(
+					idxfirst,
+					idxlast,
+					face_data[axis].begin(),
+					[f, axis, this]__host__ __device__(const int idx) {
+						return f(axis, grid.Face_Coord(axis, idx));
+					}
+				);
 			}
 		}
 	};

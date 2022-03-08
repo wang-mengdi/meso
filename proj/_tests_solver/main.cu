@@ -7,6 +7,8 @@
 #include <fmt/ranges.h>
 #include "SparseTests.h"
 #include "PoissonMapping.h"
+#include "PoissonTests.h"
+using namespace Meso;
 
 int main(){
     /*PoissonMapping<real, 2> mapping;
@@ -16,7 +18,9 @@ int main(){
     auto plus = [=] __device__ (int i, int j)->int {return i + j; };
     ArrayFunc::Binary_Transform(a, b, plus, c);*/
 
-    Test_Sparse_Matrix();
+    //Test_Sparse_Matrix();
+
+    Test_Poisson_Diagonal<real>(Vector2i(14, 53));
     
 
     return 0;
