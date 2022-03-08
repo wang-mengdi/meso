@@ -58,29 +58,11 @@ namespace Meso {
 			auto identity_except_fixed = [=] __device__(T v, bool fixed) ->T { return fixed ? 0 : v; };
 			ArrayFunc::Binary_Transform(p, fixed.data, identity_except_fixed, temp_cell.data);
 
-			Info("temp_cell [7,0] {}", temp_cell.data[temp_cell.grid.Index(Vector2i(7, 0))]);
-			Info("temp_cell [8,0] {}", temp_cell.data[temp_cell.grid.Index(Vector2i(8, 0))]);
-
-			Info("before cocell_mapping 0 [8 0] {}", temp_face.face_data[0][vol.grid.Face_Index(0, Vector2i(8, 0))]);
-
 			//temp_face = grad(temp_cell) *. vol
 			D_CoCell_Mapping(temp_cell, temp_face);
-
-			Info("after cocell_mapping 0 [8 0] {}", temp_face.face_data[0][vol.grid.Face_Index(0, Vector2i(8, 0))]);
-
 			ArrayFunc::Unary_Transform(temp_face.face_data[1], thrust::negate<T>(), temp_face.face_data[1]);
 			ArrayFunc::Binary_Transform(temp_face.face_data[0], vol.face_data[0], thrust::multiplies<T>(), temp_face.face_data[0]);
 			ArrayFunc::Binary_Transform(temp_face.face_data[1], vol.face_data[1], thrust::multiplies<T>(), temp_face.face_data[1]);
-
-			if constexpr (d == 2) {
-				Info("7 neighbors temp_face:");
-				//Info("0 [7 0] {}", temp_face(0, Vector2i(7, 0)));
-				Info("0 [7 0] {}", temp_face.face_data[0][vol.grid.Face_Index(0, Vector2i(7, 0))]);
-				Info("0 [8 0] {}", temp_face.face_data[0][vol.grid.Face_Index(0, Vector2i(8, 0))]);
-				Info("1 [7 0] {}", temp_face.face_data[1][vol.grid.Face_Index(1, Vector2i(7, 0))]);
-				Info("1 [7 1] {}", temp_face.face_data[1][vol.grid.Face_Index(1, Vector2i(7, 1))]);
-				Info("vol 0 [8 0] {}", vol.face_data[0][vol.grid.Face_Index(0, Vector2i(8, 0))]);
-			}
 
 			//temp_cell = -div(temp_face)
 			D_Face_Mapping(temp_face, temp_cell);

@@ -36,17 +36,12 @@ namespace Meso {
 		grid.Exec_Cells(
 			[&](const VectorDi cell) {
 				int idx = grid.Index(cell);
-				if (idx == 7) Info("idx {} fixed {}", idx, fixed(cell));
 				if (fixed(cell)) {
 					vec_diag_grdt[idx] = 1;
 				}
 				else {
 					vec_diag_grdt[idx] = 0;
 					for (int axis = 0; axis < d; axis++) {
-						if (idx == 7) {
-							Info("neighbor axis {} face {} vol {}", axis, cell, vol(axis, cell));
-							Info("neighbor axis {} face {} vol {}", axis, cell + VectorDi::Unit(axis), vol(axis, cell + VectorDi::Unit(axis)));
-						}
 						vec_diag_grdt[idx] += vol(axis, cell);
 						vec_diag_grdt[idx] += vol(axis, cell + VectorDi::Unit(axis));
 					}
@@ -57,11 +52,9 @@ namespace Meso {
 		for (int i = 0; i < grid.DoF(); i++) vec_diag_host[i] = diag_host[i];
 		if (vec_diag_grdt.isApprox(vec_diag_host)) Pass("Test_Poisson_Diagonal passed for counts={}", counts);
 		else Error("Test_Poisson_Diagonal failed for counts={}", counts);
-		Info("vec_diag_grdt: {}", vec_diag_grdt[7]);
-		Info("vec_diag_host: {}", vec_diag_host[7]);
-		Info("error: {}", vec_diag_host - vec_diag_grdt);
-		Info("error: {}", (vec_diag_host - vec_diag_grdt)[7]);
-		Info("error cell: {}", grid.Coord(7));
+		//Info("vec_diag_grdt: {}", vec_diag_grdt);
+		//Info("vec_diag_host: {}", vec_diag_host);
+		//Info("error: {}", vec_diag_host - vec_diag_grdt);
 	}
 
 }
