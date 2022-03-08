@@ -46,15 +46,16 @@ namespace Meso {
 		}
 
 		//element-wise multiplication, a*.=b
-		template<class T, DataHolder side>
-		void Multiply(Array<T, side>& a, const decltype(a) b) {
-			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), thrust::multiplies<T>());
+		template<class Array1>
+		void Multiply(Array1& a, const decltype(a) b) {
+			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 * _2);
 		}
 		//element-wise add, a+.=b
-		template<class T, DataHolder side>
-		void Add(Array<T, side>& a, const decltype(a) b) {
-			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), thrust::plus<T>());
+		template<class Array1>
+		void Add(Array1& a, const decltype(a) b) {
+			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 + _2);
 		}
+
 		//a=b, note it's reverse order of thrust::copy itself
 		template<class Array1, class Array2>
 		void Copy(Array1& a, const Array2& b) {

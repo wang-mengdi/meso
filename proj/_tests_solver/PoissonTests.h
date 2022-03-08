@@ -16,7 +16,6 @@ namespace Meso {
 		FaceField<T, d> vol(grid);
 		Field<bool, d> fixed(grid);
 		PoissonMapping<T, d> mapping;
-		
 		vol.Iterate_Faces(
 			[&](const int axis, const VectorDi face) {
 				return Random::Uniform(0, 1);
@@ -28,6 +27,10 @@ namespace Meso {
 			}
 		);
 		mapping.Init(Grid<d, CELL>(counts), vol, fixed);
+		ArrayDv<T> diag_dev(grid.DoF());
+		Poisson_Diagonal(diag_dev, mapping);
+		Array<T> diag_host = diag_dev;
+		Info("diag {} ", diag_host);
 	}
 
 }
