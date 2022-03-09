@@ -1,5 +1,20 @@
 #include "SparseTests.h"
 #include "ConjugateGradient.h"
+#include "Random.h"
+
+void Sparse_Diagonal_Dominant_Matrix(int cols, int rows, Eigen::SparseMatrix<real, Eigen::RowMajor, int>& mat) {
+    std::vector<Eigen::Triplet<real>> tripletList;
+    tripletList.reserve(3 * rows); //three entries per row
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = std::max(i - 1, 0); j <= std::min(i + 1, cols - 1); j++) {
+            if (i == j) { tripletList.push_back(Eigen::Triplet<real>(i, j, Random::Random() * 100)); }
+            else { tripletList.push_back(Eigen::Triplet<real>(i, j, Random::Random())); }
+        }
+    }
+    mat.resize(rows, cols);
+    mat.setFromTriplets(tripletList.begin(), tripletList.end());
+}
 
 void Test_Sparse_Matrix(void)
 {
@@ -9,22 +24,13 @@ void Test_Sparse_Matrix(void)
     int cols = 10;
 
     //create a diagonal dominant matrix
-    std::vector<Eigen::Triplet<real>> tripletList;
-    tripletList.reserve(3 * rows); //three entries per row
-    for (int i = 0; i < rows; i++)
-    {
-        for (int j = std::max(i - 1, 0); j <= std::min(i + 1, cols - 1); j++) {
-            if (i == j) { tripletList.push_back(Eigen::Triplet<real>(i, j, rand())); }
-            else { tripletList.push_back(Eigen::Triplet<real>(i, j, (real)rand() / RAND_MAX)); }
-        }
-    }
-    Eigen::SparseMatrix<real, Eigen::RowMajor, int> A(rows, cols);
-    A.setFromTriplets(tripletList.begin(), tripletList.end());
+    Eigen::SparseMatrix<real, Eigen::RowMajor, int> A;
+    Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
 
     //create b through x to make sure a solution exists
     VectorXd x(cols);
     for (int i = 0; i < rows; i++) {
-        x[i] = (real)rand() / RAND_MAX;
+        x[i] = Random::Random();
     }
     VectorXd b = A * x;
     //std::cout << "A: \n" << A.toDense() << std::endl;
@@ -70,4 +76,24 @@ void Test_Sparse_Matrix(void)
         Error("Incorrect Result!");
         std::cout << "Our x:" << x_cg.transpose() << std::endl;
     }
+}
+
+void Test_CG_Memory_Safe(void) {
+    int rows = 10;
+    int cols = 10;
+
+    //create a diagonal dominant matrix
+    Eigen::SparseMatrix<real, Eigen::RowMajor, int> A;
+    Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
+
+    SparseMatrixMapping<real, DEVICE> smm_A(A);
+    ConjugateGradient<real> cg;
+    cg.verbose = true;
+    cg.Init(&smm_A, nullptr, 1000, 1e-6);
+
+    Eigen::SparseMatrix<real, Eigen::RowMajor, int> B;
+    Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
+    SparseMatrixMapping<real, DEVICE> smm_B(B);
+    cg.Init(&smm_B, nullptr, 1000, 1e-6);
+    Pass("Passed initializing memory for multiple times!");
 }
