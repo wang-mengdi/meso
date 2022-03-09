@@ -42,16 +42,15 @@ namespace Meso {
 		ArrayDv<T> Ap_temp(n);
 		thrust::counting_iterator<int> idxbegin(0);
 		thrust::counting_iterator<int> idxend = idxbegin + n;
+
 		////white mask
-		Info("before white mask 0 {}", Ap_temp[0]);
 		ChessboardMask<d> white_mask(grid, 0);
 		thrust::transform(idxbegin, idxend, p_temp.begin(), white_mask);
 		mapping.Apply(Ap_temp, p_temp);
-		Info("after white mask 0 {}", Ap_temp[0]);
 		//Ap*.=p, masking out black cells
 		ArrayFunc::Multiply(Ap_temp, p_temp);
-		Info("multiply white mask 0 {}", Ap_temp[0]);
 		ArrayFunc::Add(diag, Ap_temp);
+
 		////black mask
 		//change p_temp from white to black
 		ArrayFunc::Unary_Transform(p_temp, 1 - thrust::placeholders::_1, p_temp);

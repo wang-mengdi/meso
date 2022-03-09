@@ -27,17 +27,17 @@ void Test_Sparse_Matrix(void)
         x[i] = (real)rand() / RAND_MAX;
     }
     VectorXd b = A * x;
-    std::cout << "A: \n" << A.toDense() << std::endl;
-    std::cout << "x:  " << x.transpose() << std::endl;
-    std::cout << "b:  " << b.transpose() << std::endl;
+    //std::cout << "A: \n" << A.toDense() << std::endl;
+    //std::cout << "x:  " << x.transpose() << std::endl;
+    //std::cout << "b:  " << b.transpose() << std::endl;
 
     //Solve with Eigen
     Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::IdentityPreconditioner> e_cg;
     e_cg.compute(A);
     x = e_cg.solve(b);
-    std::cout << "Eigen CG solve iterations:     " << e_cg.iterations() << std::endl;
-    std::cout << "Eigen CG solve estimated error: " << e_cg.error() << std::endl;
-    std::cout << "Eigen CG solved x:" << x.transpose() << std::endl;
+    //std::cout << "Eigen CG solve iterations:     " << e_cg.iterations() << std::endl;
+    //std::cout << "Eigen CG solve estimated error: " << e_cg.error() << std::endl;
+    //std::cout << "Eigen CG solved x:" << x.transpose() << std::endl;
 
     //Solve with our CG solver with linear mapping
     SparseMatrixMapping<real, DEVICE> smm(A);
@@ -53,13 +53,7 @@ void Test_Sparse_Matrix(void)
     VectorXd x_cg(cols);
     for (int i = 0; i < cols; i++) { x_cg[i] = x_d[i]; }
 
-    if (x_cg.isApprox(x)) {
-        Pass("Correct SparseMatrixMapping!");
-    }
-    else {
-        Error("Linear mapped Ap not equal to b, linear mapped Ap:");
-        std::cout << std::endl;
-    }
+    Assert(x_cg.isApprox(x), "Test_Sparse_Matrix: sparse mapped Ap not equal to b");
 
     ArrayFunc::Copy(b_d, b);
 
@@ -70,7 +64,7 @@ void Test_Sparse_Matrix(void)
     for (int i = 0; i < cols; i++) { x_cg[i] = x_d[i]; }
 
     if (x_cg.isApprox(x)) {
-        Pass("Correct Result!");
+        Pass("Test_Sparse_Matrix passed");
     }
     else {
         Error("Incorrect Result!");

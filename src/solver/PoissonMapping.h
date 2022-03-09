@@ -46,8 +46,6 @@ namespace Meso {
 			);
 		}
 
-
-
 		virtual int XDof() const { return dof; }//number of cols
 
 		virtual int YDof() const { return dof; }//number of rows
@@ -60,20 +58,9 @@ namespace Meso {
 
 			//temp_face = grad(temp_cell) *. vol
 			D_CoCell_Mapping(temp_cell, temp_face);
-			//ArrayFunc::Unary_Transform(temp_face.face_data[1], thrust::negate<T>(), temp_face.face_data[1]);
 			for (int axis = 0; axis < d; axis++) {
 				ArrayFunc::Multiply(temp_face.face_data[axis], vol.face_data[axis]);
 			}
-
-			//int idx = 0; VectorDi cell = vol.grid.Coord(idx);
-			//for (int axis = 0; axis < d; axis++) {
-			//	VectorDi face1 = cell, face2 = cell + VectorDi::Unit(axis);
-			//	int fidx1 = vol.grid.Face_Index(axis, face1), fidx2 = vol.grid.Face_Index(axis, face2);
-			//	Info("cell {} nb face {}, {} vol {}", cell, axis, face1, vol.face_data[axis][fidx1]);
-			//	Info("cell {} nb face {}, {} vol {}", cell, axis, face2, vol.face_data[axis][fidx2]);
-			//	Info("cell {} nb face {}, {} temp_face {}", cell, axis, face1, temp_face.face_data[axis][fidx1]);
-			//	Info("cell {} nb face {}, {} temp_face {}", cell, axis, face2, temp_face.face_data[axis][fidx2]);
-			//}
 
 			//temp_cell = -div(temp_face)
 			D_Face_Mapping(temp_face, temp_cell);
