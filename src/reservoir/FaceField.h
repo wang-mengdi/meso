@@ -49,7 +49,7 @@ namespace Meso {
 					idxfirst,
 					idxlast,
 					face_data[axis].begin(),
-					[f, axis, this]__host__ __device__(const int idx) {
+					[f, axis, this](const int idx) {
 						return f(axis, grid.Face_Coord(axis, idx));
 					}
 				);
