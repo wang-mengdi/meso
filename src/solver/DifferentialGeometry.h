@@ -182,10 +182,10 @@ namespace Meso {
 			__syncthreads();
 
 			// down y-axis faces
-			div += shared_face_data[idy * 8 + idx];
+			div -= shared_face_data[idy * 8 + idx];
 
 			// up y-axis faces
-			div += -shared_face_data[(idy + 1) * 8 + idx];
+			div += shared_face_data[(idy + 1) * 8 + idx];
 		}
 
 		cell[grid.Index(Vector2i(bx * 8 + idx, by * 8 + idy))] = div;
@@ -210,7 +210,7 @@ namespace Meso {
 
 		__shared__ T shared_face_data[80];
 
-		T div;
+		T div = 0;
 		{
 			// 5x4x4 face_x data load
 			shared_face_data[(idz * 4 + idy) * 4 + idx] = face_x[grid.Face_Index(0, Vector3i(bx * 4 + idz, by * 4 + idx, bz * 4 + idy))];
@@ -240,7 +240,7 @@ namespace Meso {
 		__syncthreads();
 
 		{
-			// 4x4x5 face_y data load
+			// 4x4x5 face_z data load
 			shared_face_data[(idz * 4 + idy) * 4 + idx] = face_z[grid.Face_Index(2, Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + idz))];
 			if (idz == 0) shared_face_data[(4 * 4 + idy) * 4 + idx] = face_z[grid.Face_Index(2, Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + 4))];
 			__syncthreads();
@@ -270,7 +270,7 @@ namespace Meso {
 			T* cell = thrust::raw_pointer_cast(C.data.data());
 			const T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
 			const T* face_y = thrust::raw_pointer_cast(F.face_data[1].data());
-			const T* face_z = thrust::raw_pointer_cast(F.face_data[1].data());
+			const T* face_z = thrust::raw_pointer_cast(F.face_data[2].data());
 			D_Face_Mapping_Kernel3 << <dim3((Nx >> 2), (Ny >> 2), (Nz >> 2)), dim3(4, 4, 4) >> > (F.grid, cell, face_x, face_y, face_z);
 		}
 	}

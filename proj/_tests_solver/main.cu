@@ -13,10 +13,13 @@ using namespace Meso;
 int main(){
     //Test_Sparse_Matrix();
 
-    Test_Poisson_Diagonal<float>(Vector2i(14, 53));
-    Test_Poisson_Diagonal<double>(Vector2i(14, 53));
-    Test_Poisson_Diagonal<float>(Vector3i(16, 44, 23));
-    Test_Poisson_Diagonal<double>(Vector3i(16, 44, 23));
+    Test_Poisson_Diagonal<float>(Vector2i(8, 8));
+    //Test_Poisson_Diagonal<float>(Vector3i(4, 4, 4));
+
+    //Test_Poisson_Diagonal<float>(Vector2i(14, 53));
+    //Test_Poisson_Diagonal<double>(Vector2i(14, 53));
+    //Test_Poisson_Diagonal<float>(Vector3i(16, 44, 23));
+    //Test_Poisson_Diagonal<double>(Vector3i(16, 44, 23));
     
 
     return 0;
