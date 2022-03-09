@@ -15,7 +15,7 @@ void Test_Grid(void) {
     Typedef_VectorD(d);
     Grid<2> grid(Vector2i(9, 7));
     Field<int, 2> F(grid);
-    grid.Exec_Each(
+    grid.Exec_Cells(
         [&](const VectorDi& cell) {
             F(cell) = grid.Index(cell);
         }
