@@ -4,7 +4,8 @@
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "PoissonSmoother.h"
+#include "DampedJacobiSmoother.h"
+#include "PoissonFunc.h"
 #include "Random.h"
 
 namespace Meso {
