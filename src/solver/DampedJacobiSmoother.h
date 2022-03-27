@@ -36,16 +36,16 @@ namespace Meso {
 		}
 		virtual int Dof()const { return dof; }
 		virtual void Apply(ArrayDv<T>& x_new, const ArrayDv<T>& x_old) {
-			Info("x: {}", x_old);
+			//Info("x: {}", x_old);
 			//Ax
 			mapping->Apply(x_new, x_old);
-			Info("Ax: {}", x_new);
+			//Info("Ax: {}", x_new);
 			//b-Ax
 			ArrayFunc::Binary_Transform(x_new, rhs, [=]__device__(T a, T b) { return b - a; }, x_new);
-			Info("b-Ax: {}", x_new);
+			//Info("b-Ax: {}", x_new);
 			//(b-Ax)/.rhs
 			ArrayFunc::Binary_Transform(x_new, diag, [=]__device__(T a, T b) { return a / b; }, x_new);
-			Info("(b-Ax)/rhs: {}", x_new);
+			//Info("(b-Ax)/rhs: {}", x_new);
 			//x+=(b-Ax)/.rhs*.omega
 			real _omega = omega;
 			ArrayFunc::Binary_Transform(x_new, x_old, [=]__device__(T a, T b) { return b + a * _omega; }, x_new);

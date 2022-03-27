@@ -52,6 +52,9 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+			Assert(p.size() == dof, "PoissonMapping: p.size() not equal to dof");
+			Assert(Ap.size() == dof, "PoissonMapping: Ap.size() not equal to dof");
+
 			//temp_cell=p, set to 0 if fixed
 			auto identity_except_fixed = [=] __device__(T v, bool fixed) ->T { return fixed ? 0 : v; };
 			ArrayFunc::Binary_Transform(p, fixed.data, identity_except_fixed, temp_cell.data);
@@ -61,6 +64,8 @@ namespace Meso {
 			for (int axis = 0; axis < d; axis++) {
 				ArrayFunc::Multiply(temp_face.face_data[axis], vol.face_data[axis]);
 			}
+
+			
 
 			//temp_cell = -div(temp_face)
 			D_Face_Mapping(temp_face, temp_cell);

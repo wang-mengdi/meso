@@ -83,9 +83,10 @@ namespace Meso {
 	void Test_Damped_Jacobian(int n) {
 		Typedef_VectorD(d);
 		Grid<d> grid(VectorDi::Ones() * n);
+		n = grid.DoF();
 		PoissonMapping<T, d> mapping = Random_Poisson_Mapping<T>(grid);
-		//ArrayDv<T> rhs = Random::Random_Array<T>(n, (T)0.0, (T)1.0);
-		ArrayDv<T> rhs(n); ArrayFunc::Fill(rhs, 0);
+		ArrayDv<T> rhs = Random::Random_Array<T>(n, (T)0.0, (T)1.0);
+		//ArrayDv<T> rhs(n); ArrayFunc::Fill(rhs, 0);
 		DampedJacobianSmoother<T> smoother(mapping, rhs);
 		ArrayDv<T> x0(n), x1(n);
 		ArrayDv<T> res(n);
