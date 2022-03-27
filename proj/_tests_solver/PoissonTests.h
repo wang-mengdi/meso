@@ -87,7 +87,7 @@ namespace Meso {
 		PoissonMapping<T, d> mapping = Random_Poisson_Mapping<T>(grid);
 		ArrayDv<T> rhs = Random::Random_Array<T>(n, (T)0.0, (T)1.0);
 		//ArrayDv<T> rhs(n); ArrayFunc::Fill(rhs, 0);
-		DampedJacobianSmoother<T> smoother(mapping, rhs);
+		DampedJacobiSmoother<T> smoother(mapping, rhs);
 		ArrayDv<T> x0(n), x1(n);
 		ArrayDv<T> res(n);
 		ArrayFunc::Fill(x0, 0.0);

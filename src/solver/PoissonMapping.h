@@ -65,8 +65,6 @@ namespace Meso {
 				ArrayFunc::Multiply(temp_face.face_data[axis], vol.face_data[axis]);
 			}
 
-			
-
 			//temp_cell = -div(temp_face)
 			D_Face_Mapping(temp_face, temp_cell);
 			ArrayFunc::Unary_Transform(temp_cell.data, thrust::negate<T>(), temp_cell.data);
