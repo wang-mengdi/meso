@@ -19,6 +19,6 @@ int main(){
     Test_Poisson_Diagonal<float>(Vector3i(16, 44, 23));
     Test_Poisson_Diagonal<double>(Vector3i(16, 44, 23));
     
-
+    Test_Damped_Jacobian<float, 2>(10);
     return 0;
 }

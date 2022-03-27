@@ -21,5 +21,11 @@ namespace Meso {
         real Uniform(real a, real b) {
             return a + (b - a) * Random();
         }
+
+        VectorXd Random_VectorXd(int n, real a, real b) {
+            VectorXd x(n);
+            for (int i = 0; i < n; i++) x[i] = Uniform(a, b);
+            return x;
+        }
     }
 }

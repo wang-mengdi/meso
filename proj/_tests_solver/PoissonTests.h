@@ -9,6 +9,25 @@
 #include "Random.h"
 
 namespace Meso {
+	template<class T, int d>
+	PoissonMapping<T, d> Random_Poisson_Mapping(const Grid<d> grid) {
+		Typedef_VectorD(d);
+		FaceField<T, d> vol(grid);
+		Field<bool, d> fixed(grid);
+		PoissonMapping<T, d> mapping;
+		vol.Iterate_Faces(
+			[&](const int axis, const VectorDi face) {
+				vol(axis, face) = Random::Uniform(0, 1);
+			}
+		);
+		fixed.Iterate_Cells(
+			[&](const VectorDi cell) {
+				fixed(cell) = !(bool)Random::RandInt(0, 9);
+			}
+		);
+		mapping.Init(grid, vol, fixed);
+		return mapping;
+	}
 
 	template<class T, int d>
 	void Test_Poisson_Diagonal(Vector<int, d> counts) {
@@ -59,4 +78,28 @@ namespace Meso {
 		//Info("error: {}", vec_diag_host - vec_diag_grdt);
 	}
 
+
+	template<class T, int d>
+	void Test_Damped_Jacobian(int n) {
+		Typedef_VectorD(d);
+		Grid<d> grid(VectorDi::Ones() * n);
+		PoissonMapping<T, d> mapping = Random_Poisson_Mapping<T>(grid);
+		//ArrayDv<T> rhs = Random::Random_Array<T>(n, (T)0.0, (T)1.0);
+		ArrayDv<T> rhs(n); ArrayFunc::Fill(rhs, 0);
+		DampedJacobianSmoother<T> smoother(mapping, rhs);
+		ArrayDv<T> x0(n), x1(n);
+		ArrayDv<T> res(n);
+		ArrayFunc::Fill(x0, 0.0);
+		int iter = 100;
+		real l2_error = ArrayFunc::Norm(rhs);
+		Info("iter 0 l2_error {}", l2_error);
+		for (int i = 0; i < iter; i++) {
+			smoother.Apply(x1, x0);
+			mapping.Apply(res, x1);
+			ArrayFunc::Minus(res, rhs);
+			l2_error = ArrayFunc::Norm(res);
+			Info("iter {} l2_error {}", i + 1, l2_error);
+			x0 = x1;
+		}
+	}
 }

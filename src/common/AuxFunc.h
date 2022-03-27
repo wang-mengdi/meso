@@ -44,6 +44,11 @@ namespace Meso {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
 		}
+		template<class Array1>
+		auto Norm(const Array1& a) {
+			real squared_norm = (real)Dot(a, a);
+			return sqrt(squared_norm);
+		}
 
 		//element-wise multiplication, a*.=b
 		template<class Array1>
@@ -54,6 +59,10 @@ namespace Meso {
 		template<class Array1>
 		void Add(Array1& a, const decltype(a) b) {
 			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 + _2);
+		}
+		template<class Array1>
+		void Minus(Array1& a, const decltype(a) b) {
+			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 - _2);
 		}
 
 		//a=b, note it's reverse order of thrust::copy itself

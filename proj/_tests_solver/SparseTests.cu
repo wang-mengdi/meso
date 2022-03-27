@@ -2,21 +2,6 @@
 #include "ConjugateGradient.h"
 #include "Random.h"
 
-template<class T>
-void Random_Sparse_Diagonal_Dominant_Matrix(int cols, int rows, Eigen::SparseMatrix<T, Eigen::RowMajor, int>& mat) {
-    std::vector<Eigen::Triplet<T>> tripletList;
-    tripletList.reserve(3 * rows); //three entries per row
-    for (int i = 0; i < rows; i++)
-    {
-        for (int j = std::max(i - 1, 0); j <= std::min(i + 1, cols - 1); j++) {
-            if (i == j) { tripletList.push_back(Eigen::Triplet<T>(i, j, Random::Random() * 100)); }
-            else { tripletList.push_back(Eigen::Triplet<T>(i, j, Random::Random())); }
-        }
-    }
-    mat.resize(rows, cols);
-    mat.setFromTriplets(tripletList.begin(), tripletList.end());
-}
-
 void Test_Sparse_Matrix(void)
 {
     // test the solve for a sparse matrix
@@ -26,13 +11,10 @@ void Test_Sparse_Matrix(void)
 
     //create a diagonal dominant matrix
     Eigen::SparseMatrix<real, Eigen::RowMajor, int> A;
-    Random_Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
+    Random::Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
 
     //create b through x to make sure a solution exists
-    VectorXd x(cols);
-    for (int i = 0; i < rows; i++) {
-        x[i] = Random::Random();
-    }
+    VectorXd x=Random::Random_VectorXd(cols);
     VectorXd b = A * x;
     //std::cout << "A: \n" << A.toDense() << std::endl;
     //std::cout << "x:  " << x.transpose() << std::endl;
@@ -85,7 +67,7 @@ void Test_CG_Memory_Safe(void) {
 
     //create a diagonal dominant matrix
     Eigen::SparseMatrix<real, Eigen::RowMajor, int> A;
-    Random_Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
+    Random::Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
 
     SparseMatrixMapping<real, DEVICE> smm_A(A);
     ConjugateGradient<real> cg;
@@ -93,7 +75,7 @@ void Test_CG_Memory_Safe(void) {
     cg.Init(&smm_A, nullptr, 1000, 1e-6);
 
     Eigen::SparseMatrix<real, Eigen::RowMajor, int> B;
-    Random_Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
+    Random::Sparse_Diagonal_Dominant_Matrix(rows, cols, A);
     SparseMatrixMapping<real, DEVICE> smm_B(B);
     cg.Init(&smm_B, nullptr, 1000, 1e-6);
     Pass("Passed initializing memory for multiple times!");
