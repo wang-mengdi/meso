@@ -9,7 +9,7 @@
 
 namespace Meso {
 	template<int d>
-	__global__ static void Coarsen_Kernel(const Grid<d> grid_coarser, bool* coarser_data, const Grid<d> grid_finer, const bool* finer_data) {
+	__global__ static void Coarsen_Kernel(const Grid<d> grid_coarser, bool* coarser_fixed, const Grid<d> grid_finer, const bool* finer_fixed) {
 		Typedef_VectorD(d);
 		static const int dx[8] = { 0,1,0,1,0,1,0,1 };
 		static const int dy[8] = { 0,0,1,1,0,0,1,1 };
@@ -19,12 +19,12 @@ namespace Meso {
 			blockIdx.y * grid_coarser.block_size + threadIdx.y,
 			blockIdx.z * grid_coarser.block_size + threadIdx.z
 			);
-		bool value = false;
+		bool fixed = true;//default value of fixed
 		for (int s = 0; s < (1 << d); s++) {
 			VectorDi finer_coord = coarser_coord + VectorFunc::Vi<d>(dx[s], dy[s], dz[s]);
-			value |= grid_finer.Valid(finer_coord) ? finer_data[grid_finer.Index(finer_coord)] : false;
+			fixed &= grid_finer.Valid(finer_coord) ? finer_fixed[grid_finer.Index(finer_coord)] : true;
 		}
-		coarser_data[grid_coarser.Index(coarser_coord)] = value;
+		coarser_fixed[grid_coarser.Index(coarser_coord)] = fixed;
 	}
 
 	template<int d>

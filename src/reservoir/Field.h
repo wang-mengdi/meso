@@ -67,4 +67,33 @@ namespace Meso {
 
 	template<class T, int d> using FieldDv = Field<T, d, DEVICE>;
 
+
+
 }
+
+//fmt adaptor for Field
+template <class T>
+struct fmt::formatter<Meso::Field<T, 2>> {
+	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+		//https://fmt.dev/latest/api.html#udt
+		auto it = ctx.begin(), end = ctx.end();
+		if (it != end && *it != '}') throw format_error("invalid format");
+		// Return an iterator past the end of the parsed range:
+		return it;
+	}
+
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext>
+	auto format(const Meso::Field<T, 2>& F, FormatContext& ctx) -> decltype(ctx.out()) {
+		std::string out = "";
+		//out += to_string(F.grid.counts[0]);
+		for (int i = 0; i < F.grid.counts[0]; i++) {
+			for (int j = 0; j < F.grid.counts[1]; j++) {
+				out += Meso::IOFunc::To_String_Simple(F(Eigen::Vector2i(i, j))) + " ";
+			}
+			out += "\n";
+		}
+		return format_to(ctx.out(), "{}", out);
+	}
+};

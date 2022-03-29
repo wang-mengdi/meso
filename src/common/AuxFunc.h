@@ -12,12 +12,24 @@ using namespace thrust::placeholders;
 
 namespace Meso {
 
+	namespace IOFunc {
+		std::string To_String_Simple(const bool& a);
+		template<class T> std::string To_String_Simple(const T& a) {
+			return std::to_string(a);
+		}
+	}
+
 	namespace VectorFunc {
 		////create vectors with compatible dimensions
-		template<int d> Vector<real, d> V(const real x = (real)0, const real y = (real)0, const real z = (real)0);
-		template<int d> Vector<int, d> Vi(const int x = 0, const int y = 0, const int z = 0, const int w = 0);
-		template<int d> Vector<real, d> V(const Vector2 v2);
-		template<int d> Vector<real, d> V(const Vector3 v2);
+		template<int d> __host__ __device__ Vector<real, d> V(const real x = (real)0, const real y = (real)0, const real z = (real)0);
+		template<int d> __host__ __device__ Vector<int, d> Vi(const int x = 0, const int y = 0, const int z = 0, const int w = 0) {
+			if constexpr (d == 1) { return Vector1i(x); }
+			else if constexpr (d == 2) { return Vector2i(x, y); }
+			else if constexpr (d == 3) { return Vector3i(x, y, z); }
+			else if constexpr (d == 4) { return Vector4i(x, y, z, w); }
+		}
+		template<int d> __host__ __device__ Vector<real, d> V(const Vector2 v2);
+		template<int d> __host__ __device__ Vector<real, d> V(const Vector3 v2);
 
 		////Round up vector to a multiple of bn
 		template<int d> Vector<int, d> Round_Up_To_Align(Vector<int, d> v, int bn) {
@@ -31,7 +43,7 @@ namespace Meso {
 
 	namespace ArrayFunc {
 		template<class T>
-		bool Equals(const Array<T, HOST>& a, const Array<decltype(a[0]), HOST>& b) {
+		bool Equals(const Array<T, HOST>& a, decltype(a) b) {
 			if (a.size() != b.size()) return false;
 			for (int i = 0; i < a.size(); i++) if (a[i] != b[i]) return false;
 			return true;

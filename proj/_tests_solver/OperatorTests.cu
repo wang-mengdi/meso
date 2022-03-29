@@ -21,14 +21,14 @@ namespace Meso {
 		int cnx = coarser_data.grid.counts[0], cny = coarser_data.grid.counts[1];
 		for (int i = 0; i < cnx; i++) {
 			for (int j = 0; j < cny; j++) {
-				bool value = false;
+				bool fixed = true;
 				for (int t0 = 0; t0 < 2; t0++) {
 					for (int t1 = 0; t1 < 2; t1++) {
 						Vector2i finer_sub(i * 2 + t0, j * 2 + t1);
-						if (finer_data.grid.Valid(finer_sub)) value |= finer_data(finer_sub);
+						if (finer_data.grid.Valid(finer_sub) && !finer_data(finer_sub)) fixed = false;
 					}
 				}
-				coarser_data(Vector2i(i, j)) = value;
+				coarser_data(Vector2i(i, j)) = fixed;
 			}
 		}
 
@@ -36,10 +36,17 @@ namespace Meso {
 		FieldDv<bool, 2> coarser_device{ coarser_data.grid };
 		Coarsener<2>::Apply(coarser_device, finer_device);
 
-		//Field<bool, 2> coarsen_result; coarsen_result = coarser_device;
+		Field<bool, 2> coarsen_result; coarsen_result = coarser_device;
 
-		//if (ArrayFunc::Equals<int>(coarsen_result.data, coarser_data.data)) Pass("Test_Coarsener2 passed {}", counts);
-		//else Error("Test_Coarsener2 failed {}",counts);
+		if (ArrayFunc::Equals<bool>(coarsen_result.data, coarser_data.data)) {
+			Pass("Test_Coarsener2 passed {}", counts);
+		}
+		else {
+			Error("Test_Coarsener2 failed {}", counts);
+			Info("finer_data: \n{}", finer_data);
+			Info("coarsen_result:\n{}", coarsen_result);
+			Info("coarser_data:\n{}", coarser_data);
+		}
 	}
 
 }

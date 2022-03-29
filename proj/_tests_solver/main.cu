@@ -12,8 +12,6 @@
 using namespace Meso;
 
 int main(){
-    Vector<int, 2> abc(1, 2);
-
     Test_Sparse_Matrix();
     Test_CG_Memory_Safe();
 
