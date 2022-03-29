@@ -16,6 +16,7 @@
 #include "Eigen/Geometry"
 #include <fmt/core.h>
 #include <fmt/color.h>
+#include <fmt/ostream.h>
 
 #include <iostream>
 #include <vector>
@@ -126,30 +127,30 @@ using VectorDi=Vector<int,d>
         }
     }
 
-    ////fmt adaptor for eigen vector
-    template <class T, int d> struct fmt::formatter<Vector<T, d> > {
-        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-            //https://fmt.dev/latest/api.html#udt
-            auto it = ctx.begin(), end = ctx.end();
-            if (it != end && *it != '}') throw format_error("invalid format");
+    //////fmt adaptor for eigen vector
+    //template <class T, int d> struct fmt::formatter<Vector<T, d> > {
+    //    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    //        //https://fmt.dev/latest/api.html#udt
+    //        auto it = ctx.begin(), end = ctx.end();
+    //        if (it != end && *it != '}') throw format_error("invalid format");
 
-            // Return an iterator past the end of the parsed range:
-            return it;
-        }
+    //        // Return an iterator past the end of the parsed range:
+    //        return it;
+    //    }
 
-        // Formats the point p using the parsed format specification (presentation)
-        // stored in this formatter.
-        template <typename FormatContext>
-        auto format(const Eigen::Matrix<T, d, 1>& vec, FormatContext& ctx) -> decltype(ctx.out()) {
-            std::stringstream ss;
-            ss << vec.transpose();
-            // ctx.out() is an output iterator to write to.
-            return format_to(
-                ctx.out(),
-                "{}",
-                ss.str());
-        }
-    };
+    //    // Formats the point p using the parsed format specification (presentation)
+    //    // stored in this formatter.
+    //    template <typename FormatContext>
+    //    auto format(const Eigen::Matrix<T, d, 1>& vec, FormatContext& ctx) -> decltype(ctx.out()) {
+    //        std::stringstream ss;
+    //        ss << vec.transpose();
+    //        // ctx.out() is an output iterator to write to.
+    //        return format_to(
+    //            ctx.out(),
+    //            "{}",
+    //            ss.str());
+    //    }
+    //};
 }
 
 ////fmt adaptor for eigen vector

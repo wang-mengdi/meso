@@ -6,20 +6,19 @@ namespace Meso {
 
 	void Test_Coarsener2(const Vector2i counts)
 	{
-		Info("say hello {}", counts);
-		//Info("counts: {}", Vector2i(1, 2));
 		//Info("counts: {}", counts);
-		//Grid<2> grd(counts);
-		//Field<bool, 2> finer_data(grd);
+		Grid<2> grd(counts);
+		//Field<bool, 2> finer_data(Grid<2>(counts));
+		Field<bool, 2> finer_data(grd);
 
-		//int fnx = finer_data.grid.counts[0], fny = finer_data.grid.counts[1];
-		//for (int i = 0; i < fnx; i++) {
-		//	real frac = (i + 0.0) / fnx;
-		//	for (int j = 0; j < fny; j++) {
-		//		//bool value = (Random::Random() <= frac);
-		//		//finer_data(Vector2i(i, j)) = value;
-		//	}
-		//}
+		int fnx = finer_data.grid.counts[0], fny = finer_data.grid.counts[1];
+		for (int i = 0; i < fnx; i++) {
+			real frac = (i + 0.0) / fnx;
+			for (int j = 0; j < fny; j++) {
+				//bool value = (Random::Random() <= frac);
+				//finer_data(Vector2i(i, j)) = value;
+			}
+		}
 
 		//Field<bool, 2> coarser_data(Grid<2>(counts / 2));
 		//int cnx = coarser_data.grid.counts[0], cny = coarser_data.grid.counts[1];
