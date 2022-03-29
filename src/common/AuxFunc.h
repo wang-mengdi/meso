@@ -30,6 +30,13 @@ namespace Meso {
 	}
 
 	namespace ArrayFunc {
+		template<class T>
+		bool Equals(const Array<T, HOST>& a, const Array<decltype(a[0]), HOST>& b) {
+			if (a.size() != b.size()) return false;
+			for (int i = 0; i < a.size(); i++) if (a[i] != b[i]) return false;
+			return true;
+		}
+
 		template<class Array1, class T>
 		void Fill(Array1& a, const T val) {
 			thrust::fill(a.begin(), a.end(), val);
