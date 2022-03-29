@@ -19,8 +19,8 @@ namespace Meso {
 		Grid<d, GridType::CELL> grid;
 		Array<T, side> data;
 		Field() {}
-		Field(const Grid<d, GridType::CELL> &_grid) { Init(_grid); }
-		Field(const Grid<d, GridType::CELL>&& _grid) { Init(_grid); }
+		Field(const Grid<d, GridType::CELL> _grid) { Init(_grid); }
+		//Field(const Grid<d, GridType::CELL>&& _grid) { Init(_grid); }
 		Field(const Grid<d, GridType::CELL> _grid, const T value) { Init(_grid, value); }
 		void Init(const Grid<d, GridType::CELL> _grid) {
 			grid = _grid;

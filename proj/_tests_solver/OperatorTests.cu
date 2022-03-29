@@ -8,8 +8,9 @@ namespace Meso {
 	{
 		//Info("counts: {}", counts);
 		Grid<2> grd(counts);
-		//Field<bool, 2> finer_data(Grid<2>(counts));
-		Field<bool, 2> finer_data(grd);
+		Vector2i counts1(5, 10);
+		Field<bool, 2> finer_data(Grid<2>(counts1));
+		//Field<bool, 2> finer_data(grd);
 
 		int fnx = finer_data.grid.counts[0], fny = finer_data.grid.counts[1];
 		for (int i = 0; i < fnx; i++) {
