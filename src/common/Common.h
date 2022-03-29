@@ -58,11 +58,11 @@ using Vector3##t=Eigen::Vector3##t;             \
 using Vector4##t=Eigen::Vector4##t;             \
 using VectorX##t=Eigen::VectorX##t;				
 
-        Declare_Eigen_Vector_Types(int, i)
-        Declare_Eigen_Vector_Types(float, f)
-        Declare_Eigen_Vector_Types(double, d)
+    Declare_Eigen_Vector_Types(int, i);
+    Declare_Eigen_Vector_Types(float, f);
+    Declare_Eigen_Vector_Types(double, d);
 
-        using uchar = unsigned char;
+    using uchar = unsigned char;
     using ushort = unsigned short;
     template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
     template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
@@ -125,32 +125,32 @@ using VectorDi=Vector<int,d>
             exit(-1);
         }
     }
-}
 
-////fmt adaptor for eigen vector
-//template <class T, int d> struct fmt::formatter<Vector<T, d> > {
-//    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
-//        //https://fmt.dev/latest/api.html#udt
-//        auto it = ctx.begin(), end = ctx.end();
-//        if (it != end && *it != '}') throw format_error("invalid format");
-//
-//        // Return an iterator past the end of the parsed range:
-//        return it;
-//    }
-//
-//    // Formats the point p using the parsed format specification (presentation)
-//    // stored in this formatter.
-//    template <typename FormatContext>
-//    auto format(const Vector<T, d>& vec, FormatContext& ctx) -> decltype(ctx.out()) {
-//        std::stringstream ss;
-//        ss << vec.transpose();
-//        // ctx.out() is an output iterator to write to.
-//        return format_to(
-//            ctx.out(),
-//            "{}",
-//            ss.str());
-//    }
-//};
+    ////fmt adaptor for eigen vector
+    template <class T, int d> struct fmt::formatter<Vector<T, d> > {
+        constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+            //https://fmt.dev/latest/api.html#udt
+            auto it = ctx.begin(), end = ctx.end();
+            if (it != end && *it != '}') throw format_error("invalid format");
+
+            // Return an iterator past the end of the parsed range:
+            return it;
+        }
+
+        // Formats the point p using the parsed format specification (presentation)
+        // stored in this formatter.
+        template <typename FormatContext>
+        auto format(const Eigen::Matrix<T, d, 1>& vec, FormatContext& ctx) -> decltype(ctx.out()) {
+            std::stringstream ss;
+            ss << vec.transpose();
+            // ctx.out() is an output iterator to write to.
+            return format_to(
+                ctx.out(),
+                "{}",
+                ss.str());
+        }
+    };
+}
 
 ////fmt adaptor for eigen vector
 //template <class T> struct fmt::formatter<Eigen::Matrix<T, 3, 3> > {

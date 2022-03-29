@@ -36,6 +36,7 @@ namespace Meso {
 		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += block_size; return fcounts; }
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
 		__host__ __device__ int Face_DoF(int axis) { return Face_Counts(axis).prod(); }
+		__host__ __device__ bool Valid(const VectorDi coord) { bool res = true; for (int i = 0; i < d; i++) { res &= (0 <= coord[i] && coord[i] <= counts[i]); }return res; }
 
 		__host__ __device__ int Index(const VectorDi coord) const {
 			if constexpr (d == 2) {
