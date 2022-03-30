@@ -43,9 +43,12 @@ namespace Meso {
 		}
 		else {
 			Error("Test_Coarsener2 failed {}", counts);
+			Field<bool, 2> finer_temp; finer_temp.Copy(finer_device);
 			Info("finer_data: \n{}", finer_data);
-			Info("coarsen_result:\n{}", coarsen_result);
 			Info("coarser_data:\n{}", coarser_data);
+			Info("finer on device:\n{}", finer_temp);
+			Info("coarsen_result:\n{}", coarsen_result);
+			
 		}
 	}
 
