@@ -9,5 +9,5 @@
 namespace Meso {
 
 	void Test_Coarsener2(const Vector2i counts);
-
+	void Test_Coarsener3(const Vector3i counts);
 }

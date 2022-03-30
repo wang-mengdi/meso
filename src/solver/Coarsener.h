@@ -41,7 +41,7 @@ namespace Meso {
 				Coarsen_Kernel<d> << <dim3(Nx >> 3, Ny >> 3), dim3(8, 8) >> > (fixed_coarser.grid, coarser_data, fixed_finer.grid, finer_data);
 			}
 			else if constexpr (d == 3) {
-				int Nx = fixed_coarser.grid.counts[0], Ny = fixed_coarser.grid.counts[1], Nz = Ny = fixed_coarser.grid.counts[2];
+				int Nx = fixed_coarser.grid.counts[0], Ny = fixed_coarser.grid.counts[1], Nz = fixed_coarser.grid.counts[2];
 				Coarsen_Kernel<d> << <dim3(Nx >> 2, Ny >> 2, Nz >> 2), dim3(4, 4, 4) >> > (fixed_coarser.grid, coarser_data, fixed_finer.grid, finer_data);
 			}
 		}

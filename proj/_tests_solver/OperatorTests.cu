@@ -52,4 +52,52 @@ namespace Meso {
 		}
 	}
 
+	void Test_Coarsener3(const Vector3i counts)
+	{
+		Field<bool, 3> finer_data{ Grid<3>(counts) };
+
+		int fnx = finer_data.grid.counts[0], fny = finer_data.grid.counts[1], fnz = finer_data.grid.counts[2];
+		for (int i = 0; i < fnx; i++) {
+			real frac = (i + 0.0) / fnx;
+			for (int j = 0; j < fny; j++) {
+				for (int k = 0; k < fnz; k++) {
+					bool value = (Random::Random() <= frac);
+					finer_data(Vector3i(i, j, k)) = value;
+				}
+			}
+		}
+
+		Field<bool, 3> coarser_data{ Grid<3>(counts / 2) };
+		int cnx = coarser_data.grid.counts[0], cny = coarser_data.grid.counts[1], cnz = coarser_data.grid.counts[2];
+		for (int i = 0; i < cnx; i++) {
+			for (int j = 0; j < cny; j++) {
+				for (int k = 0; k < cnz; k++) {
+					bool fixed = true;
+					for (int t0 = 0; t0 < 2; t0++) {
+						for (int t1 = 0; t1 < 2; t1++) {
+							for (int t2 = 0; t2 < 2; t2++) {
+								Vector3i finer_sub(i * 2 + t0, j * 2 + t1, k * 2 + t2);
+								if (finer_data.grid.Valid(finer_sub) && !finer_data(finer_sub)) fixed = false;
+							}
+						}
+					}
+					coarser_data(Vector3i(i, j, k)) = fixed;
+				}
+			}
+		}
+
+		FieldDv<bool, 3> finer_device; finer_device = finer_data;
+		FieldDv<bool, 3> coarser_device{ coarser_data.grid };
+		Coarsener<3>::Apply(coarser_device, finer_device);
+
+		Field<bool, 3> coarsen_result; coarsen_result = coarser_device;
+
+		if (ArrayFunc::Equals<bool>(coarsen_result.data, coarser_data.data)) {
+			Pass("Test_Coarsener3 passed {}", counts);
+		}
+		else {
+			Error("Test_Coarsener3 failed {}", counts);
+		}
+	}
+
 }
