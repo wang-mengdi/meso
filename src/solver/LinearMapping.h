@@ -3,7 +3,6 @@
 #include "Common.h"
 
 namespace Meso {
-
 	template<class T>
 	class LinearMapping
 	{

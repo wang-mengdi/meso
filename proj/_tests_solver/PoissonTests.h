@@ -86,21 +86,14 @@ namespace Meso {
 		n = grid.DoF();
 		PoissonMapping<T, d> mapping = Random_Poisson_Mapping<T>(grid);
 		ArrayDv<T> rhs = Random::Random_Array<T>(n, (T)0.0, (T)1.0);
-		//ArrayDv<T> rhs(n); ArrayFunc::Fill(rhs, 0);
-		DampedJacobiSmoother<T> smoother(mapping, rhs);
-		ArrayDv<T> x0(n), x1(n);
-		ArrayDv<T> res(n);
-		ArrayFunc::Fill(x0, 0.0);
-		int iter = 100;
-		real l2_error = ArrayFunc::Norm(rhs);
-		Info("iter 0 l2_error {}", l2_error);
-		for (int i = 0; i < iter; i++) {
-			smoother.Apply(x1, x0);
-			mapping.Apply(res, x1);
+		for (int i = 0; i < 100; i++) {
+			DampedJacobiSmoother<T> smoother(mapping, i);
+			ArrayDv<T> x(n), res(n);
+			smoother.Apply(x, rhs);
+			mapping.Apply(res, x);
 			ArrayFunc::Minus(res, rhs);
-			l2_error = ArrayFunc::Norm(res);
-			Info("iter {} l2_error {}", i + 1, l2_error);
-			x0 = x1;
+			real l2_error = ArrayFunc::Norm(res);
+			Info("iter {} l2_error {}", i, l2_error);
 		}
 	}
 }

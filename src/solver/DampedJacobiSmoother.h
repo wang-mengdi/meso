@@ -9,36 +9,48 @@
 #include "PoissonFunc.h"
 
 namespace Meso {
+	//with zero initial guess, so it's a linear mapping of b in Ax=b
 	template<class T>
 	class DampedJacobiSmoother : public LinearMapping<T> {
 	public:
 		LinearMapping<T>* mapping;
 		T omega;
 		int dof;
+		int iter_num;
 		ArrayDv<T> diag;
-		ArrayDv<T> rhs;
+		ArrayDv<T> x_temp;
 		DampedJacobiSmoother() {}
-		template<int d> DampedJacobiSmoother(PoissonMapping<T, d>& _mapping, const ArrayDv<T>& _rhs, const real _omega = 2.0 / 3.0) { Init(_mapping, _rhs, _omega); }
+		template<int d> DampedJacobiSmoother(PoissonMapping<T, d>& _mapping, const int _iter_num, const real _omega = 2.0 / 3.0) { Init(_mapping, _iter_num, _omega); }
 		template<int d>
-		void Init(PoissonMapping<T, d>& _mapping, const ArrayDv<T> &_rhs, const T _omega = 2.0 / 3.0) {
+		void Init(PoissonMapping<T, d>& _mapping, const int _iter_num, const T _omega = 2.0 / 3.0) {
 			mapping = &_mapping;
+			iter_num = _iter_num;
 			omega = _omega;
 			dof = mapping->XDof();
 			Poisson_Diagonal(diag, _mapping);
-			rhs = _rhs;//deep copy
+			x_temp.resize(dof);
 		}
 		virtual int XDof()const { return dof; }
 		virtual int YDof()const { return dof; }
-		virtual void Apply(ArrayDv<T>& x_new, const ArrayDv<T>& x_old) {
-			//Ax
-			mapping->Apply(x_new, x_old);
-			//b-Ax
-			ArrayFunc::Binary_Transform(x_new, rhs, [=]__device__(T a, T b) { return b - a; }, x_new);
-			//(b-Ax)/.rhs
-			ArrayFunc::Binary_Transform(x_new, diag, [=]__device__(T a, T b) { return a / b; }, x_new);
-			//x+=(b-Ax)/.rhs*.omega
-			real _omega = omega;
-			ArrayFunc::Binary_Transform(x_new, x_old, [=]__device__(T a, T b) { return b + a * _omega; }, x_new);
+		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
+			if (iter_num == 0) {
+				ArrayFunc::Fill(x, (T)0);
+				return;
+			}
+			ArrayFunc::Fill(x_temp, (T)0);
+			for (int i = 0; i < iter_num; i++) {
+				//Ax
+				mapping->Apply(x, x_temp);
+				//b-Ax
+				ArrayFunc::Binary_Transform(x, b, [=]__device__(T a, T b) { return b - a; }, x);
+				//(b-Ax)/.rhs
+				ArrayFunc::Binary_Transform(x, diag, [=]__device__(T a, T b) { return a / b; }, x);
+				//x+=(b-Ax)/.rhs*.omega
+				real _omega = omega;
+				ArrayFunc::Binary_Transform(x, x_temp, [=]__device__(T a, T b) { return b + a * _omega; }, x);
+
+				if (i + 1 < iter_num)ArrayFunc::Copy(x_temp, x);
+			}
 		}
 	};
 }
