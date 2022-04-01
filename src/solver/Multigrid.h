@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "LinearMapping.h"
+#include "AuxFunc.h"
 
 namespace Meso {
 
@@ -42,9 +43,17 @@ namespace Meso {
 		}
 
 		void V_Cycle(ArrayDv<T>& x0, const ArrayDv<T>& b0) {
-			
+			ArrayFunc::Copy(b[0], b0);
 			for (int i = 0; i < L; i++) {
-				presmoothers[i]->
+				//smooth
+				presmoothers[i]->Apply(xs[i], b[i]);
+				//calculate residual at layer i
+				mappings[i]->Apply(rs[i], xs[i]);
+				ArrayFunc::Binary_Transform(rs[i], b[i], [=]__device__(T a, T b) { return b - a; }, rs[i]);
+				restrictors[i]->Apply(b[i + 1], rs[i]);
+			}
+			for (int i = L - 1; i >= 0; i--) {
+
 			}
 		}
 	};
