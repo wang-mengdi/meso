@@ -10,14 +10,7 @@
 
 namespace Meso {
 	template<class T>
-	class Smoother {
-	public:
-		virtual int Dof()const = 0;
-		virtual void Apply(ArrayDv<T> &x_new, const ArrayDv<T>& x_old) = 0;
-	};
-
-	template<class T>
-	class DampedJacobiSmoother : public Smoother<T> {
+	class DampedJacobiSmoother : public LinearMapping<T> {
 	public:
 		LinearMapping<T>* mapping;
 		T omega;
@@ -34,7 +27,8 @@ namespace Meso {
 			Poisson_Diagonal(diag, _mapping);
 			rhs = _rhs;//deep copy
 		}
-		virtual int Dof()const { return dof; }
+		virtual int XDof()const { return dof; }
+		virtual int YDof()const { return dof; }
 		virtual void Apply(ArrayDv<T>& x_new, const ArrayDv<T>& x_old) {
 			//Ax
 			mapping->Apply(x_new, x_old);
