@@ -36,9 +36,10 @@ int main(){
     Test_Grid_Index<float, 3>(Vector3i(1926, 8, 17));
     Test_Grid_Index<double>(Vector3i(62, 40, 21));
 
+
     Test_Interpolation<float, 2>(Vector2i(114, 514));
     Test_Interpolation<double, 2>(Vector2i(192, 168));
-    Test_Interpolation<float, 3>(Vector3i(1926, 8, 17));
+    Test_Interpolation<float, 3>(Vector3i(16, 8, 17));
     Test_Interpolation<double, 3>(Vector3i(62, 40, 21));
     return 0;
 }
