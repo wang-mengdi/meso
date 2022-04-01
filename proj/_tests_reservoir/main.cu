@@ -21,16 +21,18 @@ void Test_Grid(void) {
             F(cell) = grid.Index(cell);
         }
     );
-    for (int i = 0; i < grid.counts[0]; i++) {
-        for (int j = 0; j < grid.counts[1]; j++) {
-            fmt::print("{} ", F(Vector2i(i, j)));
-        }
-        fmt::print("\n");
-    }
+    Info("indicies: \n{}", F);
+    //for (int i = 0; i < grid.counts[0]; i++) {
+    //    for (int j = 0; j < grid.counts[1]; j++) {
+    //        fmt::print("{} ", F(Vector2i(i, j)));
+    //    }
+    //    fmt::print("\n");
+    //}
 }
 
 int main(){
-    //Test_Grid<2>();
+    //Test_Grid<2>();//a visual test
+
     Test_Grid_Index<float>(Vector2i(114, 514));
     Test_Grid_Index<double>(Vector2i(192, 168));
     Test_Grid_Index<float, 3>(Vector3i(1926, 8, 17));
