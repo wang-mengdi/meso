@@ -25,20 +25,20 @@ namespace Meso {
 		FieldDv<T, d> temp_cell;
 		FaceFieldDv<T, d> temp_face;
 		
-		void Allocate_Memory(const Grid<d, CELL>& grid) {
+		void Allocate_Memory(const Grid<d, CENTER>& grid) {
 			dof = grid.DoF();
 			vol.Init(grid);
 			fixed.Init(grid);
 			temp_cell.Init(grid);
 			temp_face.Init(grid);
 		}
-		void Init(const Grid<d, CELL>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
+		void Init(const Grid<d, CENTER>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
 			Allocate_Memory(grid);
 			vol.Copy(_vol);
 			fixed.Copy(_fixed);
 		}
 		template<class IFFunc, class CFunc>
-		void Init(const Grid<d, GridType::CELL>& grid, IFFunc vol_func, CFunc is_unknown_func) {
+		void Init(const Grid<d, CENTER>& grid, IFFunc vol_func, CFunc is_unknown_func) {
 			Allocate_Memory(grid);
 			vol.Calc_Faces(vol_func);
 			fixed.Calc_Cells(

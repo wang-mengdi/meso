@@ -53,7 +53,7 @@ namespace Meso {
 		Array<T> diag_host = diag_dev;
 
 		EigenVec vec_diag_grdt(grid.DoF());
-		grid.Exec_Cells(
+		grid.Exec_Nodes(
 			[&](const VectorDi cell) {
 				int idx = grid.Index(cell);
 				if (fixed(cell)) {

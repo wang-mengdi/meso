@@ -147,7 +147,7 @@ namespace Meso {
 	// velocity in face_x, face_y
 	// calculate divergence to cell
 	template<class T>
-	__global__ void D_Face_Mapping_Kernel2(Grid<2,GridType::CELL> grid, T* cell, const T* face_x, const T* face_y)
+	__global__ void D_Face_Mapping_Kernel2(Grid<2,CENTER> grid, T* cell, const T* face_x, const T* face_y)
 	{
 		const int nbx = gridDim.x;
 		const int nby = gridDim.y;
@@ -194,7 +194,7 @@ namespace Meso {
 	// for blockDim = (4, 4, 4)
 	// iterate through cell
 	template<class T>
-	__global__ void D_Face_Mapping_Kernel3(Grid<3, CELL> grid, T* cell, const T* face_x, const T* face_y, const T* face_z)
+	__global__ void D_Face_Mapping_Kernel3(Grid<3, CENTER> grid, T* cell, const T* face_x, const T* face_y, const T* face_z)
 	{
 		const int nbx = gridDim.x;
 		const int nby = gridDim.y;
