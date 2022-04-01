@@ -19,6 +19,12 @@ namespace Meso {
 		//real-valued functions
 		real Random(void);//random number in [0,1)
 		real Uniform(real a, real b);
+        template<class T, int d>
+        Vector<T, d> Uniform_In_Box(const Vector<T, d> a, decltype(a) b) {
+            Vector<T, d> ret;
+            for (int i = 0; i < d; i++) ret[i] = Uniform(a[i], b[i]);
+            return ret;
+        }
 
         template<class T>
         Array<T> Random_Array(const int n, const T a = 0.0, const decltype(a) b = 1.0) {

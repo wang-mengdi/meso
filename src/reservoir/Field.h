@@ -16,16 +16,16 @@ namespace Meso {
 	class Field {
 		Typedef_VectorD(d);
 	public:
-		Grid<d, GridType::CELL> grid;
+		Grid<d, GridType::CENTER> grid;
 		Array<T, side> data;
 		Field() {}
-		Field(const Grid<d, GridType::CELL>& _grid) { Init(_grid); }
-		Field(const Grid<d, GridType::CELL> _grid, const T value) { Init(_grid, value); }
-		void Init(const Grid<d, GridType::CELL> _grid) {
+		Field(const Grid<d, GridType::CENTER>& _grid) { Init(_grid); }
+		Field(const Grid<d, GridType::CENTER> _grid, const T value) { Init(_grid, value); }
+		void Init(const Grid<d, GridType::CENTER> _grid) {
 			grid = _grid;
 			data.resize(grid.DoF());
 		}
-		void Init(const Grid<d, GridType::CELL> _grid, const T value) {
+		void Init(const Grid<d, GridType::CENTER> _grid, const T value) {
 			Init(_grid);
 			ArrayFunc::Fill(data, value);
 		}
