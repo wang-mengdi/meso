@@ -61,4 +61,19 @@ namespace Meso {
 		ArrayFunc::Add(diag, Ap_temp);
 	}
 
+	//a mask to distinguish the dense elements in a poisson system
+	template<int d>
+	class PoissonLikeMask {
+		Typedef_VectorD(d);
+	public:
+		__host__ __device__ int operator () (const VectorDi coord) {
+			if constexpr (d == 2) {
+				return (coord[0] + coord[1] * 2) % 5;
+			}
+			else if constexpr (d == 3) {
+				return (coord[0] + coord[1] * 2 + coord[2] * 3) % 7;
+			}
+			else Assert(false, "PoissonLikeMask not defined for d={}", d);
+		}
+	};
 }
