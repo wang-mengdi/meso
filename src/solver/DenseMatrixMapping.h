@@ -23,6 +23,10 @@ namespace Meso {
 		if (mask(coord) == 0) cell_data[index] = 1;
 		else cell_data[index] = 0;
 	}
+	template<class T, int d>
+	__global__ void Fill_Matrix_From_Result(const Grid<d> grid, const T* Ap, T* mat) {
+
+	}
 
 	template<class T>
 	class DenseMatrixMapping : LinearMapping<T> {
