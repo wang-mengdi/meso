@@ -66,12 +66,17 @@ namespace Meso {
 	class PoissonLikeMask {
 		Typedef_VectorD(d);
 	public:
+		static constexpr int row_nnz = (d == 2 ? 5 : 7);
+		int offset;
+		PoissonLikeMask(const int _offset = 0) {
+			offset = (_offset % row_nnz + row_nnz) % row_nnz;
+		}
 		__host__ __device__ int operator () (const VectorDi coord) {
 			if constexpr (d == 2) {
-				return (coord[0] + coord[1] * 2) % 5;
+				return (coord[0] + coord[1] * 2 + offset) % 5;
 			}
 			else if constexpr (d == 3) {
-				return (coord[0] + coord[1] * 2 + coord[2] * 3) % 7;
+				return (coord[0] + coord[1] * 2 + coord[2] * 3 + offset) % 7;
 			}
 			else Assert(false, "PoissonLikeMask not defined for d={}", d);
 		}
