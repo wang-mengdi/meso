@@ -80,5 +80,32 @@ namespace Meso {
 			}
 			else Assert(false, "PoissonLikeMask not defined for d={}", d);
 		}
+
+		__host__ __device__ VectorDi Coord_Offset_To_Zero(const int mask_value) {
+			if constexpr (d == 2) {
+				switch (mask_value) {
+				case 0:return Vector2i(0, 0);
+				case 1:return Vector2i(1, 0);
+				case 4:return Vector2i(-1, 0);
+				case 2:return Vector2i(0, 1);
+				case 3:return Vector2i(0, -1);
+				default:break;
+				}
+			}
+			else if constexpr (d == 3) {
+				switch (mask_value) {
+				case 0:return Vector3i(0, 0, 0);
+				case 1:return Vector3i(1, 0, 0);
+				case 2:return Vector3i(0, 1, 0);
+				case 3:return Vector3i(0, 0, 1);
+				case 4:return Vector3i(0, 0, -1);
+				case 5:return Vector3i(0, -1, 0);
+				case 6:return Vector3i(-1, 0, 0);
+				default:break;
+				}
+			}
+			Assert(false, "PoissonLikeMask::Coord_Offset_To_Zero not defined for d={}", d);
+
+		}
 	};
 }

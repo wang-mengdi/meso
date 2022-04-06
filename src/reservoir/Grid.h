@@ -6,7 +6,7 @@
 #pragma once
 #include "Common.h"
 #include "AuxFunc.h"
-#include "cuda_runtime.h"
+//#include "cuda_runtime.h"
 
 namespace Meso {
 
