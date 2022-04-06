@@ -26,7 +26,7 @@ namespace Meso {
 			dof = dense_mapping.XDof();
 			Assert(dense_mapping.YDof() == dof, "LUDenseSolver::Init(): must input a square matrix");
 
-			A.resize(dof * dof);
+			A = dense_mapping.A;//deep copy here
 			piv.resize(dof);
 
 			T* A_ptr = thrust::raw_pointer_cast(A.data());

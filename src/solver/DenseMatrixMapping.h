@@ -45,6 +45,7 @@ namespace Meso {
 		int cols;//xdof
 		int rows;//ydof
 		ArrayDv<T> A;
+		ArrayDv<T> temp_p;
 		ArrayDv<T> temp_Ap;
 		virtual int XDof() const { return cols; }
 
@@ -56,7 +57,8 @@ namespace Meso {
 			rows = mapping.YDof();
 			Assert(cols == rows, "DenseMatrixMapping: cols={} mismatch rols={}", cols, rows);
 			A.resize(cols * rows);
-			temp_Ap.resize(rows);
+			temp_Ap.resize(cols);
+			temp_p.resize(rows);
 			ArrayFunc::Fill(A, (T)0);
 			int row_nnz = (d == 2 ? 5 : 7);
 			dim3 block_cnt, block_size;
@@ -70,7 +72,8 @@ namespace Meso {
 			}
 			for (int flag = 0; flag < row_nnz; flag++) {//set all cells with color==flag to 1 and others to 0
 				PoissonLikeMask<d> mask(flag);
-				Set_Cell_By_Color << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_Ap.data()));
+				Set_Cell_By_Color << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_p.data()));
+				mapping.Apply(temp_Ap, temp_p);
 				Fill_Matrix_From_Result << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_Ap.data()), rows, thrust::raw_pointer_cast(A.data()));
 			}
 		}

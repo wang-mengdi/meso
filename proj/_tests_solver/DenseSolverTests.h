@@ -26,7 +26,6 @@ void Test_LU_Dense_Solver(const Vector<int, d> counts) {
 	ArrayFunc::Minus(res, b_dev);
 	T b2 = ArrayFunc::Dot(b_dev, b_dev);
 	T res2 = ArrayFunc::Dot(res, res);
-	Info("res2/b2: {}", res2 / b2);
 	if (res2 / b2 < 1e-9) {
 		Pass("Test_LU_Dense_Solver passed for {}", counts);
 	}
