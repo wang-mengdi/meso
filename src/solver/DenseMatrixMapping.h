@@ -61,17 +61,17 @@ namespace Meso {
 			int row_nnz = (d == 2 ? 5 : 7);
 			dim3 block_cnt, block_size;
 			if constexpr (d == 2) {
-				block_cnt = dim3(grid.counts[0] >> 3, grid.count[1] >> 3);
+				block_cnt = dim3(grid.counts[0] >> 3, grid.counts[1] >> 3);
 				block_size = dim3(grid.block_size, grid.block_size);
 			}
 			else if constexpr (d == 3) {
-				block_cnt = dim3(grid.counts[0] >> 2, grid.count[1] >> 2, grid.counts[2] >> 2);
+				block_cnt = dim3(grid.counts[0] >> 2, grid.counts[1] >> 2, grid.counts[2] >> 2);
 				block_size = dim3(grid.block_size, grid.block_size, grid.block_size);
 			}
 			for (int flag = 0; flag < row_nnz; flag++) {//set all cells with color==flag to 1 and others to 0
 				PoissonLikeMask<d> mask(flag);
-				Set_Cell_By_Color << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_Ap));
-				Fill_Matrix_From_Result << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_Ap), rows, thrust::raw_pointer_cast(A));
+				Set_Cell_By_Color << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_Ap.data()));
+				Fill_Matrix_From_Result << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_Ap.data()), rows, thrust::raw_pointer_cast(A.data()));
 			}
 		}
 

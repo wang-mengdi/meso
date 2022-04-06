@@ -5,11 +5,11 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "DenseMatrixMapping.h"
+#include <cusolverDn.h>
 
 namespace Meso {
 	template<class T>
 	class LUDenseSolver :public LinearMapping<T> {
-		Typedef_VectorD(d);
 	public:
 		int dof;
 
@@ -70,7 +70,7 @@ namespace Meso {
 				thrust::raw_pointer_cast(A.data()),
 				dof,
 				thrust::raw_pointer_cast(piv.data()),
-				thrust::raw_pointer_cast(b.data()),
+				thrust::raw_pointer_cast(x.data()),
 				dof,
 				thrust::raw_pointer_cast(info.data())
 			);

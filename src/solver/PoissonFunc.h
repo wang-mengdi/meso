@@ -71,7 +71,7 @@ namespace Meso {
 		PoissonLikeMask(const int _offset = 0) {
 			offset = (_offset % row_nnz + row_nnz) % row_nnz;
 		}
-		__host__ __device__ int operator () (const VectorDi coord) {
+		__host__ __device__ int operator () (const VectorDi coord) const {
 			if constexpr (d == 2) {
 				return (coord[0] + coord[1] * 2 + offset) % 5;
 			}
@@ -81,7 +81,7 @@ namespace Meso {
 			else Assert(false, "PoissonLikeMask not defined for d={}", d);
 		}
 
-		__host__ __device__ VectorDi Coord_Offset_To_Zero(const int mask_value) {
+		__host__ __device__ VectorDi Coord_Offset_To_Zero(const int mask_value) const {
 			if constexpr (d == 2) {
 				switch (mask_value) {
 				case 0:return Vector2i(0, 0);
