@@ -38,9 +38,7 @@ int main(){
     Test_Coarsener2(Vector2i(14, 53));
     Test_Coarsener3(Vector3i(16, 44, 23));
 
-    //Test_LU_Dense_Solver<float>(Vector2i(14, 53));
-    //Test_LU_Dense_Solver<double>(Vector2i(14, 53));
-    //Test_LU_Dense_Solver<float>(Vector3i(16, 44, 23));
-    //Test_LU_Dense_Solver<double>(Vector3i(16, 44, 23));
+    Test_LU_Dense_Solver<double>(Vector2i(14, 13));
+    Test_LU_Dense_Solver<double>(Vector3i(8, 7, 11));
     return 0;
 }

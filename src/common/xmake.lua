@@ -1,6 +1,6 @@
 add_requires("eigen >=3.4.0")
 add_requires("fmt >=8.1.1")
-add_requires("cuda", {system=true, configs={utils={"cublas","cusparse"}}})
+add_requires("cuda", {system=true, configs={utils={"cublas","cusparse","cusolver"}}})
 target("common")
     set_kind("static")
     add_headerfiles("*.h")
