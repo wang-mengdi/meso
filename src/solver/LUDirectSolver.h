@@ -32,7 +32,9 @@ namespace Meso {
 			T* A_ptr = thrust::raw_pointer_cast(A.data());
 			int buffer_size;
 			cusolverDnCreate(&solve_handle);
-			cusolverDnDgetrf_bufferSize(
+
+			using cuda_dense_buffersize = (std::is_same<T, double>::value ? )cusolverDnDgetrf_bufferSize:cusolverDnSgetrf_bufferSize;
+			cuda_dense_buffersize(
 				solve_handle,
 				dof,
 				dof,
@@ -42,11 +44,12 @@ namespace Meso {
 			);
 			buffer.resize(buffer_size);
 
+			using cuda_dense_lu = (std::is_same<T, double>::value ? )cusolverDnDgetrf:cusolverDnSgetrf;
 			T* buffer_ptr = thrust::raw_pointer_cast(buffer.data());
 			int* piv_ptr = thrust::raw_pointer_cast(piv.data());
 			ArrayDv<int> info(1);
 			int* info_ptr = thrust::raw_pointer_cast(info.data());
-			cusolverDnDgetrf(
+			cuda_dense_lu(
 				solve_handle,
 				dof,
 				dof,
@@ -60,9 +63,10 @@ namespace Meso {
 
 		//input b, get x
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
+			using cuda_dense_solver = (std::is_same<T, double>::value ? )cusolverDnDgetrs:cusolverDnSgetrs;
 			ArrayFunc::Copy(x, b);
 			ArrayDv<int> info(1);
-			cusolverDnDgetrs(
+			cuda_dense_solver(
 				solve_handle,
 				CUBLAS_OP_N,
 				dof,

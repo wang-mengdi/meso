@@ -20,6 +20,7 @@ namespace Meso {
 		Array<LinearMapping<T>*> prolongators;
 		Array<LinearMapping<T>*> presmoothers;
 		Array<LinearMapping<T>*> postsmoothers;
+		LinearMapping<T>* direct_solver;
 
 		ArrayDv<ArrayDv<T>> xs;
 		ArrayDv<ArrayDv<T>> bs;

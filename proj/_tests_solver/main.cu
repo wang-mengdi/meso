@@ -13,17 +13,6 @@
 using namespace Meso;
 
 int main(){
-    //PoissonLikeMask<2> mask;
-    //Field<int, 2> F(Vector2i(10, 10));
-    //F.grid.Exec_Nodes(
-    //    [&](const Vector2i cell) {
-    //        F(cell) = mask(cell);
-    //    }
-    //);
-    //Info("mask 2d: \n{}", F);
-    //return 0;
-
-
     Test_Sparse_Matrix();
     Test_CG_Memory_Safe();
 
@@ -38,6 +27,7 @@ int main(){
     Test_Coarsener2(Vector2i(14, 53));
     Test_Coarsener3(Vector3i(16, 44, 23));
 
+    Test_LU_Dense_Solver<float>(Vector2i(14, 13));
     Test_LU_Dense_Solver<double>(Vector2i(14, 13));
     Test_LU_Dense_Solver<double>(Vector3i(8, 7, 11));
     return 0;
