@@ -33,51 +33,29 @@ namespace Meso {
 			int buffer_size;
 			cusolverDnCreate(&solve_handle);
 
-			using cuda_dense_buffersize = (std::is_same<T, double>::value ? )cusolverDnDgetrf_bufferSize:cusolverDnSgetrf_bufferSize;
-			cuda_dense_buffersize(
-				solve_handle,
-				dof,
-				dof,
-				A_ptr,
-				dof,
-				&buffer_size
-			);
+			if constexpr (std::is_same<T, double>::value)cusolverDnDgetrf_bufferSize(solve_handle, dof, dof, A_ptr, dof, &buffer_size);
+			else cusolverDnSgetrf_bufferSize(solve_handle, dof, dof, A_ptr, dof, &buffer_size);
 			buffer.resize(buffer_size);
 
-			using cuda_dense_lu = (std::is_same<T, double>::value ? )cusolverDnDgetrf:cusolverDnSgetrf;
 			T* buffer_ptr = thrust::raw_pointer_cast(buffer.data());
 			int* piv_ptr = thrust::raw_pointer_cast(piv.data());
 			ArrayDv<int> info(1);
 			int* info_ptr = thrust::raw_pointer_cast(info.data());
-			cuda_dense_lu(
-				solve_handle,
-				dof,
-				dof,
-				A_ptr,
-				dof,
-				buffer_ptr,
-				piv_ptr,
-				info_ptr
-			);
+			if constexpr (std::is_same<T, double>::value) cusolverDnDgetrf(solve_handle, dof, dof, A_ptr, dof, buffer_ptr, piv_ptr, info_ptr);
+			else cusolverDnSgetrf(solve_handle, dof, dof, A_ptr, dof, buffer_ptr, piv_ptr, info_ptr);
 		}
 
 		//input b, get x
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
-			using cuda_dense_solver = (std::is_same<T, double>::value ? )cusolverDnDgetrs:cusolverDnSgetrs;
 			ArrayFunc::Copy(x, b);
+
+			T* A_ptr = thrust::raw_pointer_cast(A.data());
+			int* piv_ptr = thrust::raw_pointer_cast(piv.data());
+			T* x_ptr = thrust::raw_pointer_cast(x.data());
 			ArrayDv<int> info(1);
-			cuda_dense_solver(
-				solve_handle,
-				CUBLAS_OP_N,
-				dof,
-				1,
-				thrust::raw_pointer_cast(A.data()),
-				dof,
-				thrust::raw_pointer_cast(piv.data()),
-				thrust::raw_pointer_cast(x.data()),
-				dof,
-				thrust::raw_pointer_cast(info.data())
-			);
+			int* info_ptr = thrust::raw_pointer_cast(info.data());
+			if constexpr (std::is_same<T, double>::value) cusolverDnDgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
+			else cusolverDnSgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
 		}
 	};
 }
