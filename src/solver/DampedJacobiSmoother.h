@@ -39,13 +39,11 @@ namespace Meso {
 			}
 			ArrayFunc::Fill(x_temp, (T)0);
 			for (int i = 0; i < iter_num; i++) {
-				//Ax
-				mapping->Apply(x, x_temp);
 				//b-Ax
-				ArrayFunc::Binary_Transform(x, b, [=]__device__(T a, T b) { return b - a; }, x);
-				//(b-Ax)/.rhs
+				mapping->Residual(x, x_temp, b);
+				//(b-Ax)/.diag
 				ArrayFunc::Binary_Transform(x, diag, [=]__device__(T a, T b) { return a / b; }, x);
-				//x+=(b-Ax)/.rhs*.omega
+				//x+=(b-Ax)/.diag*.omega
 				real _omega = omega;
 				ArrayFunc::Binary_Transform(x, x_temp, [=]__device__(T a, T b) { return b + a * _omega; }, x);
 

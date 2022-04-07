@@ -25,6 +25,7 @@ namespace Meso {
 		ArrayDv<ArrayDv<T>> xs;
 		ArrayDv<ArrayDv<T>> bs;
 		ArrayDv<ArrayDv<T>> rs;
+		ArrayDv<T> x_temp;//store the value calcualted by postsmoother
 	public:
 		virtual int XDof() const {
 
@@ -46,15 +47,17 @@ namespace Meso {
 		void V_Cycle(ArrayDv<T>& x0, const ArrayDv<T>& b0) {
 			ArrayFunc::Copy(b[0], b0);
 			for (int i = 0; i < L; i++) {
-				//smooth
 				presmoothers[i]->Apply(xs[i], b[i]);
-				//calculate residual at layer i
-				mappings[i]->Apply(rs[i], xs[i]);
-				ArrayFunc::Binary_Transform(rs[i], b[i], [=]__device__(T a, T b) { return b - a; }, rs[i]);
+				mappings[i]->Residual(rs[i], xs[i], b[i]);
 				restrictors[i]->Apply(b[i + 1], rs[i]);
 			}
+			direct_solver->Apply(xs[L], b[L]);
 			for (int i = L - 1; i >= 0; i--) {
-
+				prolongators[i]->Apply(rs[i], xs[i + 1]);
+				ArrayFunc::Add(xs[i], rs[i]);
+				mappings[i]->Residual(rs[i], xs[i], b[i]);
+				postsmoothers[i]->Apply(x_temp, rs[i]);
+				ArrayFunc::Add(xs[i], x_temp);
 			}
 		}
 	};
