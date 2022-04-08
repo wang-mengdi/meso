@@ -59,6 +59,7 @@ namespace Meso {
 				postsmoothers[i]->Apply(x_temp, rs[i]);
 				ArrayFunc::Add(xs[i], x_temp);
 			}
+			ArrayFunc::Copy(x0, xs[0]);
 		}
 	};
 
