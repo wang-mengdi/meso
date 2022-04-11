@@ -32,6 +32,9 @@ namespace Meso {
 			temp_cell.Init(grid);
 			temp_face.Init(grid);
 		}
+		void Init(const Grid<d, CENTER>& grid) {
+			Allocate_Memory(grid);
+		}
 		void Init(const Grid<d, CENTER>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
 			Allocate_Memory(grid);
 			vol.Copy(_vol);

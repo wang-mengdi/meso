@@ -6,6 +6,7 @@
 #pragma once
 #include "AuxFunc.h"
 #include "Field.h"
+#include "PoissonMapping.h"
 
 namespace Meso {
 	template<int d>
@@ -33,10 +34,21 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 
-		static void Apply(FieldDv<bool, d>& fixed_coarser, const FieldDv<bool, d>& fixed_finer) {
-			bool* coarser_data = thrust::raw_pointer_cast(fixed_coarser.data.data());
-			const bool* finer_data = thrust::raw_pointer_cast(fixed_finer.data.data());
-			fixed_coarser.grid.Exec_Kernel(&Coarsen_Kernel<d>, fixed_coarser.grid, coarser_data, fixed_finer.grid, finer_data);
+		template<class T>
+		static void Apply(PoissonMapping<T, d>& coarser_poisson, const decltype(coarser_poisson) finer_poisson) {
+			const auto& finer_grid = finer_poisson.fixed.grid;
+			const auto& coarser_grid = coarser_poisson.fixed.grid;
+			
+			bool* coarser_fixed = coarser_poisson.fixed.Data();
+			const bool* finer_fixed = finer_poisson.fixed.Data();
+			coarser_grid.Exec_Kernel(&Coarsen_Kernel<d>, coarser_grid, coarser_fixed, finer_grid, finer_fixed);
+			//bool* coarser_fixed = thrust::raw_pointer_cast(coarser_poisson.fixed.data());
+			//const bool* finer_fixed=thrust::raw_pointer_cast
 		}
+		//static void Apply(FieldDv<bool, d>& fixed_coarser, const FieldDv<bool, d>& fixed_finer) {
+		//	bool* coarser_data = thrust::raw_pointer_cast(fixed_coarser.data.data());
+		//	const bool* finer_data = thrust::raw_pointer_cast(fixed_finer.data.data());
+		//	fixed_coarser.grid.Exec_Kernel(&Coarsen_Kernel<d>, fixed_coarser.grid, coarser_data, fixed_finer.grid, finer_data);
+		//}
 	};
 }

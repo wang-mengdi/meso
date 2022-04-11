@@ -35,6 +35,15 @@ namespace Meso {
 			data = f1.data;
 			return *this;
 		}
+
+		constexpr T* Data(void) noexcept {
+			if constexpr (side == HOST) return data.data();
+			else return thrust::raw_pointer_cast(data.data());
+		}
+		constexpr const T* Data(void) const noexcept {
+			if constexpr (side == HOST) return data.data();
+			else return thrust::raw_pointer_cast(data.data());
+		}
 		
 		template<DataHolder side1> void Copy(const Field<T, d, side1>& f1) { Init(f1.grid); ArrayFunc::Copy(data, f1.data); }
 

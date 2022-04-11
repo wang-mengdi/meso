@@ -32,18 +32,21 @@ namespace Meso {
 			}
 		}
 
-		FieldDv<bool, 2> finer_device; finer_device = finer_data;
-		FieldDv<bool, 2> coarser_device{ coarser_data.grid };
-		Coarsener<2>::Apply(coarser_device, finer_device);
+		PoissonMapping<real, 2> finer, coarser;
+		finer.Init(finer_data.grid);
+		finer.fixed = finer_data;
+		coarser.Init(coarser_data.grid);
 
-		Field<bool, 2> coarsen_result; coarsen_result = coarser_device;
+		Coarsener<2>::Apply(coarser, finer);
+
+		Field<bool, 2> coarsen_result; coarsen_result = coarser.fixed;
 
 		if (ArrayFunc::Equals<bool>(coarsen_result.data, coarser_data.data)) {
 			Pass("Test_Coarsener2 passed {}", counts);
 		}
 		else {
 			Error("Test_Coarsener2 failed {}", counts);
-			Field<bool, 2> finer_temp; finer_temp.Copy(finer_device);
+			Field<bool, 2> finer_temp; finer_temp.Copy(finer.fixed);
 			Info("finer_data: \n{}", finer_data);
 			Info("coarser_data:\n{}", coarser_data);
 			Info("finer on device:\n{}", finer_temp);
@@ -86,11 +89,14 @@ namespace Meso {
 			}
 		}
 
-		FieldDv<bool, 3> finer_device; finer_device = finer_data;
-		FieldDv<bool, 3> coarser_device{ coarser_data.grid };
-		Coarsener<3>::Apply(coarser_device, finer_device);
+		PoissonMapping<real, 3> finer, coarser;
+		finer.Init(finer_data.grid);
+		finer.fixed = finer_data;
+		coarser.Init(coarser_data.grid);
 
-		Field<bool, 3> coarsen_result; coarsen_result = coarser_device;
+		Coarsener<3>::Apply(coarser, finer);
+
+		Field<bool, 3> coarsen_result; coarsen_result = coarser.fixed;
 
 		if (ArrayFunc::Equals<bool>(coarsen_result.data, coarser_data.data)) {
 			Pass("Test_Coarsener3 passed {}", counts);
