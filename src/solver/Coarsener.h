@@ -6,6 +6,7 @@
 #pragma once
 #include "AuxFunc.h"
 #include "Field.h"
+#include "Interpolation.h"
 #include "PoissonMapping.h"
 
 namespace Meso {
@@ -16,11 +17,6 @@ namespace Meso {
 		static const int dy[8] = { 0,0,1,1,0,0,1,1 };
 		static const int dz[8] = { 0,0,0,0,1,1,1,1 };
 		VectorDi coarser_coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
-		//VectorDi coarser_coord = VectorFunc::Vi<d>(
-		//	blockIdx.x * grid_coarser.block_size + threadIdx.x,
-		//	blockIdx.y * grid_coarser.block_size + threadIdx.y,
-		//	blockIdx.z * grid_coarser.block_size + threadIdx.z
-		//	);
 		bool fixed = true;//default value of fixed
 		for (int s = 0; s < (1 << d); s++) {
 			VectorDi finer_coord = coarser_coord * 2 + VectorFunc::Vi<d>(dx[s], dy[s], dz[s]);
@@ -33,12 +29,11 @@ namespace Meso {
 	template<class T, int d>
 	__global__ void Coarsen_Vol_Kernel(const int axis, const Grid<d> coarser_grid, T* coarser_data, const Grid<d> finer_grid, const T* finer_data) {
 		Typedef_VectorD(d);
-		//VectorDi coarser_coord = VectorFunc::Vi<d>(
-		//	blockIdx.x * grid_coarser.block_size + threadIdx.x,
-		//	blockIdx.y * grid_coarser.block_size + threadIdx.y,
-		//	blockIdx.z * grid_coarser.block_size + threadIdx.z
-		//	);
-
+		VectorDi coarser_face = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		VectorDi finer_face = coarser_face * 2;
+		VectorD finer_frac = VectorD::Ones() * 0.5;
+		finer_frac[axis] = 0;
+		coarser_data[coarser_grid.Index(coarser_face)] = Interpolation::Linear_Intp(finer_grid, finer_data, finer_face, finer_frac);
 	}
 
 	template<int d>
@@ -58,7 +53,9 @@ namespace Meso {
 			coarser_grid.Exec_Kernel(&Coarsen_Fixed_Kernel<d>, coarser_grid, coarser_fixed, finer_grid, finer_fixed);
 
 			//fill vol
-
+			for (int i = 0; i < d; i++) {
+				
+			}
 		}
 	};
 }

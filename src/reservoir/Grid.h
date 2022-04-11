@@ -35,6 +35,11 @@ namespace Meso {
 
 		__host__ __device__ VectorDi Counts(void) { return counts; }
 		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += block_size; return fcounts; }
+		__host__ __device__ Grid<d, CORNER> Face_Grid(const int axis)const {
+			VectorD offset = VectorD::Ones() * 0.5 * dx; offset[axis] = 0;
+			VectorD fg_min = domain_min + offset;
+			return Grid<d, CORNER>(Face_Counts(axis), dx, fg_min);
+		}
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
 		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
 		__host__ __device__ bool Valid(const VectorDi coord)const { bool res = true; for (int i = 0; i < d; i++) { res &= (0 <= coord[i] && coord[i] < counts[i]); }return res; }
