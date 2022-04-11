@@ -5,7 +5,9 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "LinearMapping.h"
+#include "PoissonMapping.h"
 #include "AuxFunc.h"
+#include "Coarsener.h"
 
 namespace Meso {
 
@@ -15,12 +17,12 @@ namespace Meso {
 	public:
 		int L;
 
-		Array<LinearMapping<T>*> mappings;
-		Array<LinearMapping<T>*> restrictors;
-		Array<LinearMapping<T>*> prolongators;
-		Array<LinearMapping<T>*> presmoothers;
-		Array<LinearMapping<T>*> postsmoothers;
-		LinearMapping<T>* direct_solver;
+		Array<shared_ptr<LinearMapping<T>>> mappings;
+		Array<shared_ptr<LinearMapping<T>>> restrictors;
+		Array<shared_ptr<LinearMapping<T>>> prolongators;
+		Array<shared_ptr<LinearMapping<T>>> presmoothers;
+		Array<shared_ptr<LinearMapping<T>>> postsmoothers;
+		shared_ptr<LinearMapping<T>> direct_solver;
 
 		ArrayDv<ArrayDv<T>> xs;
 		ArrayDv<ArrayDv<T>> bs;
@@ -40,7 +42,22 @@ namespace Meso {
 
 		}
 
-		void Init(void) {
+		void Init_Poisson(const PoissonMapping<T, d> &poisson) {
+			VectorDi grid_size = poisson.fixed.grid.counts;
+			int grid_min_size = grid_size.minCoeff();
+			L = (int)std::ceil(log2(grid_min_size)) - 3;
+
+			//mappings
+			mappings.resize(L + 1);
+			mappings[0] = std::make_shared<PoissonMapping<T, d>>(poisson);
+			for (int i = 1; i <= L; i++) {
+				grid_size /= 2;
+				mappings[i] = std::make_shared<PoissonMapping<T, d>>();
+				mappings[i]->Init(Grid<d>(grid_size));
+				Coarsener<d>::Apply(*mappings[i], *mappings[i - 1]);
+			}
+
+			//restrictors
 
 		}
 
