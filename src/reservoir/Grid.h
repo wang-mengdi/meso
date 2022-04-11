@@ -35,13 +35,15 @@ namespace Meso {
 
 		__host__ __device__ VectorDi Counts(void) { return counts; }
 		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += block_size; return fcounts; }
-		__host__ __device__ Grid<d, CORNER> Face_Grid(const int axis)const {
+		__host__ __device__ VectorD Face_Min(const int axis)const {
 			if constexpr (grid_type == CENTER) {
 				VectorD offset = -VectorD::Unit(axis) * 0.5 * dx;
-				VectorD fg_min = pos_min + offset;
-				return Grid<d, CORNER>(Face_Counts(axis), dx, fg_min);
+				return pos_min + offset;
 			}
-			else Assert(false, "Grid::Face_Grid not implemented for grid_type={}", grid_type);
+			else Assert(false, "Grid::Face_Min not implemented for grid_type={}", grid_type);
+		}
+		__host__ __device__ Grid<d, CORNER> Face_Grid(const int axis)const {
+			return Grid<d, CORNER>(Face_Counts(axis), dx, Face_Min(axis));
 		}
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
 		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
@@ -154,6 +156,9 @@ namespace Meso {
 		__host__ __device__ VectorD Domain_Max(void)const {
 			if constexpr (grid_type == CORNER) return pos_min + (counts - VectorDi::Ones()).template cast<real>() * dx;
 			else return pos_min + (counts.template cast<real>() - VectorFunc::V<d>(0.5, 0.5, 0.5)) * dx;
+		}
+		__host__ __device__ VectorD Face_Center(const int axis, const VectorDi face) {
+			return Face_Min(axis) + face.template cast<real>() * dx;
 		}
 		__host__ __device__ VectorD Position(const VectorDi node)const {
 			return pos_min + node.template cast<real>() * dx;

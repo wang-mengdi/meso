@@ -87,6 +87,10 @@ void Test_Face_Grid(const Vector<int, d> counts) {
 			int index_by_face_grids = face_grids[axis].Index(face);
 			int index_by_grid = grid.Face_Index(axis, face);
 			Assert(index_by_face_grids == index_by_grid, "Test_Face_Grid failed: axis {} face {} index mismatch", axis, face);
+
+			VectorD face_grids_pos = face_grids[axis].Position(face);
+			VectorD face_pos = grid.Face_Center(axis, face);
+			Assert(face_grids_pos.isApprox(face_pos), "Test_Face_Grid failed: axis {} face {} give different positions", axis, face);
 		}
 	);
 
