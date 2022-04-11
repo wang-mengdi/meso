@@ -36,9 +36,12 @@ namespace Meso {
 		__host__ __device__ VectorDi Counts(void) { return counts; }
 		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += block_size; return fcounts; }
 		__host__ __device__ Grid<d, CORNER> Face_Grid(const int axis)const {
-			VectorD offset = VectorD::Ones() * 0.5 * dx; offset[axis] = 0;
-			VectorD fg_min = domain_min + offset;
-			return Grid<d, CORNER>(Face_Counts(axis), dx, fg_min);
+			if constexpr (grid_type == CENTER) {
+				VectorD offset = -VectorD::Unit(axis) * 0.5 * dx;
+				VectorD fg_min = pos_min + offset;
+				return Grid<d, CORNER>(Face_Counts(axis), dx, fg_min);
+			}
+			else Assert(false, "Grid::Face_Grid not implemented for grid_type={}", grid_type);
 		}
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
 		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
@@ -46,12 +49,14 @@ namespace Meso {
 
 		__host__ __device__ int Index(const int i, const int j = 0, const int k = 0) const {
 			if constexpr (d == 2) {
+				//y-x in each block
 				return ((j >> 3) * (counts[0] >> 3) + (i >> 3)) * 64 + ((j & 7) * 8 + (i & 7));
 			}
 			else if constexpr (d == 3) {
 				int nbx = counts[0] >> 2, nby = counts[1] >> 2, nbz = counts[2] >> 2;
 				int bx = i >> 2, by = j >> 2, bz = k >> 2;
 				int idx = i & 0b11, idy = j & 0b11, idz = k & 0b11;
+				//z-y-x in each block
 				return ((bz * nby + by) * nbx + bx) * 64 + ((idz * 4 + idy) * 4 + idx);
 			}
 			else Assert(false, "Grid::Index: d==2 or d==3");
@@ -99,14 +104,16 @@ namespace Meso {
 				int x = face[0], y = face[1];
 				int b_ind = (y >> 3) * ((counts[0] >> 3) + (axis == 0)) + (x >> 3);
 				int idx = x & 7, idy = y & 7;
-				return b_ind * 64 + ((axis == 0) * (idx * 8 + idy) + (axis == 1) * (idy * 8 + idx));
+				return b_ind * 64 + (idy * 8 + idx);
+				//return b_ind * 64 + ((axis == 0) * (idx * 8 + idy) + (axis == 1) * (idy * 8 + idx));
 			}
 			else if constexpr (d == 3) {
 				int x = face[0], y = face[1], z = face[2];
 				int nbx = (counts[0] >> 2) + (axis == 0), nby = (counts[1] >> 2) + (axis == 1), nbz = (counts[2] >> 2) + (axis == 2);
 				int bx = x >> 2, by = y >> 2, bz = z >> 2;
 				int idx = x & 0b11, idy = y & 0b11, idz = z & 0b11;
-				return ((bz * nby + by) * nbx + bx) * 64 + (axis == 0) * ((idx * 4 + idz) * 4 + idy) + (axis == 1) * ((idy * 4 + idz) * 4 + idx) + (axis == 2) * ((idz * 4 + idy) * 4 + idx);
+				return ((bz * nby + by) * nbx + bx) * 64 + ((idz * 4 + idy) * 4 + idx);
+				//return ((bz * nby + by) * nbx + bx) * 64 + (axis == 0) * ((idx * 4 + idz) * 4 + idy) + (axis == 1) * ((idy * 4 + idz) * 4 + idx) + (axis == 2) * ((idz * 4 + idy) * 4 + idx);
 			}
 		}
 
@@ -117,8 +124,11 @@ namespace Meso {
 				int i1 = (face_index & 0b111000) >> 3, i0 = face_index & 0b111;
 				int nbx = (counts[0] >> 3) + (axis == 0);
 				int idx, idy;
-				if (axis == 0) idx = i1, idy = i0;
-				else idx = i0, idy = i1;
+
+				idx = i0, idy = i1;
+				//if (axis == 0) idx = i1, idy = i0;
+				//else idx = i0, idy = i1;
+				
 				face[0] = ((b_ind % nbx) << 3) + idx;
 				face[1] = ((b_ind / nbx) << 3) + idy;
 			}
@@ -127,9 +137,12 @@ namespace Meso {
 				int idx = face_index & 0b11, idy = (face_index & 0b1100) >> 2, idz = (face_index & 0b110000) >> 4;
 				int b = face_index >> 6;
 
-				face[0] = ((b % nbx) << 2) + (axis == 0) * idz + (axis == 1) * idx + (axis == 2) * idx;
-				face[1] = (((b / nbx) % nby) << 2) + (axis == 0) * idx + (axis == 1) * idz + (axis == 2) * idy;
-				face[2] = ((b / nbx / nby) << 2) + (axis == 0) * idy + (axis == 1) * idy + (axis == 2) * idz;
+				face[0] = ((b % nbx) << 2) + idx;
+				face[1] = (((b / nbx) % nby) << 2) + idy;
+				face[2] = ((b / nbx / nby) << 2) + idz;
+				//face[0] = ((b % nbx) << 2) + (axis == 0) * idz + (axis == 1) * idx + (axis == 2) * idx;
+				//face[1] = (((b / nbx) % nby) << 2) + (axis == 0) * idx + (axis == 1) * idz + (axis == 2) * idy;
+				//face[2] = ((b / nbx / nby) << 2) + (axis == 0) * idy + (axis == 1) * idy + (axis == 2) * idz;
 			}
 			return face;
 		}
