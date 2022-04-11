@@ -28,6 +28,15 @@ namespace Meso {
 		inline T& operator()(const int axis, const VectorDi face) { return face_data[axis][grid.Face_Index(axis, face)]; }
 		inline const T& operator()(int axis, const VectorDi face) const { return face_data[axis][grid.Face_Index(axis, face)]; }
 
+		constexpr T* Data(const int axis) noexcept {
+			if constexpr (side == HOST) return face_data[axis].data();
+			else return thrust::raw_pointer_cast(face_data[axis].data());
+		}
+		constexpr const T* Data(const int axis) const noexcept {
+			if constexpr (side == HOST) return face_data[axis].data();
+			else return thrust::raw_pointer_cast(face_data[axis].data());
+		}
+
 		template<class IFFunc>
 		void Iterate_Faces(IFFunc f) {
 			for (int axis = 0; axis < d; axis++) {

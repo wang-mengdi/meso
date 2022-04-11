@@ -10,7 +10,7 @@
 namespace Meso {
 	namespace Interpolation {
 		template<class T, int d, GridType gtype>
-		T Linear_Intp(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		T __host__ __device__ Linear_Intp(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			Typedef_VectorD(d);
 			//if constexpr (d == 1) {
 			//	auto a0l = 1.0 - frac[0], a0r = frac[0];

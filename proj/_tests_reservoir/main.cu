@@ -22,12 +22,6 @@ void Test_Grid(void) {
         }
     );
     Info("indicies: \n{}", F);
-    //for (int i = 0; i < grid.counts[0]; i++) {
-    //    for (int j = 0; j < grid.counts[1]; j++) {
-    //        fmt::print("{} ", F(Vector2i(i, j)));
-    //    }
-    //    fmt::print("\n");
-    //}
 }
 
 int main(){
