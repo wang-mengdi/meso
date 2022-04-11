@@ -156,16 +156,21 @@ namespace Meso {
 				f(cell);
 			}
 		}
-		template<class F, class ...Args>
-		void Exec_Kernel(F kernel_func, const Args&...args) const {
+		void Get_Kernel_Dims(dim3& blocknum, dim3& blocksize) const {
 			if constexpr (d == 2) {
-				int Nx = counts[0], Ny = counts[1];
-				kernel_func << <dim3(Nx >> 3, Ny >> 3), dim3(8, 8) >> > (args...);
+				blocknum = dim3(counts[0] >> 3, counts[1] >> 3);
+				blocksize = dim3(8, 8);
 			}
 			else if constexpr (d == 3) {
-				int Nx = counts[0], Ny = counts[1], Nz = counts[2];
-				kernel_func << <dim3(Nx >> 2, Ny >> 2, Nz >> 2), dim3(4, 4, 4) >> > (args...);
+				blocknum = dim3(counts[0] >> 2, counts[1] >> 2, counts[2] >> 2);
+				blocksize = dim3(4, 4, 4);
 			}
+		}
+		template<class F, class ...Args>
+		void Exec_Kernel(F kernel_func, const Args&...args) const {
+			dim3 blocknum, blocksize;
+			Get_Kernel_Dims(blocknum, blocksize);
+			kernel_func << <blocknum, blocksize >> > (args...);
 		}
 	};
 
