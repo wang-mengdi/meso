@@ -156,6 +156,17 @@ namespace Meso {
 				f(cell);
 			}
 		}
+		template<class F, class ...Args>
+		void Exec_Kernel(F kernel_func, const Args&...args) {
+			if constexpr (d == 2) {
+				int Nx = counts[0], Ny = counts[1];
+				kernel_func << <dim3(Nx >> 3, Ny >> 3), dim3(8, 8) >> > (args...);
+			}
+			else if constexpr (d == 3) {
+				int Nx = counts[0], Ny = counts[1], Nz = counts[2];
+				kernel_func << <dim3(Nx >> 2, Ny >> 2, Nz >> 2), dim3(4, 4, 4) >> > (args...);
+			}
+		}
 	};
 
 }
