@@ -61,20 +61,11 @@ namespace Meso {
 			temp_p.resize(rows);
 			ArrayFunc::Fill(A, (T)0);
 			int row_nnz = (d == 2 ? 5 : 7);
-			dim3 block_cnt, block_size;
-			if constexpr (d == 2) {
-				block_cnt = dim3(grid.counts[0] >> 3, grid.counts[1] >> 3);
-				block_size = dim3(grid.block_size, grid.block_size);
-			}
-			else if constexpr (d == 3) {
-				block_cnt = dim3(grid.counts[0] >> 2, grid.counts[1] >> 2, grid.counts[2] >> 2);
-				block_size = dim3(grid.block_size, grid.block_size, grid.block_size);
-			}
 			for (int flag = 0; flag < row_nnz; flag++) {//set all cells with color==flag to 1 and others to 0
 				PoissonLikeMask<d> mask(flag);
-				Set_Cell_By_Color << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_p.data()));
+				grid.Exec_Kernel(&Set_Cell_By_Color<T, d>, grid, mask, thrust::raw_pointer_cast(temp_p.data()));
 				mapping.Apply(temp_Ap, temp_p);
-				Fill_Matrix_From_Result << <block_cnt, block_size >> > (grid, mask, thrust::raw_pointer_cast(temp_Ap.data()), rows, thrust::raw_pointer_cast(A.data()));
+				grid.Exec_Kernel(&Fill_Matrix_From_Result<T, d>, grid, mask, thrust::raw_pointer_cast(temp_Ap.data()), rows, thrust::raw_pointer_cast(A.data()));
 			}
 		}
 
