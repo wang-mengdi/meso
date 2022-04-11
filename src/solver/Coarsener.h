@@ -10,16 +10,17 @@
 
 namespace Meso {
 	template<int d>
-	__global__ static void Coarsen_Kernel(const Grid<d> grid_coarser, bool* coarser_fixed, const Grid<d> grid_finer, const bool* finer_fixed) {
+	__global__ void Coarsen_Fixed_Kernel(const Grid<d> grid_coarser, bool* coarser_fixed, const Grid<d> grid_finer, const bool* finer_fixed) {
 		Typedef_VectorD(d);
 		static const int dx[8] = { 0,1,0,1,0,1,0,1 };
 		static const int dy[8] = { 0,0,1,1,0,0,1,1 };
 		static const int dz[8] = { 0,0,0,0,1,1,1,1 };
-		VectorDi coarser_coord = VectorFunc::Vi<d>(
-			blockIdx.x * grid_coarser.block_size + threadIdx.x,
-			blockIdx.y * grid_coarser.block_size + threadIdx.y,
-			blockIdx.z * grid_coarser.block_size + threadIdx.z
-			);
+		VectorDi coarser_coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		//VectorDi coarser_coord = VectorFunc::Vi<d>(
+		//	blockIdx.x * grid_coarser.block_size + threadIdx.x,
+		//	blockIdx.y * grid_coarser.block_size + threadIdx.y,
+		//	blockIdx.z * grid_coarser.block_size + threadIdx.z
+		//	);
 		bool fixed = true;//default value of fixed
 		for (int s = 0; s < (1 << d); s++) {
 			VectorDi finer_coord = coarser_coord * 2 + VectorFunc::Vi<d>(dx[s], dy[s], dz[s]);
@@ -29,26 +30,35 @@ namespace Meso {
 		coarser_fixed[grid_coarser.Index(coarser_coord)] = fixed;
 	}
 
+	template<class T, int d>
+	__global__ void Coarsen_Vol_Kernel(const int axis, const Grid<d> coarser_grid, T* coarser_data, const Grid<d> finer_grid, const T* finer_data) {
+		Typedef_VectorD(d);
+		//VectorDi coarser_coord = VectorFunc::Vi<d>(
+		//	blockIdx.x * grid_coarser.block_size + threadIdx.x,
+		//	blockIdx.y * grid_coarser.block_size + threadIdx.y,
+		//	blockIdx.z * grid_coarser.block_size + threadIdx.z
+		//	);
+
+	}
+
 	template<int d>
 	class Coarsener {
 		Typedef_VectorD(d);
 	public:
 
+		//coarser_poisson must be already allocated previously
 		template<class T>
 		static void Apply(PoissonMapping<T, d>& coarser_poisson, const decltype(coarser_poisson) finer_poisson) {
 			const auto& finer_grid = finer_poisson.fixed.grid;
 			const auto& coarser_grid = coarser_poisson.fixed.grid;
 			
+			//fill fixed
 			bool* coarser_fixed = coarser_poisson.fixed.Data();
 			const bool* finer_fixed = finer_poisson.fixed.Data();
-			coarser_grid.Exec_Kernel(&Coarsen_Kernel<d>, coarser_grid, coarser_fixed, finer_grid, finer_fixed);
-			//bool* coarser_fixed = thrust::raw_pointer_cast(coarser_poisson.fixed.data());
-			//const bool* finer_fixed=thrust::raw_pointer_cast
+			coarser_grid.Exec_Kernel(&Coarsen_Fixed_Kernel<d>, coarser_grid, coarser_fixed, finer_grid, finer_fixed);
+
+			//fill vol
+
 		}
-		//static void Apply(FieldDv<bool, d>& fixed_coarser, const FieldDv<bool, d>& fixed_finer) {
-		//	bool* coarser_data = thrust::raw_pointer_cast(fixed_coarser.data.data());
-		//	const bool* finer_data = thrust::raw_pointer_cast(fixed_finer.data.data());
-		//	fixed_coarser.grid.Exec_Kernel(&Coarsen_Kernel<d>, fixed_coarser.grid, coarser_data, fixed_finer.grid, finer_data);
-		//}
 	};
 }

@@ -118,6 +118,15 @@ namespace Meso {
 			else { std::cerr << "[Error] AuxFuncCuda::Cuda_Type: Unknown data type\n"; return cudaDataType_t(); }
 		}
 
+		template<int d>
+		__device__ __host__ Vector<int, d> Thread_Coord(const dim3 blockIdx, const dim3 threadIdx) {
+			if constexpr (d == 2) {
+				return Vector2i(blockIdx.x * 8 + threadIdx.x, blockIdx.y * 8 + threadIdx.y);
+			}
+			else if constexpr (d == 3) {
+				return Vector3i(blockIdx.x * 4 + threadIdx.x, blockIdx.y * 4 + threadIdx.y, blockIdx.z * 4 + threadIdx.z);
+			}
+		}
 	}
 
 }
