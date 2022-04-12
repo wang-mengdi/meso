@@ -10,6 +10,7 @@
 #include "PoissonTests.h"
 #include "OperatorTests.h"
 #include "DenseSolverTests.h"
+#include "RestrictorTests.h"
 using namespace Meso;
 
 int main(){
@@ -31,5 +32,7 @@ int main(){
     Test_LU_Dense_Solver<double>(Vector2i(14, 13));
     Test_LU_Dense_Solver<float>(Vector3i(8, 7, 11));
     Test_LU_Dense_Solver<double>(Vector3i(8, 7, 11));
+
+    Test_Restrictor<float>(Vector2i(14, 53));
     return 0;
 }

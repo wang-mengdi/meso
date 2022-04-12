@@ -21,6 +21,7 @@ namespace Meso {
 		Field() {}
 		Field(const Grid<d, GridType::CENTER>& _grid) { Init(_grid); }
 		Field(const Grid<d, GridType::CENTER> _grid, const T value) { Init(_grid, value); }
+		template<DataHolder side1> Field(const Field<T, d, side1>& f1) { *this = f1; }
 		void Init(const Grid<d, GridType::CENTER> _grid) {
 			grid = _grid;
 			data.resize(grid.DoF());
@@ -59,7 +60,7 @@ namespace Meso {
 		}
 
 		template<class CFuncT>//CFuncT is a function: VectorDi->T, takes the cell index
-		void Calc_Cells(CFuncT f) const {
+		void Calc_Cells(CFuncT f) {
 			const int dof = grid.DoF();
 			thrust::counting_iterator<int> idxfirst(0);
 			thrust::counting_iterator<int> idxlast = idxfirst + dof;

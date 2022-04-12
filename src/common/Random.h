@@ -27,6 +27,12 @@ namespace Meso {
         }
 
         template<class T>
+        void Fill_Random_Array(Array<T>& arr, const T a = 0.0, const T b = 1.0) {
+            for (int i = 0; i < arr.size(); i++) {
+                arr[i] = Uniform(a, b);
+            }
+        }
+        template<class T>
         Array<T> Random_Array(const int n, const T a = 0.0, const decltype(a) b = 1.0) {
             Array<T> arr(n);
             for (int i = 0; i < n; i++) arr[i] = Uniform(a, b);
