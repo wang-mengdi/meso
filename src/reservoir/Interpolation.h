@@ -5,7 +5,9 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include "AuxFunc.h"
 #include "Grid.h"
+#include "Field.h"
 
 namespace Meso {
 	namespace Interpolation {
@@ -36,6 +38,13 @@ namespace Meso {
 				return intp_value;
 			}
 			else Assert("Interpolation:Linear_Intp error: dimension must be 2 or 3");
+		}
+		template<class T,int d, DataHolder side>
+		T __host__ __device__ Linear_Intp(const Field<T, d, side>& F, const Vector<real, d> pos) {
+			const T* data_ptr = ArrayFunc::Data<T, side>(F.data);
+			Vector<int, d> node; Vector<real, d> frac;
+			F.grid.Get_Fraction(pos, node, frac);
+			return Linear_Intp(F.grid, data_ptr, node, frac);
 		}
 
 		template<class T, int d, GridType gtype>

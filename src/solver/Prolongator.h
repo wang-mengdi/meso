@@ -7,6 +7,7 @@
 #include "LinearMapping.h"
 #include "Grid.h"
 #include "AuxFunc.h"
+#include "Interpolation.h"
 
 namespace Meso {
 	template<class T, int d>
@@ -19,12 +20,14 @@ namespace Meso {
 			int x = fine_coord[i];
 			if (x & 0x1) {
 				coarse_coord[i] = (x / 2);
-
+				coarse_frac[i] = 0.25;
 			}
 			else {
-				//coarse_coord[i]=
+				coarse_coord[i] = (x / 2) - 1;
+				coarse_frac[i] = 0.75;
 			}
 		}
+		fine_data[fine_grid.Index(fine_coord)] = Interpolation::Linear_Intp_Padding0(coarse_grid, coarse_data, coarse_coord, coarse_frac);
 	}
 
 	template<class T, int d>
@@ -48,7 +51,9 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& fine_data, const ArrayDv<T>& coarse_data) {
-
+			T* fine_ptr = ArrayFunc::Data<T, DEVICE>(fine_data);
+			const T* coarse_ptr = ArrayFunc::Data<T, DEVICE>(coarse_data);
+			fine_grid.Exec_Kernel(&Prolongator_Kernel<T, d>, fine_grid, fine_ptr, coarse_grid, coarse_ptr);
 		}
 	};
 }

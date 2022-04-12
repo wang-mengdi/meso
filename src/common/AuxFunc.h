@@ -48,13 +48,15 @@ namespace Meso {
 	namespace ArrayFunc {
 		template<class T, DataHolder side>
 		constexpr T* Data(Array<T, side>& arr)noexcept {
-			if constexpr (side == HOST) return arr.data();
-			else return thrust::raw_pointer_cast(arr.data());
+			return thrust::raw_pointer_cast(arr.data());
+			//if constexpr (side == HOST) return arr.data();
+			//else return thrust::raw_pointer_cast(arr.data());
 		}
 		template<class T, DataHolder side>
 		constexpr const T* Data(const Array<T, side>& arr)noexcept {
-			if constexpr (side == HOST) return arr.data();
-			else return thrust::raw_pointer_cast(arr.data());
+			return thrust::raw_pointer_cast(arr.data());
+			//if constexpr (side == HOST) return arr.data();
+			//else return thrust::raw_pointer_cast(arr.data());
 		}
 
 		template<class T>

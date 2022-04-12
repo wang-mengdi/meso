@@ -11,9 +11,13 @@
 #include "OperatorTests.h"
 #include "DenseSolverTests.h"
 #include "RestrictorTests.h"
+#include "ProlongatorTests.h"
 using namespace Meso;
 
 int main(){
+    //Test_Prolongator<float>(Vector2i(14, 15));
+    //return 0;
+
     Test_Sparse_Matrix();
     Test_CG_Memory_Safe();
 
@@ -37,5 +41,10 @@ int main(){
     Test_Restrictor<double>(Vector2i(14, 53));
     Test_Restrictor<float>(Vector3i(15, 44, 23));
     Test_Restrictor<double>(Vector3i(15, 44, 23));
+
+    Test_Prolongator<float>(Vector2i(14, 53));
+    Test_Prolongator<double>(Vector2i(14, 53));
+    Test_Prolongator<float>(Vector3i(15, 44, 23));
+    Test_Prolongator<double>(Vector3i(15, 44, 23));
     return 0;
 }
