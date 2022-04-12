@@ -25,6 +25,9 @@ namespace Meso {
 		FieldDv<T, d> temp_cell;
 		FaceFieldDv<T, d> temp_face;
 		
+		PoissonMapping() {}
+		PoissonMapping(const Grid<d, CENTER>& grid) { Allocate_Memory(grid); }
+
 		void Allocate_Memory(const Grid<d, CENTER>& grid) {
 			dof = grid.DoF();
 			vol.Init(grid);
@@ -49,7 +52,7 @@ namespace Meso {
 			);
 		}
 
-		const Grid<d>& Grid(void) {
+		const Grid<d>& Grid(void) const {
 			return fixed.grid;
 		}
 

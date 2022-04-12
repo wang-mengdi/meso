@@ -15,9 +15,8 @@
 
 namespace Meso {
 
-	template<class T, int d>
+	template<class T>
 	class VCycleMultigrid :LinearMapping<T> {
-		Typedef_VectorD(d);
 		using LinearMappingPtr = std::shared_ptr<LinearMapping<T>>;
 	public:
 		int L, dof;
@@ -65,7 +64,11 @@ namespace Meso {
 			ArrayFunc::Copy(x0, xs[0]);
 		}
 
+		template<int d>
 		void Init_Poisson(const PoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2) {
+			Typedef_VectorD(d);
+			using PoissonPtr = std::shared_ptr<PoissonMapping<T, d>>;
+
 			VectorDi grid_size = poisson.Grid().counts;
 			int grid_min_size = grid_size.minCoeff();
 			L = (int)std::ceil(log2(grid_min_size)) - 3;
@@ -81,7 +84,9 @@ namespace Meso {
 			mappings[0] = std::make_shared<PoissonMapping<T, d>>(poisson);
 			for (int i = 1; i <= L; i++) {
 				mappings[i] = std::make_shared<PoissonMapping<T, d>>(grids[i]);
-				Coarsener<d>::Apply(*mappings[i], *mappings[i - 1]);
+				PoissonPtr poisson_fine = std::dynamic_pointer_cast<PoissonMapping<T, d>>(mappings[i - 1]);
+				PoissonPtr poisson_coarse = std::dynamic_pointer_cast<PoissonMapping<T, d>>(mappings[i]);
+				Coarsener<d>::Apply(*poisson_coarse, *poisson_fine);
 			}
 
 			//restrictors
@@ -100,15 +105,21 @@ namespace Meso {
 
 			//presmoothers
 			presmoothers.resize(L);
-			for (int i = 0; i < L; i++) presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*mappings[i], pre_iter, 2.0 / 3.0);
+			for (int i = 0; i < L; i++) {
+				PoissonPtr poisson = std::dynamic_pointer_cast<PoissonMapping<T, d>>(mappings[i]);
+				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*poisson, pre_iter, 2.0 / 3.0);
+			}
 
 			//postsmoothers
 			postsmoothers.resize(L);
-			for (int i = 0; i < L; i++) postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*mappings[i], post_iter, 2.0 / 3.0);
+			for (int i = 0; i < L; i++) {
+				PoissonPtr poisson = std::dynamic_pointer_cast<PoissonMapping<T, d>>(mappings[i]);
+				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*poisson, post_iter, 2.0 / 3.0);
+			}
 
 			//direct_solver
 			DenseMatrixMapping<T> dense_mapping;
-			dense_mapping.Init_PoissonLike(mappings[L]->Grid(), mappings[L].get());
+			dense_mapping.Init_PoissonLike(grids[L], *mappings[L]);
 			direct_solver = std::make_shared<LUDenseSolver<T>>(dense_mapping);
 			
 			//auxillary arrays

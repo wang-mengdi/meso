@@ -1,0 +1,32 @@
+//////////////////////////////////////////////////////////////////////////
+// Multigrid tests
+// Copyright (c) (2022-), Mengdi Wang
+// This file is part of MESO, whose distribution is governed by the LICENSE file.
+//////////////////////////////////////////////////////////////////////////
+#pragma once
+
+#include "Multigrid.h"
+#include "PoissonTests.h"
+using namespace Meso;
+
+template<class T, int d>
+void Test_Multigrid(const Vector<int, d> counts) {
+	Grid<d> grid(counts);
+	PoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid);
+
+	Field<T, d> b_host(grid);
+	Random::Fill_Random_Array<T>(b_host.data, -5, 10);
+	FieldDv<T, d> b_dev = b_host;
+	FieldDv<T, d> x_dev(grid, 0);
+
+	FieldDv<T, d> res_dev(grid);
+	poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
+	Info("initial residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
+
+	VCycleMultigrid<T> solver;
+	solver.Init_Poisson(poisson, 2, 2);
+	solver.Apply(x_dev.data, b_dev.data);
+
+	poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
+	Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
+}
