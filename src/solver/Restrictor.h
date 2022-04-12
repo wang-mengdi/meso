@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// Restrictor
+// Restrictor in Multigrid
 // Copyright (c) (2022-), Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
@@ -65,15 +65,15 @@ namespace Meso {
 		}
 
 		//input p, get Ap
-		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+		virtual void Apply(ArrayDv<T>& coarser_data, const ArrayDv<T>& finer_data) {
 			T* intp_ptr_old = ArrayFunc::Data<T, DEVICE>(intp_data_old);
 			T* intp_ptr_new = ArrayFunc::Data<T, DEVICE>(intp_data_new);
-			const T* original_ptr = ArrayFunc::Data<T, DEVICE>(p);
+			const T* original_ptr = ArrayFunc::Data<T, DEVICE>(finer_data);
 			for (int axis = 0; axis < d; axis++) {
 				finer_grid.Exec_Kernel(&Restrictor_Axis_Kernel<T, d>, axis, finer_grid, intp_ptr_new, axis == 0 ? original_ptr : intp_ptr_old);
 				std::swap(intp_ptr_old, intp_ptr_new);
 			}
-			coarser_grid.Exec_Kernel(&Restrictor_Coarser_Kernel<T, d>, coarser_grid, ArrayFunc::Data<T, DEVICE>(Ap), finer_grid, intp_ptr_old);
+			coarser_grid.Exec_Kernel(&Restrictor_Coarser_Kernel<T, d>, coarser_grid, ArrayFunc::Data<T, DEVICE>(coarser_data), finer_grid, intp_ptr_old);
 		}
 	};
 }
