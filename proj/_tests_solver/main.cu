@@ -34,5 +34,8 @@ int main(){
     Test_LU_Dense_Solver<double>(Vector3i(8, 7, 11));
 
     Test_Restrictor<float>(Vector2i(14, 53));
+    Test_Restrictor<double>(Vector2i(14, 53));
+    Test_Restrictor<float>(Vector3i(15, 44, 23));
+    Test_Restrictor<double>(Vector3i(15, 44, 23));
     return 0;
 }

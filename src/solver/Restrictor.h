@@ -45,11 +45,13 @@ namespace Meso {
 	class Restrictor : public LinearMapping<T> {
 	public:
 		Grid<d> coarser_grid, finer_grid;
-		ArrayDv<T> intp_data;
+		ArrayDv<T> intp_data_old;
+		ArrayDv<T> intp_data_new;
 
 		void Init(const Grid<d> _coarser, const Grid<d> _finer) {
 			coarser_grid = _coarser, finer_grid = _finer;
-			intp_data.resize(XDof());
+			intp_data_old.resize(XDof());
+			intp_data_new.resize(XDof());
 		}
 
 		//number of cols
@@ -64,12 +66,14 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
-			T* intp_ptr = ArrayFunc::Data<T, DEVICE>(intp_data);
+			T* intp_ptr_old = ArrayFunc::Data<T, DEVICE>(intp_data_old);
+			T* intp_ptr_new = ArrayFunc::Data<T, DEVICE>(intp_data_new);
 			const T* original_ptr = ArrayFunc::Data<T, DEVICE>(p);
 			for (int axis = 0; axis < d; axis++) {
-				finer_grid.Exec_Kernel(&Restrictor_Axis_Kernel<T, d>, axis, finer_grid, intp_ptr, original_ptr);
+				finer_grid.Exec_Kernel(&Restrictor_Axis_Kernel<T, d>, axis, finer_grid, intp_ptr_new, axis == 0 ? original_ptr : intp_ptr_old);
+				std::swap(intp_ptr_old, intp_ptr_new);
 			}
-			coarser_grid.Exec_Kernel(&Restrictor_Coarser_Kernel<T, d>, coarser_grid, ArrayFunc::Data<T, DEVICE>(Ap), finer_grid, intp_ptr);
+			coarser_grid.Exec_Kernel(&Restrictor_Coarser_Kernel<T, d>, coarser_grid, ArrayFunc::Data<T, DEVICE>(Ap), finer_grid, intp_ptr_old);
 		}
 	};
 }

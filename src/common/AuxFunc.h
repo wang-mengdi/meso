@@ -130,7 +130,6 @@ namespace Meso {
 			T res_norm2 = Dot<T>(res, res);
 			T p = Eigen::NumTraits<T>::dummy_precision();
 			return res_norm2 <= p * p * std::min(a_norm2, b_norm2);
-			return false;
 		}
 	}
 
