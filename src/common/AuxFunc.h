@@ -19,6 +19,10 @@ namespace Meso {
 		}
 	}
 
+	namespace MathFunc {
+		template<class T> __host__ __device__ T Eps(void) { return Eigen::NumTraits<T>::dummy_precision(); }
+	}
+
 	namespace VectorFunc {
 		////create vectors with compatible dimensions
 		template<int d> __host__ __device__ Vector<real, d> V(const real x = (real)0, const real y = (real)0, const real z = (real)0);

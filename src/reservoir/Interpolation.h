@@ -12,51 +12,28 @@ namespace Meso {
 		template<class T, int d, GridType gtype>
 		T __host__ __device__ Linear_Intp(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			Typedef_VectorD(d);
-			//if constexpr (d == 1) {
-			//	auto a0l = 1.0 - frac[0], a0r = frac[0];
-			//	int i = cell[0];
-			//	int indexl = grid.Index(i);
-			//	int indexr = grid.Index(i + 1);
-			//	return
-			//		a0l * data[indexl] +
-			//		a0r * data[indexr];
-			//}
+			static constexpr int dx[8] = { 0,1,0,1,0,1,0,1 };
+			static constexpr int dy[8] = { 0,0,1,1,0,0,1,1 };
+			static constexpr int dz[8] = { 0,0,0,0,1,1,1,1 };
 			if constexpr (d == 2) {
-				auto a0l = 1.0 - frac[0], a0r = frac[0];
-				auto a1l = 1.0 - frac[1], a1r = frac[1];
-				int i = coord[0], j = coord[1];
-				int indexll = grid.Index(i, j);
-				int indexlr = grid.Index(i, j + 1);
-				int indexrl = grid.Index(i + 1, j);
-				int indexrr = grid.Index(i + 1, j + 1);
-				return
-					a0l * a1l * data[indexll] +
-					a0l * a1r * data[indexlr] +
-					a0r * a1l * data[indexrl] +
-					a0r * a1r * data[indexrr];
+				real w[2][2] = { {1.0 - frac[0],frac[0]},{1.0 - frac[1],frac[1]} };
+				T intp_value = 0;
+				for (int s = 0; s < 4; s++) {
+					int d0 = dx[s], d1 = dy[s];
+					int idx = grid.Index(coord[0] + d0, coord[1] + d1);
+					intp_value += w[0][d0] * w[1][d1] * data[idx];
+				}
+				return intp_value;
 			}
 			else if constexpr (d == 3) {
-				auto a0l = 1.0 - frac[0], a0r = frac[0];
-				auto a1l = 1.0 - frac[1], a1r = frac[1];
-				auto a2l = 1.0 - frac[2], a2r = frac[2];
-				int i = coord[0], j = coord[1], k = coord[2];
-				int indexlll = grid.Index(i, j, k);
-				int indexllr = grid.Index(i, j, k + 1);
-				int indexlrl = grid.Index(i, j + 1, k);
-				int indexlrr = grid.Index(i, j + 1, k + 1);
-				int indexrll = grid.Index(i + 1, j, k);
-				int indexrlr = grid.Index(i + 1, j, k + 1);
-				int indexrrl = grid.Index(i + 1, j + 1, k);
-				int indexrrr = grid.Index(i + 1, j + 1, k + 1);
-				return
-					a0l * a1l * a2l * data[indexlll] +
-					a0l * a1l * a2r * data[indexllr] +
-					a0l * a1r * a2l * data[indexlrl] +
-					a0l * a1r * a2r * data[indexlrr] +
-					a0r * a1l * a2l * data[indexrll] +
-					a0r * a1l * a2r * data[indexrlr] +
-					a0r * a1r * a2l * data[indexrrl] +
-					a0r * a1r * a2r * data[indexrrr];
+				real w[3][2] = { {1.0 - frac[0],frac[0]},{1.0 - frac[1],frac[1]} ,{1.0 - frac[2],frac[2]} };
+				T intp_value = 0;
+				for (int s = 0; s < 8; s++) {
+					int d0 = dx[s], d1 = dy[s], d2 = dz[s];
+					int idx = grid.Index(coord[0] + d0, coord[1] + d1, coord[2] + d2);
+					intp_value += w[0][d0] * w[1][d1] * w[2][d2] * data[idx];
+				}
+				return intp_value;
 			}
 			else Assert("Interpolation:Linear_Intp error: dimension must be 2 or 3");
 		}
