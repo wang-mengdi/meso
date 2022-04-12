@@ -51,6 +51,7 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& fine_data, const ArrayDv<T>& coarse_data) {
+			Assert(Size_Match(fine_data, coarse_data), "Prolongator error: mismatch sizes");
 			T* fine_ptr = ArrayFunc::Data<T, DEVICE>(fine_data);
 			const T* coarse_ptr = ArrayFunc::Data<T, DEVICE>(coarse_data);
 			fine_grid.Exec_Kernel(&Prolongator_Kernel<T, d>, fine_grid, fine_ptr, coarse_grid, coarse_ptr);

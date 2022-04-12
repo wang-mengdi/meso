@@ -20,6 +20,10 @@ namespace Meso {
 			Apply(res, x);
 			ArrayFunc::Binary_Transform(res, b, [=]__device__(T a, T b) { return b - a; }, res);
 		}
+
+		virtual bool Size_Match(const ArrayDv<T>& Ap, const ArrayDv<T>& p) const {
+			return p.size() == XDof() && Ap.size() == YDof();
+		}
 	};
 
 }

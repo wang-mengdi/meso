@@ -12,9 +12,12 @@
 #include "DenseSolverTests.h"
 #include "RestrictorTests.h"
 #include "ProlongatorTests.h"
+#include "Multigrid.h"
 using namespace Meso;
 
 int main(){
+    VCycleMultigrid<double, 2> mg;
+
     //Test_Prolongator<float>(Vector2i(14, 15));
     //return 0;
 

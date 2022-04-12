@@ -14,15 +14,17 @@ namespace Meso {
 	template<class T, int d>
 	class VCycleMultigrid :LinearMapping<T> {
 		Typedef_VectorD(d);
+		using LinearMappingPtr = std::shared_ptr<LinearMapping<T>>;
 	public:
 		int L;
+		Grid<d> grid;
 
-		Array<shared_ptr<LinearMapping<T>>> mappings;
-		Array<shared_ptr<LinearMapping<T>>> restrictors;
-		Array<shared_ptr<LinearMapping<T>>> prolongators;
-		Array<shared_ptr<LinearMapping<T>>> presmoothers;
-		Array<shared_ptr<LinearMapping<T>>> postsmoothers;
-		shared_ptr<LinearMapping<T>> direct_solver;
+		Array<LinearMappingPtr> mappings;
+		Array<LinearMappingPtr> restrictors;
+		Array<LinearMappingPtr> prolongators;
+		Array<LinearMappingPtr> presmoothers;
+		Array<LinearMappingPtr> postsmoothers;
+		LinearMappingPtr direct_solver;
 
 		ArrayDv<ArrayDv<T>> xs;
 		ArrayDv<ArrayDv<T>> bs;
@@ -30,11 +32,11 @@ namespace Meso {
 		ArrayDv<T> x_temp;//store the value calcualted by postsmoother
 	public:
 		virtual int XDof() const {
-
+			return grid.DoF();
 		}
 
 		virtual int YDof() const {
-
+			return grid.DoF();
 		}
 
 		//solve some Ax=b
@@ -43,7 +45,8 @@ namespace Meso {
 		}
 
 		void Init_Poisson(const PoissonMapping<T, d> &poisson) {
-			VectorDi grid_size = poisson.fixed.grid.counts;
+			grid = poisson.fixed.grid;
+			VectorDi grid_size = grid.counts;
 			int grid_min_size = grid_size.minCoeff();
 			L = (int)std::ceil(log2(grid_min_size)) - 3;
 
@@ -57,8 +60,12 @@ namespace Meso {
 				Coarsener<d>::Apply(*mappings[i], *mappings[i - 1]);
 			}
 
-			//restrictors
+			grid_size = grid.counts;
+			restrictors.resize(L);
+			for (int i = 0; i < L; i++) {
 
+			}
+			
 		}
 
 		void V_Cycle(ArrayDv<T>& x0, const ArrayDv<T>& b0) {

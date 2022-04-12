@@ -33,6 +33,7 @@ namespace Meso {
 		virtual int XDof()const { return dof; }
 		virtual int YDof()const { return dof; }
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
+			Assert(Size_Match(x, b), "DampedJacobiSmoother error: mismatch sizes");
 			if (iter_num == 0) {
 				ArrayFunc::Fill(x, (T)0);
 				return;
