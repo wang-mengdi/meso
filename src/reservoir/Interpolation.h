@@ -37,5 +37,36 @@ namespace Meso {
 			}
 			else Assert("Interpolation:Linear_Intp error: dimension must be 2 or 3");
 		}
+
+		template<class T, int d, GridType gtype>
+		T __host__ __device__ Linear_Intp_Padding0(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+			static constexpr T padding_val = 0;
+			//considering invalid datas as 0
+			Typedef_VectorD(d);
+			static constexpr int dx[8] = { 0,1,0,1,0,1,0,1 };
+			static constexpr int dy[8] = { 0,0,1,1,0,0,1,1 };
+			static constexpr int dz[8] = { 0,0,0,0,1,1,1,1 };
+			if constexpr (d == 2) {
+				real w[2][2] = { {1.0 - frac[0],frac[0]},{1.0 - frac[1],frac[1]} };
+				T intp_value = 0;
+				for (int s = 0; s < 4; s++) {
+					int d0 = dx[s], d1 = dy[s];
+					T val = grid.Valid(coord[0] + d0, coord[1] + d1) ? data[grid.Index(coord[0] + d0, coord[1] + d1)] : padding_val;
+					intp_value += w[0][d0] * w[1][d1] * val;
+				}
+				return intp_value;
+			}
+			else if constexpr (d == 3) {
+				real w[3][2] = { {1.0 - frac[0],frac[0]},{1.0 - frac[1],frac[1]} ,{1.0 - frac[2],frac[2]} };
+				T intp_value = 0;
+				for (int s = 0; s < 8; s++) {
+					int d0 = dx[s], d1 = dy[s], d2 = dz[s];
+					T val = grid.Valid(coord[0] + d0, coord[1] + d1, coord[2] + d2) ? data[grid.Index(coord[0] + d0, coord[1] + d1, coord[2] + d2)] : padding_val;
+					intp_value += w[0][d0] * w[1][d1] * w[2][d2] * val;
+				}
+				return intp_value;
+			}
+			else Assert("Interpolation:Linear_Intp error: dimension must be 2 or 3");
+		}
 	}
 }

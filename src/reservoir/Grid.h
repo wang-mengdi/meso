@@ -47,6 +47,10 @@ namespace Meso {
 		}
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
 		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
+		__host__ __device__ bool Valid(const int i, const int j = 0, const int k = 0)const {
+			if constexpr (d == 2) return 0 <= i && i < counts[0] && 0 <= j && j < counts[1];
+			else if constexpr (d == 3) return 0 <= i && i < counts[0] && 0 <= j && j < counts[1] && 0 <= k && k < counts[2];
+		}
 		__host__ __device__ bool Valid(const VectorDi coord)const { bool res = true; for (int i = 0; i < d; i++) { res &= (0 <= coord[i] && coord[i] < counts[i]); }return res; }
 
 		__host__ __device__ int Index(const int i, const int j = 0, const int k = 0) const {
