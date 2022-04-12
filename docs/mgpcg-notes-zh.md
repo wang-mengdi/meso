@@ -33,10 +33,12 @@
 
 $$u^{2h}(x)=(\mathcal{B}u^h)(x)=\frac{1}{8}u^h(x-3h/2)+\frac{3}{8}(x-h/2)+\frac{3}{8}u^h(x+h/2)+\frac{1}{8}u^h(x+3h/2)$$
 
-这样，一维取4个点，二维取16个点，三维取64个点。二维的情况如下图：
+这样，一维取4个点，二维取16个点，三维取64个点，边界外的值一律视为0。二维的情况如下图：
  <img src="./assets/mgpcg-restriction-2d.png" width =40% alt="restriction" align=center/>
 
 延拓算子$\mathcal{P}$的严格定义为$\mathcal{P}^T=8\mathcal{B}\otimes\mathcal{B}\otimes\mathcal{B}$。实际上很简单，细网格上的每一个值就是在粗糙网格上做三线性插值，可以证明二者相等。
+
+一般要求Restrictor和Prolongator互为转置，且要求$\mathcal{R}\circ\mathcal{P}=I$.
 
 ### 平滑(Smoothing)算子
 
