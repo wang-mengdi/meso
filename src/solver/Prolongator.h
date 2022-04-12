@@ -35,6 +35,10 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		Grid<d> fine_grid, coarse_grid;
+
+		Prolongator() {}
+		Prolongator(const Grid<d> _fine, const Grid<d> _coarse) { Init(_fine, _coarse); }
+
 		void Init(const Grid<d> _fine, const Grid<d> _coarse) {
 			fine_grid = _fine;
 			coarse_grid = _coarse;
@@ -51,7 +55,7 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& fine_data, const ArrayDv<T>& coarse_data) {
-			Assert(Size_Match(fine_data, coarse_data), "Prolongator error: mismatch sizes");
+			Assert(Check_Memory(fine_data, coarse_data), "Prolongator::Apply error: not enough memory");
 			T* fine_ptr = ArrayFunc::Data<T, DEVICE>(fine_data);
 			const T* coarse_ptr = ArrayFunc::Data<T, DEVICE>(coarse_data);
 			fine_grid.Exec_Kernel(&Prolongator_Kernel<T, d>, fine_grid, fine_ptr, coarse_grid, coarse_ptr);

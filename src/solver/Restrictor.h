@@ -48,6 +48,11 @@ namespace Meso {
 		ArrayDv<T> intp_data_old;
 		ArrayDv<T> intp_data_new;
 
+		Restrictor() {}
+		Restrictor(const Grid<d> coarse, const Grid<d> fine) {
+			Init(coarse, fine);
+		}
+
 		void Init(const Grid<d> _coarser, const Grid<d> _finer) {
 			coarser_grid = _coarser, finer_grid = _finer;
 			intp_data_old.resize(XDof());
@@ -66,7 +71,7 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& coarser_data, const ArrayDv<T>& finer_data) {
-			Assert(Size_Match(coarser_data, finer_data), "Restrictor error: mismatch sizes");
+			Assert(Check_Memory(coarser_data, finer_data), "Restrictor::Apply error: not enough space");
 			T* intp_ptr_old = ArrayFunc::Data<T, DEVICE>(intp_data_old);
 			T* intp_ptr_new = ArrayFunc::Data<T, DEVICE>(intp_data_new);
 			const T* original_ptr = ArrayFunc::Data<T, DEVICE>(finer_data);

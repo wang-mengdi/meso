@@ -22,6 +22,9 @@ namespace Meso {
 
 		virtual int YDof() const { return dof; } 
 
+		LUDenseSolver() {}
+		LUDenseSolver(const DenseMatrixMapping<T>& dense_mapping) { Init(dense_mapping); }
+
 		void Init(const DenseMatrixMapping<T>& dense_mapping) {
 			dof = dense_mapping.XDof();
 			Assert(dense_mapping.YDof() == dof, "LUDenseSolver::Init(): must input a square matrix");

@@ -13,6 +13,7 @@ namespace Meso {
 		virtual int YDof() const = 0;//number of rows
 
 		//input p, get Ap
+		//Ap must be allocated, but may be set to arbitrary values
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) = 0;
 
 		virtual void Residual(ArrayDv<T>& res, const ArrayDv<T>& x, const ArrayDv<T> &b) {
@@ -21,8 +22,9 @@ namespace Meso {
 			ArrayFunc::Binary_Transform(res, b, [=]__device__(T a, T b) { return b - a; }, res);
 		}
 
-		virtual bool Size_Match(const ArrayDv<T>& Ap, const ArrayDv<T>& p) const {
-			return p.size() == XDof() && Ap.size() == YDof();
+		//check if Ap and p has enough space
+		virtual bool Check_Memory(const ArrayDv<T>& Ap, const ArrayDv<T>& p) const {
+			return p.size() >= XDof() && Ap.size() >= YDof();
 		}
 	};
 

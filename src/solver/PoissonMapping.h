@@ -49,6 +49,10 @@ namespace Meso {
 			);
 		}
 
+		const Grid<d>& Grid(void) {
+			return fixed.grid;
+		}
+
 		virtual int XDof() const { return dof; }//number of cols
 
 		virtual int YDof() const { return dof; }//number of rows
