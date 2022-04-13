@@ -25,6 +25,7 @@ namespace Meso {
 		void Init(const Grid<d, GridType::CENTER> _grid) {
 			grid = _grid;
 			data.resize(grid.DoF());
+			checkCudaErrors(cudaGetLastError());
 		}
 		void Init(const Grid<d, GridType::CENTER> _grid, const T value) {
 			Init(_grid);

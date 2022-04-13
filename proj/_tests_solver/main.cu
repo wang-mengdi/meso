@@ -16,6 +16,9 @@
 using namespace Meso;
 
 int main(){
+    //Test_MGPCG<float>(Vector3i(512, 512, 512));
+    //return 0;
+
     Test_Sparse_Matrix();
     Test_CG_Memory_Safe();
 

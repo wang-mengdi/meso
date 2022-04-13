@@ -24,8 +24,8 @@ namespace Meso {
 			for (int axis = 0; axis < d; axis++) {
 				int n = grid.Face_DoF(axis);
 				face_data[axis].resize(n);
+				checkCudaErrors(cudaGetLastError());
 			}
-			checkCudaErrors(cudaGetLastError());
 		}
 
 		template<DataHolder side1> void Copy(const FaceField<T, d, side1> &f1) { for (int i = 0; i < d; i++) { ArrayFunc::Copy(face_data[i], f1.face_data[i]); } }
