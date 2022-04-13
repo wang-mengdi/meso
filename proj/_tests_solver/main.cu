@@ -16,7 +16,7 @@
 using namespace Meso;
 
 int main(){
-    Test_MGPCG<double>(Vector3i(128, 128, 128));
+    Test_MGPCG<float>(Vector3i(128, 128, 128));
     //Test_Multigrid<double>(Vector3i(32, 64, 128));
 
     //Vector3i counts(32, 64, 128);

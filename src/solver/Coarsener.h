@@ -46,9 +46,7 @@ namespace Meso {
 		static void Apply(PoissonMapping<T, d>& coarse_poisson, const decltype(coarse_poisson) fine_poisson) {
 			const auto& coarse_grid = coarse_poisson.Grid();
 			const auto& fine_grid = fine_poisson.Grid();
-			
-			Info("coarsen fine_grid counts {} coarse_grid counts {}", fine_grid.counts, coarse_grid.counts);
-			
+						
 			//fill fixed
 			bool* coarse_fixed = coarse_poisson.fixed.Data();
 			const bool* fine_fixed = fine_poisson.fixed.Data();
