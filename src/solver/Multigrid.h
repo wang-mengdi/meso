@@ -47,7 +47,6 @@ namespace Meso {
 			ArrayFunc::Copy(bs[0], b0);
 
 			for (int i = 0; i < L; i++) {
-				Info("downstroke layer {}", i);
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
@@ -61,7 +60,6 @@ namespace Meso {
 
 			//upstroke (coarse->fine)
 			for (int i = L - 1; i >= 0; i--) {
-				Info("upstroke layer {}", i);
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
 				ArrayFunc::Add(xs[i], rs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
@@ -70,8 +68,8 @@ namespace Meso {
 				ArrayFunc::Add(xs[i], bs[i]);
 			}
 
-			checkCudaErrors(cudaGetLastError());
 			ArrayFunc::Copy(x0, xs[0]);
+			checkCudaErrors(cudaGetLastError());
 		}
 
 		template<int d>

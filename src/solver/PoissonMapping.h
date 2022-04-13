@@ -90,6 +90,8 @@ namespace Meso {
 				_1 + _2,//binary op
 				thrust::identity<bool>()//pred
 			);
+
+			checkCudaErrors(cudaGetLastError());
 		}
 	};
 

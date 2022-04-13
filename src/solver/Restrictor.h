@@ -80,6 +80,7 @@ namespace Meso {
 				std::swap(intp_ptr_old, intp_ptr_new);
 			}
 			coarser_grid.Exec_Kernel(&Restrictor_Coarser_Kernel<T, d>, coarser_grid, ArrayFunc::Data<T, DEVICE>(coarser_data), finer_grid, intp_ptr_old);
+			checkCudaErrors(cudaGetLastError());
 		}
 	};
 }
