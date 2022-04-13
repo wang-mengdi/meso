@@ -16,6 +16,10 @@
 using namespace Meso;
 
 int main(){
+    //Test_MGPCG<double>(Vector3i(32, 64, 128));
+    //Test_MGPCG<double>(Vector3i(16, 16, 64));
+    //return 0;
+
     Test_Sparse_Matrix();
     Test_CG_Memory_Safe();
 
