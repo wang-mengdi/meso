@@ -23,15 +23,9 @@ namespace Meso {
 			grid = _grid;
 			for (int axis = 0; axis < d; axis++) {
 				int n = grid.Face_DoF(axis);
-				Info("axis {} size before {} ", axis, face_data[axis].size());
-				Check_Cuda_Memory("facefield init before");
-				Info("face field side {} axis {} resize {}", side, axis, grid.Face_DoF(axis));
-				//face_data[axis].clear();
-				//face_data[axis].reserve(n);
-				//Info("reserve done\n");
 				face_data[axis].resize(n);
-				cudaDeviceSynchronize();
 			}
+			checkCudaErrors(cudaGetLastError());
 		}
 
 		template<DataHolder side1> void Copy(const FaceField<T, d, side1> &f1) { for (int i = 0; i < d; i++) { ArrayFunc::Copy(face_data[i], f1.face_data[i]); } }
