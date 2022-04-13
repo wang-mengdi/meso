@@ -58,6 +58,7 @@ namespace Meso {
 			for (int i = L - 1; i >= 0; i--) {
 				Info("upstroke layer {}", i);
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
+				Info("xs[i] size {} rs[i] size {}", xs[i].size(), rs[i].size());
 				ArrayFunc::Add(xs[i], rs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				postsmoothers[i]->Apply(x_temp, rs[i]);

@@ -30,6 +30,12 @@ void Test_Multigrid(const Vector<int, d> counts) {
 
 	poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
 	Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
+
+	Info("run mg again:");
+
+	solver.Apply(x_dev.data, b_dev.data);
+	poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
+	Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
 }
 
 template<class T, int d>
@@ -43,8 +49,8 @@ void Test_MGPCG(const Vector<int, d> counts) {
 	ConjugateGradient<T> MGPCG;
 	VCycleMultigrid<T> precond;
 	precond.Init_Poisson(poisson, 2, 2);
-	//MGPCG.Init(&poisson, &precond, true);
-	MGPCG.Init(&poisson, nullptr, true);
+	MGPCG.Init(&poisson, &precond, true);
+	//MGPCG.Init(&poisson, nullptr, true);
 	int iters;
 	T res;
 	MGPCG.Solve(x_dev.data, b_dev.data, iters, res);

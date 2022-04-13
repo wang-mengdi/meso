@@ -16,8 +16,8 @@
 using namespace Meso;
 
 int main(){
-    Test_MGPCG<double>(Vector2i(99, 81));
-    //Test_Prolongator<float>(Vector2i(14, 15));
+    Test_Multigrid<double>(Vector2i(99, 81));
+    //Test_MGPCG<double>(Vector2i(99, 81));
     return 0;
 
     Test_Sparse_Matrix();

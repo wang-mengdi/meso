@@ -10,6 +10,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 #include <vector_functions.h>
+#include "driver_types.h"
 
 #include "Eigen/Dense"
 #include "Eigen/Sparse"
@@ -84,6 +85,21 @@ using VectorDi=Vector<int,d>
     template<class T> using ArrayDv = thrust::device_vector<T>;//device array
     template<class T, DataHolder side = DataHolder::HOST> using ArrayPtr = std::shared_ptr<Array<T, side> >;
     template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
+
+
+    static const char* _cudaGetErrorEnum(cudaError_t error) {
+        return cudaGetErrorName(error);
+    }
+#define checkCudaErrors(val) check((val), #val, __FILE__, __LINE__)
+    template <typename T>
+    void check(T result, char const* const func, const char* const file,
+        int const line) {
+        if (result) {
+            fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \"%s\" \n", file, line,
+                static_cast<unsigned int>(result), _cudaGetErrorEnum(result), func);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     //// fmt part
 
