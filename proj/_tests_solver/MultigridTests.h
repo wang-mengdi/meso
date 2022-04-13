@@ -51,10 +51,10 @@ void Test_MGPCG(const Vector<int, d> counts) {
 	ConjugateGradient<T> MGPCG;
 	VCycleMultigrid<T> precond;
 	precond.Init_Poisson(poisson, 2, 2);
-	MGPCG.Init(&poisson, &precond, true);
+	MGPCG.Init(&poisson, &precond, false);
 	//MGPCG.Init(&poisson, nullptr, true);
 	int iters;
-	T res;
+	real res;
 	MGPCG.Solve(x_dev.data, b_dev.data, iters, res);
 	Info("MGPCG solved {} iters with relative_error={}", iters, res);
 }

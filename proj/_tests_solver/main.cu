@@ -16,11 +16,6 @@
 using namespace Meso;
 
 int main(){
-    //Test_LU_Dense_Solver<double>(Vector3i(8, 7, 11));
-    //Test_Multigrid<double>(Vector2i(99, 81));
-    Test_MGPCG<double>(Vector3i(34, 34, 66));
-    return 0;
-
     Test_Sparse_Matrix();
     Test_CG_Memory_Safe();
 
@@ -49,5 +44,10 @@ int main(){
     Test_Prolongator<double>(Vector2i(14, 53));
     Test_Prolongator<float>(Vector3i(15, 44, 23));
     Test_Prolongator<double>(Vector3i(15, 44, 23));
+
+    Test_MGPCG<float>(Vector2i(64, 67));
+    Test_MGPCG<double>(Vector2i(64, 67));
+    Test_MGPCG<float>(Vector3i(34, 34, 66));
+    Test_MGPCG<double>(Vector3i(34, 34, 66));
     return 0;
 }

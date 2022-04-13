@@ -87,9 +87,6 @@ namespace Meso {
 				grid_size /= 2;
 				grids[i] = Grid<d>(grid_size);
 			}
-			for (int i = 0; i <= L; i++) {
-				Info("layer {} grid size {}", i, grids[i].counts);
-			}
 
 			//mappings
 			mappings.resize(L + 1);
