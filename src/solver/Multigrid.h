@@ -31,7 +31,6 @@ namespace Meso {
 		Array<ArrayDv<T>> xs;
 		Array<ArrayDv<T>> bs;
 		Array<ArrayDv<T>> rs;
-		ArrayDv<T> x_temp;//store the value calcualted by postsmoother
 	public:
 		virtual int XDof() const {
 			return dof;
@@ -46,24 +45,32 @@ namespace Meso {
 			//V-cycle
 			//downstroke (fine->coarse)
 			ArrayFunc::Copy(bs[0], b0);
+
 			for (int i = 0; i < L; i++) {
 				Info("downstroke layer {}", i);
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
 			}
+
+			checkCudaErrors(cudaGetLastError());
+			cudaDeviceSynchronize();
 			//direct solve
 			direct_solver->Apply(xs[L], bs[L]);
+			checkCudaErrors(cudaGetLastError());
+
 			//upstroke (coarse->fine)
 			for (int i = L - 1; i >= 0; i--) {
 				Info("upstroke layer {}", i);
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
-				Info("xs[i] size {} rs[i] size {}", xs[i].size(), rs[i].size());
 				ArrayFunc::Add(xs[i], rs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
-				postsmoothers[i]->Apply(x_temp, rs[i]);
-				ArrayFunc::Add(xs[i], x_temp);
+				//use bs to temporarily store the data
+				postsmoothers[i]->Apply(bs[i], rs[i]);
+				ArrayFunc::Add(xs[i], bs[i]);
 			}
+
+			checkCudaErrors(cudaGetLastError());
 			ArrayFunc::Copy(x0, xs[0]);
 		}
 
@@ -139,7 +146,6 @@ namespace Meso {
 				bs[i].resize(n);
 				rs[i].resize(n);
 			}
-			x_temp.resize(grids[0].DoF());
 		}
 	};
 

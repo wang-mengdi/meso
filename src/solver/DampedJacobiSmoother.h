@@ -50,6 +50,7 @@ namespace Meso {
 
 				if (i + 1 < iter_num)ArrayFunc::Copy(x_temp, x);
 			}
+			checkCudaErrors(cudaGetLastError());
 		}
 	};
 }

@@ -26,6 +26,10 @@ namespace Meso {
 		LUDenseSolver() {}
 		LUDenseSolver(const DenseMatrixMapping<T>& dense_mapping) { Init(dense_mapping); }
 
+		~LUDenseSolver() {
+			cusolverDnDestroy(solve_handle);
+		}
+
 		void Init(const DenseMatrixMapping<T>& dense_mapping) {
 			dof = dense_mapping.XDof();
 			Assert(dense_mapping.YDof() == dof, "LUDenseSolver::Init(): must input a square matrix");
@@ -33,43 +37,43 @@ namespace Meso {
 			A = dense_mapping.A;//deep copy here
 			piv.resize(dof);
 
-			info.resize(1);
+			info.resize(100);
 
 			T* A_ptr = thrust::raw_pointer_cast(A.data());
 			int buffer_size;
 			cusolverDnCreate(&solve_handle);
-			checkCudaErrors(cudaGetLastError());
 
-			if constexpr (std::is_same<T, double>::value)cusolverDnDgetrf_bufferSize(solve_handle, dof, dof, A_ptr, dof, &buffer_size);
-			else cusolverDnSgetrf_bufferSize(solve_handle, dof, dof, A_ptr, dof, &buffer_size);
+			cusolverStatus_t flg;
+			if constexpr (std::is_same<T, double>::value)flg = cusolverDnDgetrf_bufferSize(solve_handle, dof, dof, A_ptr, dof, &buffer_size);
+			else flg = cusolverDnSgetrf_bufferSize(solve_handle, dof, dof, A_ptr, dof, &buffer_size);
+			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver buffersize failed {}", flg);
 			buffer.resize(buffer_size);
-			cudaDeviceSynchronize();
-			checkCudaErrors(cudaGetLastError());
 
 			T* buffer_ptr = thrust::raw_pointer_cast(buffer.data());
 			int* piv_ptr = thrust::raw_pointer_cast(piv.data());
-			ArrayDv<int> info(1);
 			int* info_ptr = thrust::raw_pointer_cast(info.data());
-			if constexpr (std::is_same<T, double>::value) cusolverDnDgetrf(solve_handle, dof, dof, A_ptr, dof, buffer_ptr, piv_ptr, info_ptr);
-			else cusolverDnSgetrf(solve_handle, dof, dof, A_ptr, dof, buffer_ptr, piv_ptr, info_ptr);
-			cudaDeviceSynchronize();
+			if constexpr (std::is_same<T, double>::value) flg = cusolverDnDgetrf(solve_handle, dof, dof, A_ptr, dof, buffer_ptr, piv_ptr, info_ptr);
+			else flg = cusolverDnSgetrf(solve_handle, dof, dof, A_ptr, dof, buffer_ptr, piv_ptr, info_ptr);
+			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver getrf failed {}", flg);
 			checkCudaErrors(cudaGetLastError());
 		}
 
 		//input b, get x
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
+			Memory_Check(x, b, "LUDenseSolver::Apply failed: not enough memory space");
+
 			ArrayFunc::Copy(x, b);
 
 			T* A_ptr = ArrayFunc::Data<T, DEVICE>(A);
 			int* piv_ptr = ArrayFunc::Data<int, DEVICE>(piv);
 			T* x_ptr = ArrayFunc::Data<T, DEVICE>(x);
+			cusolverStatus_t flg;
+			//int* info_ptr = ArrayFunc::Data<int, DEVICE>(info);
+			int* info_ptr = thrust::raw_pointer_cast(info.data());
 
-			Info("A size: {}, piv size: {}, x size: {}", A.size(), piv.size(), x.size());
-
-			int* info_ptr = ArrayFunc::Data<int, DEVICE>(info);
-			if constexpr (std::is_same<T, double>::value) cusolverDnDgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
-			else cusolverDnSgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
-			cudaDeviceSynchronize();
+			if constexpr (std::is_same<T, double>::value) flg = cusolverDnDgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
+			else flg = cusolverDnSgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
+			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver solve failed {}", flg);
 			checkCudaErrors(cudaGetLastError());
 		}
 	};

@@ -33,9 +33,11 @@ void Test_Multigrid(const Vector<int, d> counts) {
 
 	Info("run mg again:");
 
-	solver.Apply(x_dev.data, b_dev.data);
-	poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
-	Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
+	for (int k = 0; k < 100; k++) {
+		solver.Apply(x_dev.data, b_dev.data);
+		poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
+		Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
+	}
 }
 
 template<class T, int d>

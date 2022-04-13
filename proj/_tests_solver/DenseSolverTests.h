@@ -20,10 +20,9 @@ void Test_LU_Dense_Solver(const Vector<int, d> counts) {
 	Array<T> b_host = Random::Random_Array<T>(n);
 	ArrayDv<T> b_dev(n); ArrayFunc::Copy(b_dev, b_host);
 	ArrayDv<T> x_dev(n);
-	solver.Apply(x_dev, b_dev);
 	ArrayDv<T> res(n);
-	poisson_mapping.Apply(res, x_dev);
-	ArrayFunc::Minus(res, b_dev);
+	solver.Apply(x_dev, b_dev);
+	poisson_mapping.Residual(res, x_dev, b_dev);
 	T b2 = ArrayFunc::Dot(b_dev, b_dev);
 	T res2 = ArrayFunc::Dot(res, res);
 	if (res2 / b2 < 1e-9) {
@@ -32,4 +31,11 @@ void Test_LU_Dense_Solver(const Vector<int, d> counts) {
 	else {
 		Error("Test_LU_Dense_Solver failed for {}", counts);
 	}
+
+	//Info("run dense again:");
+	//for (int i = 0; i < 100000000; i++) {
+	//	solver.Apply(x_dev, b_dev);
+	//	poisson_mapping.Residual(res, x_dev, b_dev);
+	//	Info("iter {} res norm2: {}", i, ArrayFunc::Dot(res, res));
+	//}
 }
