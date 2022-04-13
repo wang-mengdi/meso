@@ -16,15 +16,16 @@ namespace Meso {
 		//Ap must be allocated, but may be set to arbitrary values
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) = 0;
 
-		virtual void Residual(ArrayDv<T>& res, const ArrayDv<T>& x, const ArrayDv<T> &b) {
+		void Residual(ArrayDv<T>& res, const ArrayDv<T>& x, const ArrayDv<T> &b) {
 			//b-Ax
 			Apply(res, x);
 			ArrayFunc::Binary_Transform(res, b, [=]__device__(T a, T b) { return b - a; }, res);
 		}
 
 		//check if Ap and p has enough space
-		virtual bool Check_Memory(const ArrayDv<T>& Ap, const ArrayDv<T>& p) const {
-			return p.size() >= XDof() && Ap.size() >= YDof();
+		template<typename ...Args>
+		void Memory_Check(const ArrayDv<T>& Ap, const ArrayDv<T>& p, const Args&...args) const {
+			Assert(p.size() >= XDof() && Ap.size() >= YDof(), args...);
 		}
 	};
 

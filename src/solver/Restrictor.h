@@ -71,7 +71,7 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& coarser_data, const ArrayDv<T>& finer_data) {
-			Assert(Check_Memory(coarser_data, finer_data), "Restrictor::Apply error: not enough space");
+			Memory_Check(coarser_data, finer_data, "Restrictor::Apply error: not enough space");
 			T* intp_ptr_old = ArrayFunc::Data<T, DEVICE>(intp_data_old);
 			T* intp_ptr_new = ArrayFunc::Data<T, DEVICE>(intp_data_new);
 			const T* original_ptr = ArrayFunc::Data<T, DEVICE>(finer_data);

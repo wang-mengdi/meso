@@ -62,8 +62,7 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
-			Assert(p.size() == dof, "PoissonMapping: p.size() not equal to dof");
-			Assert(Ap.size() == dof, "PoissonMapping: Ap.size() not equal to dof");
+			Memory_Check(Ap, p, "PoissonMapping::Apply error: not enough space");
 
 			//temp_cell=p, set to 0 if fixed
 			auto identity_except_fixed = [=] __device__(T v, bool fixed) ->T { return fixed ? 0 : v; };

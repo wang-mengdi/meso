@@ -31,8 +31,7 @@ void Test_Sparse_Matrix(void)
     //Solve with our CG solver with linear mapping
     SparseMatrixMapping<real, DEVICE> smm(A);
     ConjugateGradient<real> cg;
-    cg.verbose = true;
-    cg.Init(&smm, nullptr, e_cg.maxIterations(), e_cg.tolerance()); //use the same max iteration and tolerance as Eigen
+    cg.Init(&smm, nullptr, true, e_cg.maxIterations(), e_cg.tolerance()); //use the same max iteration and tolerance as Eigen
 
     //Verify linear mapping first
     ArrayDv<real> x_d(cols), b_d(cols);

@@ -8,7 +8,7 @@
 namespace Meso {
 
 	template<class T>
-	void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T>* _preconditioner, const int _max_iter, const real _relative_tolerance, bool _verbose)
+	void ConjugateGradient<T>::Init(LinearMapping<T>* _linear_mapping, LinearMapping<T>* _preconditioner, bool _verbose, const int _max_iter, const real _relative_tolerance)
 	{
 		linear_mapping = _linear_mapping;
 		preconditioner = _preconditioner;
@@ -52,6 +52,7 @@ namespace Meso {
 
 		//rhs_norm2=r*r
 		real rhs_norm2 = ArrayFunc::Dot(r, r);
+		if (verbose) Info("ConjugateGradient initial norm of rhs: {}", sqrt(rhs_norm2));
 
 		//if b is zero, just solve to zero
 		if (rhs_norm2 == 0) {
@@ -92,6 +93,7 @@ namespace Meso {
 			ArrayFunc::Axpy(-alpha, Ap, r);
 
 			residual_norm2 = ArrayFunc::Dot(r, r);
+			if (verbose) Info("ConjugateGradient iter {} norm {} against threshold {}", i, sqrt(residual_norm2), sqrt(threshold_norm2));
 			if (residual_norm2 < threshold_norm2) break;
 
 			//z_{k+1} = Minv * r_{k+1}

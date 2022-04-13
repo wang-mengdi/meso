@@ -33,7 +33,7 @@ namespace Meso {
 		virtual int XDof()const { return dof; }
 		virtual int YDof()const { return dof; }
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
-			Assert(Check_Memory(x, b), "DampedJacobiSmoother::Apply error: memory space not enough");
+			Memory_Check(x, b, "DampedJacobiSmoother::Apply error: not enough memory space");
 			if (iter_num == 0) {
 				ArrayFunc::Fill(x, (T)0);
 				return;

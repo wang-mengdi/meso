@@ -16,7 +16,7 @@
 namespace Meso {
 
 	template<class T>
-	class VCycleMultigrid :LinearMapping<T> {
+	class VCycleMultigrid :public LinearMapping<T> {
 		using LinearMappingPtr = std::shared_ptr<LinearMapping<T>>;
 	public:
 		int L, dof;
@@ -47,6 +47,7 @@ namespace Meso {
 			//downstroke (fine->coarse)
 			ArrayFunc::Copy(bs[0], b0);
 			for (int i = 0; i < L; i++) {
+				Info("downstroke layer {}", i);
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
@@ -55,6 +56,7 @@ namespace Meso {
 			direct_solver->Apply(xs[L], bs[L]);
 			//upstroke (coarse->fine)
 			for (int i = L - 1; i >= 0; i--) {
+				Info("upstroke layer {}", i);
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
 				ArrayFunc::Add(xs[i], rs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
@@ -74,9 +76,13 @@ namespace Meso {
 			L = (int)std::ceil(log2(grid_min_size)) - 3;
 			Array<Grid<d>> grids(L + 1);
 			grids[0] = poisson.Grid();
+			dof = grids[0].DoF();
 			for (int i = 1; i <= L; i++) {
 				grid_size /= 2;
 				grids[i] = Grid<d>(grid_size);
+			}
+			for (int i = 0; i <= L; i++) {
+				Info("layer {} grid size {}", i, grids[i].counts);
 			}
 
 			//mappings
@@ -126,7 +132,7 @@ namespace Meso {
 			xs.resize(L + 1);
 			bs.resize(L + 1);
 			rs.resize(L + 1);//seem rs only need L
-			for (int i = 0; i < L; i++) {
+			for (int i = 0; i <= L; i++) {
 				int n = grids[i].DoF();
 				xs[i].resize(n);
 				bs[i].resize(n);
