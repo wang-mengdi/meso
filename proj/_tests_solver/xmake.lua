@@ -1,4 +1,4 @@
-add_rules("mode.debug")
+add_rules("mode.debug","mode.release")
 includes("./../../src/solver/xmake.lua")
 target("_tests_solver")
     add_rules("plugin.vsxmake.autoupdate")
