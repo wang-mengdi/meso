@@ -101,6 +101,8 @@ using VectorDi=Vector<int,d>
         }
     }
 
+    void Check_Cuda_Memory(const std::string str = "");
+
     //// fmt part
 
     template<typename ...Args>

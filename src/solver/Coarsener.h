@@ -33,7 +33,7 @@ namespace Meso {
 		VectorDi finer_face = coarser_face * 2;
 		VectorD finer_frac = VectorD::Ones() * 0.5;
 		finer_frac[axis] = 0;
-		coarser_data[coarser_grid.Index(coarser_face)] = Interpolation::Linear_Intp(finer_grid, finer_data, finer_face, finer_frac);
+		coarser_data[coarser_grid.Index(coarser_face)] = Interpolation::Linear_Intp_Padding0(finer_grid, finer_data, finer_face, finer_frac);
 	}
 
 	template<int d>
@@ -43,23 +43,27 @@ namespace Meso {
 
 		//coarser_poisson must be already allocated previously
 		template<class T>
-		static void Apply(PoissonMapping<T, d>& coarser_poisson, const decltype(coarser_poisson) finer_poisson) {
-			const auto& finer_grid = finer_poisson.fixed.grid;
-			const auto& coarser_grid = coarser_poisson.fixed.grid;
+		static void Apply(PoissonMapping<T, d>& coarse_poisson, const decltype(coarse_poisson) fine_poisson) {
+			const auto& coarse_grid = coarse_poisson.Grid();
+			const auto& fine_grid = fine_poisson.Grid();
+			
+			Info("coarsen fine_grid counts {} coarse_grid counts {}", fine_grid.counts, coarse_grid.counts);
 			
 			//fill fixed
-			bool* coarser_fixed = coarser_poisson.fixed.Data();
-			const bool* finer_fixed = finer_poisson.fixed.Data();
-			coarser_grid.Exec_Kernel(&Coarsen_Fixed_Kernel<d>, coarser_grid, coarser_fixed, finer_grid, finer_fixed);
+			bool* coarse_fixed = coarse_poisson.fixed.Data();
+			const bool* fine_fixed = fine_poisson.fixed.Data();
+			coarse_grid.Exec_Kernel(&Coarsen_Fixed_Kernel<d>, coarse_grid, coarse_fixed, fine_grid, fine_fixed);
 
 			//fill vol
 			for (int axis = 0; axis < d; axis++) {
-				Grid<d, CORNER> coarser_face_grid = coarser_poisson.vol.grid.Face_Grid(axis);
-				Grid<d, CORNER> finer_face_grid = finer_poisson.vol.grid.Face_Grid(axis);
-				T* coarser_vol = coarser_poisson.vol.Data(axis);
-				const T* finer_vol = finer_poisson.vol.Data(axis);
-				coarser_face_grid.Exec_Kernel(&Coarsen_Vol_Kernel<T, d>, axis, coarser_face_grid, coarser_vol, finer_face_grid, finer_vol);
+				Grid<d, CORNER> coarse_face_grid = coarse_grid.Face_Grid(axis);
+				Grid<d, CORNER> fine_face_grid = fine_grid.Face_Grid(axis);
+				T* coarse_vol = coarse_poisson.vol.Data(axis);
+				const T* fine_vol = fine_poisson.vol.Data(axis);
+				coarse_face_grid.Exec_Kernel(&Coarsen_Vol_Kernel<T, d>, axis, coarse_face_grid, coarse_vol, fine_face_grid, fine_vol);
 			}
+			cudaDeviceSynchronize();
+			checkCudaErrors(cudaGetLastError());
 		}
 	};
 }

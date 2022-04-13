@@ -13,14 +13,25 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		Grid<d, CENTER> grid;
-		std::array<Array<T, side>, d> face_data;
+		//std::array<Array<T, side>, d> face_data;
+		Array<T, side> face_data[3];//d<=3
 		FaceField() {}
 		FaceField(const Grid<d, CENTER>& _grid) { Init(_grid); }
 		FaceField(const Grid<d, CENTER>& _grid, const T value) { Init(_grid);  Fill(value); }
 		void Fill(const T value) { for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(face_data[axis], value); }
 		void Init(const Grid<d, CENTER>& _grid) {
 			grid = _grid;
-			for (int axis = 0; axis < d; axis++) face_data[axis].resize(grid.Face_DoF(axis));
+			for (int axis = 0; axis < d; axis++) {
+				int n = grid.Face_DoF(axis);
+				Info("axis {} size before {} ", axis, face_data[axis].size());
+				Check_Cuda_Memory("facefield init before");
+				Info("face field side {} axis {} resize {}", side, axis, grid.Face_DoF(axis));
+				//face_data[axis].clear();
+				//face_data[axis].reserve(n);
+				//Info("reserve done\n");
+				face_data[axis].resize(n);
+				cudaDeviceSynchronize();
+			}
 		}
 
 		template<DataHolder side1> void Copy(const FaceField<T, d, side1> &f1) { for (int i = 0; i < d; i++) { ArrayFunc::Copy(face_data[i], f1.face_data[i]); } }
