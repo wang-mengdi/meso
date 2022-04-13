@@ -60,5 +60,11 @@ void Test_MGPCG(const Vector<int, d> counts) {
 	int iters = 0;
 	real res = 0;
 	MGPCG.Solve(x_dev.data, b_dev.data, iters, res);
-	Info("MGPCG solved {} iters with relative_error={}", iters, res);
+	//Info("MGPCG solved {} iters with relative_error={}", iters, res);
+	if (iters < 100) {
+		Pass("MGPCG test passed for counts={}, with {} iters and relative_error={}", counts, iters, res);
+	}
+	else {
+		Error("MGPCG test failed for counts={}, with {} iters and relative_error={}", counts, iters, res);
+	}
 }

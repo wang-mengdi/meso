@@ -16,21 +16,6 @@
 using namespace Meso;
 
 int main(){
-    Test_MGPCG<float>(Vector3i(128, 128, 128));
-    //Test_Multigrid<double>(Vector3i(32, 64, 128));
-
-    //Vector3i counts(32, 64, 128);
-    //int L = 2;
-    //Array<PoissonMapping<double, 3>> poissons;
-    //poissons.resize(L + 1);
-    //for (int i = 0; i <= 2; i++) {
-    //    Grid<3> grid(counts);
-    //    poissons[i].Init(grid);
-    //    counts /= 2;
-    //}
-
-    return 0;
-
     Test_Sparse_Matrix();
     Test_CG_Memory_Safe();
 
@@ -64,5 +49,10 @@ int main(){
     Test_MGPCG<double>(Vector2i(64, 67));
     Test_MGPCG<float>(Vector3i(34, 34, 66));
     Test_MGPCG<double>(Vector3i(34, 34, 66));
+
+    Test_MGPCG<float>(Vector2i(512, 513));
+    Test_MGPCG<double>(Vector2i(512, 513));
+    Test_MGPCG<float>(Vector3i(128, 129, 128));
+    Test_MGPCG<double>(Vector3i(128, 129, 128));
     return 0;
 }
