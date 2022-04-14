@@ -18,7 +18,7 @@ namespace Meso {
 		GridGSMask(const Grid<d> _grid) {
 			grid = _grid;
 		}
-		int operator () (const int idx)const {
+		__host__ __device__ int operator () (const int idx)const {
 			VectorDi coord = grid.Coord(idx);
 			int col = (coord[0] & 1);
 			col |= ((coord[1] & 1) << 1);
@@ -29,7 +29,7 @@ namespace Meso {
 	template<class T, int d>
 	class GridGSSmoother : public LinearMapping<T> {
 	public:
-		constexpr int color_num = (d == 2 ? 4 : 8);
+		static constexpr int color_num = (d == 2 ? 4 : 8);
 		LinearMapping<T>* mapping;
 		int dof;
 		int iter_num;
@@ -37,8 +37,11 @@ namespace Meso {
 		ArrayDv<T> x_temp;
 		GridGSMask<d> mask;
 		GridGSSmoother() {}
+		GridGSSmoother(PoissonMapping<T, d>& _mapping, const int _iter_num) {
+			Init_Poisson(_mapping, _iter_num);
+		}
 		void Init_Poisson(PoissonMapping<T, d>& _mapping, const int _iter_num) {
-			mapping = _mapping;
+			mapping = &_mapping;
 			iter_num = _iter_num;
 			dof = mapping->XDof();
 			Poisson_Diagonal(diag, _mapping);

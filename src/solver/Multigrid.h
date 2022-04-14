@@ -11,6 +11,7 @@
 #include "Restrictor.h"
 #include "Prolongator.h"
 #include "DampedJacobiSmoother.h"
+#include "GridGSSmoother.h"
 #include "LUDirectSolver.h"
 
 namespace Meso {
@@ -117,8 +118,10 @@ namespace Meso {
 			postsmoothers.resize(L);
 			for (int i = 0; i < L; i++) {
 				PoissonPtr poisson = std::dynamic_pointer_cast<PoissonMapping<T, d>>(mappings[i]);
-				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*poisson, pre_iter, 2.0 / 3.0);
-				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*poisson, post_iter, 2.0 / 3.0);
+				//presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*poisson, pre_iter, 2.0 / 3.0);
+				//postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*poisson, post_iter, 2.0 / 3.0);
+				presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter);
+				postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter);
 			}
 
 			//direct_solver
