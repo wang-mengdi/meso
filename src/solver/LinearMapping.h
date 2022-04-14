@@ -25,7 +25,7 @@ namespace Meso {
 		//check if Ap and p has enough space
 		template<typename ...Args>
 		void Memory_Check(const ArrayDv<T>& Ap, const ArrayDv<T>& p, const Args&...args) const {
-			Assert(p.size() >= XDof() && Ap.size() >= YDof(), args...);
+			Assert(p.size() == XDof() && Ap.size() == YDof(), args...);
 		}
 	};
 

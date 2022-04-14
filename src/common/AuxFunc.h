@@ -91,6 +91,11 @@ namespace Meso {
 		void Multiply(Array1& a, const decltype(a) b) {
 			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 * _2);
 		}
+		//element-wise divide, a/.=b
+		template<class Array1, class Array2>
+		void Divide(Array1& a, const Array2& b) {
+			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 / _2);
+		}
 		//element-wise add, a+.=b
 		template<class Array1, class Array2>
 		void Add(Array1& a, const Array2& b) {
