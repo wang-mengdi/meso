@@ -14,33 +14,33 @@ namespace Meso {
 	public:
 		Grid<d, CENTER> grid;
 		//std::array<Array<T, side>, d> face_data;
-		Array<T, side> face_data[3];//d<=3
+		std::shared_ptr<Array<T, side>> face_data[3] = { nullptr,nullptr,nullptr };
 		FaceField() {}
 		FaceField(const Grid<d, CENTER>& _grid) { Init(_grid); }
 		FaceField(const Grid<d, CENTER>& _grid, const T value) { Init(_grid);  Fill(value); }
-		void Fill(const T value) { for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(face_data[axis], value); }
+		void Fill(const T value) { for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(*face_data[axis], value); }
 		void Init(const Grid<d, CENTER>& _grid) {
 			grid = _grid;
 			for (int axis = 0; axis < d; axis++) {
 				int n = grid.Face_DoF(axis);
-				face_data[axis].resize(n);
+				if (face_data[axis] == nullptr) face_data[axis] = std::make_shared<Array<T, side>>(n);
+				else face_data[axis]->resize(n);
 				checkCudaErrors(cudaGetLastError());
 			}
 		}
 
-		template<DataHolder side1> void Copy(const FaceField<T, d, side1> &f1) { for (int i = 0; i < d; i++) { ArrayFunc::Copy(face_data[i], f1.face_data[i]); } }
-
-		inline T& operator()(const int axis, const VectorDi face) { return face_data[axis][grid.Face_Index(axis, face)]; }
-		inline const T& operator()(int axis, const VectorDi face) const { return face_data[axis][grid.Face_Index(axis, face)]; }
-
-		constexpr T* Data(const int axis) noexcept {
-			if constexpr (side == HOST) return face_data[axis].data();
-			else return thrust::raw_pointer_cast(face_data[axis].data());
+		template<DataHolder side1> 
+		void Deep_Copy(const FaceField<T, d, side1>& f1) {
+			for (int i = 0; i < d; i++) { ArrayFunc::Copy(*face_data[i], f1.Data(i)); }
 		}
-		constexpr const T* Data(const int axis) const noexcept {
-			if constexpr (side == HOST) return face_data[axis].data();
-			else return thrust::raw_pointer_cast(face_data[axis].data());
-		}
+
+		inline T& operator()(const int axis, const VectorDi face) { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
+		inline const T& operator()(int axis, const VectorDi face) const { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
+
+		constexpr Array<T, side>& Data(const int axis)noexcept { return *face_data[axis]; }
+		constexpr const Array<T, side>& Data(const int axis)const noexcept { return *face_data[axis]; }
+		constexpr T* Data_Ptr(const int axis) noexcept { return thrust::raw_pointer_cast(face_data[axis]->data()); }
+		constexpr const T* Data_Ptr(const int axis) const noexcept { return thrust::raw_pointer_cast(face_data[axis]->data()); }
 
 		template<class IFFunc>
 		void Iterate_Faces(IFFunc f) {
@@ -62,7 +62,7 @@ namespace Meso {
 				thrust::transform(
 					idxfirst,
 					idxlast,
-					face_data[axis].begin(),
+					face_data[axis]->begin(),
 					[f, axis, this](const int idx) {
 						return f(axis, grid.Face_Coord(axis, idx));
 					}

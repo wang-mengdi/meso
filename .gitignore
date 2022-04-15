@@ -3,3 +3,4 @@ proj/*/build/
 *.xmake/
 build/
 bin/
+.vs/

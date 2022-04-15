@@ -40,7 +40,7 @@ namespace Meso {
 		}
 		void Init(const Grid<d, CENTER>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
 			Allocate_Memory(grid);
-			vol.Copy(_vol);
+			vol.Deep_Copy(_vol);
 			fixed.Deep_Copy(_fixed);
 		}
 		template<class IFFunc, class CFunc>
@@ -71,7 +71,7 @@ namespace Meso {
 			//temp_face = grad(temp_cell) *. vol
 			D_CoCell_Mapping(temp_cell, temp_face);
 			for (int axis = 0; axis < d; axis++) {
-				ArrayFunc::Multiply(temp_face.face_data[axis], vol.face_data[axis]);
+				ArrayFunc::Multiply(temp_face.Data(axis), vol.Data(axis));
 			}
 
 			//temp_cell = -div(temp_face)

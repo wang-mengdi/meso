@@ -56,8 +56,8 @@ namespace Meso {
 			for (int axis = 0; axis < d; axis++) {
 				Grid<d, CORNER> coarse_face_grid = coarse_grid.Face_Grid(axis);
 				Grid<d, CORNER> fine_face_grid = fine_grid.Face_Grid(axis);
-				T* coarse_vol = coarse_poisson.vol.Data(axis);
-				const T* fine_vol = fine_poisson.vol.Data(axis);
+				T* coarse_vol = coarse_poisson.vol.Data_Ptr(axis);
+				const T* fine_vol = fine_poisson.vol.Data_Ptr(axis);
 				coarse_face_grid.Exec_Kernel(&Coarsen_Vol_Kernel<T, d>, axis, coarse_face_grid, coarse_vol, fine_face_grid, fine_vol);
 			}
 			cudaDeviceSynchronize();
