@@ -41,7 +41,7 @@ namespace Meso {
 		void Init(const Grid<d, CENTER>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
 			Allocate_Memory(grid);
 			vol.Copy(_vol);
-			fixed.Copy(_fixed);
+			fixed.Deep_Copy(_fixed);
 		}
 		template<class IFFunc, class CFunc>
 		void Init(const Grid<d, CENTER>& grid, IFFunc vol_func, CFunc is_unknown_func) {
@@ -66,7 +66,7 @@ namespace Meso {
 
 			//temp_cell=p, set to 0 if fixed
 			auto identity_except_fixed = [=] __device__(T v, bool fixed) ->T { return fixed ? 0 : v; };
-			ArrayFunc::Binary_Transform(p, fixed.data, identity_except_fixed, temp_cell.data);
+			ArrayFunc::Binary_Transform(p, fixed.Data(), identity_except_fixed, temp_cell.Data());
 
 			//temp_face = grad(temp_cell) *. vol
 			D_CoCell_Mapping(temp_cell, temp_face);
@@ -76,16 +76,16 @@ namespace Meso {
 
 			//temp_cell = -div(temp_face)
 			D_Face_Mapping(temp_face, temp_cell);
-			ArrayFunc::Unary_Transform(temp_cell.data, thrust::negate<T>(), temp_cell.data);
+			ArrayFunc::Unary_Transform(temp_cell.Data(), thrust::negate<T>(), temp_cell.Data());
 			//Ap=temp_cell, set to 0 if fixed
-			ArrayFunc::Binary_Transform(temp_cell.data, fixed.data, identity_except_fixed, Ap);
+			ArrayFunc::Binary_Transform(temp_cell.Data(), fixed.Data(), identity_except_fixed, Ap);
 
 			//if fixed, add p back
 			thrust::transform_if(
 				Ap.begin(),//first1
 				Ap.end(),//last1
 				p.begin(),//first2
-				fixed.data.begin(),//stencil
+				fixed.Data().begin(),//stencil
 				Ap.begin(),//result
 				_1 + _2,//binary op
 				thrust::identity<bool>()//pred

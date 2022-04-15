@@ -41,7 +41,7 @@ namespace Meso {
 		}
 		template<class T,int d, DataHolder side>
 		T __host__ __device__ Linear_Intp(const Field<T, d, side>& F, const Vector<real, d> pos) {
-			const T* data_ptr = ArrayFunc::Data<T, side>(F.data);
+			const T* data_ptr = F.Data_Ptr();
 			Vector<int, d> node; Vector<real, d> frac;
 			F.grid.Get_Fraction(pos, node, frac);
 			return Linear_Intp(F.grid, data_ptr, node, frac);

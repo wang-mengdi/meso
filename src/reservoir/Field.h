@@ -17,40 +17,49 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		Grid<d, GridType::CENTER> grid;
-		Array<T, side> data;
+		std::shared_ptr<Array<T, side>> data = nullptr;
 		Field() {}
 		Field(const Grid<d, GridType::CENTER>& _grid) { Init(_grid); }
 		Field(const Grid<d, GridType::CENTER> _grid, const T value) { Init(_grid, value); }
 		template<DataHolder side1> Field(const Field<T, d, side1>& f1) { *this = f1; }
 		void Init(const Grid<d, GridType::CENTER> _grid) {
 			grid = _grid;
-			data.resize(grid.DoF());
+			if (data == nullptr) data = std::make_shared<Array<T, side>>(grid.DoF());
+			else data->resize(grid.DoF());
+			//data.resize(grid.DoF());
 			checkCudaErrors(cudaGetLastError());
 		}
 		void Init(const Grid<d, GridType::CENTER> _grid, const T value) {
 			Init(_grid);
-			ArrayFunc::Fill(data, value);
+			ArrayFunc::Fill(*data, value);
 		}
 		template<DataHolder side1>
 		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) {
-			grid = f1.grid;
-			data = f1.data;
+			Deep_Copy(f1);
 			return *this;
 		}
 
-		constexpr T* Data(void) noexcept {
-			if constexpr (side == HOST) return data.data();
-			else return thrust::raw_pointer_cast(data.data());
+		constexpr Array<T, side>& Data(void) noexcept {
+			return *data;
 		}
-		constexpr const T* Data(void) const noexcept {
-			if constexpr (side == HOST) return data.data();
-			else return thrust::raw_pointer_cast(data.data());
+		constexpr const Array<T, side>& Data(void)const noexcept {
+			return *data;
+		}
+		constexpr T* Data_Ptr(void) noexcept {
+			return thrust::raw_pointer_cast(data->data());
+		}
+		constexpr const T* Data_Ptr(void) const noexcept {
+			return thrust::raw_pointer_cast(data->data());
 		}
 		
-		template<DataHolder side1> void Copy(const Field<T, d, side1>& f1) { Init(f1.grid); ArrayFunc::Copy(data, f1.data); }
+		template<DataHolder side1> 
+		void Deep_Copy(const Field<T, d, side1>& f1) {
+			Init(f1.grid);
+			ArrayFunc::Copy(*data, f1.Data());
+		}
 
-		inline T& operator()(const VectorDi coord) { return data[grid.Index(coord)]; }
-		inline const T& operator()(const VectorDi coord) const { return data[grid.Index(coord)]; }
+		inline T& operator()(const VectorDi coord) { return (*data)[grid.Index(coord)]; }
+		inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 
 		template<class CFunc>
 		void Iterate_Cells(CFunc f){
@@ -68,7 +77,7 @@ namespace Meso {
 			thrust::transform(
 				idxfirst,
 				idxlast,
-				data.begin(),
+				data->begin(),
 				[f, this](const int idx) {
 					return f(grid.Coord(idx));
 				}

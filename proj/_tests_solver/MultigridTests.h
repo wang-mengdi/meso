@@ -49,7 +49,7 @@ void Test_MGPCG(const Vector<int, d> counts) {
 	Grid<d> grid(counts);
 	PoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid);
 	Field<T, d> b_host(grid);
-	Random::Fill_Random_Array<T>(b_host.data, -5, 10);
+	Random::Fill_Random_Array<T>(b_host.Data(), -5, 10);
 	FieldDv<T, d> b_dev = b_host;
 	FieldDv<T, d> x_dev(grid, 0);
 	ConjugateGradient<T> MGPCG;
@@ -60,7 +60,7 @@ void Test_MGPCG(const Vector<int, d> counts) {
 	//MGPCG.Init(&poisson, nullptr, true);
 	int iters = 0;
 	real res = 0;
-	MGPCG.Solve(x_dev.data, b_dev.data, iters, res);
+	MGPCG.Solve(x_dev.Data(), b_dev.Data(), iters, res);
 	//Info("MGPCG solved {} iters with relative_error={}", iters, res);
 	if (iters < 100) {
 		Pass("MGPCG test passed for counts={}, with {} iters and relative_error={}", counts, iters, res);

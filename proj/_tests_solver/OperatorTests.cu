@@ -41,12 +41,12 @@ namespace Meso {
 
 		Field<bool, 2> coarsen_result; coarsen_result = coarser.fixed;
 
-		if (ArrayFunc::Equals<bool>(coarsen_result.data, coarser_data.data)) {
+		if (ArrayFunc::Equals<bool>(coarsen_result.Data(), coarser_data.Data())) {
 			Pass("Test_Coarsener2 passed {}", counts);
 		}
 		else {
 			Error("Test_Coarsener2 failed {}", counts);
-			Field<bool, 2> finer_temp; finer_temp.Copy(finer.fixed);
+			Field<bool, 2> finer_temp = finer.fixed;
 			Info("finer_data: \n{}", finer_data);
 			Info("coarser_data:\n{}", coarser_data);
 			Info("finer on device:\n{}", finer_temp);
@@ -98,7 +98,7 @@ namespace Meso {
 
 		Field<bool, 3> coarsen_result; coarsen_result = coarser.fixed;
 
-		if (ArrayFunc::Equals<bool>(coarsen_result.data, coarser_data.data)) {
+		if (ArrayFunc::Equals<bool>(coarsen_result.Data(), coarser_data.Data())) {
 			Pass("Test_Coarsener3 passed {}", counts);
 		}
 		else {

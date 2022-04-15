@@ -22,7 +22,7 @@ void Test_Restrictor(const Vector<int, d> counts) {
 	Grid<d> coarser_grid(counts / 2);
 	Field<T, d> finer_host(finer_grid);
 	Field<T, d> coarser_host(coarser_grid);
-	Random::Fill_Random_Array<T>(finer_host.data);
+	Random::Fill_Random_Array<T>(finer_host.Data());
 	//ArrayFunc::Fill(finer_host.data, 0);
 	//finer_host(VectorFunc::Vi<d>(5, 5, 5)) = 1;
 	coarser_host.Calc_Cells(
@@ -59,12 +59,12 @@ void Test_Restrictor(const Vector<int, d> counts) {
 	restrictor.Init(coarser_grid, finer_grid);
 	FieldDv<T, d> finer_dev = finer_host;
 	FieldDv<T, d> coarser_dev = coarser_host;
-	restrictor.Apply(coarser_dev.data, finer_dev.data);
+	restrictor.Apply(coarser_dev.Data(), finer_dev.Data());
 	Field<T, d> restrictor_result = coarser_dev;
 
 	//Info("coarser_host: \n{}\n", coarser_host);
 	//Info("restrictor result: \n{}\n", restrictor_result);
-	if (!ArrayFunc::IsApprox<T>(restrictor_result.data, coarser_host.data)) {
+	if (!ArrayFunc::IsApprox<T>(restrictor_result.Data(), coarser_host.Data())) {
 		Error("Test_Restrictor failed for counts={}", counts);
 	}
 	else Pass("Test_Restrictor passed for counts={}", counts);

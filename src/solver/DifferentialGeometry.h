@@ -125,10 +125,10 @@ namespace Meso {
 		F.Fill(0);
 		dim3 blocknum, blocksize;
 		C.grid.Get_Kernel_Dims(blocknum, blocksize);
+		const T* cell = C.Data_Ptr();
 		if constexpr (d == 2) {
 			T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
 			T* face_y = thrust::raw_pointer_cast(F.face_data[1].data());
-			const T* cell = thrust::raw_pointer_cast(C.data.data());
 
 			D_CoCell_Mapping_Kernel2 << <blocknum, blocksize >> > (C.grid, face_x, face_y, cell);
 		}
@@ -136,7 +136,6 @@ namespace Meso {
 			T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
 			T* face_y = thrust::raw_pointer_cast(F.face_data[1].data());
 			T* face_z = thrust::raw_pointer_cast(F.face_data[2].data());
-			const T* cell = thrust::raw_pointer_cast(C.data.data());
 
 			D_CoCell_Mapping_Kernel3 << <blocknum, blocksize >> > (C.grid, face_x, face_y, face_z, cell);
 		}
@@ -260,14 +259,13 @@ namespace Meso {
 	void D_Face_Mapping(const FaceField<T, d, DEVICE>& F, Field<T, d, DEVICE>& C) {
 		dim3 blocknum, blocksize;
 		F.grid.Get_Kernel_Dims(blocknum, blocksize);
+		T* cell = C.Data_Ptr();
 		if constexpr (d == 2) {
-			T* cell = thrust::raw_pointer_cast(C.data.data());
 			const T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
 			const T* face_y = thrust::raw_pointer_cast(F.face_data[1].data());
 			D_Face_Mapping_Kernel2 << <blocknum, blocksize >> > (F.grid, cell, face_x, face_y);
 		}
 		else if constexpr (d == 3) {
-			T* cell = thrust::raw_pointer_cast(C.data.data());
 			const T* face_x = thrust::raw_pointer_cast(F.face_data[0].data());
 			const T* face_y = thrust::raw_pointer_cast(F.face_data[1].data());
 			const T* face_z = thrust::raw_pointer_cast(F.face_data[2].data());

@@ -32,7 +32,7 @@ void Test_Prolongator(const Vector<int, d> fine_counts) {
 	FieldDv<T, d> coarse_dev = coarse_host;
 	FieldDv<T, d> fine_dev(fine_grid);
 	Prolongator<T, d> P; P.Init(fine_grid, coarse_grid);
-	P.Apply(fine_dev.data, coarse_dev.data);
+	P.Apply(fine_dev.Data(), coarse_dev.Data());
 
 	Field<T, d> fine_cpu(fine_grid);
 	fine_cpu.Calc_Cells(
@@ -45,7 +45,7 @@ void Test_Prolongator(const Vector<int, d> fine_counts) {
 	Field<T, d> result_host = fine_dev;
 	//Info("fine_cpu: \n{}\n", fine_cpu);
 	//Info("result_host: \n{}\n", result_host);
-	if (ArrayFunc::IsApprox<T>(result_host.data, fine_cpu.data)) {
+	if (ArrayFunc::IsApprox<T>(result_host.Data(), fine_cpu.Data())) {
 		Pass("Test_Prolongator passed for fine_counts={}", fine_counts);
 	}
 	else {

@@ -48,8 +48,8 @@ namespace Meso {
 			const auto& fine_grid = fine_poisson.Grid();
 						
 			//fill fixed
-			bool* coarse_fixed = coarse_poisson.fixed.Data();
-			const bool* fine_fixed = fine_poisson.fixed.Data();
+			bool* coarse_fixed = coarse_poisson.fixed.Data_Ptr();
+			const bool* fine_fixed = fine_poisson.fixed.Data_Ptr();
 			coarse_grid.Exec_Kernel(&Coarsen_Fixed_Kernel<d>, coarse_grid, coarse_fixed, fine_grid, fine_fixed);
 
 			//fill vol
