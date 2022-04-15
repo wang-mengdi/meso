@@ -86,7 +86,7 @@ namespace Meso {
 		}
 	};
 
-	template<class T, int d> using FieldDv = Field<T, d, DEVICE>;
+	template<class T, int d, GridType gtype = CENTER> using FieldDv = Field<T, d, DEVICE, gtype>;
 
 
 
