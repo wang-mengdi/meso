@@ -12,11 +12,11 @@ namespace Meso {
 
 	enum CellType { Air = 0, Fluid, Solid };
 
-	template<class T, int d, DataHolder side = DataHolder::HOST>
+	template<class T, int d, DataHolder side = HOST, GridType gtype=CENTER>
 	class Field {
 		Typedef_VectorD(d);
 	public:
-		Grid<d, GridType::CENTER> grid;
+		Grid<d, gtype> grid;
 		std::shared_ptr<Array<T, side>> data = nullptr;
 		Field() {}
 		Field(const Grid<d, GridType::CENTER>& _grid) { Init(_grid); }
@@ -51,8 +51,8 @@ namespace Meso {
 		constexpr const T* Data_Ptr(void) const noexcept {
 			return thrust::raw_pointer_cast(data->data());
 		}
-		
-		template<DataHolder side1> 
+
+		template<DataHolder side1>
 		void Deep_Copy(const Field<T, d, side1>& f1) {
 			Init(f1.grid);
 			ArrayFunc::Copy(*data, f1.Data());
@@ -62,7 +62,7 @@ namespace Meso {
 		inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 
 		template<class CFunc>
-		void Iterate_Cells(CFunc f){
+		void Iterate_Cells(CFunc f) {
 			const int dof = grid.DoF();
 			for (int c = 0; c < dof; c++) {
 				f(grid.Coord(c));
