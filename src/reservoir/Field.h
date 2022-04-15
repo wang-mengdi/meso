@@ -19,10 +19,11 @@ namespace Meso {
 		Grid<d, gtype> grid;
 		std::shared_ptr<Array<T, side>> data = nullptr;
 		Field() {}
-		Field(const Grid<d, GridType::CENTER>& _grid) { Init(_grid); }
-		Field(const Grid<d, GridType::CENTER> _grid, const T value) { Init(_grid, value); }
-		template<DataHolder side1> Field(const Field<T, d, side1>& f1) { *this = f1; }
-		void Init(const Grid<d, GridType::CENTER> _grid) {
+		Field(const Grid<d, gtype>& _grid, std::shared_ptr<Array<T, side>> _data) { grid = _grid; data = _data; }
+		Field(const Grid<d, gtype>& _grid) { Init(_grid); }
+		Field(const Grid<d, gtype> _grid, const T value) { Init(_grid, value); }
+		template<DataHolder side1> Field(const Field<T, d, side1, gtype>& f1) { *this = f1; }
+		void Init(const Grid<d, gtype> _grid) {
 			grid = _grid;
 			if (data == nullptr) data = std::make_shared<Array<T, side>>(grid.DoF());
 			else data->resize(grid.DoF());
