@@ -14,7 +14,7 @@ template<class T, int d>
 void Test_Interpolation(const Vector<int, d> counts) {
 	Typedef_VectorD(d);
 	VectorD domain_min = VectorFunc::V<d>(-0.9, -1.2, 3);
-	Grid<d, CORNER> grid(counts, 0.01, domain_min);
+	Grid<d> grid(counts, 0.01, domain_min, COLLOC);
 	//Grid<d, CORNER> grid(counts, 0.01);
 	
 	Array<T> my_data(grid.DoF());
@@ -30,7 +30,7 @@ void Test_Interpolation(const Vector<int, d> counts) {
 		}
 	);
 	//VectorD domain_min = grid.Domain_Min();
-	VectorD domain_max = grid.Domain_Max();
+	VectorD domain_max = domain_min + grid.dx * (grid.counts - VectorDi::Ones()).template cast<real>();
 	for (int i = 0; i < counts.prod() * 10; i++) {
 		Vector<real, d> pos = Random::Uniform_In_Box(domain_min, domain_max);
 		VectorDi coord; VectorD frac; grid.Get_Fraction(pos, coord, frac);

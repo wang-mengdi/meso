@@ -19,8 +19,8 @@ namespace Meso {
 	//};
 
 	namespace Interpolation {
-		template<class T, int d, GridType gtype>
-		T __host__ __device__ Linear_Intp(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		template<class T, int d>
+		T __host__ __device__ Linear_Intp(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			Typedef_VectorD(d);
 			static constexpr int dx[8] = { 0,1,0,1,0,1,0,1 };
 			static constexpr int dy[8] = { 0,0,1,1,0,0,1,1 };
@@ -55,8 +55,8 @@ namespace Meso {
 			return Linear_Intp(F.grid, data_ptr, node, frac);
 		}
 
-		template<class T, int d, GridType gtype>
-		T __host__ __device__ Linear_Intp_Padding0(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		template<class T, int d>
+		T __host__ __device__ Linear_Intp_Padding0(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			static constexpr T padding_val = 0;
 			//considering invalid datas as 0
 			Typedef_VectorD(d);

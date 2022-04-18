@@ -12,25 +12,25 @@ namespace Meso {
 
 	enum CellType { Air = 0, Fluid, Solid };
 
-	template<class T, int d, DataHolder side = HOST, GridType gtype=CENTER>
+	template<class T, int d, DataHolder side = HOST>
 	class Field {
 		Typedef_VectorD(d);
 	public:
-		Grid<d, gtype> grid;
+		Grid<d> grid;
 		std::shared_ptr<Array<T, side>> data = nullptr;
 		Field() {}
-		Field(const Grid<d, gtype>& _grid, std::shared_ptr<Array<T, side>> _data) { grid = _grid; data = _data; }
-		Field(const Grid<d, gtype>& _grid) { Init(_grid); }
-		Field(const Grid<d, gtype> _grid, const T value) { Init(_grid, value); }
-		template<DataHolder side1> Field(const Field<T, d, side1, gtype>& f1) { *this = f1; }
-		void Init(const Grid<d, gtype> _grid) {
+		Field(const Grid<d>& _grid, std::shared_ptr<Array<T, side>> _data) { grid = _grid; data = _data; }
+		Field(const Grid<d>& _grid) { Init(_grid); }
+		Field(const Grid<d> _grid, const T value) { Init(_grid, value); }
+		template<DataHolder side1> Field(const Field<T, d, side1>& f1) { *this = f1; }
+		void Init(const Grid<d> _grid) {
 			grid = _grid;
 			if (data == nullptr) data = std::make_shared<Array<T, side>>(grid.DoF());
 			else data->resize(grid.DoF());
 			//data.resize(grid.DoF());
 			checkCudaErrors(cudaGetLastError());
 		}
-		void Init(const Grid<d, GridType::CENTER> _grid, const T value) {
+		void Init(const Grid<d> _grid, const T value) {
 			Init(_grid);
 			ArrayFunc::Fill(*data, value);
 		}
@@ -91,9 +91,7 @@ namespace Meso {
 		}
 	};
 
-	template<class T, int d, GridType gtype = CENTER> using FieldDv = Field<T, d, DEVICE, gtype>;
-
-
+	template<class T, int d> using FieldDv = Field<T, d, DEVICE>;
 
 }
 

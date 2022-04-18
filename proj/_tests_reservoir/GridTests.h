@@ -78,7 +78,7 @@ void Test_Face_Grid(const Vector<int, d> counts) {
 	Typedef_VectorD(d);
 	Grid<d> grid(counts);
 	FaceField<int, d> F(grid);
-	Grid<d, CORNER> face_grids[3];
+	Grid<d> face_grids[3];
 	for (int axis = 0; axis < d; axis++) {
 		face_grids[axis] = grid.Face_Grid(axis);
 	}

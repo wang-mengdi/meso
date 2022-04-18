@@ -12,14 +12,14 @@ namespace Meso {
 	class FaceField {
 		Typedef_VectorD(d);
 	public:
-		Grid<d, CENTER> grid;
+		Grid<d> grid;
 		//std::array<Array<T, side>, d> face_data;
 		std::shared_ptr<Array<T, side>> face_data[3] = { nullptr,nullptr,nullptr };
 		FaceField() {}
-		FaceField(const Grid<d, CENTER>& _grid) { Init(_grid); }
-		FaceField(const Grid<d, CENTER>& _grid, const T value) { Init(_grid);  Fill(value); }
+		FaceField(const Grid<d>& _grid) { Init(_grid); }
+		FaceField(const Grid<d>& _grid, const T value) { Init(_grid);  Fill(value); }
 		void Fill(const T value) { for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(*face_data[axis], value); }
-		void Init(const Grid<d, CENTER>& _grid) {
+		void Init(const Grid<d>& _grid) {
 			grid = _grid;
 			for (int axis = 0; axis < d; axis++) {
 				int n = grid.Face_DoF(axis);
