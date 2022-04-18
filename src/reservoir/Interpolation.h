@@ -85,6 +85,13 @@ namespace Meso {
 		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			return PointIntp::Value(grid, data, coord, frac);
 		}
+		template<class T, int d>
+		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<real, d> pos) {
+			Vector<int, d> node;
+			Vector<real, d> frac;
+			grid.Get_Fraction(pos, node, frac);
+			return PointIntp::Value(grid, data, node, frac);
+		}
 		template<class T, int d, DataHolder side>
 		static T __host__ __device__ Value(const Field<T, d, side>& F, const Vector<real, d> pos) {
 			const T* data_ptr = F.Data_Ptr();
