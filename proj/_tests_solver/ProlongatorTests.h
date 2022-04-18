@@ -38,7 +38,8 @@ void Test_Prolongator(const Vector<int, d> fine_counts) {
 	fine_cpu.Calc_Cells(
 		[&](const VectorDi cell) {
 			VectorD pos = fine_grid.Position(cell);
-			return Interpolation::Linear_Intp(coarse_pad, pos);
+			return IntpLinear::Value(coarse_pad, pos);
+			//return Interpolation::Linear_Intp(coarse_pad, pos);
 		}
 	);
 

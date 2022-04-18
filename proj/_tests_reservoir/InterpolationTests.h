@@ -35,7 +35,8 @@ void Test_Interpolation(const Vector<int, d> counts) {
 		Vector<real, d> pos = Random::Uniform_In_Box(domain_min, domain_max);
 		VectorDi coord; VectorD frac; grid.Get_Fraction(pos, coord, frac);
 		Assert(grid.Valid(coord), "Test_Interpolation encountered an invalid position {}", pos);
-		real from_intp = Interpolation::Linear_Intp(grid, my_data.data(), coord, frac);
+		real from_intp = IntpLinear::Value(grid, my_data.data(), coord, frac);
+		//real from_intp = Interpolation<PointIntpLinear>::Value(grid, my_data.data(), coord, frac);
 		if (fabs(from_intp - f(pos)) > MathFunc::Eps<T>()) {
 			Info("coord: {}, frac: {}", coord, frac);
 			Error("Test_Interpolation: counts={}, failed at {}", counts, pos);

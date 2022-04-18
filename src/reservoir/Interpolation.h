@@ -11,16 +11,10 @@
 #include "FaceField.h"
 
 namespace Meso {
-	//template<class T, int d, GridType gtype=CENTER>
-	//class Interpolation {
-	//public:
-	//	virtual static T __host__ __device__ Point_Interpolate(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) = 0;
-
-	//};
-
-	namespace Interpolation {
+	class PointIntpLinear {
+	public:
 		template<class T, int d>
-		T __host__ __device__ Linear_Intp(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			Typedef_VectorD(d);
 			static constexpr int dx[8] = { 0,1,0,1,0,1,0,1 };
 			static constexpr int dy[8] = { 0,0,1,1,0,0,1,1 };
@@ -45,18 +39,14 @@ namespace Meso {
 				}
 				return intp_value;
 			}
-			else Assert("Interpolation:Linear_Intp error: dimension must be 2 or 3");
+			else Assert("PointIntpLinear::Value error: dimension must be 2 or 3");
 		}
-		template<class T,int d, DataHolder side>
-		T __host__ __device__ Linear_Intp(const Field<T, d, side>& F, const Vector<real, d> pos) {
-			const T* data_ptr = F.Data_Ptr();
-			Vector<int, d> node; Vector<real, d> frac;
-			F.grid.Get_Fraction(pos, node, frac);
-			return Linear_Intp(F.grid, data_ptr, node, frac);
-		}
+	};
 
+	class PointIntpLinearPadding0 {
+	public:
 		template<class T, int d>
-		T __host__ __device__ Linear_Intp_Padding0(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			static constexpr T padding_val = 0;
 			//considering invalid datas as 0
 			Typedef_VectorD(d);
@@ -85,16 +75,61 @@ namespace Meso {
 			}
 			else Assert("Interpolation:Linear_Intp error: dimension must be 2 or 3");
 		}
-		template<class T, int d, GridType gtype, DataHolder side>
-		Vector<T, d> Linear_Intp_Vector_Padding0(const FaceField<T, d, side>& vector_field, const Vector<real, d> pos) {
+	};
+
+	template<class PointIntp>
+	class Interpolation {
+	public:
+		Interpolation() {}
+		template<class T, int d>
+		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+			return PointIntp::Value(grid, data, coord, frac);
+		}
+		template<class T, int d, DataHolder side>
+		static T __host__ __device__ Value(const Field<T, d, side>& F, const Vector<real, d> pos) {
+			const T* data_ptr = F.Data_Ptr();
+			Vector<int, d> node; Vector<real, d> frac;
+			F.grid.Get_Fraction(pos, node, frac);
+			return PointIntp::Value(F.grid, data_ptr, node, frac);
+		}
+		template<class T, int d>
+		static Vector<T, d> Face_Vector(const Grid<d> g0, const T* v0, const Grid<d> g1, const T* v1, const Grid<d> g2, const T* v2, const Vector<real, d> pos) {
 			Typedef_VectorD(d);
 			Vector<T, d> ret;
-			for (int axis = 0; axis < d; axis++) {
-				VectorDi node; VectorD frac;
-				vector_field.grid.Get_Fraction(pos, node, frac);
-				ret[axis] = Linear_Intp_Padding0(vector_field.grid, vector_field.Data_Ptr(axis), node, frac);
+			VectorDi node; VectorD frac;
+			//x
+			{
+				g0.Get_Fraction(pos, node, frac);
+				ret[0] = PointIntp::Value(g0, v0, node, frac);
+			}
+			//y
+			if constexpr (d >= 2) {
+				g1.Get_Fraction(pos, node, frac);
+				ret[1] = PointIntp::Value(g1, v1, node, frac);
+			}
+			//z
+			if constexpr (d >= 3) {
+				g2.Get_Fraction(pos, node, frac);
+				ret[2] = PointIntp::Value(g2, v2, node, frac);
 			}
 			return ret;
 		}
-	}
+		template<class T, int d, DataHolder side>
+		static Vector<T, d> Face_Vector(const FaceField<T, d, side>& vector_field, const Vector<real, d> pos) {
+			const auto& grid = vector_field.grid;
+			Grid<d> g0 = grid.Face_Grid(0), g1 = grid.Face_Grid(1), g2 = grid.Face_Grid(2);
+			const T* v0 = vector_field.Data_Ptr(0), v1 = vector_field.Data_Ptr(1), v2 = vector_field.Data_Ptr(2);
+			return Face_Vector(g0, v0, g1, v1, g2, v2, pos);
+			//Typedef_VectorD(d);
+			//Vector<T, d> ret;
+			//for (int axis = 0; axis < d; axis++) {
+			//	VectorDi node; VectorD frac;
+			//	vector_field.grid.Get_Fraction(pos, node, frac);
+			//	ret[axis] = PointIntp::Value(vector_field.grid, vector_field.Data_Ptr(axis), node, frac);
+			//}
+			//return ret;
+		}
+	};
+	using IntpLinear = Interpolation<PointIntpLinear>;
+	using IntpLinearPadding0 = Interpolation<PointIntpLinearPadding0>;
 }

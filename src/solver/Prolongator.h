@@ -27,7 +27,8 @@ namespace Meso {
 				coarse_frac[i] = 0.75;
 			}
 		}
-		fine_data[fine_grid.Index(fine_coord)] = Interpolation::Linear_Intp_Padding0(coarse_grid, coarse_data, coarse_coord, coarse_frac);
+		fine_data[fine_grid.Index(fine_coord)] = IntpLinearPadding0::Value(coarse_grid, coarse_data, coarse_coord, coarse_frac);
+		//fine_data[fine_grid.Index(fine_coord)] = Interpolation::Linear_Intp_Padding0(coarse_grid, coarse_data, coarse_coord, coarse_frac);
 	}
 
 	template<class T, int d>

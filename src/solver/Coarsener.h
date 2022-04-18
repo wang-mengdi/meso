@@ -33,7 +33,8 @@ namespace Meso {
 		VectorDi finer_face = coarser_face * 2;
 		VectorD finer_frac = VectorD::Ones() * 0.5;
 		finer_frac[axis] = 0;
-		coarser_data[coarser_grid.Index(coarser_face)] = Interpolation::Linear_Intp_Padding0(finer_grid, finer_data, finer_face, finer_frac);
+		coarser_data[coarser_grid.Index(coarser_face)] = IntpLinearPadding0::Value(finer_grid, finer_data, finer_face, finer_frac);
+		//coarser_data[coarser_grid.Index(coarser_face)] = Interpolation::Linear_Intp_Padding0(finer_grid, finer_data, finer_face, finer_frac);
 	}
 
 	template<int d>
