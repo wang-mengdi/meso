@@ -43,7 +43,8 @@ namespace Meso {
 			else Assert(false, "Grid::Face_Min not implemented for grid_type={}", grid_type);
 		}
 		__host__ __device__ Grid<d, CORNER> Face_Grid(const int axis)const {
-			return Grid<d, CORNER>(Face_Counts(axis), dx, Face_Min(axis));
+			if (axis < d) return Grid<d, CORNER>(Face_Counts(axis), dx, Face_Min(axis));
+			else return Grid<d, CORNER>();
 		}
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
 		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }

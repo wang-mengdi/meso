@@ -8,8 +8,16 @@
 #include "AuxFunc.h"
 #include "Grid.h"
 #include "Field.h"
+#include "FaceField.h"
 
 namespace Meso {
+	//template<class T, int d, GridType gtype=CENTER>
+	//class Interpolation {
+	//public:
+	//	virtual static T __host__ __device__ Point_Interpolate(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) = 0;
+
+	//};
+
 	namespace Interpolation {
 		template<class T, int d, GridType gtype>
 		T __host__ __device__ Linear_Intp(const Grid<d, gtype> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
@@ -76,6 +84,17 @@ namespace Meso {
 				return intp_value;
 			}
 			else Assert("Interpolation:Linear_Intp error: dimension must be 2 or 3");
+		}
+		template<class T, int d, GridType gtype, DataHolder side>
+		Vector<T, d> Linear_Intp_Vector_Padding0(const FaceField<T, d, side>& vector_field, const Vector<real, d> pos) {
+			Typedef_VectorD(d);
+			Vector<T, d> ret;
+			for (int axis = 0; axis < d; axis++) {
+				VectorDi node; VectorD frac;
+				vector_field.grid.Get_Fraction(pos, node, frac);
+				ret[axis] = Linear_Intp_Padding0(vector_field.grid, vector_field.Data_Ptr(axis), node, frac);
+			}
+			return ret;
 		}
 	}
 }

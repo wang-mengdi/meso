@@ -84,6 +84,11 @@ namespace Meso {
 				}
 			);
 		}
+
+		template<class F, class ...Args>
+		void Exec_Kernel(F kernel_func, const Args&...args) const {
+			grid.Exec_Kernel(kernel_func, args...);
+		}
 	};
 
 	template<class T, int d, GridType gtype = CENTER> using FieldDv = Field<T, d, DEVICE, gtype>;

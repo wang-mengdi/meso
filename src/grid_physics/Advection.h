@@ -10,10 +10,22 @@
 
 namespace Meso {
 	template<int d>
-	class Advection {
+	class SemiLagrangian {
+		template<class T, DataHolder side, GridType gtype>
+		__global__ static void Semi_Lagrangian_Cell(Field<T, d, side, gtype>& advected_field, const Field<T, d, side, gtype>& advected_field, const FaceField<T, d, side>& velocity) {
+			
+		}
+
 		template<class T, DataHolder side, GridType gtype>
 		static void Advect(Field<T, d, side, gtype>& advected_field, const FaceField<T, d, side>& velocity) {
-
+			if constexpr (side == DEVICE) {
+				Field<T, d, side, gtype> reference_field = advected_field;
+				advected_field.Exec_Kernel(
+				);
+			}
+			else {
+				Error("Advection::Advect not implemented for HOST");
+			}
 		}
 
 		template<class T, DataHolder side>
