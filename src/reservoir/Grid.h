@@ -10,12 +10,11 @@
 
 namespace Meso {
 
-	//The minimum position in domain is always the corner of a cell
-	//Under CORNER mode, nodes are positioned at the centers of cells, 
-	//Under CENTER mode, nodes are positioned at the corners of cells
-	enum GridType { CORNER = 0, CENTER };
+	//Staggered/Collocated grid
+	//Used when initializing the grid
+	enum GridType { MAC = 0, COLLOC };
 
-	template<int d, GridType grid_type = CENTER>
+	template<int d>
 	class Grid {
 		Typedef_VectorD(d);
 	public:
@@ -24,35 +23,30 @@ namespace Meso {
 		real dx;
 		VectorD pos_min;
 
-		Grid(const VectorDi _counts = VectorDi::Zero(), const real _dx = 0, const VectorD domain_min = VectorD::Zero()) :
+		Grid(const VectorDi _counts = VectorDi::Zero(), const real _dx = 0, const VectorD domain_min = VectorD::Zero(), const GridType gtype = MAC) :
 			dx(_dx)
 		{
 			counts = VectorFunc::Round_Up_To_Align<d>(_counts, block_size);
 			if (counts != _counts) Warn("Grid size not divisible by {} in dimension {}, automtically round up to {}", block_size, d, counts);
-			if constexpr (grid_type == GridType::CORNER) pos_min = domain_min;
+			if constexpr (gtype == COLLOC) pos_min = domain_min;
 			else pos_min = domain_min + VectorFunc::V<d>(0.5, 0.5, 0.5) * dx;
 		}
 
 		__host__ __device__ VectorDi Counts(void) { return counts; }
-		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += block_size; return fcounts; }
-		__host__ __device__ VectorD Face_Min(const int axis)const {
-			if constexpr (grid_type == CENTER) {
-				VectorD offset = -VectorD::Unit(axis) * 0.5 * dx;
-				return pos_min + offset;
-			}
-			else Assert(false, "Grid::Face_Min not implemented for grid_type={}", grid_type);
-		}
-		__host__ __device__ Grid<d, CORNER> Face_Grid(const int axis)const {
-			if (axis < d) return Grid<d, CORNER>(Face_Counts(axis), dx, Face_Min(axis));
-			else return Grid<d, CORNER>();
-		}
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
-		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
 		__host__ __device__ bool Valid(const int i, const int j = 0, const int k = 0)const {
 			if constexpr (d == 2) return 0 <= i && i < counts[0] && 0 <= j && j < counts[1];
 			else if constexpr (d == 3) return 0 <= i && i < counts[0] && 0 <= j && j < counts[1] && 0 <= k && k < counts[2];
 		}
 		__host__ __device__ bool Valid(const VectorDi coord)const { bool res = true; for (int i = 0; i < d; i++) { res &= (0 <= coord[i] && coord[i] < counts[i]); }return res; }
+		__host__ __device__ VectorD Position(const VectorDi node)const {
+			return pos_min + node.template cast<real>() * dx;
+		}
+		__host__ __device__ void Get_Fraction(const VectorD pos, VectorDi& node, VectorD& frac)const {
+			VectorD coord_with_frac = (pos - pos_min) / dx;
+			node = coord_with_frac.template cast<int>();
+			for (int i = 0; i < d; i++)frac[i] = coord_with_frac[i] - node[i];
+		}
 
 		__host__ __device__ int Index(const int i, const int j = 0, const int k = 0) const {
 			if constexpr (d == 2) {
@@ -105,6 +99,20 @@ namespace Meso {
 			}
 		}
 
+		////Staggered grid interfaces
+		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += block_size; return fcounts; }
+		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
+		__host__ __device__ VectorD Face_Center(const int axis, const VectorDi face) {
+			return Face_Min(axis) + face.template cast<real>() * dx;
+		}
+		__host__ __device__ VectorD Face_Min(const int axis)const {
+			VectorD offset = -VectorD::Unit(axis) * 0.5 * dx;
+			return pos_min + offset;
+		}
+		__host__ __device__ Grid<d> Face_Grid(const int axis)const {
+			if (axis < d) return Grid<d>(Face_Counts(axis), dx, Face_Min(axis));
+			else return Grid<d>();
+		}
 		__host__ __device__ int Face_Index(const int axis, const VectorDi face) const
 		{
 			if constexpr (d == 2) {
@@ -154,25 +162,8 @@ namespace Meso {
 			return face;
 		}
 
-		__host__ __device__ VectorD Domain_Min(void)const {
-			if constexpr (grid_type == CORNER) return pos_min;
-			else return pos_min - VectorFunc::V<d>(0.5, 0.5, 0.5) * dx;
-		}
-		__host__ __device__ VectorD Domain_Max(void)const {
-			if constexpr (grid_type == CORNER) return pos_min + (counts - VectorDi::Ones()).template cast<real>() * dx;
-			else return pos_min + (counts.template cast<real>() - VectorFunc::V<d>(0.5, 0.5, 0.5)) * dx;
-		}
-		__host__ __device__ VectorD Face_Center(const int axis, const VectorDi face) {
-			return Face_Min(axis) + face.template cast<real>() * dx;
-		}
-		__host__ __device__ VectorD Position(const VectorDi node)const {
-			return pos_min + node.template cast<real>() * dx;
-		}
-		__host__ __device__ void Get_Fraction(const VectorD pos, VectorDi& node, VectorD& frac)const {
-			VectorD coord_with_frac = (pos - pos_min) / dx;
-			node = coord_with_frac.template cast<int>();
-			for (int i = 0; i < d; i++)frac[i] = coord_with_frac[i] - node[i];
-		}
+		
+
 
 		////parallel iterators
 		template<class Fcell>//Fcell is a (void) function takes a cell index
