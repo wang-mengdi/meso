@@ -26,25 +26,25 @@ namespace Meso {
 		FaceFieldDv<T, d> temp_face;
 		
 		PoissonMapping() {}
-		PoissonMapping(const Grid<d, CENTER>& grid) { Allocate_Memory(grid); }
+		PoissonMapping(const Grid<d>& grid) { Allocate_Memory(grid); }
 
-		void Allocate_Memory(const Grid<d, CENTER>& grid) {
+		void Allocate_Memory(const Grid<d>& grid) {
 			dof = grid.DoF();
 			vol.Init(grid);
 			fixed.Init(grid);
 			temp_cell.Init(grid);
 			temp_face.Init(grid);
 		}
-		void Init(const Grid<d, CENTER>& grid) {
+		void Init(const Grid<d>& grid) {
 			Allocate_Memory(grid);
 		}
-		void Init(const Grid<d, CENTER>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
+		void Init(const Grid<d>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
 			Allocate_Memory(grid);
 			vol.Deep_Copy(_vol);
 			fixed.Deep_Copy(_fixed);
 		}
 		template<class IFFunc, class CFunc>
-		void Init(const Grid<d, CENTER>& grid, IFFunc vol_func, CFunc is_unknown_func) {
+		void Init(const Grid<d>& grid, IFFunc vol_func, CFunc is_unknown_func) {
 			Allocate_Memory(grid);
 			vol.Calc_Faces(vol_func);
 			fixed.Calc_Cells(

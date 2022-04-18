@@ -27,7 +27,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	__global__ void Coarsen_Vol_Kernel(const int axis, const Grid<d, CORNER> coarser_grid, T* coarser_data, const Grid<d, CORNER> finer_grid, const T* finer_data) {
+	__global__ void Coarsen_Vol_Kernel(const int axis, const Grid<d> coarser_grid, T* coarser_data, const Grid<d> finer_grid, const T* finer_data) {
 		Typedef_VectorD(d);
 		VectorDi coarser_face = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		VectorDi finer_face = coarser_face * 2;
@@ -54,8 +54,8 @@ namespace Meso {
 
 			//fill vol
 			for (int axis = 0; axis < d; axis++) {
-				Grid<d, CORNER> coarse_face_grid = coarse_grid.Face_Grid(axis);
-				Grid<d, CORNER> fine_face_grid = fine_grid.Face_Grid(axis);
+				Grid<d> coarse_face_grid = coarse_grid.Face_Grid(axis);
+				Grid<d> fine_face_grid = fine_grid.Face_Grid(axis);
 				T* coarse_vol = coarse_poisson.vol.Data_Ptr(axis);
 				const T* fine_vol = fine_poisson.vol.Data_Ptr(axis);
 				coarse_face_grid.Exec_Kernel(&Coarsen_Vol_Kernel<T, d>, axis, coarse_face_grid, coarse_vol, fine_face_grid, fine_vol);
