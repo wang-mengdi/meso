@@ -105,42 +105,42 @@ using VectorDi=Vector<int,d>
 
     //// fmt part
 
-    template<typename ...Args>
-    void Info(const char* fmt, const Args&...args) {
+    template<class ...Args>
+    void Info(const char* fmt_str, const Args&...args) {
         fmt::print("#     ");
-        fmt::print(fmt, args...);
+        fmt::print(fmt_str, args...);
         fmt::print("\n");
     }
     void Info(const std::string& str);
 
     template<typename ...Args>
-    void Warn(const char* fmt, const Args&...args) {
+    void Warn(const char* fmt_str, const Args&...args) {
         fmt::print(fg(fmt::color::yellow), "#     ");
-        fmt::print(fg(fmt::color::yellow), fmt, args...);
+        fmt::print(fg(fmt::color::yellow), fmt_str, args...);
         fmt::print("\n");
     }
     void Warn(const std::string& str);
 
     template<typename ...Args>
-    void Error(const char* fmt, const Args&...args) {
+    void Error(const char* fmt_str, const Args&...args) {
         fmt::print(fg(fmt::color::red), "#     ");
-        fmt::print(fg(fmt::color::red), fmt, args...);
+        fmt::print(fg(fmt::color::red), fmt_str, args...);
         fmt::print("\n");
     }
     void Error(const std::string& str);
 
     template<typename ...Args>
-    void Pass(const char* fmt, const Args&...args) {
+    void Pass(const char* fmt_str, const Args&...args) {
         fmt::print(fg(fmt::color::green), "#     ");
-        fmt::print(fg(fmt::color::green), fmt, args...);
+        fmt::print(fg(fmt::color::green), fmt_str, args...);
         fmt::print("\n");
     }
     void Pass(const std::string& str);
 
     template <typename... Args>
-    void Assert(const bool flg, const char* fmt = "", const Args &...args) {
+    void Assert(const bool flg, const char* fmt_str = "", const Args &...args) {
         if (!flg) {
-            Error(fmt, args...);
+            Error(fmt_str, args...);
             exit(-1);
         }
     }

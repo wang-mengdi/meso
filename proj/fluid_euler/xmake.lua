@@ -1,5 +1,5 @@
 add_rules("mode.debug","mode.release")
---set_languages("cxx20")
+set_languages("cxx20")
 includes("./../../src/grid_physics/xmake.lua")
 includes("./../../src/solver/xmake.lua")
 target("fluid_euler")
