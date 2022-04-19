@@ -9,10 +9,8 @@
 #include "AuxFunc.h"
 #include "Json.h"
 
-//#include <iostream>
-//#include <filesystem>
-
-//namespace fs = std::filesystem;
+#include <boost/filesystem.hpp>
+namespace bf = boost::filesystem;
 
 namespace Meso {
 
@@ -46,7 +44,9 @@ namespace Meso {
 		//at the beginning the system is at the status of start_frame
 		//will output all frames in [start_frame, end_frame]
 		void Advance(int start_frame, int end_frame) {
-			simulator.Output(output_base_dir, start_frame);
+			bf::path base_path(output_base_dir);
+			bf::path frame_dir(std::to_string(start_frame));
+			simulator.Output(base_patth.string(), (base_path / frame_dir).string());
 			for (int current_frame = start_frame; current_frame < end_frame; current_frame++) {
 				int next_frame = current_frame + 1;
 				real current_time = Time_At_Frame(current_frame);
@@ -62,7 +62,8 @@ namespace Meso {
 					}
 					else simulator.Advance(current_frame, current_time, dt);
 				}
-				simulator.Output(output_base_dir, next_frame);
+				frame_dir = bf::path(std::to_string(next_frame));
+				simulator.Output(base_patth.string(), (base_path / frame_dir).string());
 			}
 		}
 

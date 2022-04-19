@@ -11,7 +11,9 @@
 
 namespace Meso {
 	template<int d>
-	class FluidEuler {
+	class FluidEuler : public Simulator {
+		Typedef_VectorD(d);
 	public:
+		FaceFieldDv<real, d> velocity;
 	};
 }

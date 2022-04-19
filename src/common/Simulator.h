@@ -10,6 +10,7 @@
 namespace Meso {
 	class Simulator {
 	public:
-		//virtual void Output(const std::string )
+		virtual void Output(const std::string base_path, const std::string frame_path) = 0;
+		virtual void Advance(const int current_frame, const real current_time, const real dt) = 0;
 	};
 }

@@ -5,7 +5,7 @@
 using namespace Meso;
 
 #include <boost/filesystem.hpp>
-using namespace boost::filesystem;
+namespace bf = boost::filesystem;
 
 void foo(const std::string s) {
 	Info("foo {}", s);
@@ -20,6 +20,9 @@ int main(void) {
 
 	Check_Cuda_Memory("main");
 
-	//fs::path dir("/tmp");
+	bf::path dir("output");
+	bf::path frame("5");
+	bf::path full = dir / frame;
+	Info("integrated path {}", full.string());
 	return 0;
 }
