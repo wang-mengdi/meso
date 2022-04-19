@@ -4,10 +4,8 @@
 //#include <nlohmann/json.hpp>
 using namespace Meso;
 
-
-//#include <iostream>
-//#include <filesystem>
-//namespace fs = std::filesystem;
+#include <boost/filesystem.hpp>
+using namespace boost::filesystem;
 
 void foo(const std::string s) {
 	Info("foo {}", s);
