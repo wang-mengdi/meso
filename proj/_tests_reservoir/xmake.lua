@@ -1,4 +1,5 @@
 add_rules("mode.debug")
+set_languages("cxx20")
 includes("./../../src/reservoir/xmake.lua")
 target("_tests_reservoir")
     add_rules("plugin.vsxmake.autoupdate")

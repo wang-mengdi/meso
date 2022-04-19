@@ -105,9 +105,11 @@ using VectorDi=Vector<int,d>
 
     //// fmt part
 
-    template<class ...Args>
+    template<class... Args>
     void Info(const char* fmt_str, const Args&...args) {
         fmt::print("#     ");
+        //auto fst = fmt::format_string<Args...>(fmt_str);
+        //fmt::print(fst, (args)...);
         fmt::print(fmt_str, args...);
         fmt::print("\n");
     }

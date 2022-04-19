@@ -5,6 +5,7 @@ namespace Meso {
 	void Info(const std::string& str)
 	{
 		Info(str.c_str());
+        //Info(str);
 	}
 
 	void Warn(const std::string& str)

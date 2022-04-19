@@ -77,9 +77,9 @@ namespace Meso {
 
 		template<class T>
 		void Set_Non_Override(json& j, const std::string key, const T value) {
-			//if (!j.contains(key)) {
-			//	j[key] = value;
-			//}
+			if (!j.contains(key)) {
+				j[key] = value;
+			}
 		}
 	}
 
