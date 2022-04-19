@@ -21,6 +21,11 @@ namespace Meso {
 
 	namespace MathFunc {
 		template<class T> __host__ __device__ T Eps(void) { return Eigen::NumTraits<T>::dummy_precision(); }
+		template<class T> __host__ __device__ T Clamp(const T x, const T a, const T b) {
+			if (x < a) return a;
+			if (x > b) return b;
+			return x;
+		}
 	}
 
 	namespace VectorFunc {

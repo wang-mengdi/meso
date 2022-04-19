@@ -1,15 +1,17 @@
 //////////////////////////////////////////////////////////////////////////
-// Simulator Driver
-// Copyright (c) (2022-), Mengdi Wang
+// Fluid Euler
+// Copyright (c) (2022-), Bo Zhu, Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Common.h"
+#include "Multigrid.h"
+#include "ConjugateGradient.h"
+#include "Advection.h"
 
 namespace Meso {
-	class Simulator {
+	template<int d>
+	class FluidEuler {
 	public:
-		//virtual void Output(const std::string )
 	};
 }
