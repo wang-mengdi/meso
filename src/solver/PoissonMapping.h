@@ -8,7 +8,7 @@
 #include "Field.h"
 #include "FaceField.h"
 #include "LambdaHelper.h"
-#include "DifferentialGeometry.h"
+#include "DifferentialExteriorCalculus.h"
 #include "AuxFunc.h"
 using namespace thrust::placeholders;
 
@@ -76,20 +76,19 @@ namespace Meso {
 			Exterior_Derivative(temp_face, temp_cell);
 			//d(p) *. vol ----- 1-form
 			temp_face *= vol;
-			//for (int axis = 0; axis < d; axis++) {
-			//	ArrayFunc::Multiply(temp_face.Data(axis), vol.Data(axis));
-			//}
 
-			//hodge star is identity here
+			//Hodge star is identity here
 			//*d(p) *. vol ----- 2-form
 
 			//temp_cell = -div(temp_face)
 			//d*d(p) *. vol ----- 3-form
 			Exterior_Derivative(temp_cell, temp_face);
 			temp_cell *= -1;
-			//ArrayFunc::Unary_Transform(temp_cell.Data(), thrust::negate<T>(), temp_cell.Data());
 			//Ap=temp_cell, set to 0 if fixed
 			ArrayFunc::Binary_Transform(temp_cell.Data(), fixed.Data(), identity_except_fixed, Ap);
+
+			//Another identity Hodge star
+			//*d*d(p) *. -vol ----- 0-form
 
 			//if fixed, add p back
 			thrust::transform_if(
