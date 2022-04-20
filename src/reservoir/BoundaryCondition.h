@@ -10,26 +10,26 @@
 #include <thrust/iterator/constant_iterator.h>
 
 namespace Meso {
-	//template<class DataStructure>
-	//class BoundaryConditionBase {
-	//public:
-	//	virtual void Copy_Masked(DataStructure& dest, const DataStructure& src) = 0;
-	//};
-
-	template<template <class> class BC, class DATA>
-	concept BoundaryCondition =
-		requires(BC<DATA> bc) {
-		//Copy_Masked(DATA& dest, const DATA& src);
-		bc.Copy_Masked(std::declval<DATA&>(), std::declval<const DATA&>());
+	template<class DataStructure>
+	class BoundaryConditionBase {
+	public:
+		virtual void Copy_Masked(DataStructure& dest, const DataStructure& src) = 0;
 	};
 
+	//template<template <class> class BC, class DATA>
+	//concept BoundaryCondition =
+	//	requires(BC<DATA> bc) {
+	//	//Copy_Masked(DATA& dest, const DATA& src);
+	//	bc.Copy_Masked(std::declval<DATA&>(), std::declval<const DATA&>());
+	//};
+
 	template<class DataStructure>
-	class BoundaryConditionDirect {
+	class BoundaryConditionDirect : public BoundaryConditionBase<DataStructure> {
 	public:
 	};
 
 	template<class T, int d, DataHolder side>
-	class BoundaryConditionDirect<Field<T, d, side>> {
+	class BoundaryConditionDirect<Field<T, d, side>> : public BoundaryConditionBase<DataStructure> {
 	public:
 		Field<bool, d, side> fixed;
 		template<DataHolder side1>
@@ -52,7 +52,7 @@ namespace Meso {
 	};
 
 	template<class T, int d, DataHolder side>
-	class BoundaryConditionDirect<FaceField<T, d, side>> {
+	class BoundaryConditionDirect<FaceField<T, d, side>> : public BoundaryConditionBase<DataStructure> {
 		FaceField<bool, d, side> fixed;
 		template<DataHolder side1>
 		void Init(const FaceField<bool, d, side1>& _fixed) {
