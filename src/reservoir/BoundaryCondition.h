@@ -7,6 +7,7 @@
 
 #include "Field.h"
 #include "FaceField.h"
+#include <thrust/iterator/constant_iterator.h>
 
 namespace Meso {
 	template<class DataStructure>
@@ -25,6 +26,9 @@ namespace Meso {
 		}
 		void Copy_Masked(Field<T, d, side>& dest, const Field<T, d, side>& src) {
 			ArrayFunc::Copy_Masked(dest.Data(), src.Data(), fixed.Data());
+		}
+		void Set_Masked(Field<T, d, side>& dest, const T val) {
+			ArrayFunc::Copy_Masked(dest.Data(), thrust::make_constant_iterator(val), fixed.Data());
 		}
 	};
 }
