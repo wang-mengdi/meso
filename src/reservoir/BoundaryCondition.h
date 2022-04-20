@@ -29,7 +29,7 @@ namespace Meso {
 	};
 
 	template<class T, int d, DataHolder side>
-	class BoundaryConditionDirect<Field<T, d, side>> : public BoundaryConditionBase<DataStructure> {
+	class BoundaryConditionDirect<Field<T, d, side>> : public BoundaryConditionBase<Field<T, d, side>> {
 	public:
 		Field<bool, d, side> fixed;
 		template<DataHolder side1>
@@ -52,7 +52,7 @@ namespace Meso {
 	};
 
 	template<class T, int d, DataHolder side>
-	class BoundaryConditionDirect<FaceField<T, d, side>> : public BoundaryConditionBase<DataStructure> {
+	class BoundaryConditionDirect<FaceField<T, d, side>> : public BoundaryConditionBase<FaceField<T, d, side>> {
 		FaceField<bool, d, side> fixed;
 		template<DataHolder side1>
 		void Init(const FaceField<bool, d, side1>& _fixed) {
