@@ -70,6 +70,7 @@ namespace Meso {
 			//temp_cell=p, set to 0 if fixed
 			auto identity_except_fixed = [=] __device__(T v, bool fixed) ->T { return fixed ? 0 : v; };
 			ArrayFunc::Binary_Transform(p, fixed.Data(), identity_except_fixed, temp_cell.Data());
+			//ArrayFunc::Copy(temp_cell.Data(), p);
 
 			//temp_face = grad(temp_cell) *. vol
 			//d(p) ----- 1-form
