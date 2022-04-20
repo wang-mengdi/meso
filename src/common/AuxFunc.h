@@ -121,6 +121,30 @@ namespace Meso {
 		void Copy(Array1& a, const Array2& b) {
 			thrust::copy(b.begin(), b.end(), a.begin());
 		}
+		//copy all places with mask==true
+		template<class Array1, class Array2, class Array3>
+		void Copy_Masked(Array1& a, const Array2& b, const Array3& mask) {
+			thrust::transform_if(
+				b.begin(),//first
+				b.end(),//last
+				mask.begin(),//stencil
+				a.begin(),//result
+				_1,//op
+				thrust::identity<bool>()//pred
+			);
+		}
+		//copy all places with mask==false
+		template<class Array1, class Array2, class Array3>
+		void Copy_UnMasked(Array1& a, const Array2& b, const Array3& mask) {
+			thrust::transform_if(
+				b.begin(),//first
+				b.end(),//last
+				mask.begin(),//stencil
+				a.begin(),//result
+				_1,//op
+				thrust::logical_not<bool>()//pred
+			);
+		}
 		//y=y+a*x
 		template<class T>
 		void Axpy(const real a, const ArrayDv<T>& x, ArrayDv<T>& y) {

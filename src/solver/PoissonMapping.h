@@ -85,22 +85,13 @@ namespace Meso {
 			//d*d(p) *. vol ----- 3-form
 			Exterior_Derivative(temp_cell, temp_face);
 			temp_cell *= -1;
-			//Ap=temp_cell, set to 0 if fixed
-			ArrayFunc::Binary_Transform(temp_cell.Data(), fixed.Data(), identity_except_fixed, Ap);
 
-			//Another identity Hodge star
-			//*d*d(p) *. -vol ----- 0-form
+			//Hodge star is identity here
+			//*d*d(p) *. vol ----- 0-form
 
-			//if fixed, add p back
-			thrust::transform_if(
-				Ap.begin(),//first1
-				Ap.end(),//last1
-				p.begin(),//first2
-				fixed.Data().begin(),//stencil
-				Ap.begin(),//result
-				_1 + _2,//binary op
-				thrust::identity<bool>()//pred
-			);
+			//transfer data to Ap
+			ArrayFunc::Copy(Ap, temp_cell.Data());
+			ArrayFunc::Copy_Masked(Ap, p, fixed.Data());
 
 			checkCudaErrors(cudaGetLastError());
 		}
