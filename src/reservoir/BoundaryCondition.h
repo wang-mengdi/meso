@@ -43,4 +43,18 @@ namespace Meso {
 			);
 		}
 	};
+
+	template<class T, int d, DataHolder side>
+	class BoundaryConditionDirect<FaceField<T, d, side>> : BoundaryConditionBase<FaceField<T, d, side>> {
+		FaceField<bool, d, side> fixed;
+		template<DataHolder side1>
+		void Init(const FaceField<bool, d, side1>& _fixed) {
+			fixed = _fixed;
+		}
+		virtual void Copy_Masked(FaceField<T, d, side>& dest, const FaceField<T, d, side>& src) {
+			for (int axis = 0; axis < d; axis++) {
+				ArrayFunc::Copy_Masked(dest.Data(axis), src.Data(axis), fixed.Data(axis));
+			}
+		}
+	};
 }
