@@ -91,9 +91,14 @@ namespace Meso {
 			return sqrt(squared_norm);
 		}
 
+		//scalar multiplication, a*=b (where b is a scalar)
+		template<class Array1, class T>
+		void Multiply_Scalar(Array1& a, const T b) {
+			thrust::transform(a.begin(), a.end(), a.begin(), _1 * b);
+		}
 		//element-wise multiplication, a*.=b
-		template<class Array1>
-		void Multiply(Array1& a, const decltype(a) b) {
+		template<class Array1, class Array2>
+		void Multiply(Array1& a, const Array2 &b) {
 			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 * _2);
 		}
 		//element-wise divide, a/.=b

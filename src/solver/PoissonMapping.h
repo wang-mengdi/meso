@@ -62,6 +62,9 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+			//Poisson mapping is *d*d in DEC(Discrete Exterior Calculus) theory
+			//so lap(p)=*d*d(p)
+
 			Memory_Check(Ap, p, "PoissonMapping::Apply error: not enough space");
 
 			//temp_cell=p, set to 0 if fixed
@@ -69,14 +72,22 @@ namespace Meso {
 			ArrayFunc::Binary_Transform(p, fixed.Data(), identity_except_fixed, temp_cell.Data());
 
 			//temp_face = grad(temp_cell) *. vol
-			D_CoCell_Mapping(temp_cell, temp_face);
-			for (int axis = 0; axis < d; axis++) {
-				ArrayFunc::Multiply(temp_face.Data(axis), vol.Data(axis));
-			}
+			//d(p) ----- 1-form
+			Exterior_Derivative(temp_face, temp_cell);
+			//d(p) *. vol ----- 1-form
+			temp_face *= vol;
+			//for (int axis = 0; axis < d; axis++) {
+			//	ArrayFunc::Multiply(temp_face.Data(axis), vol.Data(axis));
+			//}
+
+			//hodge star is identity here
+			//*d(p) *. vol ----- 2-form
 
 			//temp_cell = -div(temp_face)
-			D_Face_Mapping(temp_face, temp_cell);
-			ArrayFunc::Unary_Transform(temp_cell.Data(), thrust::negate<T>(), temp_cell.Data());
+			//d*d(p) *. vol ----- 3-form
+			Exterior_Derivative(temp_cell, temp_face);
+			temp_cell *= -1;
+			//ArrayFunc::Unary_Transform(temp_cell.Data(), thrust::negate<T>(), temp_cell.Data());
 			//Ap=temp_cell, set to 0 if fixed
 			ArrayFunc::Binary_Transform(temp_cell.Data(), fixed.Data(), identity_except_fixed, Ap);
 

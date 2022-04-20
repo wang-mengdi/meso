@@ -118,29 +118,6 @@ namespace Meso {
 		if (idz == 3) atomicAdd(face_z + face_ind, -cell_data);
 	}
 
-	//diff of C, store on F
-	template<class T, int d>
-	void D_CoCell_Mapping(const Field<T,d,DataHolder::DEVICE> &C, FaceField<T,d,DataHolder::DEVICE> &F)
-	{
-		F.Fill(0);
-		dim3 blocknum, blocksize;
-		C.grid.Get_Kernel_Dims(blocknum, blocksize);
-		const T* cell = C.Data_Ptr();
-		if constexpr (d == 2) {
-			T* face_x = F.Data_Ptr(0);
-			T* face_y = F.Data_Ptr(1);
-
-			D_CoCell_Mapping_Kernel2 << <blocknum, blocksize >> > (C.grid, face_x, face_y, cell);
-		}
-		else if constexpr (d == 3) {
-			T* face_x = F.Data_Ptr(0);
-			T* face_y = F.Data_Ptr(1);
-			T* face_z = F.Data_Ptr(2);
-
-			D_CoCell_Mapping_Kernel3 << <blocknum, blocksize >> > (C.grid, face_x, face_y, face_z, cell);
-		}
-	}
-
 	// for blockDim = (8, 8)
 	// iterate through cell
 	// velocity in face_x, face_y
@@ -255,8 +232,34 @@ namespace Meso {
 		cell[grid.Index(Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + idz))] = div;
 	}
 
+	//input: C is a 0-form on cell (2d or 3d)
+	//output: F is a 1-form on face (3d) or 1-form on edge (2d)
 	template<class T, int d>
-	void D_Face_Mapping(const FaceField<T, d, DEVICE>& F, Field<T, d, DEVICE>& C) {
+	void Exterior_Derivative(FaceFieldDv<T, d>& F, const FieldDv<T, d>& C)
+	{
+		F.Fill(0);
+		dim3 blocknum, blocksize;
+		C.grid.Get_Kernel_Dims(blocknum, blocksize);
+		const T* cell = C.Data_Ptr();
+		if constexpr (d == 2) {
+			T* face_x = F.Data_Ptr(0);
+			T* face_y = F.Data_Ptr(1);
+
+			D_CoCell_Mapping_Kernel2 << <blocknum, blocksize >> > (C.grid, face_x, face_y, cell);
+		}
+		else if constexpr (d == 3) {
+			T* face_x = F.Data_Ptr(0);
+			T* face_y = F.Data_Ptr(1);
+			T* face_z = F.Data_Ptr(2);
+
+			D_CoCell_Mapping_Kernel3 << <blocknum, blocksize >> > (C.grid, face_x, face_y, face_z, cell);
+		}
+	}
+
+	//input: F is a 2-form on face(3d) or 1-form on edge (2d)
+	//output: C is a 3-form on cell (3d) or 2-form on cell (2d)
+	template<class T, int d>
+	void Exterior_Derivative(FieldDv<T, d>& C, const FaceFieldDv<T, d>& F) {
 		dim3 blocknum, blocksize;
 		F.grid.Get_Kernel_Dims(blocknum, blocksize);
 		T* cell = C.Data_Ptr();
