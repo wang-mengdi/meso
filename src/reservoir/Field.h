@@ -34,6 +34,7 @@ namespace Meso {
 			Init(_grid);
 			ArrayFunc::Fill(*data, value);
 		}
+		void Fill(const T value) { ArrayFunc::Fill(Data(), value); }
 		template<DataHolder side1>
 		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) {
 			Deep_Copy(f1);

@@ -10,6 +10,7 @@
 #include "LambdaHelper.h"
 #include "DifferentialExteriorCalculus.h"
 #include "AuxFunc.h"
+#include "BoundaryCondition.h"
 using namespace thrust::placeholders;
 
 namespace Meso {
@@ -20,6 +21,7 @@ namespace Meso {
 	public:
 		int dof;
 		FaceFieldDv<T, d> vol;
+		//BoundaryConditionDirect<FieldDv<bool, d>> cell_bc;
 		FieldDv<bool, d> fixed;
 
 		FieldDv<T, d> temp_cell;
@@ -41,19 +43,20 @@ namespace Meso {
 		void Init(const Grid<d>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
 			Allocate_Memory(grid);
 			vol.Deep_Copy(_vol);
+			//cell_bc.Init(_fixed);
 			fixed.Deep_Copy(_fixed);
 		}
-		template<class IFFunc, class CFunc>
-		void Init(const Grid<d>& grid, IFFunc vol_func, CFunc is_unknown_func) {
-			Allocate_Memory(grid);
-			vol.Calc_Faces(vol_func);
-			fixed.Calc_Cells(
-				[=](const VectorDi& cell)->bool {return !is_unknown_func(cell); }
-			);
-		}
+		//template<class IFFunc, class CFunc>
+		//void Init(const Grid<d>& grid, IFFunc vol_func, CFunc is_unknown_func) {
+		//	Allocate_Memory(grid);
+		//	vol.Calc_Faces(vol_func);
+		//	fixed.Calc_Cells(
+		//		[=](const VectorDi& cell)->bool {return !is_unknown_func(cell); }
+		//	);
+		//}
 
 		const Grid<d>& Grid(void) const {
-			return fixed.grid;
+			return vol.grid;
 		}
 
 		virtual int XDof() const { return dof; }//number of cols
@@ -67,10 +70,11 @@ namespace Meso {
 
 			Memory_Check(Ap, p, "PoissonMapping::Apply error: not enough space");
 
-			//temp_cell=p, set to 0 if fixed
-			auto identity_except_fixed = [=] __device__(T v, bool fixed) ->T { return fixed ? 0 : v; };
-			ArrayFunc::Binary_Transform(p, fixed.Data(), identity_except_fixed, temp_cell.Data());
+			//temp_cell=p, set to 0 if fixed			
 			//ArrayFunc::Copy(temp_cell.Data(), p);
+			temp_cell.Fill(0);
+			ArrayFunc::Copy_UnMasked(temp_cell.Data(), p, fixed.Data());
+
 
 			//temp_face = grad(temp_cell) *. vol
 			//d(p) ----- 1-form

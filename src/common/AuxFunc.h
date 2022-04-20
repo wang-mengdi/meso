@@ -123,24 +123,24 @@ namespace Meso {
 		}
 		//copy all places with mask==true
 		template<class Array1, class Array2, class Array3>
-		void Copy_Masked(Array1& a, const Array2& b, const Array3& mask) {
+		void Copy_Masked(Array1& dest, const Array2& src, const Array3& mask) {
 			thrust::transform_if(
-				b.begin(),//first
-				b.end(),//last
+				src.begin(),//first
+				src.end(),//last
 				mask.begin(),//stencil
-				a.begin(),//result
+				dest.begin(),//result
 				_1,//op
 				thrust::identity<bool>()//pred
 			);
 		}
 		//copy all places with mask==false
 		template<class Array1, class Array2, class Array3>
-		void Copy_UnMasked(Array1& a, const Array2& b, const Array3& mask) {
+		void Copy_UnMasked(Array1& dest, const Array2& src, const Array3& mask) {
 			thrust::transform_if(
-				b.begin(),//first
-				b.end(),//last
+				src.begin(),//first
+				src.end(),//last
 				mask.begin(),//stencil
-				a.begin(),//result
+				dest.begin(),//result
 				_1,//op
 				thrust::logical_not<bool>()//pred
 			);
