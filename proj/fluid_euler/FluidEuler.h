@@ -18,6 +18,9 @@ namespace Meso {
 		BoundaryConditionDirect<FaceFieldDv<real, d>> psi_N;
 		FieldDv<real, d> pressure;
 		FieldDv<real, d> vel_div;
+		FaceFieldDv<real, d> gradp;
+		ConjugateGradient<real> MGPCG;
+		VCycleMultigrid<real> MG_precond;
 		void Init(void) {
 
 		}
@@ -28,7 +31,11 @@ namespace Meso {
 			//advection
 			SemiLagrangian::Advect(dt, velocity, velocity, psi_N);
 			//projection
+			//vel_div=div(velocity)
 			Exterior_Derivative(vel_div, velocity);
+			MGPCG.Apply(pressure.Data(), vel_div.Data());
+			//velocity+=grad(p)
+			Exterior_Derivative(gradp, pressure);
 		}
 	};
 }
