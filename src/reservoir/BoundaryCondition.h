@@ -11,9 +11,10 @@
 
 namespace Meso {
 	template<class DataStructure>
-	class BoundaryConditionBase {
+	class BoundaryCondition {
 	public:
-		virtual void Copy_Masked(DataStructure& dest, const DataStructure& src) = 0;
+		virtual void Copy_Masked(DataStructure& dest, const DataStructure& src) const = 0;
+		virtual void Copy_UnMasked(DataStructure& dest, const DataStructure& src) const = 0;
 	};
 
 	//template<template <class> class BC, class DATA>
@@ -24,22 +25,22 @@ namespace Meso {
 	//};
 
 	template<class DataStructure>
-	class BoundaryConditionDirect : public BoundaryConditionBase<DataStructure> {
+	class BoundaryConditionDirect : public BoundaryCondition<DataStructure> {
 	public:
 	};
 
 	template<class T, int d, DataHolder side>
-	class BoundaryConditionDirect<Field<T, d, side>> : public BoundaryConditionBase<Field<T, d, side>> {
+	class BoundaryConditionDirect<Field<T, d, side>> : public BoundaryCondition<Field<T, d, side>> {
 	public:
 		Field<bool, d, side> fixed;
 		template<DataHolder side1>
 		void Init(const Field<bool, d, side1>& _fixed) {
 			fixed = _fixed;
 		}
-		virtual void Copy_Masked(Field<T, d, side>& dest, const Field<T, d, side>& src) {
+		virtual void Copy_Masked(Field<T, d, side>& dest, const Field<T, d, side>& src) const {
 			ArrayFunc::Copy_Masked(dest.Data(), src.Data(), fixed.Data());
 		}
-		virtual void Set_Masked(Field<T, d, side>& dest, const T val) {
+		virtual void Set_Masked(Field<T, d, side>& dest, const T val) const {
 			thrust::transform_if(
 				dest.Data().begin(),//first
 				dest.Data().end(),//last
@@ -52,15 +53,20 @@ namespace Meso {
 	};
 
 	template<class T, int d, DataHolder side>
-	class BoundaryConditionDirect<FaceField<T, d, side>> : public BoundaryConditionBase<FaceField<T, d, side>> {
+	class BoundaryConditionDirect<FaceField<T, d, side>> : public BoundaryCondition<FaceField<T, d, side>> {
 		FaceField<bool, d, side> fixed;
 		template<DataHolder side1>
 		void Init(const FaceField<bool, d, side1>& _fixed) {
 			fixed = _fixed;
 		}
-		virtual void Copy_Masked(FaceField<T, d, side>& dest, const FaceField<T, d, side>& src) {
+		virtual void Copy_Masked(FaceField<T, d, side>& dest, const FaceField<T, d, side>& src) const {
 			for (int axis = 0; axis < d; axis++) {
 				ArrayFunc::Copy_Masked(dest.Data(axis), src.Data(axis), fixed.Data(axis));
+			}
+		}
+		virtual void Copy_Unmasked(FaceField<T, d, side>& dest, const FaceField<T, d, side>& src)const {
+			for (int axis = 0; axis < d; axis++) {
+				ArrayFunc::Copy_UnMasked(dest.Data(axis), src.Data(axis), fixed.Data(axis));
 			}
 		}
 	};

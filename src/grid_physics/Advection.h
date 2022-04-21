@@ -9,6 +9,7 @@
 #include "FaceField.h"
 #include "Interpolation.h"
 #include "AuxFunc.h"
+#include "BoundaryCondition.h"
 
 namespace Meso {
 
@@ -28,9 +29,8 @@ namespace Meso {
 	template<int d>
 	class SemiLagrangian {
 		template<class T, DataHolder side>
-		static void Advect(const real dt, Field<T, d, side>& advected_field, const FaceField<T, d, side>& velocity) {
+		static void Advect(const real dt, Field<T, d, side>& advected_field, const Field<T, d, side>& origin_field, const FaceField<T, d, side>& velocity) {
 			if constexpr (side == DEVICE) {
-				Field<T, d, side> reference_field = advected_field;
 				const auto& vgrid = velocity.grid;
 				Grid<d> vg0 = vgrid.Face_Grid(0), vg1 = vgrid.Face_Grid(1), vg2 = vgrid.Face_Grid(2);
 				const T* v0 = velocity.Data_Ptr(0), v1 = velocity.Data_Ptr(1), v2 = velocity.Data_Ptr(2);
@@ -39,7 +39,7 @@ namespace Meso {
 					dt,
 					advected_field.grid,
 					advected_field.Data_Ptr(),
-					reference_field.Data_Ptr(),
+					origin_field.Data_Ptr(),
 					vg0, v0,
 					vg1, v1,
 					vg2, v2
@@ -50,12 +50,17 @@ namespace Meso {
 			}
 		}
 
+		//advected_val may be the same as velocity
 		template<class T, DataHolder side>
-		static void Advect(FaceField<T, d, side>& advected_val, const FaceField<T, d, side>& velocity) {
+		static void Advect(const real dt, FaceField<T, d, side>& advected_val, const FaceField<T, d, side>& velocity, const BoundaryCondition<FaceField<T, d, side>>& bc) {
+			FaceField<T, d, side> advection_result(advected_val.grid);
 			for (int axis = 0; axis < d; axis++) {
-				Field<T, d, side> face_val(advected_val.grid.Face_Grid(axis), advected_val.face_data[axis]);
-				Advect(face_val, velocity);
+				const auto face_grid = advected_val.grid.Face_Grid(axis);
+				Field<T, d, side> face_origin(face_grid, advected_val.face_data[axis]);
+				Field<T, d, side> face_result(face_grid, advection_result.face_data[axis]);
+				Advect(dt, face_result, face_origin, velocity);
 			}
+			bc.Copy_UnMasked(advected_val, advection_result);
 		}
 	};
 }

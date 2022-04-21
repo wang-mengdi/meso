@@ -46,7 +46,7 @@ namespace Meso {
 		void Advance(int start_frame, int end_frame) {
 			bf::path base_path(output_base_dir);
 			bf::path frame_dir(std::to_string(start_frame));
-			simulator.Output(base_patth.string(), (base_path / frame_dir).string());
+			simulator.Output(base_path.string(), (base_path / frame_dir).string());
 			for (int current_frame = start_frame; current_frame < end_frame; current_frame++) {
 				int next_frame = current_frame + 1;
 				real current_time = Time_At_Frame(current_frame);
@@ -63,7 +63,7 @@ namespace Meso {
 					else simulator.Advance(current_frame, current_time, dt);
 				}
 				frame_dir = bf::path(std::to_string(next_frame));
-				simulator.Output(base_patth.string(), (base_path / frame_dir).string());
+				simulator.Output(base_path.string(), (base_path / frame_dir).string());
 			}
 		}
 
