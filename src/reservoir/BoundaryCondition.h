@@ -13,8 +13,9 @@ namespace Meso {
 	template<class DataStructure>
 	class BoundaryCondition {
 	public:
-		virtual void Copy_Masked(DataStructure& dest, const DataStructure& src) const = 0;
-		virtual void Copy_UnMasked(DataStructure& dest, const DataStructure& src) const = 0;
+		virtual void Apply(DataStructure& data)const = 0;
+		//virtual void Copy_Masked(DataStructure& dest, const DataStructure& src) const = 0;
+		//virtual void Copy_UnMasked(DataStructure& dest, const DataStructure& src) const = 0;
 	};
 
 	//template<template <class> class BC, class DATA>
@@ -32,42 +33,59 @@ namespace Meso {
 	template<class T, int d, DataHolder side>
 	class BoundaryConditionDirect<Field<T, d, side>> : public BoundaryCondition<Field<T, d, side>> {
 	public:
-		Field<bool, d, side> fixed;
-		template<DataHolder side1>
-		void Init(const Field<bool, d, side1>& _fixed) {
-			fixed = _fixed;
+		Array<int, side> indices;
+		Array<T, side> values;
+		virtual void Apply(Field<T, d, side>& data)const {
+			thrust::scatter(
+				values.begin(),//first
+				values.end(),//last
+				indicies.begin(),//map
+				data.Data().begin(),//result
+				);
 		}
-		virtual void Copy_Masked(Field<T, d, side>& dest, const Field<T, d, side>& src) const {
-			ArrayFunc::Copy_Masked(dest.Data(), src.Data(), fixed.Data());
-		}
-		virtual void Set_Masked(Field<T, d, side>& dest, const T val) const {
-			thrust::transform_if(
-				dest.Data().begin(),//first
-				dest.Data().end(),//last
-				fixed.Data().begin(),//stencil
-				dest.Data().begin(),//result
-				[=]__device__(const T dest_val) { return val; },//op
-				thrust::identity<bool>()//pred
-			);
-		}
+		//Field<bool, d, side> fixed;
+		//template<DataHolder side1>
+		//void Init(const Field<bool, d, side1>& _fixed) {
+		//	fixed = _fixed;
+		//}
+		//virtual void Copy_Masked(Field<T, d, side>& dest, const Field<T, d, side>& src) const {
+		//	ArrayFunc::Copy_Masked(dest.Data(), src.Data(), fixed.Data());
+		//}
+		//virtual void Set_Masked(Field<T, d, side>& dest, const T val) const {
+		//	thrust::transform_if(
+		//		dest.Data().begin(),//first
+		//		dest.Data().end(),//last
+		//		fixed.Data().begin(),//stencil
+		//		dest.Data().begin(),//result
+		//		[=]__device__(const T dest_val) { return val; },//op
+		//		thrust::identity<bool>()//pred
+		//	);
+		//}
 	};
 
 	template<class T, int d, DataHolder side>
 	class BoundaryConditionDirect<FaceField<T, d, side>> : public BoundaryCondition<FaceField<T, d, side>> {
-		FaceField<bool, d, side> fixed;
-		template<DataHolder side1>
-		void Init(const FaceField<bool, d, side1>& _fixed) {
-			fixed = _fixed;
-		}
-		virtual void Copy_Masked(FaceField<T, d, side>& dest, const FaceField<T, d, side>& src) const {
+	public:
+		std::array<BoundaryConditionDirect<Field<T, d, side>>, d> field_bc;
+		virtual void Apply(FaceField<T, d, side>& face_field)const {
 			for (int axis = 0; axis < d; axis++) {
-				ArrayFunc::Copy_Masked(dest.Data(axis), src.Data(axis), fixed.Data(axis));
+				Field<T, d, side> field(face_field.grid.Face_Grid(axis), face_field.face_data[axis]);
+				field_bc.Apply(field);
 			}
 		}
-		virtual void Copy_Unmasked(FaceField<T, d, side>& dest, const FaceField<T, d, side>& src)const {
-			for (int axis = 0; axis < d; axis++) {
-				ArrayFunc::Copy_UnMasked(dest.Data(axis), src.Data(axis), fixed.Data(axis));
-			}
-		}
+		//template<DataHolder side1>
+		//void Init(const FaceField<bool, d, side1>& _fixed) {
+		//	fixed = _fixed;
+		//}
+		//virtual void Copy_Masked(FaceField<T, d, side>& dest, const FaceField<T, d, side>& src) const {
+		//	for (int axis = 0; axis < d; axis++) {
+		//		ArrayFunc::Copy_Masked(dest.Data(axis), src.Data(axis), fixed.Data(axis));
+		//	}
+		//}
+		//virtual void Copy_Unmasked(FaceField<T, d, side>& dest, const FaceField<T, d, side>& src)const {
+		//	for (int axis = 0; axis < d; axis++) {
+		//		ArrayFunc::Copy_UnMasked(dest.Data(axis), src.Data(axis), fixed.Data(axis));
+		//	}
+		//}
 	};
 }

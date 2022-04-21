@@ -50,17 +50,31 @@ namespace Meso {
 			}
 		}
 
-		//advected_val may be the same as velocity
+		////advected_val may be the same as velocity
+		//template<class T, DataHolder side>
+		//static void Advect(const real dt, FaceField<T, d, side>& advected_val, const FaceField<T, d, side>& velocity, const BoundaryCondition<FaceField<T, d, side>>& bc) {
+		//	FaceField<T, d, side> advection_result(advected_val.grid);
+		//	for (int axis = 0; axis < d; axis++) {
+		//		const auto face_grid = advected_val.grid.Face_Grid(axis);
+		//		Field<T, d, side> face_origin(face_grid, advected_val.face_data[axis]);
+		//		Field<T, d, side> face_result(face_grid, advection_result.face_data[axis]);
+		//		Advect(dt, face_result, face_origin, velocity);
+		//	}
+		//	bc.Copy_UnMasked(advected_val, advection_result);
+		//}
+
+		//original_value and velocity can be the same
+		//advected_result must be different
+		//don't handle boundary conditions
 		template<class T, DataHolder side>
-		static void Advect(const real dt, FaceField<T, d, side>& advected_val, const FaceField<T, d, side>& velocity, const BoundaryCondition<FaceField<T, d, side>>& bc) {
-			FaceField<T, d, side> advection_result(advected_val.grid);
+		static void Advect(const real dt, FaceField<T, d, side>& advected_result, const FaceField<T, d, side>& original_value, const FaceField<T, d, side>& velocity) {
+			advected_result.Init(original_value.grid);
 			for (int axis = 0; axis < d; axis++) {
 				const auto face_grid = advected_val.grid.Face_Grid(axis);
-				Field<T, d, side> face_origin(face_grid, advected_val.face_data[axis]);
-				Field<T, d, side> face_result(face_grid, advection_result.face_data[axis]);
+				Field<T, d, side> face_origin(face_grid, original_value.face_data[axis]);
+				Field<T, d, side> face_result(face_grid, advected_result.face_data[axis]);
 				Advect(dt, face_result, face_origin, velocity);
 			}
-			bc.Copy_UnMasked(advected_val, advection_result);
 		}
 	};
 }

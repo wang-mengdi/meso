@@ -36,6 +36,11 @@ namespace Meso {
 
 		inline T& operator()(const int axis, const VectorDi face) { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
 		inline const T& operator()(int axis, const VectorDi face) const { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
+		void operator += (const FaceField<T, d, side>& f1) {
+			for (int axis = 0; axis < d; axis++) {
+				ArrayFunc::Add(Data(axis), f1.Data(axis));
+			}
+		}
 		void operator *= (const FaceField<T, d, side>& f1) {
 			for (int axis = 0; axis < d; axis++) {
 				ArrayFunc::Multiply(Data(axis), f1.Data(axis));
