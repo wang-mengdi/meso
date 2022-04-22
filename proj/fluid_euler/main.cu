@@ -16,7 +16,10 @@ void Run(json &j) {
 
 int main(void) {
 	try {
-		json j;
+		json j = {
+			{"driver",json::object()},
+			{"scene",json::object()}
+		};
 		//int dim = 2;
 		int dim = Json::Value(j, "dimension", 2);
 		if (dim == 2) Run<2>(j);

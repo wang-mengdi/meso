@@ -29,10 +29,18 @@ namespace Meso {
 				checkCudaErrors(cudaGetLastError());
 			}
 		}
+		template<DataHolder side1>
+		void Init(const FaceField<T, d, side1>& f1) {
+			Deep_Copy(f1);
+		}
 
 		template<DataHolder side1> 
 		void Deep_Copy(const FaceField<T, d, side1>& f1) {
-			for (int i = 0; i < d; i++) { ArrayFunc::Copy(*face_data[i], f1.Data(i)); }
+			Init(f1.grid);
+			for (int i = 0; i < d; i++) {
+				//deep copy
+				*face_data[i] = f1.Data(i);
+			}
 		}
 
 		inline T& operator()(const int axis, const VectorDi face) { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }

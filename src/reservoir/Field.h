@@ -57,7 +57,8 @@ namespace Meso {
 		template<DataHolder side1>
 		void Deep_Copy(const Field<T, d, side1>& f1) {
 			Init(f1.grid);
-			ArrayFunc::Copy(*data, f1.Data());
+			//deep copy
+			*data = f1.Data();
 		}
 
 		inline T& operator()(const VectorDi coord) { return (*data)[grid.Index(coord)]; }

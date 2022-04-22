@@ -16,7 +16,7 @@ namespace Meso {
 		void Apply(json& j, FluidEuler<d>& fluid) {
 			int test = Json::Value(j, "test", 0);
 			switch (test) {
-			case 0:Case_0(j, fluid);
+			case 0:Case_0(j, fluid); break;
 			default:Assert(false, "test {} not exist", test); break;
 			}
 		}
