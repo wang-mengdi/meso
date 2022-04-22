@@ -9,6 +9,7 @@
 #include "AuxFunc.h"
 #include "Json.h"
 #include "Simulator.h"
+#include "Timer.h"
 
 #include <boost/filesystem.hpp>
 namespace bf = boost::filesystem;
@@ -39,11 +40,24 @@ namespace Meso {
 		real Time_At_Frame(const int frame) {
 			return frame * time_per_frame;
 		}
+		//will change timer
+		void Print_Frame_Info(Timer &frame_timer, const int frame, const int start_frame, const int end_frame) {
+			int total_frames = end_frame - start_frame;
+			int done_frames = frame - start_frame;
+			real frame_seconds = frame_timer.Lap_Time();
+			real completed_seconds = frame_timer.Total_Time();
+			real eta = completed_seconds * total_frames / done_frames;
+			Info("Frame {} in {}-{} done in {}s, ETA {}/{}s", frame, start_frame, end_frame, frame_seconds, eta, completed_seconds + eta);
+		}
 		//at the beginning the system is at the status of start_frame
 		//will output all frames in [start_frame, end_frame]
 		void Advance(Simulator &simulator, int start_frame, int end_frame) {
+			Timer frame_timer;
+			
 			bf::path base_path(output_base_dir);
 			bf::path frame_dir(std::to_string(start_frame));
+
+			Print_Frame_Info(frame_timer, start_frame, start_frame, end_frame);
 			simulator.Output(base_path.string(), (base_path / frame_dir).string());
 			for (int current_frame = start_frame; current_frame < end_frame; current_frame++) {
 				int next_frame = current_frame + 1;
@@ -60,6 +74,7 @@ namespace Meso {
 					}
 					else simulator.Advance(current_frame, current_time, dt);
 				}
+				Print_Frame_Info(frame_timer, current_frame, start_frame, end_frame);
 				frame_dir = bf::path(std::to_string(next_frame));
 				simulator.Output(base_path.string(), (base_path / frame_dir).string());
 			}
