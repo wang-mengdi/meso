@@ -8,6 +8,7 @@
 #include "Multigrid.h"
 #include "ConjugateGradient.h"
 #include "Advection.h"
+#include "Simulator.h"
 
 namespace Meso {
 	template<int d>
@@ -25,6 +26,11 @@ namespace Meso {
 		void Init(void) {
 
 		}
+		virtual real CFL_Time(const real cfl) {
+			real dx = velocity.grid.dx;
+			real max_vel = velocity.Max_Abs();
+			return dx * cfl / max_vel;
+		}
 		virtual void Output(const std::string base_path, const std::string frame_path) {
 
 		}
@@ -36,7 +42,8 @@ namespace Meso {
 			//projection
 			//vel_div=div(velocity)
 			Exterior_Derivative(vel_div, temp_velocity);
-			MGPCG.Apply(pressure.Data(), vel_div.Data());
+			int iter; real res;
+			MGPCG.Solve(pressure.Data(), vel_div.Data(), iter, res);
 
 			//velocity+=grad(p)
 			Exterior_Derivative(temp_velocity, pressure);

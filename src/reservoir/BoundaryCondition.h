@@ -39,9 +39,9 @@ namespace Meso {
 			thrust::scatter(
 				values.begin(),//first
 				values.end(),//last
-				indicies.begin(),//map
-				data.Data().begin(),//result
-				);
+				indices.begin(),//map
+				data.Data().begin()//result
+			);
 		}
 		//Field<bool, d, side> fixed;
 		//template<DataHolder side1>
@@ -70,7 +70,7 @@ namespace Meso {
 		virtual void Apply(FaceField<T, d, side>& face_field)const {
 			for (int axis = 0; axis < d; axis++) {
 				Field<T, d, side> field(face_field.grid.Face_Grid(axis), face_field.face_data[axis]);
-				field_bc.Apply(field);
+				field_bc[axis].Apply(field);
 			}
 		}
 		//template<DataHolder side1>

@@ -8,3 +8,4 @@ target("grid_physics")
     add_cuflags("-extended-lambda")
     add_includedirs(".",{public=true})
     add_deps("reservoir")
+    

@@ -41,6 +41,12 @@ namespace Meso {
 				ArrayFunc::Add(Data(axis), f1.Data(axis));
 			}
 		}
+
+		constexpr Array<T, side>& Data(const int axis)noexcept { return *face_data[axis]; }
+		constexpr const Array<T, side>& Data(const int axis)const noexcept { return *face_data[axis]; }
+		constexpr T* Data_Ptr(const int axis) noexcept { return thrust::raw_pointer_cast(face_data[axis]->data()); }
+		constexpr const T* Data_Ptr(const int axis) const noexcept { return thrust::raw_pointer_cast(face_data[axis]->data()); }
+
 		void operator *= (const FaceField<T, d, side>& f1) {
 			for (int axis = 0; axis < d; axis++) {
 				ArrayFunc::Multiply(Data(axis), f1.Data(axis));
@@ -50,10 +56,13 @@ namespace Meso {
 			for (int axis = 0; axis < d; axis++) ArrayFunc::Multiply_Scalar(Data(axis), a);
 		}
 
-		constexpr Array<T, side>& Data(const int axis)noexcept { return *face_data[axis]; }
-		constexpr const Array<T, side>& Data(const int axis)const noexcept { return *face_data[axis]; }
-		constexpr T* Data_Ptr(const int axis) noexcept { return thrust::raw_pointer_cast(face_data[axis]->data()); }
-		constexpr const T* Data_Ptr(const int axis) const noexcept { return thrust::raw_pointer_cast(face_data[axis]->data()); }
+		T Max_Abs(void) {
+			real max_val = 0;
+			for (int axis = 0; axis < d; axis++) {
+				max_val = std::max<T>(max_val, ArrayFunc::Max_Abs<T>(Data(axis)));
+			}
+			return max_val;
+		}
 
 		template<class IFFunc>
 		void Iterate_Faces(IFFunc f) {

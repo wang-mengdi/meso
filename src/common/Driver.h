@@ -8,17 +8,15 @@
 #include "Common.h"
 #include "AuxFunc.h"
 #include "Json.h"
+#include "Simulator.h"
 
 #include <boost/filesystem.hpp>
 namespace bf = boost::filesystem;
 
 namespace Meso {
 
-	template<class Simulator>
 	class Driver {
 	public:
-		Simulator simulator;
-
 		int fps = 25;
 		real cfl = 1.0;
 		real time_per_frame = 0.04;
@@ -38,12 +36,12 @@ namespace Meso {
 			last_frame = Json::Value(j, "last_frame", fps * 10);
 			output_base_dir = Json::Value(j, "output_base_dir", "output");
 		}
-		void Time_At_Frame(const int frame) {
+		real Time_At_Frame(const int frame) {
 			return frame * time_per_frame;
 		}
 		//at the beginning the system is at the status of start_frame
 		//will output all frames in [start_frame, end_frame]
-		void Advance(int start_frame, int end_frame) {
+		void Advance(Simulator &simulator, int start_frame, int end_frame) {
 			bf::path base_path(output_base_dir);
 			bf::path frame_dir(std::to_string(start_frame));
 			simulator.Output(base_path.string(), (base_path / frame_dir).string());
@@ -68,11 +66,10 @@ namespace Meso {
 		}
 
 		template<class Initializer>
-		void Run(json& j, Initializer& initializer) {
+		void Run(json& j, Initializer& scene, Simulator& simulator) {
 			Init(j.at("driver"));
-			initializer.Init(j.at("initializer"));
-			initializer.Apply(simulator);
-			Advance(first_frame, last_frame);
+			scene.Apply(j.at("scene"), simulator);
+			Advance(simulator, first_frame, last_frame);
 		}
 	};
 }

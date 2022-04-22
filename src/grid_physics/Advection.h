@@ -26,16 +26,16 @@ namespace Meso {
 		result_data[grid.Index(cell)] = IntpLinearPadding0::Value(grid, origin_data, back_pos);
 	}
 
-	template<int d>
 	class SemiLagrangian {
-		template<class T, DataHolder side>
+	public:
+		template<class T, int d, DataHolder side>
 		static void Advect(const real dt, Field<T, d, side>& advected_field, const Field<T, d, side>& origin_field, const FaceField<T, d, side>& velocity) {
 			if constexpr (side == DEVICE) {
 				const auto& vgrid = velocity.grid;
 				Grid<d> vg0 = vgrid.Face_Grid(0), vg1 = vgrid.Face_Grid(1), vg2 = vgrid.Face_Grid(2);
-				const T* v0 = velocity.Data_Ptr(0), v1 = velocity.Data_Ptr(1), v2 = velocity.Data_Ptr(2);
-				advected_field.Exec_Kernel(
-					Semi_Lagrangian_Cell,
+				const T* v0 = velocity.Data_Ptr(0), * v1 = velocity.Data_Ptr(1), * v2 = velocity.Data_Ptr(2);
+				advected_field.grid.Exec_Kernel(
+					&Semi_Lagrangian_Cell<T, d>,
 					dt,
 					advected_field.grid,
 					advected_field.Data_Ptr(),
@@ -66,11 +66,11 @@ namespace Meso {
 		//original_value and velocity can be the same
 		//advected_result must be different
 		//don't handle boundary conditions
-		template<class T, DataHolder side>
+		template<class T, int d, DataHolder side>
 		static void Advect(const real dt, FaceField<T, d, side>& advected_result, const FaceField<T, d, side>& original_value, const FaceField<T, d, side>& velocity) {
 			advected_result.Init(original_value.grid);
 			for (int axis = 0; axis < d; axis++) {
-				const auto face_grid = advected_val.grid.Face_Grid(axis);
+				const auto face_grid = original_value.grid.Face_Grid(axis);
 				Field<T, d, side> face_origin(face_grid, original_value.face_data[axis]);
 				Field<T, d, side> face_result(face_grid, advected_result.face_data[axis]);
 				Advect(dt, face_result, face_origin, velocity);

@@ -71,6 +71,29 @@ namespace Meso {
 			return true;
 		}
 
+		template<class T>
+		T Max_Abs(const Array<T>& a) {
+			return thrust::reduce(
+				a.begin(),
+				a.end(),
+				(T)0,
+				[=](const T a, const T b) { return std::max(std::abs(a), std::abs(b)); }
+			);
+		}
+		template<class T>
+		T Max_Abs(const ArrayDv<T>& a) {
+			return thrust::reduce(
+				a.begin(),
+				a.end(),
+				(T)0,
+				[=]__device__(T a, T b) {
+					if (a < 0) a = -a;
+					if (b < 0) b = -b;
+					return a > b ? a : b;
+				}
+			);
+		}
+
 		template<class Array1, class T>
 		void Fill(Array1& a, const T val) {
 			thrust::fill(a.begin(), a.end(), val);

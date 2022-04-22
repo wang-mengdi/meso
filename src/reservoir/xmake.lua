@@ -6,5 +6,7 @@ target("reservoir")
     add_files("*.cpp","*.cu","*.cxx")
     add_cugencodes("native")
     add_cugencodes("compute_61")
+    add_cuflags("--extended-lambda")
     add_includedirs(".",{public=true})
     add_deps("common")
+    

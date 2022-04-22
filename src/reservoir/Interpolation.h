@@ -100,7 +100,7 @@ namespace Meso {
 			return PointIntp::Value(F.grid, data_ptr, node, frac);
 		}
 		template<class T, int d>
-		static Vector<T, d> Face_Vector(const Grid<d> g0, const T* v0, const Grid<d> g1, const T* v1, const Grid<d> g2, const T* v2, const Vector<real, d> pos) {
+		static Vector<T, d> __host__ __device__ Face_Vector(const Grid<d> g0, const T* v0, const Grid<d> g1, const T* v1, const Grid<d> g2, const T* v2, const Vector<real, d> pos) {
 			Typedef_VectorD(d);
 			Vector<T, d> ret;
 			VectorDi node; VectorD frac;
@@ -122,7 +122,7 @@ namespace Meso {
 			return ret;
 		}
 		template<class T, int d, DataHolder side>
-		static Vector<T, d> Face_Vector(const FaceField<T, d, side>& vector_field, const Vector<real, d> pos) {
+		static Vector<T, d> __host__ __device__ Face_Vector(const FaceField<T, d, side>& vector_field, const Vector<real, d> pos) {
 			const auto& grid = vector_field.grid;
 			Grid<d> g0 = grid.Face_Grid(0), g1 = grid.Face_Grid(1), g2 = grid.Face_Grid(2);
 			const T* v0 = vector_field.Data_Ptr(0), v1 = vector_field.Data_Ptr(1), v2 = vector_field.Data_Ptr(2);

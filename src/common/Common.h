@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cmath>
 
 namespace Meso {
     ////template operations

@@ -12,5 +12,7 @@ namespace Meso {
 	public:
 		virtual void Output(const std::string base_path, const std::string frame_path) = 0;
 		virtual void Advance(const int current_frame, const real current_time, const real dt) = 0;
+		//can return inf
+		virtual real CFL_Time(const real cfl) = 0;
 	};
 }
