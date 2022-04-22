@@ -4,7 +4,6 @@
 #include "Common.h"
 #include "Grid.h"
 #include "Field.h"
-//#include <fmt/ranges.h>
 #include "SparseTests.h"
 #include "PoissonMapping.h"
 #include "PoissonTests.h"
@@ -34,6 +33,11 @@ int main(){
     Test_Exterior_Derivative_Cell<double>(Vector2i(14, 53));
     Test_Exterior_Derivative_Cell<float>(Vector3i(16, 44, 23));
     Test_Exterior_Derivative_Cell<double>(Vector3i(16, 44, 23));
+
+    Test_Exterior_Derivative_Face<float>(Vector2i(14, 53));
+    Test_Exterior_Derivative_Face<double>(Vector2i(14, 53));
+    Test_Exterior_Derivative_Face<float>(Vector3i(16, 44, 23));
+    Test_Exterior_Derivative_Face<double>(Vector3i(16, 44, 23));
 
     Test_Coarsener2(Vector2i(14, 53));
     Test_Coarsener3(Vector3i(16, 44, 23));

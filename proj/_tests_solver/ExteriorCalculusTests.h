@@ -25,8 +25,8 @@ void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
 		[&](const int axis, const VectorDi face) {
 			VectorDi cell0 = face - VectorDi::Unit(axis);
 			VectorDi cell1 = face;
-			real v0 = (grid.Valid(cell0) ? field_host(cell0) : 0);
-			real v1 = (grid.Valid(cell1) ? field_host(cell1) : 0);
+			T v0 = (grid.Valid(cell0) ? field_host(cell0) : 0);
+			T v1 = (grid.Valid(cell1) ? field_host(cell1) : 0);
 			return v1 - v0;
 		}
 	);
@@ -37,4 +37,33 @@ void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
 		}
 	}
 	Pass("Test_Exterior_Derivative_Cell passed for counts={}", counts);
+}
+
+template<class T, int d>
+void Test_Exterior_Derivative_Face(const Vector<int, d> counts) {
+	Typedef_VectorD(d);
+	Grid<d> grid(counts);
+	FaceField<T, d> F_host(grid);
+	for (int axis = 0; axis < d; axis++) Random::Fill_Random_Array<T>(F_host.Data(axis), -3, 10);
+	FaceFieldDv<T, d> F_dev = F_host;
+	FieldDv<T, d> C_ext_dev;
+	Exterior_Derivative(C_ext_dev, F_dev);
+	Field<T, d> C_ext_host = C_ext_dev;
+	Field<T, d> C_naive(grid);
+	C_naive.Calc_Cells(
+		[&](const VectorDi cell) {
+			T div = 0;
+			for (int axis = 0; axis < d; axis++) {
+				VectorDi face0 = cell, face1 = cell + VectorDi::Unit(axis);
+				div += F_host(axis, face1) - F_host(axis, face0);
+			}
+			return div;
+		}
+	);
+	if (ArrayFunc::IsApprox<T>(C_naive.Data(), C_ext_host.Data())) {
+		Pass("Test_Exterior_Derivative_Face passed for counts={}", counts);
+	}
+	else {
+		Error("Test_Exterior_Derivative_Face passed for counts={}", counts);
+	}
 }
