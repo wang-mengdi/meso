@@ -7,8 +7,6 @@
 #include "GridTests.h"
 #include "InterpolationTests.h"
 
-#include <fmt/ranges.h>
-
 using namespace Meso;
 
 template<int d>

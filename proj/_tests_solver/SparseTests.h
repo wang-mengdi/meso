@@ -3,6 +3,7 @@
 // Copyright (c) (2022-), Fan Feng
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
+#pragma once
 #include "SparseMatrixMapping.h"
 using namespace Meso;
 

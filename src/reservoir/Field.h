@@ -129,7 +129,7 @@ struct fmt::formatter<Meso::Field<T, 2, side>> {
 	template <typename FormatContext>
 	auto format(const Meso::Field<T, 2, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
 		std::string out;
-		if constexpr (side == HOST) Update_String(F, out);
+		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
 		else if constexpr (side == DEVICE) {
 			Meso::Field<T, 2> F_host = F;
 			Update_String(F_host, out);
@@ -167,7 +167,7 @@ struct fmt::formatter<Meso::Field<T, 3, side>> {
 	template <typename FormatContext>
 	auto format(const Meso::Field<T, 3, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
 		std::string out;
-		if constexpr (side == HOST) Update_String(F, out);
+		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
 		else {
 			Meso::Field<T, 3> F_host = F;
 			Update_String(F_host, out);

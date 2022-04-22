@@ -6,6 +6,8 @@
 #include "Field.h"
 #include "FaceField.h"
 
+#pragma once
+
 namespace Meso {
 	// for blockDim = (8, 8)
 	// iterate through cell
