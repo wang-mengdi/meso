@@ -28,6 +28,7 @@ namespace Meso {
 			velocity.Deep_Copy(initial_velocity);
 			psi_N.Init(face_fixed, initial_velocity);
 			temp_velocity.Init(velocity.grid);
+			pressure.Init(velocity.grid);
 			vel_div.Init(velocity.grid);
 
 			poisson.Init(velocity.grid, vol, fixed);

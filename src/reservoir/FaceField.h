@@ -53,8 +53,10 @@ namespace Meso {
 
 		constexpr Array<T, side>& Data(const int axis)noexcept { return *face_data[axis]; }
 		constexpr const Array<T, side>& Data(const int axis)const noexcept { return *face_data[axis]; }
-		constexpr T* Data_Ptr(const int axis) noexcept { return thrust::raw_pointer_cast(face_data[axis]->data()); }
-		constexpr const T* Data_Ptr(const int axis) const noexcept { return thrust::raw_pointer_cast(face_data[axis]->data()); }
+		constexpr T* Data_Ptr(const int axis) noexcept { return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data()); }
+		constexpr const T* Data_Ptr(const int axis) const noexcept {
+			return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data());
+		}
 
 		void operator *= (const FaceField<T, d, side>& f1) {
 			for (int axis = 0; axis < d; axis++) {
