@@ -49,6 +49,12 @@ namespace Meso {
 			real eta = completed_seconds * total_frames / done_frames;
 			Info("Frame {} in {}-{} done in {}s, ETA {}/{}s", frame, start_frame, end_frame, frame_seconds, eta, completed_seconds + eta);
 		}
+		//will change timer
+		void Print_Iteration_Info(Timer& iteration_timer, const real dt, const real current_time, const real frame_time) {
+			real step_seconds = iteration_timer.Lap_Time();
+			real completed_seconds = iteration_timer.Total_Time();
+			Info("Iteration {}/{}s, cost {}s, ETA {}s", dt, frame_time, step_seconds, completed_seconds * frame_time / current_time);
+		}
 		//at the beginning the system is at the status of start_frame
 		//will output all frames in [start_frame, end_frame]
 		void Advance(Simulator &simulator, int start_frame, int end_frame) {
@@ -60,8 +66,10 @@ namespace Meso {
 			Print_Frame_Info(frame_timer, start_frame, start_frame, end_frame);
 			simulator.Output(base_path.string(), (base_path / frame_dir).string());
 			for (int current_frame = start_frame; current_frame < end_frame; current_frame++) {
+				Timer iter_timer;
 				int next_frame = current_frame + 1;
 				real current_time = Time_At_Frame(current_frame);
+				real frame_start_time = current_time;
 				real next_time = Time_At_Frame(next_frame);
 				while (true) {
 					//can return an inf
@@ -73,6 +81,7 @@ namespace Meso {
 						break;
 					}
 					else simulator.Advance(current_frame, current_time, dt);
+					Print_Iteration_Info(iter_timer, dt, current_time - frame_start_time, time_per_frame);
 				}
 				Print_Frame_Info(frame_timer, current_frame, start_frame, end_frame);
 				frame_dir = bf::path(std::to_string(next_frame));
