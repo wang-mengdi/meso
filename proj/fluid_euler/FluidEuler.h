@@ -38,6 +38,7 @@ namespace Meso {
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
 			real max_vel = velocity.Max_Abs();
+			Info("cfl={}, dx={}, max_vel={}, cfl time {}", cfl, dx, max_vel, dx * cfl / max_vel);
 			return dx * cfl / max_vel;
 		}
 		virtual void Output(const std::string base_path, const std::string frame_path) {
@@ -58,6 +59,9 @@ namespace Meso {
 			Exterior_Derivative(temp_velocity, pressure);
 			velocity += temp_velocity;
 			psi_N.Apply(velocity);
+
+			Exterior_Derivative(vel_div, velocity);
+			Info("max div abs after projection: {}", vel_div.Max_Abs());
 		}
 	};
 }

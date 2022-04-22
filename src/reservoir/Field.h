@@ -65,6 +65,10 @@ namespace Meso {
 		inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 		template<class T1> void operator *= (const T1 a) { ArrayFunc::Multiply_Scalar(Data(), a); }
 
+		T Max_Abs(void) {
+			return ArrayFunc::Max_Abs<T>(Data());
+		}
+
 		template<class CFunc>
 		void Iterate_Cells(CFunc f) {
 			const int dof = grid.DoF();
