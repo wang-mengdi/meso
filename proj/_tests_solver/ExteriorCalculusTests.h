@@ -12,7 +12,7 @@ using namespace Meso;
 //test: facefield=d(field)
 template<class T, int d>
 void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
-	Typedef_VectorD(D);
+	Typedef_VectorD(d);
 	Grid<d> grid(counts);
 	Field<T, d> field_host(grid);
 	Random::Fill_Random_Array<T>(field_host.Data(), -3, 10);
@@ -31,7 +31,7 @@ void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
 		}
 	);
 	for (int axis = 0; axis < d; axis++) {
-		if (!ArrayFunc::IsApprox(facefield_naive.Data(axis), facefield_ext_host.Data(axis))) {
+		if (!ArrayFunc::IsApprox<T>(facefield_naive.Data(axis), facefield_ext_host.Data(axis))) {
 			Error("Test_Exterior_Derivative_Cell failed for counts={}", counts);
 			return;
 		}
