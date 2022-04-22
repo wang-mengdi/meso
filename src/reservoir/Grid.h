@@ -186,7 +186,7 @@ namespace Meso {
 		}
 
 		template<class IFFunc>
-		void Exec_Faces(IFFunc f) {
+		void Exec_Faces(IFFunc f) const {
 			for (int axis = 0; axis < d; axis++) {
 				int dof = Face_DoF(axis);
 #pragma omp parallel for

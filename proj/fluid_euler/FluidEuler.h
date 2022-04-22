@@ -21,10 +21,18 @@ namespace Meso {
 		FaceFieldDv<real, d> temp_velocity;
 		FieldDv<real, d> pressure;
 		FieldDv<real, d> vel_div;
-		ConjugateGradient<real> MGPCG;
+		PoissonMapping<real, d> poisson;
 		VCycleMultigrid<real> MG_precond;
-		void Init(void) {
+		ConjugateGradient<real> MGPCG;
+		void Init(Field<bool, d>& fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
+			velocity.Deep_Copy(initial_velocity);
+			psi_N.Init(face_fixed, initial_velocity);
+			temp_velocity.Init(velocity.grid);
+			vel_div.Init(velocity.grid);
 
+			poisson.Init(velocity.grid, vol, fixed);
+			MG_precond.Init_Poisson(poisson, 2, 2);
+			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-5);
 		}
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;

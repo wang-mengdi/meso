@@ -34,7 +34,7 @@ namespace Meso {
 			min_step_frame_fraction = Json::Value(j, "min_step_frame_fraction", (real)0);
 			first_frame = Json::Value(j, "first_frame", 0);
 			last_frame = Json::Value(j, "last_frame", fps * 10);
-			output_base_dir = Json::Value(j, "output_base_dir", "output");
+			output_base_dir = Json::Value(j, "output_base_dir", std::string("output"));
 		}
 		real Time_At_Frame(const int frame) {
 			return frame * time_per_frame;
@@ -52,7 +52,7 @@ namespace Meso {
 				while (true) {
 					//can return an inf
 					real dt = simulator.CFL_Time(cfl);
-					dt = MathFunc::Clamp(dt, min_step_time, time_per_frame);
+					dt = MathFunc::Clamp(dt, min_step_frame_fraction * time_per_frame, time_per_frame);
 					if (current_time + dt >= next_time) {
 						dt = next_time - current_time;
 						simulator.Advance(current_frame, current_time, dt);
@@ -65,8 +65,8 @@ namespace Meso {
 			}
 		}
 
-		template<class Initializer>
-		void Run(json& j, Initializer& scene, Simulator& simulator) {
+		template<class Initializer, class TSimulator>
+		void Run(json& j, Initializer& scene, TSimulator& simulator) {
 			Init(j.at("driver"));
 			scene.Apply(j.at("scene"), simulator);
 			Advance(simulator, first_frame, last_frame);
