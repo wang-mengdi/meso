@@ -166,6 +166,15 @@ namespace Meso {
 
 
 		////parallel iterators
+		template<class Fcell>
+		void Iterate_Nodes(Fcell f)const {
+			const int dof = DoF();
+			for (int c = 0; c < dof; c++) {
+				const VectorDi cell = Coord(c);
+				f(cell);
+			}
+		}
+
 		template<class Fcell>//Fcell is a (void) function takes a cell index
 		void Exec_Nodes(Fcell f) const {
 			const int dof = DoF();
@@ -175,6 +184,19 @@ namespace Meso {
 				f(cell);
 			}
 		}
+
+		template<class IFFunc>
+		void Exec_Faces(IFFunc f) {
+			for (int axis = 0; axis < d; axis++) {
+				int dof = Face_DoF(axis);
+#pragma omp parallel for
+				for (int i = 0; i < dof; i++) {
+					VectorDi face = Face_Coord(axis, i);
+					f(axis, face);
+				}
+			}
+		}
+
 		void Get_Kernel_Dims(dim3& blocknum, dim3& blocksize) const {
 			if constexpr (d == 2) {
 				blocknum = dim3(counts[0] >> 3, counts[1] >> 3);

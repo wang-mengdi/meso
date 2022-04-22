@@ -32,9 +32,32 @@ namespace Meso {
 
 	template<class T, int d, DataHolder side>
 	class BoundaryConditionDirect<Field<T, d, side>> : public BoundaryCondition<Field<T, d, side>> {
+		Typedef_VectorD(d);
 	public:
 		Array<int, side> indices;
 		Array<T, side> values;
+		void Init(Field<bool, d>& fixed, Field<T, d> val_field) {
+			for (int axis = 0; axis < d; axis++) {
+				Array<std::pair<int, T>> bc_pairs;
+				fixed.Iterate_Cells(
+					[&](const VectorDi cell) {
+						if (fixed(cell)) {
+							bc_pairs.push_back(std::make_pair(fixed.grid.Index(cell), val_field(cell)));
+						}
+					}
+				);
+				std::sort(bc_pairs.begin(), bc_pairs.end());
+				int n = bc_pairs.size();
+				Array<int> ind_host(n);
+				Array<T> val_host(n);
+				for (int i = 0; i < n; i++) {
+					ind_host[i] = bc_pairs[i].first;
+					val_host[i] = bc_pairs[i].second;
+				}
+				indices = ind_host;
+				values = val_host;
+			}
+		}
 		virtual void Apply(Field<T, d, side>& data)const {
 			thrust::scatter(
 				values.begin(),//first
@@ -67,6 +90,14 @@ namespace Meso {
 	class BoundaryConditionDirect<FaceField<T, d, side>> : public BoundaryCondition<FaceField<T, d, side>> {
 	public:
 		std::array<BoundaryConditionDirect<Field<T, d, side>>, d> field_bc;
+		void Init(FaceField<bool, d>& fixed, FaceField<T, d>& value) {
+			for (int axis = 0; axis < d; axis++) {
+				Grid<d> face_grid = fixed.grid.Face_Grid(axis);
+				Field<bool, d> face_fixed(face_grid, fixed.face_data[axis]);
+				Field<T, d> face_value(face_grid, value.face_data[axis]);
+				field_bc[axis].Init(face_fixed, face_value);
+			}
+		}
 		virtual void Apply(FaceField<T, d, side>& face_field)const {
 			for (int axis = 0; axis < d; axis++) {
 				Field<T, d, side> field(face_field.grid.Face_Grid(axis), face_field.face_data[axis]);

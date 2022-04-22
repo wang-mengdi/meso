@@ -30,6 +30,7 @@ namespace Meso {
 	public:
 		template<class T, int d, DataHolder side>
 		static void Advect(const real dt, Field<T, d, side>& advected_field, const Field<T, d, side>& origin_field, const FaceField<T, d, side>& velocity) {
+			advected_field.Init(origin_field.grid);
 			if constexpr (side == DEVICE) {
 				const auto& vgrid = velocity.grid;
 				Grid<d> vg0 = vgrid.Face_Grid(0), vg1 = vgrid.Face_Grid(1), vg2 = vgrid.Face_Grid(2);

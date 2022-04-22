@@ -237,7 +237,7 @@ namespace Meso {
 	template<class T, int d>
 	void Exterior_Derivative(FaceFieldDv<T, d>& F, const FieldDv<T, d>& C)
 	{
-		F.Fill(0);
+		F.Init(C.grid, 0);
 		dim3 blocknum, blocksize;
 		C.grid.Get_Kernel_Dims(blocknum, blocksize);
 		const T* cell = C.Data_Ptr();
@@ -260,6 +260,7 @@ namespace Meso {
 	//output: C is a 3-form on cell (3d) or 2-form on cell (2d)
 	template<class T, int d>
 	void Exterior_Derivative(FieldDv<T, d>& C, const FaceFieldDv<T, d>& F) {
+		C.Init(F.grid);
 		dim3 blocknum, blocksize;
 		F.grid.Get_Kernel_Dims(blocknum, blocksize);
 		T* cell = C.Data_Ptr();
