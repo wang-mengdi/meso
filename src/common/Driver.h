@@ -47,7 +47,7 @@ namespace Meso {
 			real frame_seconds = frame_timer.Lap_Time();
 			real completed_seconds = frame_timer.Total_Time();
 			real eta = completed_seconds * total_frames / done_frames;
-			Info("Frame {} in {}-{} done in {:.3f}s, ETA {:.3f}/{:,3f}s", frame, start_frame, end_frame, frame_seconds, eta, completed_seconds + eta);
+			Info("Frame {} in {}-{} done in {:.3f}s, ETA {:.3f}/{:.3f}s", frame, start_frame, end_frame, frame_seconds, eta, completed_seconds + eta);
 		}
 		//will change timer
 		void Print_Iteration_Info(Timer& iteration_timer, const real dt, const real current_time, const real frame_time) {
