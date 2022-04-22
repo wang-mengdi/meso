@@ -103,8 +103,8 @@ namespace Meso {
 }
 
 //fmt adaptor for Field
-template <class T>
-struct fmt::formatter<Meso::Field<T, 2>> {
+template <class T, Meso::DataHolder side>
+struct fmt::formatter<Meso::Field<T, 2, side>> {
 	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
 		//https://fmt.dev/latest/api.html#udt
 		auto it = ctx.begin(), end = ctx.end();
@@ -113,11 +113,8 @@ struct fmt::formatter<Meso::Field<T, 2>> {
 		return it;
 	}
 
-	// Formats the point p using the parsed format specification (presentation)
-	// stored in this formatter.
-	template <typename FormatContext>
-	auto format(const Meso::Field<T, 2>& F, FormatContext& ctx) -> decltype(ctx.out()) {
-		std::string out = "";
+	void Update_String(const Meso::Field<T, 2>& F, std::string& out) {
+		out = "";
 		//out += to_string(F.grid.counts[0]);
 		for (int i = 0; i < F.grid.counts[0]; i++) {
 			for (int j = 0; j < F.grid.counts[1]; j++) {
@@ -125,12 +122,24 @@ struct fmt::formatter<Meso::Field<T, 2>> {
 			}
 			out += "\n";
 		}
+	}
+
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext>
+	auto format(const Meso::Field<T, 2, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
+		std::string out;
+		if constexpr (side == HOST) Update_String(F, out);
+		else if constexpr (side == DEVICE) {
+			Meso::Field<T, 2> F_host = F;
+			Update_String(F_host, out);
+		}
 		return format_to(ctx.out(), "{}", out);
 	}
 };
 
-template<class T>
-struct fmt::formatter<Meso::Field<T, 3>> {
+template<class T, Meso::DataHolder side>
+struct fmt::formatter<Meso::Field<T, 3, side>> {
 	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
 		//https://fmt.dev/latest/api.html#udt
 		auto it = ctx.begin(), end = ctx.end();
@@ -139,11 +148,8 @@ struct fmt::formatter<Meso::Field<T, 3>> {
 		return it;
 	}
 
-	// Formats the point p using the parsed format specification (presentation)
-	// stored in this formatter.
-	template <typename FormatContext>
-	auto format(const Meso::Field<T, 3>& F, FormatContext& ctx) -> decltype(ctx.out()) {
-		std::string out = "";
+	void Update_String(const Meso::Field<T, 3>& F, std::string& out) {
+		out = "";
 		//out += to_string(F.grid.counts[0]);
 		for (int i = 0; i < F.grid.counts[0]; i++) {
 			for (int j = 0; j < F.grid.counts[1]; j++) {
@@ -153,6 +159,18 @@ struct fmt::formatter<Meso::Field<T, 3>> {
 				out += "\n";
 			}
 			out += "===========\n";
+		}
+	}
+
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext>
+	auto format(const Meso::Field<T, 3, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
+		std::string out;
+		if constexpr (side == HOST) Update_String(F, out);
+		else {
+			Meso::Field<T, 3> F_host = F;
+			Update_String(F_host, out);
 		}
 		return format_to(ctx.out(), "{}", out);
 	}

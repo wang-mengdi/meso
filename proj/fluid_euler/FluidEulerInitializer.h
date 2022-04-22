@@ -109,6 +109,7 @@ namespace Meso {
 
 			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
+			ArrayFunc::Fill(fluid.velocity.Data(0), 1.0);
 		}
 	};
 }
