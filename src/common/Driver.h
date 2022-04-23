@@ -92,7 +92,7 @@ namespace Meso {
 
 		template<class Initializer, class TSimulator>
 		void Run(json& j, Initializer& scene, TSimulator& simulator) {
-			Info("Driver::Run parse json: {}", j.dump(2));
+			Info("Driver::Run parse json: \n{}", j.dump(2));
 			Init(j.at("driver"));
 			scene.Apply(j.at("scene"), simulator);
 			Advance(simulator, first_frame, last_frame);
