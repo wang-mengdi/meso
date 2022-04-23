@@ -33,7 +33,7 @@ namespace Meso {
 
 			poisson.Init(velocity.grid, vol, fixed);
 			MG_precond.Init_Poisson(poisson, 2, 2);
-			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
+			MGPCG.Init(&poisson, &MG_precond, true, -1, 1e-6);
 		}
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
@@ -55,7 +55,7 @@ namespace Meso {
 
 			int iter; real res;
 			MGPCG.Solve(pressure.Data(), vel_div.Data(), iter, res);
-			//Info("solve poisson with {} iters and residual {}", iter, res);
+			Info("solve poisson with {} iters and residual {}", iter, res);
 
 			//velocity+=grad(p)
 			Exterior_Derivative(temp_velocity, pressure);
