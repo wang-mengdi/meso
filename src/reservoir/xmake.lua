@@ -1,5 +1,6 @@
 includes("./../../src/common/xmake.lua")
 -- add_rules("plugin.vsxmake.autoupdate")
+add_requires("vtk >=9.1.0")
 target("reservoir")
     set_kind("static")
     add_headerfiles("*.h")
@@ -8,5 +9,6 @@ target("reservoir")
     add_cugencodes("compute_61")
     add_cuflags("--extended-lambda")
     add_includedirs(".",{public=true})
+    add_packages("vtk",{public=true})
     add_deps("common")
     

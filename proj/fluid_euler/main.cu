@@ -17,7 +17,12 @@ void Run(json &j) {
 int main(void) {
 	try {
 		json j = {
-			{"driver",json::object()},
+			{
+				"driver",
+				{
+					{"last_frame",10}
+				}
+			},
 			{"scene",json::object()}
 		};
 		//int dim = 2;

@@ -5,6 +5,15 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Grid.h"
+#include "Interpolation.h"
+#include <vtkXMLStructuredGridWriter.h>
+#include <vtkStructuredGrid.h>
+#include <vtkDataSet.h>
+#include <vtkPointData.h>
+#include <vtkCellData.h>
+#include <vtkCellArray.h>
+#include <vtkDoubleArray.h>
+
 
 namespace Meso {
 
@@ -85,6 +94,76 @@ namespace Meso {
 				max_val = std::max<T>(max_val, ArrayFunc::Max_Abs<T>(Data(axis)));
 			}
 			return max_val;
+		}
+
+		void Output_Vtk(const std::string file_name) {
+			// Reading data from the file. ">>" is a operator of "ifstream"
+			int nx, ny, nz;
+			if constexpr (d == 2) {
+				nx = grid.counts[0];
+				ny = grid.counts[1];
+				nz = 1;
+			}
+			else {
+				nx = grid.counts[0];
+				ny = grid.counts[1];
+				nz = grid.counts[2];
+			}
+
+			// setup VTK
+			vtkXMLStructuredGridWriter* writer = vtkXMLStructuredGridWriter::New();
+			vtkStructuredGrid* structured_grid = vtkStructuredGrid::New();
+			structured_grid->SetDimensions(nx, ny, nz);
+			vtkPoints* nodes = vtkPoints::New();
+			nodes->Allocate(nx * ny * nz);
+			vtkDoubleArray* prsArray = vtkDoubleArray::New();
+			prsArray->SetNumberOfComponents(1);
+			prsArray->SetName("Pressure");
+			vtkDoubleArray* velArray = vtkDoubleArray::New();
+			velArray->SetNumberOfComponents(3);
+			velArray->SetName("Velocity");
+
+			FaceField<T, d> field_host = *this;
+
+			for (int k = 0; k < nz; k++) {
+				for (int j = 0; j < ny; j++) {
+					for (int i = 0; i < nx; i++) {
+						real x, y, z, u, v, w, p;
+						//ifile >> x >> y >> z >> u >> v >> w >> p;
+						VectorDi cell = VectorFunc::Vi<d>(i, j, k);
+						VectorD pos = grid.Position(cell);
+						Vector3 pos3 = VectorFunc::V<3>(pos);
+
+						//nodes->InsertNextPoint(x, y, z);
+						nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
+						//prsArray->InsertNextTuple(&p);
+						VectorD vel = IntpLinear::Face_Vector<T, d, HOST>(field_host, pos);
+						Vector3 vel3 = VectorFunc::V<3>();
+						//velArray->InsertNextTuple3(u, v, w);
+						velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
+					}
+				}
+			}
+
+			structured_grid->SetPoints(nodes);
+			structured_grid->GetPointData()->AddArray(velArray);
+			//structured_grid->GetPointData()->AddArray(prsArray);
+
+#if (VTK_MAJOR_VERSION >=6)
+			writer->SetInputData(structured_grid);
+#else
+			writer->SetInput(structured_grid);
+#endif
+
+			writer->SetFileName("officeFlow.vts");
+			writer->SetDataModeToAscii();
+			writer->Write();
+
+			structured_grid->Delete();
+			writer->Delete();
+			nodes->Delete();
+			velArray->Delete();
+			prsArray->Delete();
 		}
 
 		template<class IFFunc>

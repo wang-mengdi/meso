@@ -11,9 +11,6 @@
 #include "Simulator.h"
 #include "Timer.h"
 
-#include <boost/filesystem.hpp>
-namespace bf = boost::filesystem;
-
 namespace Meso {
 
 	class Driver {
@@ -55,16 +52,23 @@ namespace Meso {
 			real completed_seconds = iteration_timer.Total_Time();
 			Info("Iteration {:.5f}/{:.5f}s, cost {:.3f}s, ETA {:.3f}s", dt, frame_time, step_seconds, completed_seconds * frame_time / current_time);
 		}
+
+		void Output(Simulator &simulator, bf::path base_path, const int frame) {
+			bf::path frame_dir(std::to_string(frame));
+			bf::path frame_path = base_path / frame_dir;
+			IOFunc::Create_Directory(frame_path);
+			Info("Output frame {} to {}", frame, frame_path.string());
+			simulator.Output(base_path, frame_path);
+		}
+
 		//at the beginning the system is at the status of start_frame
 		//will output all frames in [start_frame, end_frame]
 		void Advance(Simulator &simulator, int start_frame, int end_frame) {
 			Timer frame_timer;
-			
 			bf::path base_path(output_base_dir);
-			bf::path frame_dir(std::to_string(start_frame));
 
 			Print_Frame_Info(frame_timer, start_frame, start_frame, end_frame);
-			simulator.Output(base_path.string(), (base_path / frame_dir).string());
+			Output(simulator, base_path, start_frame);
 			for (int current_frame = start_frame; current_frame < end_frame; current_frame++) {
 				Timer iter_timer;
 				int next_frame = current_frame + 1;
@@ -86,8 +90,7 @@ namespace Meso {
 					if (last_iter) break;
 				}
 				Print_Frame_Info(frame_timer, current_frame, start_frame, end_frame);
-				frame_dir = bf::path(std::to_string(next_frame));
-				simulator.Output(base_path.string(), (base_path / frame_dir).string());
+				Output(simulator, base_path, current_frame);
 			}
 		}
 

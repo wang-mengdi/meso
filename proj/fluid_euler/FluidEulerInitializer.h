@@ -106,8 +106,8 @@ namespace Meso {
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << 1, -1, -1, -1, -1, -1;
-			bc_val << 1, 0, 0, 0, 0, 0;
+			bc_width << 0, -1, 0, 0, 0, 0;
+			bc_val << 1, 1, 0, 0, 0, 0;
 
 			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 			fluid.Init(fixed, vol, face_fixed, initial_vel);

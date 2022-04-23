@@ -33,15 +33,16 @@ namespace Meso {
 
 			poisson.Init(velocity.grid, vol, fixed);
 			MG_precond.Init_Poisson(poisson, 2, 2);
-			MGPCG.Init(&poisson, &MG_precond, true, -1, 1e-6);
+			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
 		}
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
 			real max_vel = velocity.Max_Abs();
 			return dx * cfl / max_vel;
 		}
-		virtual void Output(const std::string base_path, const std::string frame_path) {
-
+		virtual void Output(const bf::path base_path, const bf::path frame_path) {
+			bf::path vtk_path = frame_path / bf::path("velocity.vtk");
+			velocity.Output_Vtk(vtk_path.string());
 		}
 		virtual void Advance(const int current_frame, const real current_time, const real dt) {
 			//advection

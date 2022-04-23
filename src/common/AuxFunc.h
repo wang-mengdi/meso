@@ -13,6 +13,7 @@ using namespace thrust::placeholders;
 namespace Meso {
 
 	namespace IOFunc {
+		void Create_Directory(const bf::path path);
 		std::string To_String_Simple(const bool& a);
 		template<class T> std::string To_String_Simple(const T& a) {
 			return std::to_string(a);
