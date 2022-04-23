@@ -75,14 +75,15 @@ namespace Meso {
 					//can return an inf
 					real dt = simulator.CFL_Time(cfl);
 					dt = MathFunc::Clamp(dt, min_step_frame_fraction * time_per_frame, time_per_frame);
+					bool last_iter = false;
 					if (current_time + dt >= next_time) {
 						dt = next_time - current_time;
-						simulator.Advance(current_frame, current_time, dt);
-						break;
+						last_iter = true;
 					}
-					else simulator.Advance(current_frame, current_time, dt);
+					simulator.Advance(current_frame, current_time, dt);
 					current_time += dt;
 					Print_Iteration_Info(iter_timer, dt, current_time - frame_start_time, time_per_frame);
+					if (last_iter) break;
 				}
 				Print_Frame_Info(frame_timer, current_frame, start_frame, end_frame);
 				frame_dir = bf::path(std::to_string(next_frame));
