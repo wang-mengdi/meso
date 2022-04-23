@@ -112,10 +112,6 @@ namespace Meso {
 			bc_width << 1, -1, -1, -1, -1, -1;
 			bc_val << 1, 0, 0, 0, 0, 0;
 
-			//Info("bc_width: \n{}\n, bc_val: \n{}\n", bc_width, bc_val);
-			std::cout << "bc_width: " << bc_width << "\n";
-			std::cout << "bc_width: " << bc_val << "\n";
-
 			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
 			//ArrayFunc::Fill(fluid.velocity.Data(0), 1.0);

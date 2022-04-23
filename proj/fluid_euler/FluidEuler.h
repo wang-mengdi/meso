@@ -54,15 +54,9 @@ namespace Meso {
 			velocity = temp_velocity;
 			psi_N.Apply(velocity);
 
-			FieldDv<real,d> vel0 = FieldDv<real, d>(velocity.grid.Face_Grid(0), velocity.face_data[0]);
-			Info("velocity 0 after advection: \n{}\n", vel0);
-
 			//projection
 			//vel_div=div(velocity)
 			Exterior_Derivative(vel_div, velocity);
-
-			vel0 = FieldDv<real, d>(velocity.grid.Face_Grid(0), velocity.face_data[0]);
-			Info("velocity after exterior derivative: \n{}\n", vel0);
 
 			//VectorDi cell0 = VectorFunc::Vi<d>(0, 0, 0);
 			//for (int axis = 0; axis < d; axis++) {
@@ -80,11 +74,12 @@ namespace Meso {
 
 			//velocity+=grad(p)
 			Exterior_Derivative(temp_velocity, pressure);
+			temp_velocity *= poisson.vol;
 
 			FieldDv<real, d> temp0 = FieldDv<real, d>(temp_velocity.grid.Face_Grid(0), temp_velocity.face_data[0]);
 			Info("solved grad(p)[0]: \n{}\n", temp0);
 
-			vel0 = FieldDv<real, d>(velocity.grid.Face_Grid(0), velocity.face_data[0]);
+			FieldDv<real, d> vel0 = FieldDv<real, d>(velocity.grid.Face_Grid(0), velocity.face_data[0]);
 			Info("velocity before add: \n{}\n", vel0);
 
 			velocity += temp_velocity;
