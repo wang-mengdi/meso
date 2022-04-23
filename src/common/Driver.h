@@ -54,11 +54,11 @@ namespace Meso {
 		}
 
 		void Output(Simulator &simulator, bf::path base_path, const int frame) {
-			bf::path frame_dir(std::to_string(frame));
-			bf::path frame_path = base_path / frame_dir;
-			IOFunc::Create_Directory(frame_path);
-			Info("Output frame {} to {}", frame, frame_path.string());
-			simulator.Output(base_path, frame_path);
+			//bf::path frame_dir(std::to_string(frame));
+			//bf::path frame_path = base_path / frame_dir;
+			//IOFunc::Create_Directory(frame_path);
+			Info("Output frame {} to {}", frame, base_path.string());
+			simulator.Output(base_path, frame);
 		}
 
 		//at the beginning the system is at the status of start_frame
@@ -66,6 +66,7 @@ namespace Meso {
 		void Advance(Simulator &simulator, int start_frame, int end_frame) {
 			Timer frame_timer;
 			bf::path base_path(output_base_dir);
+			IOFunc::Create_Directory(base_path);
 
 			Print_Frame_Info(frame_timer, start_frame, start_frame, end_frame);
 			Output(simulator, base_path, start_frame);

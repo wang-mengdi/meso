@@ -128,20 +128,20 @@ namespace Meso {
 			for (int k = 0; k < nz; k++) {
 				for (int j = 0; j < ny; j++) {
 					for (int i = 0; i < nx; i++) {
-						real x, y, z, u, v, w, p;
+						//real x, y, z, u, v, w, p;
 						//ifile >> x >> y >> z >> u >> v >> w >> p;
 						VectorDi cell = VectorFunc::Vi<d>(i, j, k);
 						//VectorD pos = VectorFunc::V<d>(i, j, k);
 						VectorD pos = grid.Position(cell);
 						Vector3 pos3 = VectorFunc::V<3>(pos);
 
-						//nodes->InsertNextPoint(x, y, z);
+						//nodes->InsertNextPoint(i, j, k);
 						nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
-						VectorD vel = IntpLinear::Face_Vector<T, d, HOST>(field_host, pos);
-						Vector3 vel3 = VectorFunc::V<3>(vel);
+						VectorD vec = IntpLinear::Face_Vector<T, d, HOST>(field_host, pos);
+						Vector3 vec3 = VectorFunc::V<3>(vec);
 						//velArray->InsertNextTuple3(u, v, w);
-						//velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
-						velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
+						velArray->InsertNextTuple3(vec3[0], vec3[1], vec3[2]);
+						//velArray->InsertNextTuple3(vec3[0], j, vec3[2]);
 					}
 				}
 			}

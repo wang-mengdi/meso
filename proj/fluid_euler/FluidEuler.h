@@ -40,8 +40,9 @@ namespace Meso {
 			real max_vel = velocity.Max_Abs();
 			return dx * cfl / max_vel;
 		}
-		virtual void Output(const bf::path base_path, const bf::path frame_path) {
-			bf::path vtk_path = frame_path / bf::path("velocity.vts");
+		virtual void Output(const bf::path base_path, const int frame) {
+			std::string vts_name = fmt::format("vts{:04d}.vts", frame);
+			bf::path vtk_path = base_path / bf::path(vts_name);
 			velocity.Output_Vtk(vtk_path.string());
 		}
 		virtual void Advance(const int current_frame, const real current_time, const real dt) {
