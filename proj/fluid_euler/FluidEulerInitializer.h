@@ -13,10 +13,18 @@ namespace Meso {
 	class FluidEulerInitializer {
 	public:
 		Typedef_VectorD(d);
+
+		//define the boundary conditions of the eulerian system
+		Field<bool, d> fixed;
+		FaceField<real, d> vol;
+		FaceField<bool, d> face_fixed;
+		FaceField<real, d> initial_vel;
+
 		void Apply(json& j, FluidEuler<d>& fluid) {
 			int test = Json::Value(j, "test", 0);
 			switch (test) {
 			case 0:Case_0(j, fluid); break;
+			case 1:Case_1(j, fluid); break;
 			default:Assert(false, "test {} not exist", test); break;
 			}
 		}
@@ -99,10 +107,6 @@ namespace Meso {
 			real dx = 1.0 / scale;
 			VectorDi grid_size = scale * VectorFunc::Vi<d>(2, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
-			Field<bool, d> fixed;
-			FaceField<real, d> vol;
-			FaceField<bool, d> face_fixed;
-			FaceField<real, d> initial_vel;
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
@@ -112,6 +116,33 @@ namespace Meso {
 			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
 			ArrayFunc::Fill(fluid.velocity.Data(0), 1.0);
+		}
+
+		void Case_1(json& j, FluidEuler<d>& fluid) {
+			int scale = Json::Value(j, "scale", 32);
+			real dx = 1.0 / scale;
+			VectorDi grid_size = scale * VectorFunc::Vi<d>(1, 1, 1);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
+
+			Eigen::Matrix<int, 3, 2> bc_width;
+			Eigen::Matrix<real, 3, 2> bc_val;
+			bc_width << 1, 1, 1, 1, 1, 1;
+			bc_val << 0, 0, 0, 0, 0, 0;
+
+			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+
+			grid.Exec_Faces(
+				[&](const int axis, const VectorDi face) {
+					if (axis == 0 && face[1] >= grid.counts[1] - 2) {
+						if (!face_fixed(axis, face)) {
+							face_fixed(axis, face) = true;
+							initial_vel(axis, face) = 1.0;
+						}
+					}
+				}
+			);
+
+			fluid.Init(fixed, vol, face_fixed, initial_vel);
 		}
 	};
 }
