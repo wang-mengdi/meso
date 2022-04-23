@@ -95,7 +95,7 @@ namespace Meso {
 
 		//an empty field with inflow boundary condition v=1
 		void Case_0(json& j, FluidEuler<d>& fluid) {
-			int scale = Json::Value(j, "scale", 8);
+			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
 			VectorDi grid_size = scale * VectorFunc::Vi<d>(2, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
