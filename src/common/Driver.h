@@ -44,14 +44,14 @@ namespace Meso {
 			int done_frames = frame - start_frame;
 			real frame_seconds = frame_timer.Lap_Time();
 			real completed_seconds = frame_timer.Total_Time();
-			real eta = completed_seconds * total_frames / done_frames;
+			real eta = completed_seconds * (total_frames - done_frames) / done_frames;
 			Info("Frame {} in {}-{} done in {:.3f}s, ETA {:.3f}/{:.3f}s", frame, start_frame, end_frame, frame_seconds, eta, completed_seconds + eta);
 		}
 		//will change timer
 		void Print_Iteration_Info(Timer& iteration_timer, const real dt, const real current_time, const real frame_time) {
 			real step_seconds = iteration_timer.Lap_Time();
 			real completed_seconds = iteration_timer.Total_Time();
-			Info("Iteration {:.5f}/{:.5f}s, cost {:.3f}s, ETA {:.3f}s", dt, frame_time, step_seconds, completed_seconds * frame_time / current_time);
+			Info("Iteration {:.5f}/{:.5f}s, cost {:.3f}s, remaining {:.3f}s", dt, frame_time, step_seconds, completed_seconds * (frame_time - current_time) / current_time);
 		}
 
 		void Output(Simulator &simulator, bf::path base_path, const int frame) {
