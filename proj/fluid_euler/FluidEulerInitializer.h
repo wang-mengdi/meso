@@ -62,8 +62,6 @@ namespace Meso {
 				}
 			);
 
-			Info("grid counts: {}", grid.counts);
-
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
 					vol(axis, face) = 1;
@@ -84,7 +82,6 @@ namespace Meso {
 							vol(axis, face) = 0;
 							face_fixed(axis, face) = true;
 							boundary_vel(axis, face) = bc_val(_chk_axis, _side);
-							//Info("set face bc {},{} to {} with chk_axis {} and side {}", axis, face, boundary_vel(axis, face), _chk_axis, _side);
 						}
 						else {
 							vol(axis, face) = 0;

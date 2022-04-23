@@ -47,6 +47,8 @@ namespace Meso {
 			Poisson_Diagonal(diag, _mapping);
 			x_temp.resize(dof);
 			mask = GridGSMask<d>(_mapping.Grid());
+
+			Info("GS diagonal: {}", diag);
 		}
 		virtual int XDof()const { return dof; }
 		virtual int YDof()const { return dof; }

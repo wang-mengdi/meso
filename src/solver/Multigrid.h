@@ -128,6 +128,8 @@ namespace Meso {
 			DenseMatrixMapping<T> dense_mapping;
 			dense_mapping.Init_PoissonLike(grids[L], *mappings[L]);
 			direct_solver = std::make_shared<LUDenseSolver<T>>(dense_mapping);
+			//PoissonPtr last_layer_poisson = std::dynamic_pointer_cast<PoissonMapping<T, d>>(mappings[L]);
+			//direct_solver = std::make_shared<GridGSSmoother<T, d>>(*last_layer_poisson, 5);
 			
 			//auxillary arrays
 			xs.resize(L + 1);

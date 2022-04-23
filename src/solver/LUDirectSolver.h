@@ -56,6 +56,15 @@ namespace Meso {
 			else flg = cusolverDnSgetrf(solve_handle, dof, dof, A_ptr, dof, buffer_ptr, piv_ptr, info_ptr);
 			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver getrf failed {}", flg);
 			checkCudaErrors(cudaGetLastError());
+
+			//Info("matrix A:");
+			//for (int i = 0; i < dof; i++) {
+			//	for (int j = 0; j < dof; j++) {
+			//		T ele = A[i + dof * j];
+			//		fmt::print("{} ", ele);
+			//	}
+			//	fmt::print("\n");
+			//}
 		}
 
 		//input b, get x
@@ -75,6 +84,8 @@ namespace Meso {
 			else flg = cusolverDnSgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
 			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver solve failed {}", flg);
 			checkCudaErrors(cudaGetLastError());
+
+			//Info("direct solve input:\n{}\noutput:\n{}", b, x);
 		}
 	};
 }

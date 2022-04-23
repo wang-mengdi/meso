@@ -81,6 +81,7 @@ namespace Meso {
 						break;
 					}
 					else simulator.Advance(current_frame, current_time, dt);
+					current_time += dt;
 					Print_Iteration_Info(iter_timer, dt, current_time - frame_start_time, time_per_frame);
 				}
 				Print_Frame_Info(frame_timer, current_frame, start_frame, end_frame);

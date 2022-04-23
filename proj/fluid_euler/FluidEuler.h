@@ -33,7 +33,7 @@ namespace Meso {
 
 			poisson.Init(velocity.grid, vol, fixed);
 			MG_precond.Init_Poisson(poisson, 2, 2);
-			MGPCG.Init(&poisson, &MG_precond, false);
+			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
 		}
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
@@ -45,10 +45,6 @@ namespace Meso {
 
 		}
 		virtual void Advance(const int current_frame, const real current_time, const real dt) {
-			//FieldDv<real, d> vel0(velocity.grid.Face_Grid(0), velocity.face_data[0]);
-			//Info("velocity 0 before advection: \n{}\n", vel0);
-
-
 			//advection
 			SemiLagrangian::Advect(dt, temp_velocity, velocity, velocity);
 			velocity = temp_velocity;
@@ -58,40 +54,16 @@ namespace Meso {
 			//vel_div=div(velocity)
 			Exterior_Derivative(vel_div, velocity);
 
-			//VectorDi cell0 = VectorFunc::Vi<d>(0, 0, 0);
-			//for (int axis = 0; axis < d; axis++) {
-			//	VectorDi face0 = cell0, face1 = cell0 + VectorDi::Unit(axis);
-			//	Info("cell {} incident face {},{} velocity {}", cell0, axis, face0, velocity.Get(axis, face0));
-			//	Info("cell {} incident face {},{} velocity {}", cell0, axis, face1, velocity.Get(axis, face1));
-			//}
-			//Info("cell {} vel_div {}", cell0, vel_div.Get(cell0));
-
-			Info("max abs vel_div before projection: {}", vel_div.Max_Abs());
-			//Info("vel_div before projection: \n{}\n", vel_div);
-
 			int iter; real res;
 			MGPCG.Solve(pressure.Data(), vel_div.Data(), iter, res);
+			//Info("solve poisson with {} iters and residual {}", iter, res);
 
 			//velocity+=grad(p)
 			Exterior_Derivative(temp_velocity, pressure);
 			temp_velocity *= poisson.vol;
 
-			FieldDv<real, d> temp0 = FieldDv<real, d>(temp_velocity.grid.Face_Grid(0), temp_velocity.face_data[0]);
-			Info("solved grad(p)[0]: \n{}\n", temp0);
-
-			FieldDv<real, d> vel0 = FieldDv<real, d>(velocity.grid.Face_Grid(0), velocity.face_data[0]);
-			Info("velocity before add: \n{}\n", vel0);
-
 			velocity += temp_velocity;
 			psi_N.Apply(velocity);
-
-			vel0 = FieldDv<real, d>(velocity.grid.Face_Grid(0), velocity.face_data[0]);
-			Info("velocity 0 after projection: \n{}\n", vel0);
-
-			Exterior_Derivative(vel_div, velocity);
-			Info("max div abs after projection: {}", vel_div.Max_Abs());
-
-			exit(0);
 		}
 	};
 }
