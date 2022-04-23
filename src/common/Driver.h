@@ -69,7 +69,7 @@ namespace Meso {
 
 			Print_Frame_Info(frame_timer, start_frame, start_frame, end_frame);
 			Output(simulator, base_path, start_frame);
-			for (int current_frame = start_frame; current_frame < end_frame; current_frame++) {
+			for (int current_frame = start_frame; current_frame <= end_frame; current_frame++) {
 				Timer iter_timer;
 				int next_frame = current_frame + 1;
 				real current_time = Time_At_Frame(current_frame);

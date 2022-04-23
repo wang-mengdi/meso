@@ -116,12 +116,12 @@ namespace Meso {
 			structured_grid->SetDimensions(nx, ny, nz);
 			vtkPoints* nodes = vtkPoints::New();
 			nodes->Allocate(nx * ny * nz);
-			vtkDoubleArray* prsArray = vtkDoubleArray::New();
-			prsArray->SetNumberOfComponents(1);
-			prsArray->SetName("Pressure");
+			//vtkDoubleArray* prsArray = vtkDoubleArray::New();
+			//prsArray->SetNumberOfComponents(1);
+			//prsArray->SetName("Pressure");
 			vtkDoubleArray* velArray = vtkDoubleArray::New();
-			velArray->SetNumberOfComponents(3);
 			velArray->SetName("Velocity");
+			velArray->SetNumberOfComponents(3);
 
 			FaceField<T, d> field_host = *this;
 
@@ -131,15 +131,16 @@ namespace Meso {
 						real x, y, z, u, v, w, p;
 						//ifile >> x >> y >> z >> u >> v >> w >> p;
 						VectorDi cell = VectorFunc::Vi<d>(i, j, k);
+						//VectorD pos = VectorFunc::V<d>(i, j, k);
 						VectorD pos = grid.Position(cell);
 						Vector3 pos3 = VectorFunc::V<3>(pos);
 
 						//nodes->InsertNextPoint(x, y, z);
 						nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
-						//prsArray->InsertNextTuple(&p);
 						VectorD vel = IntpLinear::Face_Vector<T, d, HOST>(field_host, pos);
-						Vector3 vel3 = VectorFunc::V<3>();
+						Vector3 vel3 = VectorFunc::V<3>(vel);
 						//velArray->InsertNextTuple3(u, v, w);
+						//velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
 						velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
 					}
 				}
@@ -147,6 +148,7 @@ namespace Meso {
 
 			structured_grid->SetPoints(nodes);
 			structured_grid->GetPointData()->AddArray(velArray);
+			structured_grid->GetPointData()->SetActiveVectors("velocity");
 			//structured_grid->GetPointData()->AddArray(prsArray);
 
 #if (VTK_MAJOR_VERSION >=6)
@@ -155,7 +157,7 @@ namespace Meso {
 			writer->SetInput(structured_grid);
 #endif
 
-			writer->SetFileName("officeFlow.vts");
+			writer->SetFileName(file_name.c_str());
 			writer->SetDataModeToAscii();
 			writer->Write();
 
@@ -163,7 +165,7 @@ namespace Meso {
 			writer->Delete();
 			nodes->Delete();
 			velArray->Delete();
-			prsArray->Delete();
+			//prsArray->Delete();
 		}
 
 		template<class IFFunc>
