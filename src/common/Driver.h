@@ -10,6 +10,7 @@
 #include "Json.h"
 #include "Simulator.h"
 #include "Timer.h"
+#include <fstream>
 
 namespace Meso {
 
@@ -100,6 +101,9 @@ namespace Meso {
 			Info("Driver::Run parse json: \n{}", j.dump(2));
 			Init(j.at("driver"));
 			scene.Apply(j.at("scene"), simulator);
+			bf::path dump_file = bf::path(output_base_dir) / bf::path("setup.json");
+			std::ofstream dump_output(dump_file.string());
+			dump_output <<std::setw(4)<< j;
 			Advance(simulator, first_frame, last_frame);
 		}
 	};
