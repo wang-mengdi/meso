@@ -28,19 +28,21 @@ namespace Meso {
 		}
 
 		bool Face_In_Boundary(const Grid<d> grid, int axis, const VectorDi face, int chk_axis, int side, int width) {
+			int lbound = width;
+			int rbound = (width == -1) ? grid.Face_Grid(axis).counts[chk_axis] + 1 : grid.counts[chk_axis] - width;
 			if (side == 0) {
-				if (axis == chk_axis) return face[chk_axis] <= width;
-				else return face[chk_axis] < width;
+				if (axis == chk_axis) return face[chk_axis] <= lbound;
+				else return face[chk_axis] < lbound;
 			}
 			else if (side == 1) {
-				return face[chk_axis] >= grid.counts[chk_axis] - width;
+				return face[chk_axis] >= rbound;
 			}
 			else return false;
 		}
 
 		//all these passed fields are not initialized before
 		void Set_Boundary(const Grid<d> grid, const Eigen::Matrix<int, 3, 2> bc_width, const Eigen::Matrix<real, 3, 2> bc_val,
-			Field<bool, d>& cell_fixed, FaceField<real, d>& vol, FaceField<bool, d> face_fixed, FaceField<real, d>& boundary_vel) {
+			Field<bool, d>& cell_fixed, FaceField<real, d>& vol, FaceField<bool, d> &face_fixed, FaceField<real, d>& boundary_vel) {
 			cell_fixed.Init(grid);
 			vol.Init(grid);
 			face_fixed.Init(grid);
@@ -60,6 +62,8 @@ namespace Meso {
 				}
 			);
 
+			Info("grid counts: {}", grid.counts);
+
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
 					vol(axis, face) = 1;
@@ -70,7 +74,7 @@ namespace Meso {
 						for (int side = 0; side < 2; side++) {
 							if (Face_In_Boundary(grid, axis, face, chk_axis, side, bc_width(chk_axis, side))) {
 								in_cnt++;
-								_chk_axis = axis;
+								_chk_axis = chk_axis;
 								_side = side;
 							}
 						}
@@ -80,6 +84,7 @@ namespace Meso {
 							vol(axis, face) = 0;
 							face_fixed(axis, face) = true;
 							boundary_vel(axis, face) = bc_val(_chk_axis, _side);
+							//Info("set face bc {},{} to {} with chk_axis {} and side {}", axis, face, boundary_vel(axis, face), _chk_axis, _side);
 						}
 						else {
 							vol(axis, face) = 0;
@@ -107,9 +112,13 @@ namespace Meso {
 			bc_width << 1, -1, -1, -1, -1, -1;
 			bc_val << 1, 0, 0, 0, 0, 0;
 
+			//Info("bc_width: \n{}\n, bc_val: \n{}\n", bc_width, bc_val);
+			std::cout << "bc_width: " << bc_width << "\n";
+			std::cout << "bc_width: " << bc_val << "\n";
+
 			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
-			ArrayFunc::Fill(fluid.velocity.Data(0), 1.0);
+			//ArrayFunc::Fill(fluid.velocity.Data(0), 1.0);
 		}
 	};
 }

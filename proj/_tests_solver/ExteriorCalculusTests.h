@@ -45,6 +45,12 @@ void Test_Exterior_Derivative_Face(const Vector<int, d> counts) {
 	Grid<d> grid(counts);
 	FaceField<T, d> F_host(grid);
 	for (int axis = 0; axis < d; axis++) Random::Fill_Random_Array<T>(F_host.Data(axis), -3, 10);
+	//F_host.Calc_Faces(
+	//	[&](const int axis, const VectorDi face) {
+	//		if (axis == 0) return 1;
+	//		else return 0;
+	//	}
+	//);
 	FaceFieldDv<T, d> F_dev = F_host;
 	FieldDv<T, d> C_ext_dev;
 	Exterior_Derivative(C_ext_dev, F_dev);

@@ -37,26 +37,24 @@ namespace Meso {
 		Array<int, side> indices;
 		Array<T, side> values;
 		void Init(Field<bool, d>& fixed, Field<T, d> val_field) {
-			for (int axis = 0; axis < d; axis++) {
-				Array<std::pair<int, T>> bc_pairs;
-				fixed.Iterate_Cells(
-					[&](const VectorDi cell) {
-						if (fixed(cell)) {
-							bc_pairs.push_back(std::make_pair(fixed.grid.Index(cell), val_field(cell)));
-						}
+			Array<std::pair<int, T>> bc_pairs;
+			fixed.Iterate_Cells(
+				[&](const VectorDi cell) {
+					if (fixed(cell)) {
+						bc_pairs.push_back(std::make_pair(fixed.grid.Index(cell), val_field(cell)));
 					}
-				);
-				std::sort(bc_pairs.begin(), bc_pairs.end());
-				int n = bc_pairs.size();
-				Array<int> ind_host(n);
-				Array<T> val_host(n);
-				for (int i = 0; i < n; i++) {
-					ind_host[i] = bc_pairs[i].first;
-					val_host[i] = bc_pairs[i].second;
 				}
-				indices = ind_host;
-				values = val_host;
+			);
+			std::sort(bc_pairs.begin(), bc_pairs.end());
+			int n = bc_pairs.size();
+			Array<int> ind_host(n);
+			Array<T> val_host(n);
+			for (int i = 0; i < n; i++) {
+				ind_host[i] = bc_pairs[i].first;
+				val_host[i] = bc_pairs[i].second;
 			}
+			indices = ind_host;
+			values = val_host;
 		}
 		virtual void Apply(Field<T, d, side>& data)const {
 			thrust::scatter(

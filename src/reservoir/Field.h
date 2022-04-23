@@ -63,6 +63,7 @@ namespace Meso {
 
 		inline T& operator()(const VectorDi coord) { return (*data)[grid.Index(coord)]; }
 		inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
+		const T Get(const VectorDi coord)const { return (*data)[grid.Index(coord)]; }
 		template<class T1> void operator *= (const T1 a) { ArrayFunc::Multiply_Scalar(Data(), a); }
 
 		T Max_Abs(void) {

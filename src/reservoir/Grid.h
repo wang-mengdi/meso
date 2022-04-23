@@ -186,6 +186,16 @@ namespace Meso {
 		}
 
 		template<class IFFunc>
+		void Iterate_Faces(IFFunc f) const {
+			for (int axis = 0; axis < d; axis++) {
+				int dof = Face_DoF(axis);
+				for (int i = 0; i < dof; i++) {
+					VectorDi face = Face_Coord(axis, i);
+					f(axis, face);
+				}
+			}
+		}
+		template<class IFFunc>
 		void Exec_Faces(IFFunc f) const {
 			for (int axis = 0; axis < d; axis++) {
 				int dof = Face_DoF(axis);
