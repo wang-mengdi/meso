@@ -35,11 +35,6 @@ namespace Meso {
 			ArrayFunc::Fill(*data, value);
 		}
 		void Fill(const T value) { ArrayFunc::Fill(Data(), value); }
-		template<DataHolder side1>
-		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) {
-			Deep_Copy(f1);
-			return *this;
-		}
 
 		constexpr Array<T, side>& Data(void) noexcept {
 			return *data;
@@ -61,6 +56,17 @@ namespace Meso {
 			*data = f1.Data();
 		}
 
+
+		template<DataHolder side1>
+		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) {
+			Deep_Copy(f1);
+			return *this;
+		}
+		template<DataHolder side1>
+		Field<T, d, side>& operator = (Field<T, d, side1>& f1) {
+			Deep_Copy(f1);
+			return *this;
+		}
 		inline T& operator()(const VectorDi coord) { return (*data)[grid.Index(coord)]; }
 		inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 		const T Get(const VectorDi coord)const { return (*data)[grid.Index(coord)]; }
