@@ -130,16 +130,9 @@ namespace Meso {
 			Grid<d> g0 = grid.Face_Grid(0), g1 = grid.Face_Grid(1), g2 = grid.Face_Grid(2);
 			const T* v0 = vector_field.Data_Ptr(0), * v1 = vector_field.Data_Ptr(1), * v2 = vector_field.Data_Ptr(2);
 			return Interpolation<PointIntp>::Face_Vector(g0, v0, g1, v1, g2, v2, pos);
-			//Typedef_VectorD(d);
-			//Vector<T, d> ret;
-			//for (int axis = 0; axis < d; axis++) {
-			//	VectorDi node; VectorD frac;
-			//	vector_field.grid.Get_Fraction(pos, node, frac);
-			//	ret[axis] = PointIntp::Value(vector_field.grid, vector_field.Data_Ptr(axis), node, frac);
-			//}
-			//return ret;
 		}
-	};
+	}; 
+
 	using IntpLinear = Interpolation<PointIntpLinear>;
 	using IntpLinearPadding0 = Interpolation<PointIntpLinearPadding0>;
 }

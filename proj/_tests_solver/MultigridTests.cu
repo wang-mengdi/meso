@@ -21,11 +21,13 @@ namespace Meso {
 		int cnx = coarser_data.grid.counts[0], cny = coarser_data.grid.counts[1];
 		for (int i = 0; i < cnx; i++) {
 			for (int j = 0; j < cny; j++) {
-				bool fixed = true;
+				//bool fixed = true;
+				bool fixed = false;
 				for (int t0 = 0; t0 < 2; t0++) {
 					for (int t1 = 0; t1 < 2; t1++) {
 						Vector2i finer_sub(i * 2 + t0, j * 2 + t1);
-						if (finer_data.grid.Valid(finer_sub) && !finer_data(finer_sub)) fixed = false;
+						//if (finer_data.grid.Valid(finer_sub) && !finer_data(finer_sub)) fixed = false;
+						if (!finer_data.grid.Valid(finer_sub) || finer_data(finer_sub)) fixed = true;
 					}
 				}
 				coarser_data(Vector2i(i, j)) = fixed;
@@ -75,12 +77,14 @@ namespace Meso {
 		for (int i = 0; i < cnx; i++) {
 			for (int j = 0; j < cny; j++) {
 				for (int k = 0; k < cnz; k++) {
-					bool fixed = true;
+					//bool fixed = true;
+					bool fixed = false;
 					for (int t0 = 0; t0 < 2; t0++) {
 						for (int t1 = 0; t1 < 2; t1++) {
 							for (int t2 = 0; t2 < 2; t2++) {
 								Vector3i finer_sub(i * 2 + t0, j * 2 + t1, k * 2 + t2);
-								if (finer_data.grid.Valid(finer_sub) && !finer_data(finer_sub)) fixed = false;
+								//if (finer_data.grid.Valid(finer_sub) && !finer_data(finer_sub)) fixed = false;
+								if (!finer_data.grid.Valid(finer_sub) || finer_data(finer_sub)) fixed = true;
 							}
 						}
 					}

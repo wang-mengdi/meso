@@ -17,7 +17,7 @@ namespace Meso {
 		static const int dy[8] = { 0,0,1,1,0,0,1,1 };
 		static const int dz[8] = { 0,0,0,0,1,1,1,1 };
 		VectorDi coarser_coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
-		bool fixed = true;//default value of fixed
+		bool fixed = false;//default value of fixed
 		for (int s = 0; s < (1 << d); s++) {
 			VectorDi finer_coord = coarser_coord * 2 + VectorFunc::Vi<d>(dx[s], dy[s], dz[s]);
 			//if (grid_finer.Valid(finer_coord)) fixed &= finer_fixed[grid_finer.Index(finer_coord)];
