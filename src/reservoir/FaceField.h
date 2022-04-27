@@ -63,6 +63,11 @@ namespace Meso {
 				ArrayFunc::Add(Data(axis), f1.Data(axis));
 			}
 		}
+		void operator -= (const FaceField<T, d, side>& f1) {
+			for (int axis = 0; axis < d; axis++) {
+				ArrayFunc::Minus(Data(axis), f1.Data(axis));
+			}
+		}
 
 		constexpr Array<T, side>& Data(const int axis)noexcept { return *face_data[axis]; }
 		constexpr const Array<T, side>& Data(const int axis)const noexcept { return *face_data[axis]; }

@@ -85,10 +85,10 @@ namespace Meso {
 			//Hodge star is identity here
 			//*d(p) *. vol ----- 2-form
 
-			//temp_cell = -div(temp_face)
+			//temp_cell = div(temp_face)
 			//d*d(p) *. vol ----- 3-form
 			Exterior_Derivative(temp_cell, temp_face);
-			temp_cell *= -1;
+			//temp_cell *= -1;
 
 			//Hodge star is identity here
 			//*d*d(p) *. vol ----- 0-form
