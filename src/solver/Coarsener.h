@@ -44,7 +44,7 @@ namespace Meso {
 
 		//coarser_poisson must be already allocated previously
 		template<class T>
-		static void Apply(PoissonMapping<T, d>& coarse_poisson, const decltype(coarse_poisson) fine_poisson) {
+		static void Apply(MaskedPoissonMapping<T, d>& coarse_poisson, const decltype(coarse_poisson) fine_poisson) {
 			const auto& coarse_grid = coarse_poisson.Grid();
 			const auto& fine_grid = fine_poisson.Grid();
 						

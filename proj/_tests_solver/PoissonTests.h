@@ -10,11 +10,11 @@
 
 namespace Meso {
 	template<class T, int d>
-	PoissonMapping<T, d> Random_Poisson_Mapping(const Grid<d> grid) {
+	MaskedPoissonMapping<T, d> Random_Poisson_Mapping(const Grid<d> grid) {
 		Typedef_VectorD(d);
 		FaceField<T, d> vol(grid);
 		Field<bool, d> fixed(grid);
-		PoissonMapping<T, d> mapping;
+		MaskedPoissonMapping<T, d> mapping;
 		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = Random::Uniform(0, 1); });
 		fixed.Iterate_Cells([&](const VectorDi cell) {	fixed(cell) = !(bool)Random::RandInt(0, 9);	});
 		mapping.Init(grid, vol, fixed);
@@ -23,11 +23,11 @@ namespace Meso {
 
 	//vol==1, it's a 0/1 poisson mapping
 	template<class T, int d>
-	PoissonMapping<T, d> Random_Poisson01_Mapping(const Grid<d> grid) {
+	MaskedPoissonMapping<T, d> Random_Poisson01_Mapping(const Grid<d> grid) {
 		Typedef_VectorD(d);
 		FaceField<T, d> vol(grid);
 		Field<bool, d> fixed(grid);
-		PoissonMapping<T, d> mapping;
+		MaskedPoissonMapping<T, d> mapping;
 		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = 1; });
 		fixed.Iterate_Cells([&](const VectorDi cell) {	fixed(cell) = !(bool)Random::RandInt(0, 9);	});
 		mapping.Init(grid, vol, fixed);
@@ -41,7 +41,7 @@ namespace Meso {
 		Grid<d> grid(counts);
 		FaceField<T, d> vol(grid);
 		Field<bool, d> fixed(grid);
-		PoissonMapping<T, d> mapping;
+		MaskedPoissonMapping<T, d> mapping;
 		vol.Iterate_Faces(
 			[&](const int axis, const VectorDi face) {
 				vol(axis, face) = Random::Uniform(0, 1);
@@ -89,7 +89,7 @@ namespace Meso {
 		Typedef_VectorD(d);
 		Grid<d> grid(VectorDi::Ones() * n);
 		n = grid.DoF();
-		PoissonMapping<T, d> mapping = Random_Poisson_Mapping<T>(grid);
+		MaskedPoissonMapping<T, d> mapping = Random_Poisson_Mapping<T>(grid);
 		ArrayDv<T> rhs = Random::Random_Array<T>(n, (T)0.0, (T)1.0);
 		for (int i = 0; i < 100; i++) {
 			DampedJacobiSmoother<T> smoother(mapping, i);

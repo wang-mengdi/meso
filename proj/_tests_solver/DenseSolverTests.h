@@ -11,7 +11,7 @@ using namespace Meso;
 template<class T, int d>
 void Test_LU_Dense_Solver(const Vector<int, d> counts) {
 	Grid<d> grid(counts);
-	PoissonMapping<T, d> poisson_mapping = Random_Poisson_Mapping<T, d>(grid);
+	MaskedPoissonMapping<T, d> poisson_mapping = Random_Poisson_Mapping<T, d>(grid);
 	DenseMatrixMapping<T> dense_mapping;
 	dense_mapping.Init_PoissonLike(grid, poisson_mapping);
 	LUDenseSolver<T> solver;

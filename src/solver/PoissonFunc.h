@@ -34,7 +34,7 @@ namespace Meso {
 	};
 
 	template<class T, int d >
-	void Poisson_Diagonal(ArrayDv<T>& diag, PoissonMapping<T, d>& mapping) {
+	void Poisson_Diagonal(ArrayDv<T>& diag, MaskedPoissonMapping<T, d>& mapping) {
 		const auto& grid = mapping.vol.grid;
 		size_t n = mapping.XDof();
 		diag.resize(n);

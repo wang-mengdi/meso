@@ -37,10 +37,10 @@ namespace Meso {
 		ArrayDv<T> x_temp;
 		GridGSMask<d> mask;
 		GridGSSmoother() {}
-		GridGSSmoother(PoissonMapping<T, d>& _mapping, const int _iter_num) {
+		GridGSSmoother(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num) {
 			Init_Poisson(_mapping, _iter_num);
 		}
-		void Init_Poisson(PoissonMapping<T, d>& _mapping, const int _iter_num) {
+		void Init_Poisson(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num) {
 			mapping = &_mapping;
 			iter_num = _iter_num;
 			dof = mapping->XDof();

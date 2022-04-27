@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// Poisson Linear Mapping
+// Poisson Linear Mapping with Fixed Mask
 // Copyright (c) (2022-), Zangyueyang Xian, Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
@@ -15,7 +15,7 @@ using namespace thrust::placeholders;
 
 namespace Meso {
 	template<class T, int d>
-	class PoissonMapping : public LinearMapping<T> {
+	class MaskedPoissonMapping : public LinearMapping<T> {
 		//Ap=-lap(p)
 		Typedef_VectorD(d);
 	public:
@@ -27,8 +27,8 @@ namespace Meso {
 		FieldDv<T, d> temp_cell;
 		FaceFieldDv<T, d> temp_face;
 		
-		PoissonMapping() {}
-		PoissonMapping(const Grid<d>& grid) { Allocate_Memory(grid); }
+		MaskedPoissonMapping() {}
+		MaskedPoissonMapping(const Grid<d>& grid) { Allocate_Memory(grid); }
 
 		void Allocate_Memory(const Grid<d>& grid) {
 			dof = grid.DoF();

@@ -34,7 +34,7 @@ namespace Meso {
 			}
 		}
 
-		PoissonMapping<real, 2> finer, coarser;
+		MaskedPoissonMapping<real, 2> finer, coarser;
 		finer.Init(finer_data.grid);
 		finer.fixed = finer_data;
 		coarser.Init(coarser_data.grid);
@@ -93,7 +93,7 @@ namespace Meso {
 			}
 		}
 
-		PoissonMapping<real, 3> finer, coarser;
+		MaskedPoissonMapping<real, 3> finer, coarser;
 		finer.Init(finer_data.grid);
 		finer.fixed = finer_data;
 		coarser.Init(coarser_data.grid);

@@ -20,9 +20,9 @@ namespace Meso {
 		ArrayDv<T> diag;
 		ArrayDv<T> x_temp;
 		DampedJacobiSmoother() {}
-		template<int d> DampedJacobiSmoother(PoissonMapping<T, d>& _mapping, const int _iter_num, const real _omega = 2.0 / 3.0) { Init(_mapping, _iter_num, _omega); }
+		template<int d> DampedJacobiSmoother(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num, const real _omega = 2.0 / 3.0) { Init(_mapping, _iter_num, _omega); }
 		template<int d>
-		void Init(PoissonMapping<T, d>& _mapping, const int _iter_num, const T _omega = 2.0 / 3.0) {
+		void Init(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num, const T _omega = 2.0 / 3.0) {
 			mapping = &_mapping;
 			iter_num = _iter_num;
 			omega = _omega;

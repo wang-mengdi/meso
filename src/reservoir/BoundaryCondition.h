@@ -117,4 +117,9 @@ namespace Meso {
 		//	}
 		//}
 	};
+
+	template<class DataStructure>
+	class BoundaryConditionViscous : public BoundaryCondition<DataStructure> {
+	public:
+	};
 }
