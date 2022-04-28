@@ -51,10 +51,10 @@ An output folder with `.vst` files will be generated.
 - Navigate to the folder containing `.vst` files and open the files.
 - Click on the eye symbol to show the results.
 - Suggestions on modifying settings:
-      - Coloring: velocity
-      - Right click on the file to add filter (for example `glyph`)
-      - Orientation array: velocity
-      - Masking: all points (continous display of points)
-      - Click `apply` to save the settings
+  -  Coloring: velocity
+  - Right click on the file to add filter (for example `glyph`)
+  - Orientation array: velocity
+  - Masking: all points (continous display of points)
+  - Click `apply` to save the settings
 - Click &rarr; in the toolbar at top of screen to play the animation.
 - `ctrl+s` to save the result.
