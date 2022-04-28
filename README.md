@@ -41,9 +41,9 @@ We use `fluid_euler` as an example here.
 
 ##### Build Project
 Open `\build\fluid_euler\vsxmake2022\fluid_euler.sln` and compile in Release mode.
-Navigate to `\bin\fluid_euler` and move or create a `.json` file in the current folder. Run:
+Navigate to `\bin\fluid_euler` and copy `docs\fluid_euler\cavity.json`  to the current folder. Run:
       
-      $ fluid_euler.exe example.json
+      $ fluid_euler.exe cavity.json
 An output folder with `.vst` files will be generated.
 
 ##### Visualize Results with Paraview
