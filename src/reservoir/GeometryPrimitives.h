@@ -12,9 +12,9 @@
 #include "Constants.h"
 
 namespace Meso {
-
+    template<int d>
     class ImplicitGeometry {
-        Typedef_VectorDii(d);
+        Typedef_VectorD(d);
     public:
         ImplicitGeometry() {};
         virtual real Phi(const VectorD& pos) const = 0;
@@ -22,17 +22,17 @@ namespace Meso {
             return Phi(pos) < (real)0;
         }
         virtual VectorD Normal(const VectorD& pos) const = 0;
-    }
+    };
 
     template<int d> class Sphere : public ImplicitGeometry<d> {
-        Typedef_VectorDii(d);
+        Typedef_VectorD(d);
     public:
         VectorD center = VectorD::Zero();
         real radius = (real)1;
 
-        Sphere(const VectorD& _radius, const VectorD& _center) :center(_center), radius(_radius) {}
+        Sphere(const VectorD& _center, const real _radius):center(_center), radius(_radius) {}
         Sphere<d>& operator=(const Sphere<d>& copy) { center = copy.centerl; radius = copy.radius; return *this; }
-        Sphere(const Sphere<d> copy) { *this = copy; }
+        Sphere(const Sphere<d>& copy) { *this = copy; }
 
         virtual real Phi(const VectorD& pos) const {
             return (pos - center).norm() - radius;
