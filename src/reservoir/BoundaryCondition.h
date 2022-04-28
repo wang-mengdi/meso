@@ -141,8 +141,25 @@ namespace Meso {
 				gathered_data.begin()
 			);
 			ArrayFunc::Multiply_Scalar(gathered_data, a);
-			ArrayFunc::Add_Scalar(gathered_data, a);
-			
+			gathered_data += b;
+			thrust::scatter(
+				gathered_data.begin(),
+				gathered_data.end(),
+				dst_list.begin(),
+				F.data().begin()
+			);
+		}
+	};
+
+	template<class T, int d, DataHolder side>
+	class BoundaryConditionRefrLinear<FaceField<T, d, side>> : public BoundaryCondition<FaceField<T, d, side>> {
+	public:
+		std::array<BoundaryConditionRefrLinear<Field<T, d, side>>, d> field_bc;
+		virtual void Apply(FaceField<T, d, side>& F) {
+			for (int i = 0; i < d; i++) {
+				Field<T, d, side> face_field(F.grid.Face_Grid(i), f.face_data[i]);
+				field_bc[i].Apply(face_field);
+			}
 		}
 	};
 }
