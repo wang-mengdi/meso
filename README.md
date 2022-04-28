@@ -5,6 +5,8 @@
 ##### Install Environment
 - Visual Studio 2022
 - CUDA 11.6
+- Paraview 5.10.1-MPI
+- Microsoft MPI (should be installed by default)
 
 ##### Install xmake
 
@@ -17,10 +19,10 @@
 
          xmake update -s github:xq114/xmake#dev
 
-##### Compile Project
+##### Compile Test Project
         $ python make_project.py _tests_reservoir
 
-##### Build Project
+##### Build Test Project
 Open `\build\_tests_reservoir\vsxmake2022\_tests_reservoir.sln` and compile.
 
 Note: in the output window, the first command should be something like
@@ -31,3 +33,28 @@ If it's
 
       $xmake config -y  -P . -p windows -m debug -a x64 -o "build"
 There is an error. But we don't exactly know why. Report when this happens.      
+
+##### Compile Project
+We use `fluid_euler` as an example here.
+
+      $ python make_project.py fluid_euler
+
+##### Build Project
+Open `\build\fluid_euler\vsxmake2022\fluid_euler.sln` and compile in Release mode.
+Navigate to `\bin\fluid_euler` and move or create a `.json` file in the current folder. Run:
+      
+      $ fluid_euler.exe example.json
+An output folder with `.vst` files will be generated.
+
+##### Visualize Results with Paraview
+- Open Paraview
+- Navigate to the folder containing `.vst` files and open the files.
+- Click on the eye symbol to show the results.
+- Suggestions on modifying settings:
+      - Coloring: velocity
+      - Right click on the file to add filter (for example `glyph`)
+      - Orientation array: velocity
+      - Masking: all points (continous display of points)
+      - Click `apply` to save the settings
+- Click &rarr; in the toolbar at top of screen to play the animation.
+- `ctrl+s` to save the result.
