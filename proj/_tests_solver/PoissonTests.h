@@ -68,8 +68,8 @@ namespace Meso {
 					vec_diag_grdt[idx] = 0;
 					for (int axis = 0; axis < d; axis++) {
 						VectorDi face0 = cell, face1 = cell + VectorDi::Unit(axis);
-						vec_diag_grdt[idx] += vol(axis, face0);
-						vec_diag_grdt[idx] += vol(axis, face1);
+						vec_diag_grdt[idx] -= vol(axis, face0);
+						vec_diag_grdt[idx] -= vol(axis, face1);
 					}
 				}
 			}

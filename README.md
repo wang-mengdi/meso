@@ -1,4 +1,4 @@
-# Duplex Modern Physical Simulator
+# MESO Modern Physical Simulator
 
 ## Getting started
 
