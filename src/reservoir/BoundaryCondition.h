@@ -8,6 +8,7 @@
 #include "Field.h"
 #include "FaceField.h"
 #include <thrust/iterator/constant_iterator.h>
+#include <thrust/gather.h>
 
 namespace Meso {
 	template<class DataStructure>
@@ -119,7 +120,29 @@ namespace Meso {
 	};
 
 	template<class DataStructure>
-	class BoundaryConditionViscous : public BoundaryCondition<DataStructure> {
+	class BoundaryConditionRefrLinear : public BoundaryCondition<DataStructure> {
 	public:
+	};
+
+	template<class T, int d, DataHolder side>
+	class BoundaryConditionRefrLinear<Field<T, d, side>> : public BoundaryCondition<Field<T, d, side>> {
+	public:
+		//dst=a*src+b
+		Array<int, side> src_list;
+		Array<int, side> dst_list;
+		Array<T, side> a;
+		Array<T, side> b;
+		Array<T, side> gathered_data;
+		virtual void Apply(Field<T, d, side>& F) {
+			thrust::gather(
+				src_list.begin(),
+				src_list.end(),
+				F.Data().begin(),
+				gathered_data.begin()
+			);
+			ArrayFunc::Multiply_Scalar(gathered_data, a);
+			ArrayFunc::Add_Scalar(gathered_data, a);
+			
+		}
 	};
 }

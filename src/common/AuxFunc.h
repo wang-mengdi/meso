@@ -135,6 +135,10 @@ namespace Meso {
 		void Add(Array1& a, const Array2& b) {
 			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 + _2);
 		}
+		template<class Array1, class T>
+		void Add_Scalar(Array1& a, const T b) {
+			thrust::transform(a.begin(), a.end(), a.begin(), _1 + b);
+		}
 		template<class Array1, class Array2>
 		void Minus(Array1& a, const Array2& b) {
 			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 - _2);
