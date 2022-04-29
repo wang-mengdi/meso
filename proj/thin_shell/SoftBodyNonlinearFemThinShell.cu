@@ -8,20 +8,21 @@
 #include "AuxFunc.h"
 #include "NonlinearFemFunc.h"
 #include "TimerOld.h"
-#include "Codimension.h"
 #include "Hashtable.h"
 #include "SimplicialPrimitives.h"
+#include "Common.h"
 #include <Eigen/IterativeLinearSolvers>
 #include <iostream>
 #include <fstream>
+
+using namespace ThinShellAuxFunc; 
+using namespace Meso;
 
 template<class T_ARRAY> int Element_Edges(const Vector2i& v,T_ARRAY& edges);
 template<class T_ARRAY> int Element_Edges(const Vector3i& v,T_ARRAY& edges);
 void Grad_Q(const ArrayF<Vector3, 3>& vtx, const int i, const int j, const Vector3& ps, const real& qs_i, const ArrayF<Vector3, 3>& ls, const real& a, Vector3& grad_q);
 void Grad_R(const ArrayF<Vector3, 3>& vtx, const int i, const int j, const Vector3& ps, const ArrayF<Vector3, 3>& ls, const real& a, ArrayF<Vector3, 2>& grad_r);
 void Grad_N(const ArrayF<Vector3, 3>& vtx, const ArrayF<Vector3, 3>& ls, const real& a, ArrayF<Matrix3, 3>& grad_n);
-
-using namespace ThinShellAuxFunc; using namespace Meso;
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>& _mesh)
 {
@@ -63,8 +64,8 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>
 		}
 	}
 
-	AuxFunc::Fill(F(),VectorD::Zero());
-	AuxFunc::Fill(V(),VectorD::Zero());
+	ArrayFunc::Fill(F(),VectorD::Zero());
+	ArrayFunc::Fill(V(),VectorD::Zero());
 
 	////initialize implicit variables
 	if (!use_explicit) {
@@ -89,7 +90,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Allocate_A() {
-	Array<TripletT> triplets;
+	std::vector<TripletT> triplets;
 
 	//vertex with itself
 	for (int i = 0; i < Vtx_Num(); i++) {
@@ -194,7 +195,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const re
 	Timer timer;
 	timer.Reset();
 
-	AuxFunc::Fill(F(),VectorD::Zero());
+	ArrayFunc::Fill(F(),VectorD::Zero());
 	const int vtx_num=Vtx_Num();
 
 	////body force, damping force, boundary
@@ -261,7 +262,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const re
 	Update_Implicit_Bending(dt);
 	Update_Implicit_Boundary_Condition(dt);
 
-	Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::IncompleteCholesky<real>> cg;
+	Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper> cg;
 	cg.setTolerance((real)1e-5);
 	dv = cg.compute(A).solve(b);
 	timer.Elapse_And_Output_And_Reset("linear system solve");
@@ -383,41 +384,43 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 			int node = bc_d.first; VectorD dis = bc_d.second;
 			for (int axis = 0; axis < d; axis++) {
 				int idx = node * d + axis;
-				if(iter==0){ LinearFemFunc::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]); }
-				else{ LinearFemFunc::Set_Dirichlet_Boundary_Helper(A, b, idx, (real)0); }
+				if(iter==0){ NonlinearFemFunc<d>::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]); }
+				else{ NonlinearFemFunc<d>::Set_Dirichlet_Boundary_Helper(A, b, idx, (real)0); }
 			}
 		}
 		
-		Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::IncompleteCholesky<real>> cg;
+		Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper> cg;
+		//Eigen::ConjugateGradient<Eigen::SparseMatrix<double, Eigen::RowMajor, int>, Eigen::Lower | Eigen::Upper, Eigen::IncompleteCholesky<double>> cg;
 		cg.setTolerance((real)1e-6);
-		dv = cg.compute(A).solve(b);
+		cg.compute(A);
+		dv = cg.solve(b);
 
-		/*std::cout << "A:" << std::endl;
-		std::cout << A << std::endl;
-		std::cout << "b:" << std::endl;
-		std::cout << b.transpose() << std::endl;
-		std::cout << "dv:" << std::endl;
-		std::cout << dv.transpose() << std::endl;*/
-		
-		//timer.Elapse_And_Output_And_Reset("linear system solve");
+		///*std::cout << "A:" << std::endl;
+		//std::cout << A << std::endl;
+		//std::cout << "b:" << std::endl;
+		//std::cout << b.transpose() << std::endl;
+		//std::cout << "dv:" << std::endl;
+		//std::cout << dv.transpose() << std::endl;*/
+		//
+		////timer.Elapse_And_Output_And_Reset("linear system solve");
 
-		//std::cout << "#	CG iterations:     " << cg.iterations() << std::endl;
-		//std::cout << "#	CG estimated error: " << cg.error() << std::endl;
+		////std::cout << "#	CG iterations:     " << cg.iterations() << std::endl;
+		////std::cout << "#	CG estimated error: " << cg.error() << std::endl;
 
-		#pragma omp parallel for
-		for (int i = 0; i < vtx_num; i++) {
-			for (int j = 0; j < d; j++) {
-				X()[i][j] += damping*dv[i * d + j]; //damping becomes the step size here
-			}
-		}
+		//#pragma omp parallel for
+		//for (int i = 0; i < vtx_num; i++) {
+		//	for (int j = 0; j < d; j++) {
+		//		X()[i][j] += damping*dv[i * d + j]; //damping becomes the step size here
+		//	}
+		//}
 
-		//timer.Elapse_And_Output_And_Reset("update nodes");
+		////timer.Elapse_And_Output_And_Reset("update nodes");
 
-		err = dv.norm() / dv.size();
-		//Info("b norm is:{}", b.norm());
-		//Info("relative error is:{}", err);
-		iter++;
-		//energies_n.push_back(energy);
+		//err = dv.norm() / dv.size();
+		////Info("b norm is:{}", b.norm());
+		////Info("relative error is:{}", err);
+		//iter++;
+		////energies_n.push_back(energy);
 	}
 	Info("Quasi_static solve finished with {} Newton iterations: ", iter);
 }
@@ -518,7 +521,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Boundary_
 		int node = bc_d.first; VectorD dis = bc_d.second;
 		for (int axis = 0; axis < d; axis++) {
 			int idx = node * d + axis;
-			LinearFemFunc::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]);
+			NonlinearFemFunc<d>::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]);
 		}
 	}
 }
@@ -1228,8 +1231,8 @@ template<int d> bool SoftBodyNonlinearFemThinShell<d>::Junction_Info(int edge_id
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
-////omp accelerated functions
+////////////////////////////////////////////////////////////////////////
+//omp accelerated functions
 
 inline void Add_Element_Force_To_Vertices(Array<Vector2>& F,const Vector3i& e,const Matrix2& ff)
 {
@@ -1302,6 +1305,18 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Block(VectorX& b, con
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block(VectorX& b, const int i, const VectorD& bi)
 {
 	for (int ii = 0; ii < d; ii++)b[i * d + ii] += bi[ii];
+}
+
+template<int d> real SoftBodyNonlinearFemThinShell<d>::CFL_Time(const real cfl) {
+	return 0.01;
+}
+
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Output(const bf::path base_path, const int frame) {
+	return;
+}
+
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance(const int current_frame, const real current_time, const real dt) {
+	return;
 }
 
 template class SoftBodyNonlinearFemThinShell<2>;

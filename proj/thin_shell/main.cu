@@ -31,8 +31,7 @@ int main(int argv, char** argc) {
 		}
 		//int dim = 2;
 		int dim = Json::Value(j, "dimension", 2);
-		if (dim == 2) Run<2>(j);
-		else if (dim == 3) Run<3>(j);
+		if (dim == 3) Run<3>(j);
 	}
 	catch (nlohmann::json::exception& e)
 	{

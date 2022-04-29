@@ -2,6 +2,7 @@
 #define __NonlinearFem_h__
 #include "Common.h"
 #include "AuxFunc.h"
+#include "SparseFunc.h"
 #include <iostream>
 
 using namespace Meso;
@@ -28,12 +29,12 @@ public:
 
 	//////////////////////////////////////////////////////////////////////////
 	////Hex element
-	static void Deformation_Gradient(const real dx,const VectorX& cell_u,const VectorD& natural_coord,/*rst*/MatrixD& F);
+	//static void Deformation_Gradient(const real dx,const VectorX& cell_u,const VectorD& natural_coord,/*rst*/MatrixD& F);
 	////for implicit solver: 
 	////assembling K
-	static void dPdx_Neohookean(const real mu,const real lambda,const VectorD& natural_coord,const MatrixD& F,const VectorD& dNidX_T,/*rst*/Array<MatrixD>& dPdx);
+	//static void dPdx_Neohookean(const real mu,const real lambda,const VectorD& natural_coord,const MatrixD& F,const VectorD& dNidX_T,/*rst*/Array<MatrixD>& dPdx);
 	////updating K
-	static void Cell_Stiffness_Matrix_And_f_Nonlinear(const real mu,const real lambda,const real dx,const VectorX& cell_u,/*rst*/MatrixX& K_e,/*rst*/VectorX* f_elas=0,/*rst*/real* e_elas=0);
+	//static void Cell_Stiffness_Matrix_And_f_Nonlinear(const real mu,const real lambda,const real dx,const VectorX& cell_u,/*rst*/MatrixX& K_e,/*rst*/VectorX* f_elas=0,/*rst*/real* e_elas=0);
 
 	//////////////////////////////////////////////////////////////////////////
 	////Tet element
@@ -91,6 +92,9 @@ public:
 	{D_Inv_And_Area_And_Normal(x[0],x[1],dm_inv,area,normal);}
 	static void D_Inv_And_Area_And_Normal(const ArrayF<Vector<real,3>,3>& x,/*rst*/Matrix3& dm_inv,/*rst*/real& area, Vector3& normal)
 	{D_Inv_And_Area_And_Normal(x[0],x[1],x[2],dm_inv,area,normal);}
+
+	//helper function
+	static void Set_Dirichlet_Boundary_Helper(SparseMatrixT& K, VectorX& b, const int i, const real psi_D_value);
 };
 
 #endif

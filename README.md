@@ -17,7 +17,7 @@
 3. Type `M` in installing (which means it will install `xmake` for the current user).
 4. (Optional, not necessary) Update xmake to dev version
 
-         xmake update -s github:xq114/xmake#dev
+         xmake update dev
 
 ##### Compile Test Project
         $ python make_project.py _tests_reservoir
