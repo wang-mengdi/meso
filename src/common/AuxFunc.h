@@ -11,15 +11,18 @@
 using namespace thrust::placeholders;
 
 namespace Meso {
-
-	namespace IOFunc {
-		void Create_Directory(const bf::path path);
+	namespace StringFunc{
 		std::string To_String_Simple(const bool& a);
 		template<class T> std::string To_String_Simple(const T& a) {
 			return std::to_string(a);
 		}
 
 		Array<std::string> Split_String(const std::string& s, const std::string& delimiters = " \t\n\v\f\r");
+	}
+
+	namespace FileFunc {
+		void Create_Directory(const bf::path path);
+		
 	}
 
 	namespace MathFunc {

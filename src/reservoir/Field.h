@@ -125,7 +125,7 @@ struct fmt::formatter<Meso::Field<T, 2, side>> {
 		//out += to_string(F.grid.counts[0]);
 		for (int i = 0; i < F.grid.counts[0]; i++) {
 			for (int j = 0; j < F.grid.counts[1]; j++) {
-				out += Meso::IOFunc::To_String_Simple(F(Eigen::Vector2i(i, j))) + " ";
+				out += Meso::StringFunc::To_String_Simple(F(Eigen::Vector2i(i, j))) + " ";
 			}
 			out += "\n";
 		}
@@ -161,7 +161,7 @@ struct fmt::formatter<Meso::Field<T, 3, side>> {
 		for (int i = 0; i < F.grid.counts[0]; i++) {
 			for (int j = 0; j < F.grid.counts[1]; j++) {
 				for (int k = 0; k < F.grid.counts[2]; k++) {
-					out += Meso::IOFunc::To_String_Simple(F(Eigen::Vector3i(i, j, k))) + " ";
+					out += Meso::StringFunc::To_String_Simple(F(Eigen::Vector3i(i, j, k))) + " ";
 				}
 				out += "\n";
 			}
