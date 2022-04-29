@@ -19,30 +19,22 @@
 
          xmake update dev
 
-##### Compile Test Project
-        $ python make_project.py _tests_reservoir
+##### Run Tests
 
-##### Build Test Project
-Open `\build\_tests_reservoir\vsxmake2022\_tests_reservoir.sln` and compile.
+      $ python run_tests.py
 
-Note: in the output window, the first command should be something like
 
-      $xmake config -y  -P . -p windows -m debug -a x64 -o "..\..\bin\_tests_reservoir"
+You should pass all tests.
 
-If it's
-
-      $xmake config -y  -P . -p windows -m debug -a x64 -o "build"
-There is an error. But we don't exactly know why. Report when this happens.      
-
-##### Compile Project
+##### Generate Solution of a Fluid Simnulator
 We use `fluid_euler` as an example here.
 
       $ python make_project.py fluid_euler
 
-##### Build Project
+##### Build and Run a Cavity Flow
 Open `\build\fluid_euler\vsxmake2022\fluid_euler.sln` and compile in Release mode.
 Navigate to `\bin\fluid_euler\windows\x64\release` and copy `docs\fluid_euler\cavity.json`  to the current folder. Run:
-      
+
       $ fluid_euler.exe cavity.json
 
 An output folder named `cavity` with `.vst` files will be generated.
