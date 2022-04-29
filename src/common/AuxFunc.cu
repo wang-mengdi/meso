@@ -1,19 +1,7 @@
 #include "AuxFunc.h"
 
 namespace Meso {
-	
-	namespace IOFunc {
-		void Create_Directory(const bf::path path)
-		{
-			//recursively
-			try {
-				if (!boost::filesystem::exists(path))
-					boost::filesystem::create_directories(path);
-			}
-			catch (std::exception& e) { // Not using fs::filesystem_error since std::bad_alloc can throw too.
-				std::cout << e.what() << std::endl;
-			}
-		}
+	namespace StringFunc {
 
 		std::string To_String_Simple(const bool& a) {
 			return std::to_string((int)a);
@@ -32,6 +20,21 @@ namespace Meso {
 			}
 			return tokens;
 		}
+	}
+	
+	namespace FileFunc {
+		void Create_Directory(const bf::path path)
+		{
+			//recursively
+			try {
+				if (!boost::filesystem::exists(path))
+					boost::filesystem::create_directories(path);
+			}
+			catch (std::exception& e) { // Not using fs::filesystem_error since std::bad_alloc can throw too.
+				std::cout << e.what() << std::endl;
+			}
+		}
+
 	}
 
 	namespace VectorFunc {

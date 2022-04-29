@@ -30,11 +30,11 @@ using namespace Meso;
 
 ////parent functions
 #define Declare_Attribute_Base_Func(...)											\
-virtual void New_Attributes(){New_Att(__VA_ARGS__);auto vec=IOFunc::Split_String(#__VA_ARGS__,", ");std::reverse(vec.begin(),vec.end());Register_Att(att_map,vec,__VA_ARGS__);}
+virtual void New_Attributes(){New_Att(__VA_ARGS__);auto vec=StringFunc::Split_String(#__VA_ARGS__,", ");std::reverse(vec.begin(),vec.end());Register_Att(att_map,vec,__VA_ARGS__);}
 
 ////call the parent virtual function first
 #define Declare_Attribute_Inherent_Func(...)															\
-virtual void New_Attributes(){Base::New_Attributes();New_Att(__VA_ARGS__);auto vec=IOFunc::Split_String(#__VA_ARGS__,", ");std::reverse(vec.begin(),vec.end());Register_Att(this->att_map,vec,__VA_ARGS__);}
+virtual void New_Attributes(){Base::New_Attributes();New_Att(__VA_ARGS__);auto vec=StringFunc::Split_String(#__VA_ARGS__,", ");std::reverse(vec.begin(),vec.end());Register_Att(this->att_map,vec,__VA_ARGS__);}
 
 //////////////////////////////////////////////////////////////////////////
 ////CODESAMPLE: variadic template functions for manipulating attributes

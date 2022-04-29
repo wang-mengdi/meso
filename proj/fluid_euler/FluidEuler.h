@@ -9,7 +9,7 @@
 #include "ConjugateGradient.h"
 #include "Advection.h"
 #include "Simulator.h"
-#include "RenderFunc.h"
+#include "IOFunc.h"
 
 namespace Meso {
 	template<int d>
