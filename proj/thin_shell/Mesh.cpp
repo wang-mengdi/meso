@@ -120,15 +120,15 @@ template class SurfaceQuadMesh<3>;
 typedef SimplicialMesh<3, 4> SimplicialMesh3;
 typedef SimplicialMesh<2, 4> SimplicialMesh2;
 
-template<class MESH_T1,class MESH_T2> void Dim_Conversion(const MESH_T1& mesh2,/*rst*/MESH_T2& mesh3)
+template<class MESH_T1, class MESH_T2> void Dim_Conversion(const MESH_T1& mesh2,/*rst*/MESH_T2& mesh3)
 {
 	////TOACC: with openmp
 	mesh3.vertices->resize((int)(mesh2.vertices->size()));
-	for(auto i=0;i<(*mesh3.vertices).size();i++)
-		AuxFunc::Dim_Conversion<real,MESH_T1::Dim(),MESH_T2::Dim()>((*mesh2.vertices)[i],(*mesh3.vertices)[i],(real)0);
+	for (auto i = 0; i < (*mesh3.vertices).size(); i++)
+		ArrayFunc::Dim_Conversion<real, MESH_T1::Dim(), MESH_T2::Dim()>((*mesh2.vertices)[i], (*mesh3.vertices)[i], (real)0);
 	mesh3.elements.resize((int)mesh2.elements.size());
-	for(auto i=0;i<mesh2.elements.size();i++)
-		AuxFunc::Dim_Conversion<int,MESH_T1::Element_Dim(),MESH_T2::Element_Dim()>(mesh2.elements[i],mesh3.elements[i],(int)-1);
+	for (auto i = 0; i < mesh2.elements.size(); i++)
+		ArrayFunc::Dim_Conversion<int, MESH_T1::Element_Dim(), MESH_T2::Element_Dim()>(mesh2.elements[i], mesh3.elements[i], (int)-1);
 }
 
 #define Inst_Helper(T1,T2) \

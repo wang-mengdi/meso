@@ -3,8 +3,7 @@
 // Copyright (c) (2018-), Bo Zhu
 // This file is part of SimpleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
-#ifndef __Mesher_h__
-#define __Mesher_h__
+#pragma once
 #include "Common.h"
 #include "AuxFunc.h"
 #include "Particles.h"
@@ -50,25 +49,9 @@ inline Vector4i To_V4(const Vector2i& input){return Vector4i(input[0],input[1],-
 inline Vector4i To_V4(const Vector3i& input){return Vector4i(input[0],input[1],input[2],-1);}
 inline Vector4i To_V4(int i,int j){return Vector4i(i,j,-1,-1);}
 inline Vector4i To_V4(int i,int j,int k){return Vector4i(i,j,k,-1);}
-
-////Check whether vertex exists
-inline bool Element_Has(const Vector<int,3>& e,const Vector<int,2>& f){return AuxFunc::Has(e,f[0])&&AuxFunc::Has(e,f[1]);}
-inline bool Element_Has(const Vector<int,4>& e,const Vector<int,3>& f){return AuxFunc::Has(e,f[0])&&AuxFunc::Has(e,f[1])&&AuxFunc::Has(e,f[2]);}
-inline bool Element_Has_Not(const Vector<int,2>& e,const int f){return e[0]!=f||e[1]!=f;}
-inline bool Element_Has_Not(const Vector<int,3>& e,const int f){return e[0]!=f||e[1]!=f||e[2]!=f;}
-inline bool Element_Has_Not(const Vector<int,4>& e,const int f){return e[0]!=f||e[1]!=f||e[2]!=f||e[3]!=f;}
-
-////Check shared vertices
-inline int Shared_Vertex(const Vector<int,3>& e1,const Vector<int,3>& e2,const Vector<int,3>& e3)
-{return (AuxFunc::Has(e2,e1[0])&&AuxFunc::Has(e3,e1[0]))?e1[0]:((AuxFunc::Has(e2,e1[1])&&AuxFunc::Has(e3,e1[1]))?e1[1]:(AuxFunc::Has(e2,e1[2])&&AuxFunc::Has(e2,e1[2])?e1[2]:-1));}
-inline int Shared_Vertex(const Vector<int,2>& e1,const Vector<int,2>& e2)
-{return AuxFunc::Has(e2,e1[0])?e1[0]:(AuxFunc::Has(e2,e1[1])?e1[1]:-1);}
-inline Vector<int,2> Shared_Edge(const Vector<int,3>& e1,const Vector<int,3>& e2)
-{if(!AuxFunc::Has(e2,e1[0]))return Vector<int,2>(e1[1],e1[2]);else if(!AuxFunc::Has(e2,e1[1]))return Vector<int,2>(e1[2],e1[0]);else return Vector<int,2>(e1[0],e1[1]);}
 };
-
 template<int d,class T_MESH> class MeshAux
-{Typedef_VectorDi(d);
+{Typedef_VectorD(d);
 public:
 
 	const T_MESH& mesh;
@@ -161,4 +144,3 @@ protected:
 	template<int dim> int Element_Vertex_Index(const Vector<int,dim>& v,const int v0) const
 	{for(int i=0;i<dim;i++)if(v[i]==v0)return i;return -1;}
 };
-#endif

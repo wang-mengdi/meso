@@ -33,12 +33,12 @@ namespace BinaryDataIO {
 	template<class T> void Write_Array_Stream(std::ostream& output, const Array<T>& arr) {
 		std::uint32_t n = (std::uint32_t)arr.size();
 		File::Write_Binary<std::uint32_t>(output, n);
-		Write_Array_Stream_Content(output, arr);
+		Write_Array_Stream_Content<T>(output, arr);
 	}
 	template<class T, class F> void Write_Array_Stream(std::ostream& output, F& f, std::uint32_t n) {
 		Array<T> arr(n);
 		for (int i = 0; i < n; i++) arr[i] = f(i);
-		Write_Array_Stream(output, arr);
+		Write_Array_Stream<T>(output, arr);
 	}
 	template<class T> void Read_Array_Stream_Content(std::istream& input, Array<T>& arr, const std::uint32_t& n) {
 		arr.resize(n);
@@ -48,7 +48,7 @@ namespace BinaryDataIO {
 	template<class T> void Read_Array_Stream(std::istream& input, Array<T>& arr) {
 		std::uint32_t n;
 		File::Read_Binary<std::uint32_t>(input, n);
-		Read_Array_Stream_Content(input, arr, n);
+		Read_Array_Stream_Content<T>(input, arr, n);
 	}
 
 	//File Style
