@@ -50,12 +50,13 @@ namespace Meso {
 			return pos_min;
 		}
 		__host__ __device__ VectorD Domain_Max(const GridType gtype = MAC) const {
-			VectorD count_real = counts.template cast<real>();
+			//VectorD count_real = counts.template cast<real>();
 			//VectorD domain_max = pos_min + count;
 			//if (gtype == MAC) {
 			//	return domain_max + VectorD::Ones() * (real)0.5 * dx;
 			//}
-			return domain_max;
+			//return domain_max;
+			return VectorD::Zero();
 		}
 		//__host__ __device__ VectorD Center(void) { return (real)0.5 * (Domain_Min() + Domain_Max()); }
 
