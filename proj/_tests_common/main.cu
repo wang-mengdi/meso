@@ -3,7 +3,7 @@ using namespace Meso;
 
 
 int main() {
-    Info("Hello world!");
+    Pass("Hello world!");
     //int n = 10;
     //SparseMatrix<double> A = MatrixXd::Random(n, n).sparseView(0.5, 1);
     //VectorXd b(n), x(n);
