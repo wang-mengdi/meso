@@ -23,6 +23,22 @@ void Test_Grid(void) {
 }
 
 int main(){
+    int n = 10;
+    SparseMatrix<double> A = MatrixXd::Random(n, n).sparseView(0.5, 1);
+    VectorXd b(n), x(n);
+    Eigen::ConjugateGradient<SparseMatrix<double>, Eigen::Lower | Eigen::Upper, Eigen::IncompleteCholesky<double, Eigen::Lower | Eigen::Upper>> cg;
+    //Eigen::ConjugateGradient<SparseMatrix<double>, Eigen::Lower, Eigen::IncompleteCholesky<double>> cg;
+    cg.compute(A);
+    x = cg.solve(b);
+    x = cg.solve(b);
+    return 0;
+
+    //Eigen::ConjugateGradient<Eigen::SparseMatrix<double, Eigen::RowMajor, int>, Eigen::Lower | Eigen::Upper, Eigen::IncompleteCholesky<double>> cg;
+    ////cg.setTolerance((real)1e-6);
+    //Eigen::SparseMatrix<double, Eigen::RowMajor, int> A0;
+    //cg.compute(A0);
+    //return 0;
+
     //Test_Grid<2>();//a visual test
 
     Test_Grid_Index<float>(Vector2i(114, 514));
