@@ -20,7 +20,10 @@
 #include <fmt/ostream.h>
 //fmt/ranges.h will override the format of Vector<T,d>
 #include <fmt/ranges.h>
-
+//ideally we don't want to use standard list, queue and array
+#include <list>
+#include <queue>
+#include <array>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -67,36 +70,58 @@ using Vector3##t=Eigen::Vector3##t;             \
 using Vector4##t=Eigen::Vector4##t;             \
 using VectorX##t=Eigen::VectorX##t;				
 
-    Declare_Eigen_Vector_Types(int, i);
-    Declare_Eigen_Vector_Types(float, f);
-    Declare_Eigen_Vector_Types(double, d);
+#define Declare_Eigen_Matrix_Types(type,t)		\
+using Matrix1##t=Eigen::Matrix<type,1,1>;       \
+using Matrix2##t=Eigen::Matrix2##t;             \
+using Matrix3##t=Eigen::Matrix3##t;             \
+using Matrix4##t=Eigen::Matrix4##t;             \
+using MatrixX##t=Eigen::MatrixX##t;             
 
-    using uchar = unsigned char;
-    using ushort = unsigned short;
-    template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
-    template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
+Declare_Eigen_Vector_Types(int, i);
+Declare_Eigen_Vector_Types(float, f);
+Declare_Eigen_Vector_Types(double, d);
+Declare_Eigen_Matrix_Types(int, i)
+Declare_Eigen_Matrix_Types(float, f)
+Declare_Eigen_Matrix_Types(double, d)
+
+using uchar = unsigned char;
+using ushort = unsigned short;
+template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
+template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
 
 #define Typedef_VectorD(d) \
 using VectorD=Vector<real,d>; \
-using VectorDi=Vector<int,d>
+using VectorDi=Vector<int,d>; 
+#define Typedef_MatrixD(d) \
+using MatrixD=Matrix<real,d>;
+#define Typedef_VectorEi(d) \
+using VectorEi=Vector<int,d>;
 
-    // CUDA programming
-    enum DataHolder { HOST = 0, DEVICE };
+// CUDA programming
+enum DataHolder { HOST = 0, DEVICE };
 
-    ////Container alias
+////Container alias
 
-    //Array
-    template<class T, DataHolder side = DataHolder::HOST>
-    using Array = typename std::conditional<side == DataHolder::HOST, thrust::host_vector<T>, thrust::device_vector<T>>::type;
-    //template<class T> using Array = thrust::host_vector<T>;
-    template<class T> using ArrayDv = thrust::device_vector<T>;//device array
-    template<class T, DataHolder side = DataHolder::HOST> using ArrayPtr = std::shared_ptr<Array<T, side> >;
-    template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
+//Array
+template<class T, DataHolder side = DataHolder::HOST>
+using Array = typename std::conditional<side == DataHolder::HOST, thrust::host_vector<T>, thrust::device_vector<T>>::type;
+//template<class T> using Array = thrust::host_vector<T>;
+template<class T> using ArrayDv = thrust::device_vector<T>;//device array
+template<class T, DataHolder side = DataHolder::HOST> using ArrayPtr = std::shared_ptr<Array<T, side> >;
+template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
+////Array with fixed size
+template<class T, int n> using ArrayF = std::array<T, n>;
+template<class T, int n, int m> using Array2DF = std::array<std::array<T, n>, m>;
+constexpr int Pow(int x, int p) { return p == 1 ? x : x * Pow(x, p - 1); }
+template<class T, int d> using ArrayF2P = ArrayF<T, Pow(2, d) >;
+template<class T, int d> using ArrayF3P = ArrayF<T, Pow(3, d) >;
+////Other containers
+template<class T> using List = std::list<T>;
+template<class T, class CMP = std::less<T> > using Heap = std::priority_queue<T, std::vector<T>, CMP>;
 
-
-    static const char* _cudaGetErrorEnum(cudaError_t error) {
-        return cudaGetErrorName(error);
-    }
+static const char* _cudaGetErrorEnum(cudaError_t error) {
+    return cudaGetErrorName(error);
+}
 #define checkCudaErrors(val) check((val), #val, __FILE__, __LINE__)
     template <typename T>
     void check(T result, char const* const func, const char* const file,

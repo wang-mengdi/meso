@@ -10,7 +10,7 @@ if __name__=='__main__':
     lua_file=os.path.join('proj',proj_name,'xmake.lua')
     proj_dir=os.path.join('proj',proj_name)
     clean_cmd="xmake c -P {} -a".format(proj_dir)
-    config_cmd="xmake f -o {} -P {}".format(bin_dir, proj_dir)
+    config_cmd="xmake f -o {} -P {} -y".format(bin_dir, proj_dir)
     project_cmd="xmake project -k vsxmake -v -a \"x64\" -P {} {}".format(proj_dir, build_dir)
     print(clean_cmd)
     os.system(clean_cmd)

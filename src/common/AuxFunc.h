@@ -11,13 +11,18 @@
 using namespace thrust::placeholders;
 
 namespace Meso {
-
-	namespace IOFunc {
-		void Create_Directory(const bf::path path);
+	namespace StringFunc{
 		std::string To_String_Simple(const bool& a);
 		template<class T> std::string To_String_Simple(const T& a) {
 			return std::to_string(a);
 		}
+
+		Array<std::string> Split_String(const std::string& s, const std::string& delimiters = " \t\n\v\f\r");
+	}
+
+	namespace FileFunc {
+		void Create_Directory(const bf::path path);
+		
 	}
 
 	namespace MathFunc {
@@ -49,6 +54,37 @@ namespace Meso {
 			}
 			return v;
 		}
+
+		////Eigen zero compiler fix
+		template<class T> T Zero() { return (T)0; }
+
+		//Comparison
+		template<class ArrayT> bool All_Less(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] >= a1[i])return false; }return true; }
+		template<class ArrayT> bool All_Less_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] > a1[i])return false; }return true; }
+		template<class ArrayT> bool All_Greater(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] <= a1[i])return false; }return true; }
+		template<class ArrayT> bool All_Greater_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] < a1[i])return false; }return true; }
+		template<class ArrayT> bool Has_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] == a1[i])return true; return false; }
+		template<class ArrayT> bool Has_Less_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] <= a1[i])return true; return false; }
+		template<class ArrayT> bool Has_Greater_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] >= a1[i])return true; return false; }
+
+		Vector1 Orthogonal_Vector(const Vector1& v);
+		Vector2 Orthogonal_Vector(const Vector2& v);	////this is the orthogonal vector on the *left* hand
+		Vector3 Orthogonal_Vector(const Vector3& v);
+		Vector4 Orthogonal_Vector(const Vector4& v);
+
+		Vector1 Cross(const Vector2& v1, const Vector2& v2);
+		Vector2 Cross(const Vector1& v1, const Vector2& v2);
+		Vector2 Cross(const real& v1, const Vector2& v2);
+
+		real Angle_Between(const Vector2& v1, const Vector2& v2);	////[0,pi]
+		real Angle_Between(const Vector3& v1, const Vector3& v2);	////[0,pi]
+		real Angle_From_To(const Vector2& v1, const Vector2& v2);	////[-pi,pi], default is +z
+		real Angle_From_To(const Vector3& v1, const Vector3& v2);	////[-pi,pi], no axis specified, [0,pi]
+
+		template<class T, int dim> int Abs_Min_Index(const Vector<T, dim>& v) { int i_min = 0; for (int i = 1; i < dim; i++)if (abs(v[i]) < abs(v[i_min]))i_min = i; return i_min; }
+		template<class T, int dim> int Abs_Max_Index(const Vector<T, dim>& v) { int i_max = 0; for (int i = 1; i < dim; i++)if (abs(v[i]) > abs(v[i_max]))i_max = i; return i_max; }
+		template<class T, int dim> inline int Min_Index(const Vector<T, dim>& v) { int i_min = 0; for (int i = 1; i < dim; i++)if (v[i] < v[i_min])i_min = i; return i_min; }
+		template<class T, int dim> inline int Max_Index(const Vector<T, dim>& v) { int i_max = 0; for (int i = 1; i < dim; i++)if (v[i] > v[i_max])i_max = i; return i_max; }
 	}
 
 	namespace ArrayFunc {
@@ -203,6 +239,38 @@ namespace Meso {
 			T res_norm2 = Dot<T>(res, res);
 			T p = Eigen::NumTraits<T>::dummy_precision();
 			return res_norm2 <= p * p * std::min(a_norm2, b_norm2);
+		}
+
+		////Dim conversion for vectors and vector arrays
+		template<class T, int d1, int d2> void Dim_Conversion(const Vector<T, d1>& input, Vector<T, d2>& output, const T filled_value = (T)0)
+		{
+			constexpr int n = d1 < d2 ? d1 : d2;
+			for (int i = 0; i < n; i++)output[i] = input[i];
+			if /*constexpr*/ (n < d2) {
+				for (int i = n; i < d2; i++)output[i] = filled_value;
+			}
+		}
+
+		template<class T, int d1, int d2> void Dim_Conversion_Array(const Array<Vector<T, d1> >& input, Array<Vector<T, d2> >& output, const T filled_value = (T)0)
+		{
+			const int n = (int)input.size();
+#pragma omp parallel for
+			for (auto i = 0; i < n; i++) { Dim_Conversion<T, d1, d2>(input[i], output[i], filled_value); }
+		}
+
+		////Dim conversion for matrices and matrix arrays
+		template<class T, int d1, int d2> void Dim_Conversion(const Matrix<T, d1>& input, Matrix<T, d2>& output, const T filled_value = (T)0)
+		{
+			constexpr int n = d1 < d2 ? d1 : d2;
+			output = Matrix<T, d2>::Constant(filled_value);
+			for (int i = 0; i < n; i++)for (int j = 0; j < n; j++)output(i, j) = input(i, j);
+		}
+
+		template<class T, int d1, int d2> void Dim_Conversion_Array(const Array<Matrix<T, d1> >& input, Array<Matrix<T, d2> >& output)
+		{
+			const int n = (int)input.size();
+#pragma omp parallel for
+			for (auto i = 0; i < n; i++)Dim_Conversion<T, d1, d2>(input[i], output[i]);
 		}
 	}
 
