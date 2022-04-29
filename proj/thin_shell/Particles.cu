@@ -7,6 +7,7 @@
 #include "File.h"
 #include "AuxFunc.h"
 
+using namespace Meso;
 //////////////////////////////////////////////////////////////////////////
 ////points
 
@@ -181,21 +182,6 @@ bool Points<d, T>::Load_Snapshot(const std::string& file_name)
 	return true;
 }
 
-//template<int d, typename T> int Points<d, T>::Add_Point(VectorD pos) {
-//	X()->push_back(pos);
-//	int n = Size();
-//	this->Resize(n);//Critical: use this to access child class
-//	return n - 1;
-//}
-//
-//template<int d, typename T> int Points<d, T>::Add_Points(const Array<VectorD>& vertices) {
-//	int n=(int)vertices.size();
-//	int idx = this->Add_Elements(n);
-//	for (int i = 0; i < n; i++) {
-//		this->X(i + idx) = vertices[i];}
-//	return idx;
-//}
-//
 template<int d, typename T> void Points<d, T>::Write_To_File_3d(const std::string& file_name) const
 {
 	if constexpr (d == 3) {
@@ -203,7 +189,7 @@ template<int d, typename T> void Points<d, T>::Write_To_File_3d(const std::strin
 	}
 	else {
 		Points<3, T> p3; p3.Resize(Size());
-		AuxFunc::Dim_Conversion_Array<T, d, 3>(*X(), *p3.X(), (T)0);
+		ArrayFunc::Dim_Conversion_Array<T, d, 3>(*X(), *p3.X(), (T)0);
 		File::Write_Binary_To_File(file_name, p3);
 	}
 }
@@ -220,26 +206,6 @@ template class Points<2,float>;
 template class Points<3,float>;
 
 //////////////////////////////////////////////////////////////////////////
-////tracker points
-
-template<int d,typename T> void TrackerPoints<d,T>::Write_To_File_3d(const std::string& file_name) const
-{
-	if constexpr (d==3){
-		File::Write_Binary_To_File(file_name,*this);}
-	else{
-		TrackerPoints<3,T> p3;p3.Resize(Size());
-		AuxFunc::Dim_Conversion_Array<T,d,3>(*X(),*p3.X(),(T)0);
-		AuxFunc::Dim_Conversion_Array<T,d,3>(*V(),*p3.V(),(T)0);
-		*p3.I()=*I();
-		File::Write_Binary_To_File(file_name,p3);}
-}
-
-template class TrackerPoints<2,double>;
-template class TrackerPoints<3,double>;
-template class TrackerPoints<2,float>;
-template class TrackerPoints<3,float>;
-
-//////////////////////////////////////////////////////////////////////////
 ////particles
 
 template<int d,typename T> void Particles<d,T>::Write_To_File_3d(const std::string& file_name) const
@@ -248,9 +214,9 @@ template<int d,typename T> void Particles<d,T>::Write_To_File_3d(const std::stri
 		File::Write_Binary_To_File(file_name,*this);}
 	else {
 		Particles<3, T> p3; p3.Resize(Size());
-		AuxFunc::Dim_Conversion_Array<T, d, 3>(*X(), *p3.X(), (T)0);
-		AuxFunc::Dim_Conversion_Array<T, d, 3>(*V(), *p3.V(), (T)0);
-		AuxFunc::Dim_Conversion_Array<T, d, 3>(*F(), *p3.F(), (T)0);
+		ArrayFunc::Dim_Conversion_Array<T, d, 3>(*X(), *p3.X(), (T)0);
+		ArrayFunc::Dim_Conversion_Array<T, d, 3>(*V(), *p3.V(), (T)0);
+		ArrayFunc::Dim_Conversion_Array<T, d, 3>(*F(), *p3.F(), (T)0);
 		*p3.M() = *M();
 		*p3.C() = *C();
 		*p3.I() = *I();

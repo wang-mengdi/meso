@@ -24,7 +24,7 @@ public:
 
 	Array<real> hs;					//thickness of the thin shell,defined on vertices
 	DiagonalMatrix<real> M;			//mass of face
-	SparseMatrixT A;				//stiffness matrix
+	SparseMatrix<real> A;				//stiffness matrix
 	VectorX dv;						//displacement, delta x
 	VectorX b;
 
@@ -131,6 +131,12 @@ public:
 	Eigen::Matrix<real,d,d+1> Numerical_Grad_Bend(int jct_idx, ArrayF<int, d + 1>& vtx_idx, ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_b);
 	Array2DF<MatrixD, d + 1, d + 1> Numerical_Hess_Bend(int jct_idx, const ArrayF<int, d + 1>& vtx_idx,const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real,d,d+1>& grad_b, const MatrixD hess_b[d + 1][d + 1]);
 	Array2DF<MatrixD, d + 1, d + 1> Numerical_Hess_Theta(const ArrayF<int, d + 1>& vtx_idx,const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_theta);
+	
+	virtual real CFL_Time(const real cfl);
+
+	virtual void Output(const bf::path base_path, const int frame);
+
+	virtual void Advance(const int current_frame, const real current_time, const real dt);
 
 protected:
 	void Add_Block_Helper(SparseMatrixT& K, const int i, const int j, const MatrixD& Ks);

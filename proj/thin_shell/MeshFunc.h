@@ -82,9 +82,9 @@ namespace MeshFunc{
 	template<int d> bool Inside(const ArrayF<Vector<real,d>,d+1>& vtx,const Vector<real,d>& p);
 
 	////Mesh transformation
-	template<int d> Box<d> Bounding_Box(const Array<Vector<real,d> >& vertices);
-	template<int d> Box<d> Bounding_Box(const Vector<real,d>* vertices,int vn);
-	template<int d> void Rescale(Array<Vector<real, d> >& vertices, const real longest_length);
+	//template<int d> Box<d> Bounding_Box(const Array<Vector<real,d> >& vertices);
+	//template<int d> Box<d> Bounding_Box(const Vector<real,d>* vertices,int vn);
+	//template<int d> void Rescale(Array<Vector<real, d> >& vertices, const real longest_length);
 	template<int d> Vector<real,d> Center(const Array<Vector<real,d> >& vertices);
 	template<int d> void Translate(Array<Vector<real,d> >& vertices,const Vector<real,d>& trans);
 	template<int d> void Translate_Center_To(Array<Vector<real,d> >& vertices,const Vector<real,d>& center);
@@ -98,9 +98,6 @@ namespace MeshFunc{
 
 	////Mesh initialization with analytical shapes
 	template<class T_MESH> void Initialize_Herring_Bone_Mesh(const int m,const int n,const real dx,T_MESH* mesh,int axis_0=0,int axis_1=1);
-	void Initialize_Lattice_Mesh(const Vector3i& counts,const real dx,TetrahedronMesh<3>* mesh,const Array<int>* flag=nullptr);
-	void Initialize_Lattice_Mesh(const Vector2i& counts,const real dx,TriangleMesh<2>* mesh,const Array<int>* flag=nullptr);
-	template<int d> void Initialize_Lattice_Mesh(const Vector<int,d>& counts,const real dx,HexMesh<d>* mesh,const Array<int>* flag=nullptr);
 	void Initialize_Icosahedron_Mesh(const real scale,TriangleMesh<3>* mesh);
 	void Initialize_Sphere_Mesh(const real r,TriangleMesh<3>* mesh,const int sub=2);
 	void Initialize_Ellipsoid_Mesh(const real r, TriangleMesh<3>* mesh, const real a, const real b, const real c, const int sub = 2);
