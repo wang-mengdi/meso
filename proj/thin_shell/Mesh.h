@@ -17,7 +17,7 @@ public:
 	ArrayPtr<VectorD> vertices;
 	Array<VectorEi> elements;
 	ArrayPtr<VectorD> normals;		////default=nullptr
-	ArrayPtr<Vector2> textures;		////default=nullptr
+	ArrayPtr<Vector2> textures;		////default=nullptr no need to use
 
 	////constructors
 	SimplicialMesh(const ArrayPtr<VectorD> _vertices=nullptr);

@@ -6,11 +6,12 @@
 #pragma once
 
 #include "FluidEuler.h"
+#include "GeometryPrimitives.h"
 #include "Json.h"
 
 namespace Meso {
 	template<int d>
-	class FluidEulerInitializer {
+	class  FluidEulerInitializer{
 	public:
 		Typedef_VectorD(d);
 
@@ -25,6 +26,7 @@ namespace Meso {
 			switch (test) {
 			case 0:Case_0(j, fluid); break;
 			case 1:Case_1(j, fluid); break;
+			case 2:Case_2(j, fluid); break;
 			default:Assert(false, "test {} not exist", test); break;
 			}
 		}
@@ -143,6 +145,43 @@ namespace Meso {
 			);
 
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
+		}
+
+		// with a sheprical obstacle, initial velocity of 1
+		void Case_2(json& j, FluidEuler<d>& fluid) {
+			//int scale = Json::Value(j, "scale", 32);
+			//real dx = 1.0 / scale;
+			//VectorDi grid_size = scale * VectorFunc::Vi<d>(2, 1, 1);
+			//Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
+
+			//Eigen::Matrix<int, 3, 2> bc_width;
+			//Eigen::Matrix<real, 3, 2> bc_val;
+			//bc_width << 0, -1, 0, 0, 0, 0;
+			//bc_val << 1, 1, 0, 0, 0, 0;
+
+			//Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+
+			////sphere
+			//VectorD center = VectorD::Zero(); //how to decide the center of the sphere?
+			//center[0] = (real)0.3;
+			//real r = (real)0.3;
+			//Sphere<d> sphere(center, r);
+
+			////iterate cell
+			//grid.Iterate_Nodes(
+			//	[&](const int axis, const VectorDi face) {
+			//		const VectorD pos = grid.Face_Center(axis, pos);
+			//		if (sphere.Inside(pos)) {
+			//			fixed(axis, face) = true;
+			//			face_fixed(axis, face) = true;
+			//			initial_vel(axis, face) = 0;
+			//			vol(axis, face) = 0;
+			//		}
+			//	}
+			//);
+
+			//fluid.Init(fixed, vol, face_fixed, initial_vel);
+			//ArrayFunc::Fill(fluid.velocity.Data(0), 1.0);
 		}
 	};
 }

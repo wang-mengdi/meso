@@ -1,9 +1,9 @@
-#ifndef __SimplicialPrimitives_h__
-#define __SimplicialPrimitives_h__
+#pragma once
 #include "Common.h"
 #include "AuxFunc.h"
 #include "GeometryPrimitives.h"
 
+using namespace Meso;
 //////////////////////////////////////////////////////////////////////////
 ////Segment
 //////////////////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@ public:
 		dis[1]=Phi(p0,p1,q1);
 		dis[2]=Phi(q0,q1,p0);
 		dis[3]=Phi(q0,q1,p1);
-		return AuxFunc::Min(dis);
+		return dis.minCoeff();
 	}
 };
 
@@ -108,9 +108,9 @@ public:
 
 	static bool Inside(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& pos)
 	{
-		VectorD v0=p1-p0;VectorD q0=pos-p0;real c0=AuxFunc::Cross(v0,q0)[0];
-		VectorD v1=p2-p1;VectorD q1=pos-p1;real c1=AuxFunc::Cross(v1,q1)[0];
-		VectorD v2=p0-p2;VectorD q2=pos-p2;real c2=AuxFunc::Cross(v2,q2)[0];
+		VectorD v0=p1-p0;VectorD q0=pos-p0;real c0=VectorFunc::Cross(v0,q0)[0];
+		VectorD v1=p2-p1;VectorD q1=pos-p1;real c1=VectorFunc::Cross(v1, q1)[0];
+		VectorD v2=p0-p2;VectorD q2=pos-p2;real c2=VectorFunc::Cross(v2, q2)[0];
 		return (c0>(real)0&&c1>(real)0&&c2>(real)0)||(c0<(real)0&&c1<(real)0&&c2<(real)0);
 	}
 
@@ -121,7 +121,7 @@ public:
 		phi[1]=Segment<2>::Phi(p1,p2,pos);
 		phi[2]=Segment<2>::Phi(p2,p0,pos);
 		real sign=Inside(p0,p1,p2,pos)?(real)-1:(real)1;
-		return sign*phi[AuxFunc::Abs_Min_Index(phi)];
+		return sign*phi[VectorFunc::Abs_Min_Index(phi)];
 	}
 
 	static VectorD Normal(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& pos)
@@ -143,7 +143,7 @@ public:
 		abs_phi[1]=v[1].norm();
 		abs_phi[2]=v[2].norm();
 
-		int idx=AuxFunc::Min_Index(abs_phi);
+		int idx= VectorFunc::Min_Index(abs_phi);
 		return v[idx];
 	}
 
@@ -162,7 +162,7 @@ public:
 		abs_phi[1]=v[1].norm();
 		abs_phi[2]=v[2].norm();
 
-		int idx=AuxFunc::Min_Index(abs_phi);
+		int idx= VectorFunc::Min_Index(abs_phi);
 		
 		if(!inside){	////extrapolate barycentric coordinate
 			barycentric[idx]=(real)1-a[idx];
@@ -250,7 +250,7 @@ public:
 		abs_phi[1]=v[1].norm();
 		abs_phi[2]=v[2].norm();
 
-		int idx=AuxFunc::Min_Index(abs_phi);
+		int idx= VectorFunc::Min_Index(abs_phi);
 		return v[idx];
 	}
 
@@ -277,7 +277,7 @@ public:
 		abs_phi[1]=v[1].norm();
 		abs_phi[2]=v[2].norm();
 
-		int idx=AuxFunc::Min_Index(abs_phi);
+		int idx= VectorFunc::Min_Index(abs_phi);
 		if(alphas[idx]>0&&alphas[idx]<1){feature=ClosestPointFeature::Edge(idx);}
 		else if(alphas[idx]==0){feature=ClosestPointFeature::Vertex(ClosestPointFeature::c_EdgeStartPoint[idx]);}
 		else{feature=ClosestPointFeature::Vertex(ClosestPointFeature::c_EdgeEndPoint[idx]);}
@@ -308,71 +308,69 @@ public:
 ////Tetrahedron (3D only)
 //////////////////////////////////////////////////////////////////////////
 
-template<int d> class Tetrahedron{};
-
-template<> class Tetrahedron<2>	////For template compiling only
-{Typedef_VectorD(2);
-public:
-	static bool Inside(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos){return false;}
-	static real Phi(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos){return (real)0;}
-	static VectorD Normal(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos){return VectorD::Zero();}
-	static VectorD Closest_Point_Vector(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos){return VectorD::Zero();}
-};
-
-template<> class Tetrahedron<3>
-{Typedef_VectorD(3);
-public:
-	VectorD p0,p1,p2,p3;	////Four faces pointing outward: 021, 013, 123, 032
-
-	Tetrahedron(const VectorD& _p0,const VectorD& _p1,const VectorD& _p2,const VectorD& _p3):p0(_p0),p1(_p1),p2(_p2),p3(_p3){}
-	
-	virtual bool Inside(const VectorD& pos) const {return Inside(p0,p1,p2,p3,pos);}
-	virtual real Phi(const VectorD& pos) const {return Phi(p0,p1,p2,p3,pos);}
-	virtual VectorD Normal(const VectorD& pos) const {return Normal(p0,p1,p2,p3,pos);}
-
-	static bool Inside(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos)
-	{
-		bool inside_t021=Plane<3>::Inside(p0,p2,p1,pos);
-		bool inside_t013=Plane<3>::Inside(p0,p1,p3,pos);
-		bool inside_t123=Plane<3>::Inside(p1,p2,p3,pos);
-		bool inside_t032=Plane<3>::Inside(p0,p3,p2,pos);
-		return inside_t021&&inside_t013&&inside_t123&&inside_t032;
-	}
-
-	static real Phi(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos)
-	{
-		Vector<real,4> phi;
-		phi[0]=Triangle<3>::Phi(p0,p2,p1,pos);
-		phi[1]=Triangle<3>::Phi(p0,p1,p3,pos);
-		phi[2]=Triangle<3>::Phi(p1,p2,p3,pos);
-		phi[3]=Triangle<3>::Phi(p0,p3,p2,pos);
-		return phi[AuxFunc::Abs_Min_Index(phi)];
-	}
-
-	static VectorD Normal(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos)
-	{
-		VectorD v=Closest_Point_Vector(p0,p1,p2,p3,pos);
-		real coef=Inside(p0,p1,p2,p3,pos)?(real)-1:(real)1;
-		return coef*v.normalized();
-	}
-
-	static VectorD Closest_Point_Vector(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos)
-	{
-		Vector<VectorD,4> v;
-		v[0]=Triangle<3>::Closest_Point_Vector(p0,p2,p1,pos);
-		v[1]=Triangle<3>::Closest_Point_Vector(p0,p1,p3,pos);
-		v[2]=Triangle<3>::Closest_Point_Vector(p1,p2,p3,pos);
-		v[3]=Triangle<3>::Closest_Point_Vector(p0,p3,p2,pos);
-
-		Vector<real,4> abs_phi;
-		abs_phi[0]=v[0].norm();
-		abs_phi[1]=v[1].norm();
-		abs_phi[2]=v[2].norm();
-		abs_phi[3]=v[3].norm();
-		real sign=Inside(p0,p1,p2,p3,pos)?(real)-1:(real)1;
-		int idx=AuxFunc::Min_Index(abs_phi);
-		return sign*v[idx];
-	}
-};
-
-#endif
+//template<int d> class Tetrahedron{};
+//
+//template<> class Tetrahedron<2>	////For template compiling only
+//{Typedef_VectorD(2);
+//public:
+//	static bool Inside(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos){return false;}
+//	static real Phi(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos){return (real)0;}
+//	static VectorD Normal(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos){return VectorD::Zero();}
+//	static VectorD Closest_Point_Vector(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos){return VectorD::Zero();}
+//};
+//
+//template<> class Tetrahedron<3>
+//{Typedef_VectorD(3);
+//public:
+//	VectorD p0,p1,p2,p3;	////Four faces pointing outward: 021, 013, 123, 032
+//
+//	Tetrahedron(const VectorD& _p0,const VectorD& _p1,const VectorD& _p2,const VectorD& _p3):p0(_p0),p1(_p1),p2(_p2),p3(_p3){}
+//	
+//	virtual bool Inside(const VectorD& pos) const {return Inside(p0,p1,p2,p3,pos);}
+//	virtual real Phi(const VectorD& pos) const {return Phi(p0,p1,p2,p3,pos);}
+//	virtual VectorD Normal(const VectorD& pos) const {return Normal(p0,p1,p2,p3,pos);}
+//
+//	static bool Inside(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos)
+//	{
+//		bool inside_t021=Plane<3>::Inside(p0,p2,p1,pos);
+//		bool inside_t013=Plane<3>::Inside(p0,p1,p3,pos);
+//		bool inside_t123=Plane<3>::Inside(p1,p2,p3,pos);
+//		bool inside_t032=Plane<3>::Inside(p0,p3,p2,pos);
+//		return inside_t021&&inside_t013&&inside_t123&&inside_t032;
+//	}
+//
+//	static real Phi(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos)
+//	{
+//		Vector<real,4> phi;
+//		phi[0]=Triangle<3>::Phi(p0,p2,p1,pos);
+//		phi[1]=Triangle<3>::Phi(p0,p1,p3,pos);
+//		phi[2]=Triangle<3>::Phi(p1,p2,p3,pos);
+//		phi[3]=Triangle<3>::Phi(p0,p3,p2,pos);
+//		return phi[VectorFunc::Abs_Min_Index(phi)];
+//	}
+//
+//	static VectorD Normal(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos)
+//	{
+//		VectorD v=Closest_Point_Vector(p0,p1,p2,p3,pos);
+//		real coef=Inside(p0,p1,p2,p3,pos)?(real)-1:(real)1;
+//		return coef*v.normalized();
+//	}
+//
+//	static VectorD Closest_Point_Vector(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& p3,const VectorD& pos)
+//	{
+//		Vector<VectorD,4> v;
+//		v[0]=Triangle<3>::Closest_Point_Vector(p0,p2,p1,pos);
+//		v[1]=Triangle<3>::Closest_Point_Vector(p0,p1,p3,pos);
+//		v[2]=Triangle<3>::Closest_Point_Vector(p1,p2,p3,pos);
+//		v[3]=Triangle<3>::Closest_Point_Vector(p0,p3,p2,pos);
+//
+//		Vector<real,4> abs_phi;
+//		abs_phi[0]=v[0].norm();
+//		abs_phi[1]=v[1].norm();
+//		abs_phi[2]=v[2].norm();
+//		abs_phi[3]=v[3].norm();
+//		real sign=Inside(p0,p1,p2,p3,pos)?(real)-1:(real)1;
+//		int idx= VectorFunc::Min_Index(abs_phi);
+//		return sign*v[idx];
+//	}
+//};

@@ -42,6 +42,24 @@ namespace Meso {
 		__host__ __device__ VectorD Position(const VectorDi node)const {
 			return pos_min + node.template cast<real>() * dx;
 		}
+		__host__ __device__ VectorD Domain_Min(const GridType gtype = MAC) const { 
+			//if (gtype == MAC) {
+				//VectorD offset = VectorD::Ones() * 0.5 * dx;
+				//return pos_min - offset;
+			//}
+			return pos_min;
+		}
+		__host__ __device__ VectorD Domain_Max(const GridType gtype = MAC) const {
+			//VectorD count_real = counts.template cast<real>();
+			//VectorD domain_max = pos_min + count;
+			//if (gtype == MAC) {
+			//	return domain_max + VectorD::Ones() * (real)0.5 * dx;
+			//}
+			//return domain_max;
+			return VectorD::Zero();
+		}
+		//__host__ __device__ VectorD Center(void) { return (real)0.5 * (Domain_Min() + Domain_Max()); }
+
 		__host__ __device__ void Get_Fraction(const VectorD pos, VectorDi& node, VectorD& frac)const {
 			VectorD coord_with_frac = (pos - pos_min) / dx;
 			node = coord_with_frac.template cast<int>();
@@ -221,7 +239,7 @@ namespace Meso {
 		void Exec_Kernel(F kernel_func, const Args&...args) const {
 			dim3 blocknum, blocksize;
 			Get_Kernel_Dims(blocknum, blocksize);
-			kernel_func << <blocknum, blocksize >> > (args...);
+			kernel_func <<<blocknum, blocksize >>> (args...);
 		}
 	};
 

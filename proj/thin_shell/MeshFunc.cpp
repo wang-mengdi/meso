@@ -21,7 +21,7 @@ namespace MeshFunc{
 	{Vector2 v12=(v2-v1).normalized();return Vector2(v12[1],-v12[0]);}
     
 	Vector1 Normal(const Vector2& p1,const Vector2& p2,const Vector2& p3)
-	{Vector2 p12=p2-p1;Vector2 p13=p3-p1;return p12.cross(p13).normalized();} //revised ross from Cross in AuxFunc of Simplex
+	{Vector2 p12=p2-p1;Vector2 p13=p3-p1;return VectorFunc::Cross(p12,p13).normalized();}
     
 	Vector3 Normal(const Vector3& p1,const Vector3& p2,const Vector3& p3)
 	{return (p2-p1).cross(p3-p1).normalized();}
@@ -58,7 +58,7 @@ namespace MeshFunc{
 	{Vector2 v12=(v2-v1).normalized();return Vector2(v12[1],-v12[0]);}
 
 	Vector1 Area_Weighted_Normal(const Vector2& p1,const Vector2& p2,const Vector2& p3)
-	{Vector2 p12=p2-p1;Vector2 p13=p3-p1;return p12.cross(p13);} //revised ross from Cross in AuxFunc of Simplex
+	{Vector2 p12=p2-p1;Vector2 p13=p3-p1;return VectorFunc::Cross(p12,p13);}
 
 	Vector3 Area_Weighted_Normal(const Vector3& p1,const Vector3& p2,const Vector3& p3)
 	{return (p2-p1).cross(p3-p1);}
@@ -69,7 +69,7 @@ namespace MeshFunc{
     real Tetrahedron_Volume(const ArrayF<Vector3,4>& tet){return Tetrahedron_Volume(tet[0],tet[1],tet[2],tet[3]);}
 	real Tetrahedron_Volume(const Vector2&,const Vector2&,const Vector2&,const Vector2&){return (real)0;}
 
-	real Triangle_Area(const Vector2& v0,const Vector2& v1,const Vector2& v2){Vector2 v01=v1-v0;Vector2 v02=v2-v0;return (real).5*abs(v01.cross(v02)[0]);}//revised ross from Cross in AuxFunc of Simplex
+	real Triangle_Area(const Vector2& v0,const Vector2& v1,const Vector2& v2){Vector2 v01=v1-v0;Vector2 v02=v2-v0;return (real).5*abs(VectorFunc::Cross(v01,v02)[0]);}
     real Triangle_Area(const ArrayF<Vector2,3>& tri){return Triangle_Area(tri[0],tri[1],tri[2]);}
     real Triangle_Area(const Vector3& v0,const Vector3& v1,const Vector3& v2){return (real).5*((v1-v0).cross(v2-v0)).norm();}
     real Triangle_Area(const ArrayF<Vector3,3>& tri){return Triangle_Area(tri[0],tri[1],tri[2]);}
@@ -110,16 +110,16 @@ Inst_Helper(2,2);Inst_Helper(2,3);Inst_Helper(3,3);Inst_Helper(3,4);
 
 	template<int d> void Triangle_Angles(const ArrayF<Vector<real,d>,3>& tri,ArrayF<real,3>& angles)
 	{
-		Vector<real,d> v01=(tri[1]-tri[0]).normalized();Vector<real,d> v02=(tri[2]-tri[0]).normalized();angles[0]=Angle_Between(v01,v02);
-		Vector<real,d> v12=(tri[2]-tri[1]).normalized();angles[1]=Angle_Between(v12,-v01);
-		angles[2]=pi-angles[0]-angles[1];	
+		Vector<real,d> v01=(tri[1]-tri[0]).normalized();Vector<real,d> v02=(tri[2]-tri[0]).normalized();angles[0]=VectorFunc::Angle_Between(v01,v02);
+		Vector<real,d> v12=(tri[2]-tri[1]).normalized();angles[1]= VectorFunc::Angle_Between(v12,-v01);
+		angles[2]=CommonConstants::pi-angles[0]-angles[1];	
 	}
 	template void Triangle_Angles<2>(const ArrayF<Vector2,3>&,ArrayF<real,3>&);
 	template void Triangle_Angles<3>(const ArrayF<Vector3,3>&,ArrayF<real,3>&);
 	
 	template<int d> real Three_Point_Angle(const Vector<real,d>& a,const Vector<real,d>& b,const Vector<real,d>& c)
 	{
-		Vector<real,d> ba=(a-b).normalized();Vector<real,d> bc=(c-b).normalized();return Angle_Between(bc,ba);
+		Vector<real,d> ba=(a-b).normalized();Vector<real,d> bc=(c-b).normalized();return VectorFunc::Angle_Between(bc,ba);
 	}
 	template real Three_Point_Angle<2>(const Vector2&,const Vector2&,const Vector2&);
 	template real Three_Point_Angle<3>(const Vector3&,const Vector3&,const Vector3&);
@@ -272,7 +272,7 @@ Inst_Helper(2,2);Inst_Helper(2,3);Inst_Helper(3,2);Inst_Helper(3,3);Inst_Helper(
 
 	template<class T,int d> T Barycentric_Interpolation(const ArrayF<T,d+1>& values,const Vector<real,d>& coord)
 	{
-		T v=Zero<T>();real c=(real)1;
+		T v=VectorFunc::Zero<T>();real c=(real)1;
 		for(int i=0;i<d;i++){c-=coord[i];v+=values[i]*coord[i];}v+=values[d]*c;return v;
 	}
 	#define Inst_Helper(T,d)	\
@@ -291,29 +291,29 @@ Inst_Helper(2,2);Inst_Helper(2,3);Inst_Helper(3,2);Inst_Helper(3,3);Inst_Helper(
 	
 	//////////////////////////////////////////////////////////////////////////
 	////Mesh transformation
-	template<int d> Box<d> Bounding_Box(const Array<Vector<real,d> >& vertices)
-	{
-		Box<d> box=Box<d>::Infi_Min();
-		for(auto& v:vertices){box.min_corner=box.min_corner.cwiseMin(v);box.max_corner=box.max_corner.cwiseMax(v);}return box;
-	}
-	template Box<2> Bounding_Box<2>(const Array<Vector2>&);
-	template Box<3> Bounding_Box<3>(const Array<Vector3>&);
+	//template<int d> Box<d> Bounding_Box(const Array<Vector<real,d> >& vertices)
+	//{
+	//	Box<d> box=Box<d>::Infi_Min();
+	//	for(auto& v:vertices){box.min_corner=box.min_corner.cwiseMin(v);box.max_corner=box.max_corner.cwiseMax(v);}return box;
+	//}
+	//template Box<2> Bounding_Box<2>(const Array<Vector2>&);
+	//template Box<3> Bounding_Box<3>(const Array<Vector3>&);
 
-	template<int d> Box<d> Bounding_Box(const Vector<real,d>* vertices,int vn)
-	{
-		Box<d> box=Box<d>::Infi_Min();
-		for(int i=0;i<vn;i++){box.min_corner=box.min_corner.cwiseMin(vertices[i]);box.max_corner=box.max_corner.cwiseMax(vertices[i]);}return box;
-	}
-	template Box<2> Bounding_Box<2>(const Vector2*,int);
-	template Box<3> Bounding_Box<3>(const Vector3*,int);
+	//template<int d> Box<d> Bounding_Box(const Vector<real,d>* vertices,int vn)
+	//{
+	//	Box<d> box=Box<d>::Infi_Min();
+	//	for(int i=0;i<vn;i++){box.min_corner=box.min_corner.cwiseMin(vertices[i]);box.max_corner=box.max_corner.cwiseMax(vertices[i]);}return box;
+	//}
+	//template Box<2> Bounding_Box<2>(const Vector2*,int);
+	//template Box<3> Bounding_Box<3>(const Vector3*,int);
 		
-	template<int d> void Rescale(Array<Vector<real,d> >& vertices,const real longest_length)
-	{
-		Box<d> box=Bounding_Box<d>(vertices);Vector<real,d> length=box.Edge_Lengths();int axis=AuxFunc::Max_Index(length);
-		real rescale=(length[axis]>(real)0)?longest_length/length[axis]:(real)1;for(auto& v:vertices)v*=rescale;
-	}
-	template void Rescale<2>(Array<Vector2>&,const real);
-	template void Rescale<3>(Array<Vector3>&,const real);
+	//template<int d> void Rescale(Array<Vector<real,d> >& vertices,const real longest_length)
+	//{
+	//	Box<d> box=Bounding_Box<d>(vertices);Vector<real,d> length=box.Edge_Lengths();int axis=VectorFunc::Max_Index(length);
+	//	real rescale=(length[axis]>(real)0)?longest_length/length[axis]:(real)1;for(auto& v:vertices)v*=rescale;
+	//}
+	//template void Rescale<2>(Array<Vector2>&,const real);
+	//template void Rescale<3>(Array<Vector3>&,const real);
 
 	template<int d> Vector<real,d> Center(const Array<Vector<real,d> >& vertices)
 	{
@@ -356,54 +356,6 @@ Inst_Helper(2,2);Inst_Helper(2,3);Inst_Helper(3,2);Inst_Helper(3,3);Inst_Helper(
 
 	//////////////////////////////////////////////////////////////////////////
 	////Mesh initialization
-	
-	////Five tetrahedrons per cube, PhysBAM implementation TETRAHEDRON_MESH.cpp
-	template<class T_MESH> void Initialize_Lattice_Mesh_Implementation(const Vector3i& counts,const real dx,T_MESH* mesh,const Array<int>* flag)
-	{
-		const int m=counts[0]+1,n=counts[1]+1,p=counts[2]+1;Grid<3> grid(counts,dx);
-		for(int i=1;i<=m-1;i++)for(int j=1;j<=n-1;j++)for(int k=1;k<=p-1;k++){
-			if(flag!=nullptr&&(*flag)[grid.Cell_Index(Vector3i(i-1,j-1,k-1))]==-1)continue;
-			if((i+j+k)%2==0){
-				mesh->elements.push_back(Vector4i(i+m*(j-1)+m*n*(k-1),i+1+m*(j-1)+m*n*(k-1),i+m*j+m*n*(k-1),i+m*(j-1)+m*n*k));
-				mesh->elements.push_back(Vector4i(i+1+m*(j-1)+m*n*(k-1),i+1+m*(j-1)+m*n*k,i+1+m*j+m*n*k,i+m*(j-1)+m*n*k));
-				mesh->elements.push_back(Vector4i(i+m*j+m*n*(k-1),i+1+m*j+m*n*(k-1),i+1+m*j+m*n*k,i+1+m*(j-1)+m*n*(k-1)));
-				mesh->elements.push_back(Vector4i(i+m*j+m*n*k,i+1+m*j+m*n*k,i+m*(j-1)+m*n*k,i+m*j+m*n*(k-1)));
-				mesh->elements.push_back(Vector4i(i+1+m*(j-1)+m*n*(k-1),i+m*(j-1)+m*n*k,i+1+m*j+m*n*k,i+m*j+m*n*(k-1)));}
-			else{
-				mesh->elements.push_back(Vector4i(i+m*(j-1)+m*n*(k-1),i+1+m*(j-1)+m*n*(k-1),i+1+m*j+m*n*(k-1),i+1+m*(j-1)+m*n*k));
-				mesh->elements.push_back(Vector4i(i+m*(j-1)+m*n*(k-1),i+m*j+m*n*(k-1),i+m*j+m*n*k,i+1+m*j+m*n*(k-1)));
-				mesh->elements.push_back(Vector4i(i+m*j+m*n*k,i+1+m*(j-1)+m*n*k,i+m*(j-1)+m*n*k,i+m*(j-1)+m*n*(k-1)));
-				mesh->elements.push_back(Vector4i(i+m*j+m*n*k,i+1+m*j+m*n*k,i+1+m*(j-1)+m*n*k,i+1+m*j+m*n*(k-1)));
-				mesh->elements.push_back(Vector4i(i+m*j+m*n*k,i+m*(j-1)+m*n*(k-1),i+1+m*j+m*n*(k-1),i+1+m*(j-1)+m*n*k));}}
-		for(auto& e:mesh->elements){e-=Vector4i::Ones();}
-		for(int k=0;k<p;k++)for(int j=0;j<n;j++)for(int i=0;i<m;i++)mesh->Vertices().push_back(Vector3((real)i,(real)j,(real)k)*dx);
-		if(flag)Prune_Unused_Vertices(mesh);
-	}
-
- 	void Initialize_Lattice_Mesh(const Vector3i& counts,const real dx,TetrahedronMesh<3>* mesh,const Array<int>* flag)
-	{
-		Initialize_Lattice_Mesh_Implementation<TetrahedronMesh<3> >(counts,dx,mesh,flag);
-	}
-
-	void Initialize_Lattice_Mesh(const Vector2i& counts,const real dx,TriangleMesh<2>* mesh,const Array<int>* flag/*=nullptr*/)
-	{
-		Initialize_Herring_Bone_Mesh(counts[0]+1,counts[1]+1,dx,mesh);	////TODO: implement flag
-	}
-		
-	template<int d> void Initialize_Lattice_Mesh(const Vector<int,d>& counts,const real dx,HexMesh<d>* mesh,const Array<int>* flag/*=nullptr*/)
-	{
-		Grid<d> grid(counts,dx);
-		iterate_node(iter,grid){const Vector<int,d>& node=iter.Coord();const Vector<real,d> pos=grid.Node(node);mesh->Vertices().push_back(pos);}
-		iterate_cell(iter,grid){const Vector<int,d>& cell=iter.Coord();const int idx=grid.Cell_Index(cell);
-			if(flag!=nullptr&&(*flag)[idx]==-1)continue;
-			ArrayF<int,Pow(2,d)> v;grid.Cell_Incident_Node_Indices(cell,v);
-			Vector<int,Pow(2,d)> vtx;for(int i=0;i<Pow(2,d);i++)vtx[i]=v[i];
-			mesh->Elements().push_back(vtx);}
-		if(flag)Prune_Unused_Vertices(mesh);
-	}
-
-	template void Initialize_Lattice_Mesh<2>(const Vector2i&,const real,HexMesh<2>*,const Array<int>*);
-	template void Initialize_Lattice_Mesh<3>(const Vector3i&,const real,HexMesh<3>*,const Array<int>*);
 
 	////Cone mesh, n+1 vertices, n triangles
 	void Initialize_Cone_Mesh(const real r,const real h,const int n,TriangleMesh<3>* mesh,const int axis)	
@@ -479,7 +431,7 @@ Inst_Helper(2,2);Inst_Helper(2,3);Inst_Helper(3,2);Inst_Helper(3,3);Inst_Helper(
 		for(int i=1;i<=m-1;i++)for(int j=1;j<=n-1;j++){ // counterclockwise node ordering
 			if(i%2){mesh->elements[t++]=Vector3i(i+m*(j-1),i+1+m*(j-1),i+m*j);mesh->elements[t++]=Vector3i(i+1+m*(j-1),i+1+m*j,i+m*j);}
 			else{mesh->elements[t++]=Vector3i(i+m*(j-1),i+1+m*(j-1),i+1+m*j);mesh->elements[t++]=Vector3i(i+m*(j-1),i+1+m*j,i+m*j);}}
-		for(size_type i=0;i<mesh->elements.size();i++){mesh->elements[i]-=Vector3i::Ones();}
+		for(int i=0;i<mesh->elements.size();i++){mesh->elements[i]-=Vector3i::Ones();}
 			//int tmp=mesh->elements[i][1];mesh->elements[i][1]=mesh->elements[i][2];mesh->elements[i][2]=tmp;}
 		for(int j=0;j<n;j++)for(int i=0;i<m;i++){VectorD pos=VectorD::Zero();pos[axis_0]=(real)i*dx;pos[axis_1]=(real)j*dx;mesh->Vertices().push_back(pos);}
 	}

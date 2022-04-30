@@ -111,6 +111,7 @@ template<class T, DataHolder side = DataHolder::HOST> using ArrayPtr = std::shar
 template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array ptr
 ////Array with fixed size
 template<class T, int n> using ArrayF = std::array<T, n>;
+template<class T, int n, int m> using Array2DF = std::array<std::array<T, n>, m>;
 constexpr int Pow(int x, int p) { return p == 1 ? x : x * Pow(x, p - 1); }
 template<class T, int d> using ArrayF2P = ArrayF<T, Pow(2, d) >;
 template<class T, int d> using ArrayF3P = ArrayF<T, Pow(3, d) >;
@@ -159,6 +160,7 @@ static const char* _cudaGetErrorEnum(cudaError_t error) {
         fmt::print(fg(fmt::color::red), "#     ");
         fmt::print(fg(fmt::color::red), fmt_str, args...);
         fmt::print("\n");
+        exit(1);
     }
     void Error(const std::string& str);
 

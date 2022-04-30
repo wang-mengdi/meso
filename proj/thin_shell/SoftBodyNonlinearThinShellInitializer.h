@@ -13,17 +13,18 @@ template<int d> class SoftBodyNonlinearThinShellInitializer
 {Typedef_VectorD(d);Typedef_MatrixD(d);
 public:
 	SurfaceMesh<d> mesh;
-	SoftBodyNonlinearFemThinShell<d> thin_shell;
 	bool use_quasi_static=false;
 
-	virtual void Initialize()
+	virtual void Apply(json& j, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
 	{
-		Initialize_Mesh();
-		Initialize_Boundary_Conditions();
-		Initialize_Materials();
+		int test = Json::Value(j, "test", 0);
+		int scale = Json::Value(j, "scale", 32);
+		Initialize_Mesh(test,scale, thin_shell_simulator);
+		Initialize_Boundary_Conditions(test,scale, thin_shell_simulator);
+		Initialize_Materials(test, thin_shell_simulator);
 	}
 
-	void Initialize_Mesh()
+	void Initialize_Mesh(int test,int scale, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
 	{
 		if constexpr (d == 2) {
 			switch (test) {
@@ -42,51 +43,51 @@ public:
 			}
 		}
 
-		thin_shell.Initialize(mesh);
+		thin_shell_simulator.Initialize(mesh);
 	}
 
-	void Initialize_Boundary_Conditions()
+	void Initialize_Boundary_Conditions(int test,int scale, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
 	{
 		switch(test){
 		case 1:{	////beam with one end fixed under gravity
 			if constexpr (d == 2) {
-				thin_shell.Set_Fixed(0);
+				thin_shell_simulator.Set_Fixed(0);
 			}
 			if constexpr (d == 3) {
 				real length = (real)1; int w = scale; real step = length / (real)w;
 
 				for (int i = 0; i < w; i++) {
-					thin_shell.Set_Fixed(i);
+					thin_shell_simulator.Set_Fixed(i);
 				}
 			}
-			thin_shell.use_body_force=true;
+			thin_shell_simulator.use_body_force=true;
 		}break;
 		}
 	}
 
-	void Initialize_Materials()
+	void Initialize_Materials(int test, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
 	{
 		switch (test) {
 			case 1:{
-				thin_shell.materials.clear();
-				thin_shell.Add_Material((real)1e2, (real).35);
-				AuxFunc::Fill(thin_shell.material_id, 0);
-				thin_shell.Initialize_Material();
+				thin_shell_simulator.materials.clear();
+				thin_shell_simulator.Add_Material((real)1e2, (real).35);
+				ArrayFunc::Fill(thin_shell_simulator.material_id, 0);
+				thin_shell_simulator.Initialize_Material();
 			}break;
 		}
 	}
 
-	virtual void Advance_One_Time_Step(const real dt, const real time)
-	{
-		if (use_quasi_static) {
-			thin_shell.Advance_Quasi_Static();
-			//Write_Output_Files(1);
-			exit(0);
-		}
-		else {
-			thin_shell.Advance(dt, time);
-		}
-	}
+	//virtual void Advance_One_Time_Step(const real dt, const real time)
+	//{
+	//	if (use_quasi_static) {
+	//		thin_shell.Advance_Quasi_Static();
+	//		//Write_Output_Files(1);
+	//		exit(0);
+	//	}
+	//	else {
+	//		thin_shell_simulator.Advance(dt, time);
+	//	}
+	//}
 
 	//virtual void Write_Output_Files(const int frame)
 	//{	

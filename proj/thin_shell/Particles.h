@@ -24,17 +24,17 @@ using namespace Meso;
 	const ArrayPtr<T> A##Ptr() const {return a;}																		\
 	Array<T>& A##Ref(){return *a;}																						\
 	const Array<T>& A##Ref() const {return *a;}				  															\
-	void Rebind_##A(Array<T>* _a){AuxFunc::Assert(_a->size()==this->Size(),"Points class rebine mismatch");a.reset(_a);}\
+	void Rebind_##A(Array<T>* _a){Assert(_a->size()==this->Size(),"Points class rebine mismatch");a.reset(_a);}\
 	std::function<T(const int )> A##_callable=[&](const int i){return A(i);};																\
     protected:ArrayPtr<T> a;public:
 
 ////parent functions
 #define Declare_Attribute_Base_Func(...)											\
-virtual void New_Attributes(){New_Att(__VA_ARGS__);auto vec=AuxFunc::Split_String(#__VA_ARGS__,", ");std::reverse(vec.begin(),vec.end());Register_Att(att_map,vec,__VA_ARGS__);}
+virtual void New_Attributes(){New_Att(__VA_ARGS__);auto vec=StringFunc::Split_String(#__VA_ARGS__,", ");std::reverse(vec.begin(),vec.end());Register_Att(att_map,vec,__VA_ARGS__);}
 
 ////call the parent virtual function first
 #define Declare_Attribute_Inherent_Func(...)															\
-virtual void New_Attributes(){Base::New_Attributes();New_Att(__VA_ARGS__);auto vec=IOFunc::Split_String(#__VA_ARGS__,", ");std::reverse(vec.begin(),vec.end());Register_Att(this->att_map,vec,__VA_ARGS__);}
+virtual void New_Attributes(){Base::New_Attributes();New_Att(__VA_ARGS__);auto vec=StringFunc::Split_String(#__VA_ARGS__,", ");std::reverse(vec.begin(),vec.end());Register_Att(this->att_map,vec,__VA_ARGS__);}
 
 //////////////////////////////////////////////////////////////////////////
 ////CODESAMPLE: variadic template functions for manipulating attributes
@@ -43,21 +43,29 @@ virtual void New_Attributes(){Base::New_Attributes();New_Att(__VA_ARGS__);auto v
 //template <typename T,typename...Args> void print(int n,const T &t,const Args&...rest)
 //{std::cout<<n<<": "<<t<<" ";print(10,rest...);}
 
-template<typename T> void New_Att(ArrayPtr<T> & att)
-{if(att==nullptr)att=std::make_shared<Array<T> >();}
-template<typename T,typename...Args>
-void New_Att(ArrayPtr<T> & att,Args & ...rest)
-{New_Att<T>(att);New_Att(rest...);}
+//template<typename T, typename ALLOC> void New_Att(ArrayPtr<T> & att)
+template<typename T, typename ALLOC> void New_Att(std::shared_ptr<thrust::host_vector<T, ALLOC>>& att)
+{
+	if (att == nullptr)att = std::make_shared<Array<T> >();
+}
+template<typename T, typename ALLOC, typename...Args>
+void New_Att(std::shared_ptr<thrust::host_vector<T, ALLOC>>& att, Args & ...rest)
+{
+	New_Att<T>(att); New_Att(rest...);
+}
 
-template<class T> void Register_Att(std::map<std::string, std::shared_ptr<ArrayPointerBase>>& att_map, Array<std::string>& reverse_names, ArrayPtr<T>& att)
+template<class T, class ALLOC> 
+void Register_Att(std::map<std::string, std::shared_ptr<ArrayPointerBase>>& att_map, Array<std::string>& reverse_names,
+	std::shared_ptr<thrust::host_vector<T, ALLOC>>& att)
 {
 	att_map[reverse_names.back()] = std::make_shared<ArrayPointerDerived<T>>(att);
 	reverse_names.pop_back();
 }
-template<typename T, typename... Args>
-void Register_Att(std::map<std::string, std::shared_ptr<ArrayPointerBase>>& att_map, Array<std::string>& reverse_names, ArrayPtr<T>& att, Args & ...rest)
+template<typename T, class ALLOC, typename... Args>
+void Register_Att(std::map<std::string, std::shared_ptr<ArrayPointerBase>>& att_map, Array<std::string>& reverse_names,
+	std::shared_ptr<thrust::host_vector<T, ALLOC>>& att, Args & ...rest)
 {
-	Register_Att<T>(att_map, reverse_names, att); 
+	Register_Att<T>(att_map, reverse_names, att);
 	Register_Att(att_map, reverse_names, rest...);
 }
 
@@ -119,29 +127,7 @@ public:
 	}
 
 public:
-	////Old functions, may not extended to all derived classes
-	//Add
-	//virtual int Add_Point(VectorD pos);//return the index of new point
-	//virtual int Add_Points(const Array<VectorD>& vertices);
-
 	//IO
-	virtual void Write_To_File_3d(const std::string& file_name) const;
-	//virtual void Write_To_File_3d_Fast(const std::string& file_name) const;	////Fast write function writes positions to files with type of float
-};
-
-template<int d, typename T = real> class TrackerPoints : public Points<d, T>
-{
-	using VectorD = Vector<T, d>; using Base = Points<d, T>;
-public:
-	using Base::Size; using Base::Resize; using Base::X; using Base::x;
-	TrackerPoints() { New_Attributes(); }
-
-	////attributes
-	Declare_Attribute(VectorD, V, v);			////velocity
-	Declare_Attribute(short, I, idx);			////flag
-	Declare_Attribute_Inherent_Func(v, idx);
-
-	////IO
 	virtual void Write_To_File_3d(const std::string& file_name) const;
 };
 
