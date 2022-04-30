@@ -61,9 +61,9 @@ namespace Meso {
 			return vol.grid;
 		}
 
-		virtual int XDof() const { return dof; }//number of cols
+		virtual int XDoF() const { return dof; }//number of cols
 
-		virtual int YDof() const { return dof; }//number of rows
+		virtual int YDoF() const { return dof; }//number of rows
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {

@@ -47,14 +47,14 @@ namespace Meso {
 		ArrayDv<T> A;
 		ArrayDv<T> temp_p;
 		ArrayDv<T> temp_Ap;
-		virtual int XDof() const { return cols; }
+		virtual int XDoF() const { return cols; }
 
-		virtual int YDof() const { return rows; }
+		virtual int YDoF() const { return rows; }
 
 		template<int d>
 		void Init_PoissonLike(const Grid<d> grid, LinearMapping<T>& mapping) {
-			cols = mapping.XDof();
-			rows = mapping.YDof();
+			cols = mapping.XDoF();
+			rows = mapping.YDoF();
 			Assert(cols == rows, "DenseMatrixMapping: cols={} mismatch rols={}", cols, rows);
 			A.resize(cols * rows);
 			temp_Ap.resize(cols);

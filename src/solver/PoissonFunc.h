@@ -36,7 +36,7 @@ namespace Meso {
 	template<class T, int d >
 	void Poisson_Diagonal(ArrayDv<T>& diag, MaskedPoissonMapping<T, d>& mapping) {
 		const auto& grid = mapping.vol.grid;
-		size_t n = mapping.XDof();
+		size_t n = mapping.XDoF();
 		diag.resize(n);
 		thrust::fill(diag.begin(), diag.end(), 0);
 		ArrayDv<T> p_temp(n);

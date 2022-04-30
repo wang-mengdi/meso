@@ -43,13 +43,13 @@ namespace Meso {
 		void Init_Poisson(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num) {
 			mapping = &_mapping;
 			iter_num = _iter_num;
-			dof = mapping->XDof();
+			dof = mapping->XDoF();
 			Poisson_Diagonal(diag, _mapping);
 			x_temp.resize(dof);
 			mask = GridGSMask<d>(_mapping.Grid());
 		}
-		virtual int XDof()const { return dof; }
-		virtual int YDof()const { return dof; }
+		virtual int XDoF()const { return dof; }
+		virtual int YDoF()const { return dof; }
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
 			Memory_Check(x, b, "GridGSSmoother::Apply error: not enough memory space");
 			ArrayFunc::Fill(x, (T)0);

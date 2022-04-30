@@ -45,12 +45,12 @@ namespace Meso {
 			coarse_grid = _coarse;
 		}
 		//number of cols
-		virtual int XDof() const {
+		virtual int XDoF() const {
 			return coarse_grid.DoF();
 		}
 
 		//number of rows
-		virtual int YDof() const {
+		virtual int YDoF() const {
 			return fine_grid.DoF();
 		}
 
