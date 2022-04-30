@@ -35,7 +35,7 @@ namespace Meso {
 		void Init(const FaceField<T, d, side1>& f1) {
 			Deep_Copy(f1);
 		}
-
+		bool Empty(void)const { for (int axis = 0; axis < d; axis++) if (face_data[axis] == 0) return true; return false; }
 		template<DataHolder side1> 
 		void Deep_Copy(const FaceField<T, d, side1>& f1) {
 			Init(f1.grid);

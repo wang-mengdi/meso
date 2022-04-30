@@ -35,7 +35,7 @@ namespace Meso {
 			ArrayFunc::Fill(*data, value);
 		}
 		void Fill(const T value) { ArrayFunc::Fill(Data(), value); }
-
+		bool Empty(void)const { return data == nullptr; }
 		constexpr Array<T, side>& Data(void) noexcept {
 			return *data;
 		}

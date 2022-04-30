@@ -239,6 +239,9 @@ namespace Meso {
 	template<class T, int d>
 	void Exterior_Derivative(FaceFieldDv<T, d>& F, const FieldDv<T, d>& C)
 	{
+		Assert(!F.Empty(), "Exterior_Derivative C->F error: F is empty");
+		Assert(!C.Empty(), "Exterior_Derivative C->F error: F is empty");
+		Assert(C.grid.counts == F.grid.counts, "Exterior_Derivative C->F error: size of F and C does not match");
 		F.Init(C.grid, 0);
 		dim3 blocknum, blocksize;
 		C.grid.Get_Kernel_Dims(blocknum, blocksize);
@@ -262,6 +265,9 @@ namespace Meso {
 	//output: C is a 3-form on cell (3d) or 2-form on cell (2d)
 	template<class T, int d>
 	void Exterior_Derivative(FieldDv<T, d>& C, const FaceFieldDv<T, d>& F) {
+		Assert(!F.Empty(), "Exterior_Derivative F->C error: F is empty");
+		Assert(!C.Empty(), "Exterior_Derivative F->C error: F is empty");
+		Assert(C.grid.counts == F.grid.counts, "Exterior_Derivative F->C error: size of F and C does not match");
 		C.Init(F.grid);
 		dim3 blocknum, blocksize;
 		F.grid.Get_Kernel_Dims(blocknum, blocksize);
