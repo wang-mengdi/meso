@@ -7,7 +7,7 @@
 #include "MeshFunc.h"
 #include "AuxFunc.h"
 #include "NonlinearFemFunc.h"
-#include "TimerOld.h"
+#include "Timer.h"
 #include "Hashtable.h"
 #include "SimplicialPrimitives.h"
 #include "Common.h"
@@ -23,6 +23,60 @@ template<class T_ARRAY> int Element_Edges(const Vector3i& v,T_ARRAY& edges);
 void Grad_Q(const ArrayF<Vector3, 3>& vtx, const int i, const int j, const Vector3& ps, const real& qs_i, const ArrayF<Vector3, 3>& ls, const real& a, Vector3& grad_q);
 void Grad_R(const ArrayF<Vector3, 3>& vtx, const int i, const int j, const Vector3& ps, const ArrayF<Vector3, 3>& ls, const real& a, ArrayF<Vector3, 2>& grad_r);
 void Grad_N(const ArrayF<Vector3, 3>& vtx, const ArrayF<Vector3, 3>& ls, const real& a, ArrayF<Matrix3, 3>& grad_n);
+
+template<int d> real SoftBodyNonlinearFemThinShell<d>::CFL_Time(const real cfl) {
+	return 0.01;
+}
+
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Output(const bf::path base_path, const int frame) {
+	bf::path frame_dir = base_path / std::to_string(frame);
+	FileFunc::Create_Directory(frame_dir);
+
+	{bf::path file_name = frame_dir / (d == 2 ? "segment_mesh" : "triangle_mesh");
+	mesh->Write_To_File_3d(file_name.string()); }
+
+	/*{bf::path file_name = frame_dir / "particles";
+	particles.Write_To_File_3d(file_name.string()); }*/
+
+	//{bf::path file_name = frame_dir / "mat";
+	//int n = (int)material_id.size();
+	//Field<real, 1> mat; mat.Resize(n);
+	//for (int i = 0; i < n; i++) {
+	//	mat.array[i] = (real)material_id[i];
+	//}
+	//mat.Write_To_File_3d(file_name); }
+
+	{bf::path file_name = frame_dir / "psi_D";
+	Particles<d> psi_D_particles;
+	for (auto& p : bc.psi_D_values) {
+		int idx = p.first;
+		int i = psi_D_particles.Add_Element(); psi_D_particles.X(i) = particles.X(idx);
+	}
+	psi_D_particles.Write_To_File_3d(file_name.string()); }
+
+	{bf::path file_name = frame_dir / "psi_N";
+	Particles<d> psi_N_particles;
+	for (auto& p : bc.forces) {
+		int idx = p.first;
+		int i = psi_N_particles.Add_Element(); psi_N_particles.X(i) = particles.X(idx);
+		psi_N_particles.F(i) = p.second;
+	}
+	psi_N_particles.Write_To_File_3d(file_name.string()); }
+
+	//if (frame == last_frame) {
+	//	bf::path file_name = base_path / "energy.txt";
+	//	std::ofstream energy_file(file_name);
+	//	for (int count = 0; count < energies_n.size(); count++) {
+	//		energy_file << energies_n[count] << "\n";
+	//	}
+	//}
+}
+
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance(const int current_frame, const real current_time, const real dt) {
+	if (use_explicit) { Advance_Explicit(dt); }
+	else { Advance_Implicit(dt); }
+	return;
+}
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>& _mesh)
 {
@@ -90,13 +144,13 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Allocate_A() {
-	std::vector<TripletT> triplets;
+	std::vector<Triplet<real>> triplets;
 
 	//vertex with itself
 	for (int i = 0; i < Vtx_Num(); i++) {
 		int r = i; int c = i;
 		for (int rr = r * d; rr < (r + 1) * d; rr++)for (int cc = c * d; cc < (c + 1) * d; cc++) {
-			triplets.push_back(TripletT(rr, cc, (real)0));
+			triplets.push_back(Triplet<real>(rr, cc, (real)0));
 		}
 	}
 
@@ -104,11 +158,11 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Allocate_A() {
 	for (int i = 0; i < edges.size(); i++) {
 		const Vector2i& e = edges[i]; int r = e[0]; int c = e[1];
 		for (int rr = r * d; rr < (r + 1) * d; rr++)for (int cc = c * d; cc < (c + 1) * d; cc++) {
-			triplets.push_back(TripletT(rr, cc, (real)0));
+			triplets.push_back(Triplet<real>(rr, cc, (real)0));
 		}
 		r = e[1]; c = e[0];
 		for (int rr = r * d; rr < (r + 1) * d; rr++)for (int cc = c * d; cc < (c + 1) * d; cc++) {
-			triplets.push_back(TripletT(rr, cc, (real)0));
+			triplets.push_back(Triplet<real>(rr, cc, (real)0));
 		}
 
 		if constexpr (d == 3) {
@@ -122,8 +176,8 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Allocate_A() {
 				c = Third_Vertex(e[0], e[1], E()[face_idx_1]);
 				Assert(r != -1 && c != -1, "index {} {} out of range for finding opposite vertex");
 				for (int rr = r * d; rr < (r + 1) * d; rr++)for (int cc = c * d; cc < (c + 1) * d; cc++) {
-					triplets.push_back(TripletT(rr, cc, (real)0));
-					triplets.push_back(TripletT(cc, rr, (real)0));
+					triplets.push_back(Triplet<real>(rr, cc, (real)0));
+					triplets.push_back(Triplet<real>(cc, rr, (real)0));
 				}
 			}
 		}
@@ -184,16 +238,9 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Clear_Force()
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Rest_Shape(const Array<VectorD>& _X0)
 {X0=_X0;}
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance(const real dt,const real time)
-{
-	if(use_explicit){Advance_Explicit(dt,time);}
-	else{Advance_Implicit(dt,time);}
-}
-
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const real dt,const real time)
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const real dt)
 {
 	Timer timer;
-	timer.Reset();
 
 	ArrayFunc::Fill(F(),VectorD::Zero());
 	const int vtx_num=Vtx_Num();
@@ -241,16 +288,14 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const re
 		V()[i]+=F()[i]/Mass(i)*dt;
 		if(bc.Is_Psi_D(i))V()[i]=VectorD::Zero();
 		X()[i]+=V()[i]*dt;}
-
-	timer.Elapse_And_Output("Explicit time integration");
+	Info("Explicit time integration: {} ms" , timer.Total_Time(PhysicalUnits::ms));
 }
 
 // A = dt^2 J + dt damp J
 // b = dt f + dt^2 J v + dt damp J v
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const real dt,const real time)
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const real dt)
 {
 	Timer timer;
-	timer.Reset();
 
 	Clear_A_And_Rhs();
 	std::cout << "# number of non-zeros of A:  " << A.nonZeros() << std::endl;
@@ -265,7 +310,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const re
 	Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper> cg;
 	cg.setTolerance((real)1e-5);
 	dv = cg.compute(A).solve(b);
-	timer.Elapse_And_Output_And_Reset("linear system solve");
+	Info("Linear system solve: {} ms", timer.Lap_Time(PhysicalUnits::ms));
 
 	std::cout << "#	CG iterations:     " << cg.iterations() << std::endl;
 	std::cout << "#	CG estimated error: " << cg.error() << std::endl;
@@ -280,7 +325,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const re
 		X()[i] += V()[i] * dt;
 	}
 
-	timer.Elapse_And_Output_And_Reset("update nodes");
+	Info("update nodes: {} ms", timer.Lap_Time(PhysicalUnits::ms));
 }
 
 // A = hess
@@ -390,7 +435,6 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 		}
 		
 		Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper> cg;
-		//Eigen::ConjugateGradient<Eigen::SparseMatrix<double, Eigen::RowMajor, int>, Eigen::Lower | Eigen::Upper, Eigen::IncompleteCholesky<double>> cg;
 		cg.setTolerance((real)1e-6);
 		cg.compute(A);
 		dv = cg.solve(b);
@@ -432,7 +476,6 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Clear_A_And_Rhs(){
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Force_And_Mass(const real dt){
 	Timer timer;
-	timer.Reset();
 	const int vtx_num=Vtx_Num();
 	const int ele_num=Ele_Num();
 
@@ -442,20 +485,19 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Force_And
 			Add_Block(b, i, dt * Mass(i) * g);
 		}
 	}
-	timer.Elapse_And_Output_And_Reset("Add body force for b");
+	Info("Add body force for b", timer.Lap_Time(PhysicalUnits::ms));
 
 	for(auto& iter:bc.forces){
 		Add_Block(b,iter.first, dt*iter.second);
 	}
-	timer.Elapse_And_Output_And_Reset("Add external force for b");
+	Info("Add external force for b", timer.Lap_Time(PhysicalUnits::ms));
 
 	for(int i=0;i<vtx_num;i++){Add_Block_Helper(A,i,i,Mass(i)*MatrixD::Identity());}
-	timer.Elapse_And_Output_And_Reset("Add mass for A");
+	Info("Add mass for A", timer.Lap_Time(PhysicalUnits::ms));
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Stretching(const real dt){
 	Timer timer;
-	timer.Reset();
 	const int vtx_num=Vtx_Num();
 	const int ele_num=Ele_Num();
 		
@@ -475,45 +517,42 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Stretchin
 		timer2.Record("assemble strething matrix");
 	}
 	timer2.Output_Profile(std::cout);
-	timer.Elapse_And_Output_And_Reset("Assemble linear system for stretching");
+	Info("Assemble linear system for stretching", timer.Lap_Time(PhysicalUnits::ms));
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Bending(const real dt){
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Bending(const real dt) {
 	Timer timer;
-	timer.Reset();
-	const int vtx_num=Vtx_Num();
-	const int ele_num=Ele_Num();
-	
-	Timer timer2;
-	timer2.Begin_Loop();
+	const int vtx_num = Vtx_Num();
+	const int ele_num = Ele_Num();
+
+	timer.Begin_Loop();
 	if constexpr (d == 3) {
-		for(int i=0;i<edges.size();i++){
-			Eigen::Matrix<real,d,d+1> grad_b;
-			Eigen::Matrix<real,d,d> hess_b [d+1][d+1];
-			ArrayF<int,d+1> vtx_idx;
+		for (int i = 0; i < edges.size(); i++) {
+			Eigen::Matrix<real, d, d + 1> grad_b;
+			Eigen::Matrix<real, d, d> hess_b[d + 1][d + 1];
+			ArrayF<int, d + 1> vtx_idx;
 			ArrayF<int, 2> ele_idx;
 			if (Junction_Info(i, vtx_idx, ele_idx)) {
 				Bend_Force_Approx(i, grad_b, vtx_idx, ele_idx, hess_b);
-				timer2.Record("calculate bending force");
-				for(int j=0;j<d+1;j++){
+				timer.Record("calculate bending force");
+				for (int j = 0; j < d + 1; j++) {
 					Add_Block(b, vtx_idx[j], -dt * grad_b.col(j));
-					
-					for (int k = 0; k < d+1; k++) {
+
+					for (int k = 0; k < d + 1; k++) {
 						Add_Block(b, vtx_idx[j], -dt * (dt + damping) * hess_b[j][k] * V()[vtx_idx[k]]);
 						Add_Block_Helper(A, vtx_idx[j], vtx_idx[k], dt * (dt + damping) * hess_b[j][k]);
 					}
 				}
-				timer2.Record("assemble bending matrix");
+				timer.Record("assemble bending matrix");
 			}
 		}
 	}
-	timer2.Output_Profile(std::cout);
-	timer.Elapse_And_Output_And_Reset("Assemble linear system for bending");
+	timer.Output_Profile(std::cout);
+	Info("Assemble linear system for bending", timer.Lap_Time(PhysicalUnits::ms));
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Boundary_Condition(const real dt){
 	Timer timer;
-	timer.Reset();
 	const int vtx_num=Vtx_Num();
 	const int ele_num=Ele_Num();
 
@@ -1292,7 +1331,7 @@ inline void Add_Element_Force_To_Vertices(Array<Vector3>& F,const Vector4i& e,co
 	f3[2]+=c3[2];
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block_Helper(SparseMatrixT& K, const int i, const int j, const MatrixD& Ks)
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block_Helper(SparseMatrix<real>& K, const int i, const int j, const MatrixD& Ks)
 {
 	SparseFunc::Add_Block<d, MatrixD>(K, i, j, Ks);
 }
@@ -1305,18 +1344,6 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Block(VectorX& b, con
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block(VectorX& b, const int i, const VectorD& bi)
 {
 	for (int ii = 0; ii < d; ii++)b[i * d + ii] += bi[ii];
-}
-
-template<int d> real SoftBodyNonlinearFemThinShell<d>::CFL_Time(const real cfl) {
-	return 0.01;
-}
-
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Output(const bf::path base_path, const int frame) {
-	return;
-}
-
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance(const int current_frame, const real current_time, const real dt) {
-	return;
 }
 
 template class SoftBodyNonlinearFemThinShell<2>;

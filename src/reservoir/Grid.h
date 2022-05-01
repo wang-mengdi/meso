@@ -43,22 +43,22 @@ namespace Meso {
 			return pos_min + node.template cast<real>() * dx;
 		}
 		__host__ __device__ VectorD Domain_Min(const GridType gtype = MAC) const { 
-			//if (gtype == MAC) {
-				//VectorD offset = VectorD::Ones() * 0.5 * dx;
-				//return pos_min - offset;
-			//}
+			if (gtype == MAC) {
+				VectorD offset = VectorD::Ones() * 0.5 * dx;
+				return pos_min - offset;
+			}
 			return pos_min;
 		}
 		__host__ __device__ VectorD Domain_Max(const GridType gtype = MAC) const {
-			//VectorD count_real = counts.template cast<real>();
-			//VectorD domain_max = pos_min + count;
-			//if (gtype == MAC) {
-			//	return domain_max + VectorD::Ones() * (real)0.5 * dx;
-			//}
-			//return domain_max;
-			return VectorD::Zero();
+			VectorD domain_max = pos_min + counts.template cast<real>() * dx;
+			if (gtype == MAC) {
+				return domain_max + VectorD::Ones() * 0.5 * dx;
+			}
+			return domain_max;
 		}
-		//__host__ __device__ VectorD Center(void) { return (real)0.5 * (Domain_Min() + Domain_Max()); }
+		__host__ __device__ VectorD Center(void) {
+			return (real)0.5 * (Domain_Min(MAC) + Domain_Max(MAC));
+		}
 
 		__host__ __device__ void Get_Fraction(const VectorD pos, VectorDi& node, VectorD& frac)const {
 			VectorD coord_with_frac = (pos - pos_min) / dx;

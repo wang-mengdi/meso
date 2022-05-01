@@ -8,9 +8,9 @@ namespace Meso {
 	class LinearMapping
 	{
 	public:
-		virtual int XDof() const = 0;//former xdof
+		virtual int XDoF() const = 0;//former xdof
 
-		virtual int YDof() const = 0;//number of rows
+		virtual int YDoF() const = 0;//number of rows
 
 		//input p, get Ap
 		//Ap must be allocated, but may be set to arbitrary values
@@ -25,7 +25,7 @@ namespace Meso {
 		//check if Ap and p has enough space
 		template<typename ...Args>
 		void Memory_Check(const ArrayDv<T>& Ap, const ArrayDv<T>& p, const Args&...args) const {
-			Assert(p.size() == XDof() && Ap.size() == YDof(), args...);
+			Assert(p.size() == XDoF() && Ap.size() == YDoF(), args...);
 		}
 	};
 

@@ -10,11 +10,25 @@
 #include "Constants.h"
 
 namespace Meso {
+	class TimerRecord {
+	public:
+		double total;//total time
+		double cur;//time of the current loop
+		int num;//number of loops
+		std::string name;
+		TimerRecord(std::string _name) :total(0), cur(0), num(0), name(_name) {}
+		void Add(double cur_time);//add a loop
+		std::pair<double, double> Profile(void);//first:current time. second: avg time
+	};
 
 	class Timer {
 	public:
 		std::chrono::time_point<std::chrono::system_clock> total_start;
 		std::chrono::time_point<std::chrono::system_clock> lap_start;
+		std::chrono::time_point<std::chrono::system_clock> loop_start;
+		std::map<std::string, int> name_index;
+		Array<TimerRecord> records;
+
 		Timer() {
 			Reset();
 		}
@@ -23,6 +37,9 @@ namespace Meso {
 		real Total_Time(const real unit = PhysicalUnits::s);
 		//lap time, and reset the lap clock
 		real Lap_Time(const real unit = PhysicalUnits::s);
+		//loop functions
+		void Begin_Loop(void);
+		void Record(const std::string& name);
+		void Output_Profile(std::ostream& out = std::cout);
 	};
-
 }

@@ -26,12 +26,12 @@ namespace Meso {
 			mapping = &_mapping;
 			iter_num = _iter_num;
 			omega = _omega;
-			dof = mapping->XDof();
+			dof = mapping->XDoF();
 			Poisson_Diagonal(diag, _mapping);
 			x_temp.resize(dof);
 		}
-		virtual int XDof()const { return dof; }
-		virtual int YDof()const { return dof; }
+		virtual int XDoF()const { return dof; }
+		virtual int YDoF()const { return dof; }
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
 			Memory_Check(x, b, "DampedJacobiSmoother::Apply error: not enough memory space");
 			if (iter_num == 0) {

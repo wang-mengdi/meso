@@ -53,9 +53,9 @@
 //				if(i!=j)for(int ii=0;ii<d;ii++)for(int jj=0;jj<d;jj++){K_e(j*d+jj,i*d+ii)=K_e(i*d+ii,j*d+jj);}}}}	
 //}
 
-template<int d> void NonlinearFemFunc<d>::Set_Dirichlet_Boundary_Helper(SparseMatrixT& K, VectorX& b, const int i, const real psi_D_value)
+template<int d> void NonlinearFemFunc<d>::Set_Dirichlet_Boundary_Helper(SparseMatrix<real>& K, VectorX& b, const int i, const real psi_D_value)
 {
-	for (InnerIteratorT iter(K, i); iter; ++iter) {
+	for (InnerIterator<real> iter(K, i); iter; ++iter) {
 		int j = (int)iter.col();
 		if (i == j) { b(j) = psi_D_value * K.coeff(i, j); }
 		else {

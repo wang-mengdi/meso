@@ -3,11 +3,9 @@
 // Copyright (c) (2018-), Bo Zhu
 // This file is part of SimpleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
-#ifndef __Mesh_h__
-#define __Mesh_h__
+#pragma once
 #include <fstream>
 #include "Common.h"
-#include "TypeFunc.h"
 
 using namespace Meso;
 ////Simplicial mesh
@@ -17,7 +15,6 @@ public:
 	ArrayPtr<VectorD> vertices;
 	Array<VectorEi> elements;
 	ArrayPtr<VectorD> normals;		////default=nullptr
-	ArrayPtr<Vector2> textures;		////default=nullptr no need to use
 
 	////constructors
 	SimplicialMesh(const ArrayPtr<VectorD> _vertices=nullptr);
@@ -34,10 +31,8 @@ public:
 
 	virtual Array<VectorD>* Normals(){return normals.get();}
 	virtual const Array<VectorD>* Normals() const {return normals.get();}
-	virtual Array<Vector2>* Textures(){return textures.get();}
-	virtual const Array<Vector2>* Textures() const {return textures.get();}
 
-	virtual void Clear(){if(vertices)vertices->clear();elements.clear();if(normals)normals->clear();if(textures)textures->clear();}
+	virtual void Clear() { if (vertices)vertices->clear(); elements.clear(); if (normals)normals->clear(); }
 
 	////IO
 	virtual void Write_Binary(std::ostream& output) const;
@@ -97,6 +92,3 @@ template<int d> using SurfaceMesh=typename If<d==2,SegmentMesh<2>,TriangleMesh<3
 ////Aux functions
 ////Dimension and type conversion
 template<class MESH_T1,class MESH_T2> void Dim_Conversion(const MESH_T1& mesh2,/*rst*/MESH_T2& mesh3);
-
-#endif
-

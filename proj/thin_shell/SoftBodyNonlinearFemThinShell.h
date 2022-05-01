@@ -52,17 +52,19 @@ public:
 	Array<Array2DF<ArrayF<Vector3, 2>,3,3>> grad_rs; //2 grads (+-) of Vector3 for each q and each vertex in a triangle
 	
 	bool use_exact_hessian = true;		//turn on when the solver is used for optimization, otherwise the we use Gauss-Newton approximation for the forward solve 
-	bool use_explicit=false;		
-	bool use_body_force=false;
+	bool use_explicit=true;		
+	bool use_body_force=true;
 	VectorD g=VectorD::Unit(1)*-9.8;
 	real damping=(real)0.1;			//damping constant
 
+	virtual real CFL_Time(const real cfl);
+	virtual void Output(const bf::path base_path, const int frame);
+	virtual void Advance(const int current_frame, const real current_time, const real dt);
 	void Initialize(SurfaceMesh<d>& _mesh);
 	void Allocate_A();
 	void Initialize_Material();
-	virtual void Advance(const real dt,const real time);
-	void Advance_Explicit(const real dt,const real time);
-	void Advance_Implicit(const real dt,const real time);
+	void Advance_Explicit(const real dt);
+	void Advance_Implicit(const real dt);
 	void Advance_Quasi_Static();
 
 	void Add_Material(real youngs,real poisson);
@@ -131,15 +133,9 @@ public:
 	Eigen::Matrix<real,d,d+1> Numerical_Grad_Bend(int jct_idx, ArrayF<int, d + 1>& vtx_idx, ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_b);
 	Array2DF<MatrixD, d + 1, d + 1> Numerical_Hess_Bend(int jct_idx, const ArrayF<int, d + 1>& vtx_idx,const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real,d,d+1>& grad_b, const MatrixD hess_b[d + 1][d + 1]);
 	Array2DF<MatrixD, d + 1, d + 1> Numerical_Hess_Theta(const ArrayF<int, d + 1>& vtx_idx,const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_theta);
-	
-	virtual real CFL_Time(const real cfl);
-
-	virtual void Output(const bf::path base_path, const int frame);
-
-	virtual void Advance(const int current_frame, const real current_time, const real dt);
 
 protected:
-	void Add_Block_Helper(SparseMatrixT& K, const int i, const int j, const MatrixD& Ks);
+	void Add_Block_Helper(SparseMatrix<real>& K, const int i, const int j, const MatrixD& Ks);
 	void Set_Block(VectorX& b, const int i, const VectorD& bi);
 	void Add_Block(VectorX& b, const int i, const VectorD& bi);
 };

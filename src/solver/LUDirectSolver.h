@@ -19,9 +19,9 @@ namespace Meso {
 		ArrayDv<T> buffer;
 		cusolverDnHandle_t solve_handle;
 
-		virtual int XDof() const { return dof; }
+		virtual int XDoF() const { return dof; }
 
-		virtual int YDof() const { return dof; } 
+		virtual int YDoF() const { return dof; } 
 
 		LUDenseSolver() {}
 		LUDenseSolver(const DenseMatrixMapping<T>& dense_mapping) { Init(dense_mapping); }
@@ -31,8 +31,8 @@ namespace Meso {
 		}
 
 		void Init(const DenseMatrixMapping<T>& dense_mapping) {
-			dof = dense_mapping.XDof();
-			Assert(dense_mapping.YDof() == dof, "LUDenseSolver::Init(): must input a square matrix");
+			dof = dense_mapping.XDoF();
+			Assert(dense_mapping.YDoF() == dof, "LUDenseSolver::Init(): must input a square matrix");
 
 			A = dense_mapping.A;//deep copy here
 			piv.resize(dof);

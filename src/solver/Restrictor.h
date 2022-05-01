@@ -55,17 +55,17 @@ namespace Meso {
 
 		void Init(const Grid<d> _coarser, const Grid<d> _finer) {
 			coarser_grid = _coarser, finer_grid = _finer;
-			intp_data_old.resize(XDof());
-			intp_data_new.resize(XDof());
+			intp_data_old.resize(XDoF());
+			intp_data_new.resize(XDoF());
 		}
 
 		//number of cols
-		virtual int XDof() const {
+		virtual int XDoF() const {
 			return finer_grid.DoF();
 		}
 
 		//number of rows
-		virtual int YDof() const {
+		virtual int YDoF() const {
 			return coarser_grid.DoF();
 		}
 

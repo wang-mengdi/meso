@@ -33,11 +33,11 @@ namespace Meso {
 		Array<ArrayDv<T>> bs;
 		Array<ArrayDv<T>> rs;
 	public:
-		virtual int XDof() const {
+		virtual int XDoF() const {
 			return dof;
 		}
 
-		virtual int YDof() const {
+		virtual int YDoF() const {
 			return dof;
 		}
 

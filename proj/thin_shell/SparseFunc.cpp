@@ -8,10 +8,10 @@
 
 using namespace Meso;
 namespace SparseSolver{
-    using ConjugateGradient=Eigen::ConjugateGradient<SparseMatrixT,Eigen::Upper,Eigen::IdentityPreconditioner>;
-    using ICPCG=Eigen::ConjugateGradient<SparseMatrixT,Eigen::Upper/*,Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> >*/ >;
-    using BiCGSTAB=Eigen::BiCGSTAB<SparseMatrixT>;
-    using SparseLU=Eigen::SparseLU<SparseMatrixT>;
+    using ConjugateGradient=Eigen::ConjugateGradient<SparseMatrix<real>,Eigen::Upper,Eigen::IdentityPreconditioner>;
+    using ICPCG=Eigen::ConjugateGradient<SparseMatrix<real>,Eigen::Upper/*,Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> >*/ >; //not working with cuda
+    using BiCGSTAB=Eigen::BiCGSTAB<SparseMatrix<real>>;
+    using SparseLU=Eigen::SparseLU<SparseMatrix<real>>;
 
     bool Conjugate_Gradient(const SparseMatrix<real>& A,VectorN<real>& x,const VectorN<real>& b,const Params params)
     {
