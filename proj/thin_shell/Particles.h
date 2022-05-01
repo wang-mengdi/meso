@@ -43,7 +43,6 @@ virtual void New_Attributes(){Base::New_Attributes();New_Att(__VA_ARGS__);auto v
 //template <typename T,typename...Args> void print(int n,const T &t,const Args&...rest)
 //{std::cout<<n<<": "<<t<<" ";print(10,rest...);}
 
-//template<typename T, typename ALLOC> void New_Att(ArrayPtr<T> & att)
 template<typename T, typename ALLOC> void New_Att(std::shared_ptr<thrust::host_vector<T, ALLOC>>& att)
 {
 	if (att == nullptr)att = std::make_shared<Array<T> >();

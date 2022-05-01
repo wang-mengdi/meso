@@ -11,31 +11,22 @@
 using namespace Meso;
 ////Eigen sparse type alias
 template<class T> using VectorN=Eigen::Matrix<T,-1,1>;
-using SparseMatrixT=SparseMatrix<real>;
-using SparseMatrixC=SparseMatrix<C>;
 template<class T> using InnerIterator=typename SparseMatrix<T>::InnerIterator;
-using InnerIteratorT=SparseMatrixT::InnerIterator;
-using InnerIteratorC=SparseMatrixC::InnerIterator;
 template<class T> using DiagonalMatrix=Eigen::DiagonalMatrix<T,Eigen::Dynamic,Eigen::Dynamic>;
-using DiagonalMatrixT=Eigen::DiagonalMatrix<real,Eigen::Dynamic,Eigen::Dynamic>;
-using DiagonalMatrixC=Eigen::DiagonalMatrix<C,Eigen::Dynamic,Eigen::Dynamic>;
 template<class T> using Triplet=Eigen::Triplet<T,int>;
-using TripletT=Triplet<real>;
-using TripletC=Triplet<C>;
-template<class T> using IncompleteCholesky=Eigen::IncompleteCholesky<T>;
 
 namespace SparseFunc{
 ////block matrix operations
-template<int dim,class T_MAT> void Add_Block(SparseMatrixT& K,const int K_i,const int K_j,const T_MAT& K_b,const int Kb_i=0,const int Kb_j=0)
+template<int dim,class T_MAT> void Add_Block(SparseMatrix<real>& K,const int K_i,const int K_j,const T_MAT& K_b,const int Kb_i=0,const int Kb_j=0)
 {for(int i=0;i<dim;i++)for(int j=0;j<dim;j++){K.coeffRef(K_i*dim+i,K_j*dim+j)+=K_b.coeff(Kb_i*dim+i,Kb_j*dim+j);}}
 
-template<int dim,class T_MAT> void Copy_Block(SparseMatrixT& K,const int K_i,const int K_j,const T_MAT& K_b,const int Kb_i=0,const int Kb_j=0)
+template<int dim,class T_MAT> void Copy_Block(SparseMatrix<real>& K,const int K_i,const int K_j,const T_MAT& K_b,const int Kb_i=0,const int Kb_j=0)
 {for(int i=0;i<dim;i++)for(int j=0;j<dim;j++){K.coeffRef(K_i*dim+i,K_j*dim+j)=K_b.coeff(Kb_i*dim+i,Kb_j*dim+j);}}
 
-template<int dim> void Set_Block(SparseMatrixT& K,const int K_i,const int K_j,const real value)
+template<int dim> void Set_Block(SparseMatrix<real>& K,const int K_i,const int K_j,const real value)
 {for(int i=0;i<dim;i++)for(int j=0;j<dim;j++){K.coeffRef(K_i*dim+i,K_j*dim+j)=value;}}
 
-inline void Set_Value(SparseMatrixT& K,const real value)	/////set all nonzero values to be value but keep all indices
+inline void Set_Value(SparseMatrix<real>& K,const real value)	/////set all nonzero values to be value but keep all indices
 {
 	int nnz=(int)K.nonZeros();
 	#pragma omp parallel for

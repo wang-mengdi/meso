@@ -58,11 +58,6 @@ template<int d,int e_d> void SimplicialMesh<d,e_d>::Read_Text(std::istream& inpu
 	if(e_n>0){
 		elements.resize(e_n);
 		for(int i=0;i<e_n;i++)File::Read_Text_Array(input,elements[i],e_d);}
-	int e_t=0;File::Read_Text(input,e_t);
-	if(e_t>0){
-		if(Textures()==nullptr)textures.reset(new Array<Vector2>());
-		(*textures).resize(e_t);
-		for(int i=0;i<e_t;i++)File::Read_Text_Array(input,(*textures)[i],2);}
 }
 
 template<int d,int e_d> void SimplicialMesh<d,e_d>::Write_Text(std::ostream& output) const

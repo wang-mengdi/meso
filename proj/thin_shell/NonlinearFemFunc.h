@@ -1,5 +1,4 @@
-#ifndef __NonlinearFem_h__
-#define __NonlinearFem_h__
+#pragma once
 #include "Common.h"
 #include "AuxFunc.h"
 #include "SparseFunc.h"
@@ -94,7 +93,5 @@ public:
 	{D_Inv_And_Area_And_Normal(x[0],x[1],x[2],dm_inv,area,normal);}
 
 	//helper function
-	static void Set_Dirichlet_Boundary_Helper(SparseMatrixT& K, VectorX& b, const int i, const real psi_D_value);
+	static void Set_Dirichlet_Boundary_Helper(SparseMatrix<real>& K, VectorX& b, const int i, const real psi_D_value);
 };
-
-#endif
