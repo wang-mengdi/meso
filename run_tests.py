@@ -24,6 +24,6 @@ def Run_Project(proj_name):
 if __name__=='__main__':
     #assert (len(sys.argv)==2), 'Error: must pass 1 parameter(s). Example: python make_project.py _tests_reservoir'
     #proj_name=sys.argv[1]
-    Run_Project("_tests_common")
+    #Run_Project("_tests_common")
     Run_Project("_tests_reservoir")
     Run_Project("_tests_solver")
