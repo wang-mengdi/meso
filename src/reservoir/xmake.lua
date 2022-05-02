@@ -1,6 +1,8 @@
 includes("./../../src/common/xmake.lua")
 -- add_rules("plugin.vsxmake.autoupdate")
+
 add_requires("vtk >=9.1.0")
+add_requires("tinyobjloader >= 1.0.7")
 target("reservoir")
     set_kind("static")
     add_headerfiles("*.h")
@@ -10,5 +12,6 @@ target("reservoir")
     add_cuflags("--extended-lambda")
     add_includedirs(".",{public=true})
     add_packages("vtk",{public=true})
+    add_packages("tinyobjloader", {public=true})
     add_deps("common")
     
