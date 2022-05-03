@@ -16,7 +16,7 @@ void Test_LU_Dense_Solver(const Vector<int, d> counts) {
 	dense_mapping.Init_PoissonLike(grid, poisson_mapping);
 	LUDenseSolver<T> solver;
 	solver.Init(dense_mapping);
-	int n = dense_mapping.YDof();
+	int n = dense_mapping.YDoF();
 	Array<T> b_host = Random::Random_Array<T>(n);
 	ArrayDv<T> b_dev(n); ArrayFunc::Copy(b_dev, b_host);
 	ArrayDv<T> x_dev(n);
