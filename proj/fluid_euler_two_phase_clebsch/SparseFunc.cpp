@@ -9,6 +9,7 @@
 namespace SparseSolver{
     using ConjugateGradient=Eigen::ConjugateGradient<SparseMatrixT,Eigen::Upper,Eigen::IdentityPreconditioner>;
     using ICPCG=Eigen::ConjugateGradient<SparseMatrixT,Eigen::Upper,Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> > >;
+    //using ICPCG = Eigen::ConjugateGradient<SparseMatrixT, Eigen::Upper >;
     using BiCGSTAB=Eigen::BiCGSTAB<SparseMatrixT>;
     using SparseLU=Eigen::SparseLU<SparseMatrixT>;
 

@@ -52,7 +52,7 @@ using Matrix4=Eigen::Matrix4##t;        \
 using MatrixX=Eigen::MatrixX##t;        \
 using C=std::complex<real>;             \
 using Quaternion=Eigen::Quaternion##t;  \
-using AngleAxis=Eigen::AngleAxis##t;	\
+using AngleAxis=Eigen::AngleAxis##t;	
 
     template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
     template<class T> using SparseMatrix = Eigen::SparseMatrix<T, Eigen::RowMajor, int>;
