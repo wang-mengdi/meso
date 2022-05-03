@@ -112,8 +112,8 @@ template<int d> void Build_Grid_Cell_Matrix_Bijective_Mapping(const Grid<d>& gri
 
 ////Type conversion
 ////Convert a serialized-scalar array (e.g., VectorX,VectorN<real>,Array<real>) to a vector array
-template<class T_ARRAY,class T,int d> void Convert_To_Field(const T_ARRAY& input,Field<Vector<T,d>,d>& output);		////Assuming the field is initialized
-template<class T_ARRAY,class T,int d> void Convert_To_Field1(const T_ARRAY& input,Field<Vector<T,d>,1>& output);
+//template<class T_ARRAY,class T,int d> void Convert_To_Field(const T_ARRAY& input,Field<Vector<T,d>,d>& output);		////Assuming the field is initialized
+//template<class T_ARRAY,class T,int d> void Convert_To_Field1(const T_ARRAY& input,Field<Vector<T,d>,1>& output);
 ////Convert a serialized-vector array to a vector array (the vectors of the two arrays are with different dimensions)
 template<class T_ARRAY,class T,int d1,int d2> void Convert_To_Field(const T_ARRAY& input,Field<Vector<T,d2>,d2>& output);		////Assuming the field is initialized
 template<class T_ARRAY,class T,int d1,int d2> void Convert_To_Field1(const T_ARRAY& input,Field<Vector<T,d2>,1>& output);

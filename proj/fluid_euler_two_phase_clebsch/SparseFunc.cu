@@ -8,7 +8,7 @@
 
 namespace SparseSolver{
     using ConjugateGradient=Eigen::ConjugateGradient<SparseMatrixT,Eigen::Upper,Eigen::IdentityPreconditioner>;
-    using ICPCG=Eigen::ConjugateGradient<SparseMatrixT,Eigen::Upper,Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> > >;
+    //using ICPCG=Eigen::ConjugateGradient<SparseMatrixT,Eigen::Upper,Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> > >;
     using BiCGSTAB=Eigen::BiCGSTAB<SparseMatrixT>;
     using SparseLU=Eigen::SparseLU<SparseMatrixT>;
 
@@ -26,7 +26,7 @@ namespace SparseSolver{
 
 	bool IC_PCG(const SparseMatrix<real>& A,VectorN<real>& x,const VectorN<real>& b,const Params params)
     {
-        ICPCG cg;
+        ConjugateGradient cg;
         cg.setMaxIterations(params.max_iter_num);
         cg.setTolerance(params.tolerance);
         cg.compute(A);

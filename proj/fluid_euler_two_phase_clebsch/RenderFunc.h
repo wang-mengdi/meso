@@ -9,7 +9,7 @@
 #include "SPX_FaceField.h"
 #include "MacGrid.h"
 #include "BoundaryCondition.h"
-#include "Json.h"
+//#include "Json.h"
 #include "LevelSet.h"
 
 //All these functions directly output to opengl_viewer. 

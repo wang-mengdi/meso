@@ -23,7 +23,7 @@ using DiagonalMatrixC=Eigen::DiagonalMatrix<C,Eigen::Dynamic,Eigen::Dynamic>;
 template<class T> using Triplet=Eigen::Triplet<T,TI>;
 using TripletT=Triplet<real>;
 using TripletC=Triplet<C>;
-template<class T> using IncompleteCholesky=Eigen::IncompleteCholesky<T>;
+//template<class T> using IncompleteCholesky=Eigen::IncompleteCholesky<T>;
 
 namespace SparseFunc{
 ////block matrix operations

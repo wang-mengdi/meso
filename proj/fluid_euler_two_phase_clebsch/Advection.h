@@ -182,7 +182,7 @@ template<int d> void MacCormack(const real dt,const MacGrid<d>& mac_grid,const F
 	}
 	
 	if (use_clamp) {
-		Interpolation intp(mac_grid);
+		Interpolation<d> intp(mac_grid);
 		for (int axis = 0; axis < d; axis++) {
 			int face_num = mac_grid.Number_Of_Faces(axis);
 			#pragma omp parallel for
@@ -221,7 +221,7 @@ template<class T, int d> void MacCormack(const real dt, const MacGrid<d>& mac_gr
 		density(cell) = intermediate_density(cell) + (real).5 * (ghost_density(cell) - density(cell));}
 
 	if (use_clamp) {
-		Interpolation intp(mac_grid);
+		Interpolation<d> intp(mac_grid);
 		int cell_num = mac_grid.grid.Number_Of_Cells();
 		Grid<d> node_grid=mac_grid.grid.Cell_Grid_To_Node_Grid();
 		#pragma omp parallel for

@@ -62,11 +62,12 @@ public:
 template<class KA> class KrylovA
 {public:
 	const KA* ka=nullptr;
-	Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> > ic;
+	//Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> > ic;
 
 	KrylovA(const KA* _ka):ka(_ka){Compute_Precond();}
 
-	void Compute_Precond(){ic.compute(*ka);}
+	void Compute_Precond(){//ic.compute(*ka);
+	}
 
 	////rst=Ax
 	template<class KXW> void Multiply(const KXW& x,KXW& rst)const 
@@ -93,19 +94,19 @@ template<class KA> class KrylovPrecIdentity
 template<class KA> class KrylovPrecIC
 {public:
 	const KA* ka=nullptr;
-	Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> > ic;
+	//Eigen::IncompleteCholesky<real,Eigen::Upper,Eigen::NaturalOrdering<int> > ic;
 
 	KrylovPrecIC(const KA* _ka):ka(_ka){Initialize();}
 
 	void Initialize()
 	{
-		ic.compute(*ka);
+		//ic.compute(*ka);
 	}
 
 	template<class KXW> void Precond(const KXW& r,KXW& rst)
 	{
-		*rst.kx=ic.solve(*r.kx);
-		if(ic.info()!=Eigen::Success){std::cerr<<"Precond failed";}
+		//*rst.kx=ic.solve(*r.kx);
+		//if(ic.info()!=Eigen::Success){std::cerr<<"Precond failed";}
 	}
 };
 
