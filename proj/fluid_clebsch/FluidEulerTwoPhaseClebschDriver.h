@@ -3,8 +3,7 @@
 // Copyright (c) (2018-), Bo Zhu Shiying Xiong Zhecheng Wang
 // This file is part of SimpleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
-#ifndef __FluidEulerTwoPhaseClebschDriver_h__
-#define __FluidEulerTwoPhaseClebschDriver_h__
+#pragma once
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "SPX_Common.h"
@@ -216,5 +215,3 @@ public:
 		return C2V(psi);
 	}
 };
-
-#endif

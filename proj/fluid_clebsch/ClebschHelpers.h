@@ -11,8 +11,8 @@
 #include "SPX_Common.h"
 using namespace std::complex_literals;
 
-//////////////////////////////////////////////////////////////////////////
-////wave function helpers
+////////////////////////////////////////////////////////////////////////
+//wave function helpers
 inline Vector4 C2V(const Vector<C,2>& v) { 
 	return Vector4(v[0].real(),v[0].imag(),v[1].real(),v[1].imag()); 
 } 
@@ -24,17 +24,23 @@ inline Vector3 V2A(const Vector4& v) {
 	real alpha = std::sqrt(a*a+b*b); real beta = std::atan2(b, a); real gamma = std::atan2(d, c); 
 	return Vector3(alpha, beta, gamma);
 }
-inline Vector3 Q2V(const Vector4& v) {
-	AngleAxis a=AngleAxis(v);
-	Vector3 q=a.axis()*a.angle(); 
-	return q;
-}
-inline Vector4 Q2V(const Quaternion& q) {
-	return Vector4(q.w(),q.x(),q.y(),q.z());
-}
+
 inline Quaternion V2Q(const Vector4& v) {
-	return Quaternion(&v[0]);
+	//return Quaternion(&v[0]);
+	return Quaternion(v[0], v[1], v[2], v[3]);
 }
+
+inline Vector4 Q2V(const Quaternion& q) {
+	return Vector4(q.w(), q.x(), q.y(), q.z());
+}
+
+//inline Vector3 Q2V(const Vector4& v) {
+//	AngleAxis a = AngleAxis(v);
+//	Vector3 q = a.axis() * a.angle();
+//	return q;
+//}
+
+
 
 //// enforced v = h_bar * vel(k in the paper)
 template<int d>

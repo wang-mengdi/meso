@@ -10,11 +10,18 @@
 #include "SPX_AuxFunc.h"
 
 ////SimplicialMesh
-template<int d,int e_d> SimplicialMesh<d,e_d>::SimplicialMesh(const ArrayPtr<VectorD> _vertices)
-{if(_vertices==nullptr)vertices=std::make_shared<Array<VectorD> >();else vertices=_vertices;}
+template<int d, int e_d> SimplicialMesh<d, e_d>::SimplicialMesh(const ArrayPtr<VectorD> _vertices)
+{
+	if (_vertices == nullptr)vertices = std::make_shared<Array<VectorD> >(); else vertices = _vertices;
+}
 
-template<int d,int e_d> SimplicialMesh<d,e_d>& SimplicialMesh<d,e_d>::operator=(const SimplicialMesh<d,e_d>& copy)	////deep copy
-{if(vertices==nullptr)vertices=std::make_shared<Array<VectorD> >();*vertices=*(copy.vertices);elements=copy.elements;return *this;}
+template<int d, int e_d> SimplicialMesh<d, e_d>& SimplicialMesh<d, e_d>::operator=(const SimplicialMesh<d, e_d>& copy)	////deep copy
+{
+	if (vertices == nullptr)vertices = std::make_shared<Array<VectorD> >(); 
+	*vertices = *(copy.vertices); 
+	elements = copy.elements;
+	return *this;
+}
 
 template<int d,int e_d> void SimplicialMesh<d,e_d>::Write_Binary(std::ostream&output) const
 {

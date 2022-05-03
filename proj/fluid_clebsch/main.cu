@@ -18,6 +18,7 @@ void Run(json& j) {
 }
 
 int main(int argv, char** argc) {
+
 	try {
 		json j;
 		if (argv > 1) {

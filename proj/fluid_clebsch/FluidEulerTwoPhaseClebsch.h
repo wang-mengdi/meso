@@ -3,8 +3,7 @@
 // Copyright (c) (2021-), Bo Zhu Shiying Xiong Zhecheng Wang
 // This file is part of CompleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
-#ifndef __FluidEulerTwoPhaseClebsch_h__
-#define __FluidEulerTwoPhaseClebsch_h__
+#pragma once
 #include "MacGrid.h"
 #include "Advection.h"
 #include "BoundaryCondition.h"
@@ -398,4 +397,3 @@ public:
 	{{VectorDi cell=MacGrid<d>::Face_Incident_Cell(axis,face,0);if(Is_Fluid_Cell(cell))return true;}
 	{VectorDi cell=MacGrid<d>::Face_Incident_Cell(axis,face,1);if(Is_Fluid_Cell(cell))return true;}return false;}
 };
-#endif
