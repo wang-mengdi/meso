@@ -40,15 +40,17 @@ template<class T,int d> Field<T,d>& Field<T,d>::operator=(const Field<T,d>& copy
 template<class T,int d> Field<T,d>& Field<T,d>::operator+=(const Field<T,d>& f2)
 {
 	int n=(int)array.size();
-	#pragma omp parallel for
-	for(int i=0;i<n;i++)array[i]+=f2.array[i];return *this;
+	//#pragma omp parallel for
+	//for(int i=0;i<n;i++)array[i]+=f2.array[i];
+	return *this;
 }
 
 template<class T,int d> Field<T,d>& Field<T,d>::operator-=(const Field<T,d>& f2)
 {
 	int n=(int)array.size();
-	#pragma omp parallel for
-	for(int i=0;i<n;i++)array[i]-=f2.array[i];return *this;
+	//#pragma omp parallel for
+	//for(int i=0;i<n;i++)array[i]-=f2.array[i];
+	return *this;
 }
 
 template<class T,int d> Field<T,d>& Field<T,d>::operator*=(const Field<T,d>& f2)
@@ -245,7 +247,9 @@ template<class T,int d> void Axpy(T a,const Field<T,d>& x,const Field<T,d>& y,Fi
 template<class T,int d> T Dot(const Field<T,d>& x,const Field<T,d>& y)
 {
 	int n=(int)x.array.size();
-	T dot=(T)0;for(int i=0;i<n;i++)dot+=x.array[i]*y.array[i];return dot;
+	//T dot=(T)0;for(int i=0;i<n;i++)dot+=x.array[i]*y.array[i];
+	T dot;
+	return dot;
 }
 
 template<class T,int d> T Sum(const Field<T,d>& x)
@@ -370,27 +374,27 @@ template void Build_Grid_Cell_Matrix_Bijective_Mapping<d>(const Grid<d>&,std::fu
 Inst_Helper(2);Inst_Helper(3);
 #undef Inst_Helper
 
-template<class T_ARRAY,class T,int d> void Convert_To_Field(const T_ARRAY& u,Field<Vector<T,d>,d>& output)
-{
-	const int n=(int)output.array.size();
-	for(int i=0;i<n;i++){Vector<T,d> v;for(int j=0;j<d;j++)v[j]=u[i*d+j];output.array[i]=v;}
-}
-#define Inst_Helper(T_ARRAY,T,d) \
-template void Convert_To_Field<T_ARRAY,T,d>(const T_ARRAY&,Field<Vector<T,d>,d>&);
-Inst_Helper(VectorN<real>,real,2);Inst_Helper(VectorN<real>,real,3);
-Inst_Helper(Array<real>,real,2);Inst_Helper(Array<real>,real,3);
-#undef Inst_Helper
-
-template<class T_ARRAY,class T,int d> void Convert_To_Field1(const T_ARRAY& u,Field<Vector<T,d>,1>& output)
-{
-	const int n=(int)u.size()/d;output.Resize(n);
-	for(int i=0;i<n;i++){Vector<T,d> v;for(int j=0;j<d;j++)v[j]=u[i*d+j];output.array[i]=v;}
-}
-#define Inst_Helper(T_ARRAY,T,d) \
-template void Convert_To_Field1<T_ARRAY,T,d>(const T_ARRAY&,Field<Vector<T,d>,1>&);
-Inst_Helper(VectorN<real>,real,2);Inst_Helper(VectorN<real>,real,3);
-Inst_Helper(Array<real>,real,2);Inst_Helper(Array<real>,real,3);
-#undef Inst_Helper
+//template<class T_ARRAY,class T,int d> void Convert_To_Field(const T_ARRAY& u,Field<Vector<T,d>,d>& output)
+//{
+//	const int n=(int)output.array.size();
+//	for(int i=0;i<n;i++){Vector<T,d> v;for(int j=0;j<d;j++)v[j]=u[i*d+j];output.array[i]=v;}
+//}
+//#define Inst_Helper(T_ARRAY,T,d) \
+//template void Convert_To_Field<T_ARRAY,T,d>(const T_ARRAY&,Field<Vector<T,d>,d>&);
+//Inst_Helper(VectorN<real>, real, 2); Inst_Helper(VectorN<real>, real, 3);
+//Inst_Helper(Array<real>, real, 2); Inst_Helper(Array<real>, real, 3);
+//#undef Inst_Helper
+//
+//template<class T_ARRAY,class T,int d> void Convert_To_Field1(const T_ARRAY& u,Field<Vector<T,d>,1>& output)
+//{
+//	const int n=(int)u.size()/d;output.Resize(n);
+//	for(int i=0;i<n;i++){Vector<T,d> v;for(int j=0;j<d;j++)v[j]=u[i*d+j];output.array[i]=v;}
+//}
+//#define Inst_Helper(T_ARRAY,T,d) \
+//template void Convert_To_Field1<T_ARRAY,T,d>(const T_ARRAY&,Field<Vector<T,d>,1>&);
+//Inst_Helper(VectorN<real>,real,2);Inst_Helper(VectorN<real>,real,3);
+//Inst_Helper(Array<real>,real,2);Inst_Helper(Array<real>,real,3);
+//#undef Inst_Helper
 
 template<class T_ARRAY,class T,int d1,int d2> void Convert_To_Field(const T_ARRAY& u,Field<Vector<T,d2>,d2>& output)
 {
