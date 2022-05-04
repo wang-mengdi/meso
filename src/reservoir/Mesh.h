@@ -22,7 +22,7 @@ namespace Meso {
 			//vertices = _vertices == nullptr ? std::make_shared<Array<VectorD>>() : _vertices;
 		//}
 		//SimplicialMesh(const SimplicialMesh<d, e_i, slide>& copy) { *this = copy; }
-		//SimplicialMesh<d, e_i, slide>& opertor = (const SimplicialMesh<d, slide>&copy){ *this = copy; }
+		//SimplicialMesh<d, e_d, side>& operator=(const SimplicialMesh<d, e_d, side>&copy){ *this = copy; }
 
 		// attribute access
 		static constexpr int Dim() { return d; }

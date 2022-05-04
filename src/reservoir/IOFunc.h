@@ -103,71 +103,26 @@ namespace Meso {
 		// reference: https://github.com/tinyobjloader/tinyobjloader#example-code-new-object-oriented-api
 		// `mesh->indice->normal` represents the normal on vetices, which is used for rendering. 
 		// Therefore, we only load vertices and faces from .obj file, then compute normals on each faces.
-		
-		// Idea: we can save face normal in .obj file correponding to each face, where len(vn) == len(f)
 
-		// used for tinyobj 2.0-rc1
-		//Array<std::shared_ptr<TriangleMesh<3>>> Read_Mesh_From_Obj_File(const std::string& file_name) {
-		//	Array<std::shared_ptr<TriangleMesh<3>>> meshes;
+		// Using tinyobj 1.0.7 
+		// ONLY support traiangle mesh now
 
-		//	tinyobj::ObjReaderConfig reader_config;
-		//	tinyobj::ObjReader reader;
-
-		//	if (!reader.ParseFromFile(file_name, reader_config)) {
-		//		if (!reader.Error().empty()) std::cerr << "TinyObjReader: " << reader.Error();
-		//		exit(1);
-		//	}
-		//	if (!reader.Warning().empty()) std::cout << "TinyObjReader: " << reader.Warning();
-
-
-		//	const tinyobj::attrib_t& attrib = reader.GetAttrib();
-		//	const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
-		//	meshes.resize(shapes.size());
-
-		//	size_t v_begin = 0; size_t v_end = 0;
-
-		//	for (size_t s = 0; s < shapes.size(); s++) {
-		//		meshes[s] = std::make_shared<TriangleMesh<3>>();
-
-		//		const tinyobj::mesh_t& mesh = shapes[s].mesh;
-		//		// three vertices form a triagnle face 
-		//		for (size_t i = 0; i < mesh.indices.size() / 3; i++) {
-		//			meshes[s]->faces.push_back(Vector3i(
-		//				mesh.indices[i * 3 + 0].vertex_index - v_begin,
-		//				mesh.indices[i * 3 + 1].vertex_index - v_begin,
-		//				mesh.indices[i * 3 + 2].vertex_index - v_begin));
-
-		//			v_end = std::max({ v_end, v_begin + (size_t)meshes[s]->faces.back().maxCoeff() });
-		//		}
-		//		for (size_t i = v_begin; i <= v_end; i++) {
-		//			(*meshes[s]->vertices).push_back(Vector3(attrib.vertices[i * 3 + 0], attrib.vertices[i * 3 + 1], attrib.vertices[i * 3 + 2]));
-		//		}
-		//		v_begin = v_end + 1;
-		//	}
-		//	return meshes;
-		//}
-
-		// used for tinyobj 1.0.7
-		Array<std::shared_ptr<TriangleMesh<3>>> Read_Mesh_From_Obj_File(const std::string& file_name) {
-			Array<std::shared_ptr<TriangleMesh<3>>> meshes;
+		template<class T>
+		void Read_Meshes(const std::string& file_name, Array<std::shared_ptr<T>>& meshes) {
 
 			tinyobj::attrib_t attrib;
-			std::vector<tinyobj::shape_t> shapes;
-			std::vector<tinyobj::material_t> materials;
-
+			std::vector<tinyobj::shape_t> shapes; std::vector<tinyobj::material_t> materials;
 			std::string warn;std::string err;
 			bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file_name.c_str());
 			if (!warn.empty()) std::cout << warn << std::endl;
 			if (!err.empty()) std::cerr << err << std::endl;
 			if (!ret) exit(1);
 
-
 			meshes.resize(shapes.size());
-
 			size_t v_begin = 0; size_t v_end = 0;
 
 			for (size_t s = 0; s < shapes.size(); s++) {
-				meshes[s] = std::make_shared<TriangleMesh<3>>();
+				meshes[s] = std::make_shared<T>();
 
 				const tinyobj::mesh_t& mesh = shapes[s].mesh;
 				// three vertices form a triagnle face 
@@ -184,25 +139,24 @@ namespace Meso {
 				}
 				v_begin = v_end + 1;
 			}
-			return meshes;
 		}
 
-
-		static std::string GetFileBasename(const std::string& FileName)
-		{
-			if (FileName.find_last_of(".") != std::string::npos)
-				return FileName.substr(0, FileName.find_last_of("."));
-			return "";
+		template<class T>
+		void Read_Mesh(const std::string& file_name, std::shared_ptr<T>& mesh) {
+			Array<std::shared_ptr<T>> meshes;
+			Read_Meshes<T>(file_name, meshes);
+			Assert(meshes.size() == 1, "Wrong mesh number {} in {}, which should be 1", meshes.size(), file_name);
+			mesh = meshes[0];
 		}
-		bool WriteObj(const std::string& filename, const tinyobj::attrib_t& attributes, const std::vector<tinyobj::shape_t>& shapes, const std::vector<tinyobj::material_t>& materials) {
+
+		bool Write_Obj(const std::string& filename, const tinyobj::attrib_t& attributes, const std::vector<tinyobj::shape_t>& shapes, const std::vector<tinyobj::material_t>& materials) {
 			FILE* fp = fopen(filename.c_str(), "w");
 			if (!fp) {
 				fprintf(stderr, "Failed to open file [ %s ] for write.\n", filename.c_str());
 				return false;
 			}
 
-			std::string basename = GetFileBasename(filename);
-			for (size_t k = 0; k < attributes.vertices.size(); k += 3) 
+			for (size_t k = 0; k < attributes.vertices.size(); k += 3)
 				fprintf(fp, "v %f %f %f\n", attributes.vertices[k + 0], attributes.vertices[k + 1], attributes.vertices[k + 2]);
 
 			fprintf(fp, "\n");
@@ -226,7 +180,9 @@ namespace Meso {
 			fclose(fp);
 			return true;
 		}
-		bool Write_Mesh_To_Obj_File(const std::string& filename, Array<std::shared_ptr<TriangleMesh<3>>>& meshes) {
+
+		template<class T>
+		bool Write_Meshes(const std::string& filename, const Array<std::shared_ptr<T>>& meshes) {
 			tinyobj::attrib_t attribute;
 			std::vector<tinyobj::shape_t> shapes(meshes.size());
 
@@ -249,6 +205,16 @@ namespace Meso {
 				}
 			}
 
-			return OBJFunc::WriteObj(filename, attribute, shapes, std::vector<tinyobj::material_t>());
-		}}
+			return Write_Obj(filename, attribute, shapes, std::vector<tinyobj::material_t>());
+		}
+
+		template<class T>
+		bool Write_Mesh(const std::string& filename, const std::shared_ptr<T> mesh) {
+			Array<std::shared_ptr<T>> meshes; meshes.push_back(mesh);
+			return Write_Meshes<T>(filename, meshes);
+		}
+
+	}
+
+
 }
