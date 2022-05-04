@@ -21,7 +21,8 @@ void Test_Sparse_Matrix(void)
     //std::cout << "b:  " << b.transpose() << std::endl;
 
     //Solve with Eigen
-    Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::IdentityPreconditioner> e_cg;
+    //Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::IdentityPreconditioner> e_cg;
+    Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::DiagonalPreconditioner<real>> e_cg;
     e_cg.compute(A);
     x = e_cg.solve(b);
     //std::cout << "Eigen CG solve iterations:     " << e_cg.iterations() << std::endl;
@@ -56,8 +57,8 @@ void Test_Sparse_Matrix(void)
         Pass("Test_Sparse_Matrix passed");
     }
     else {
-        Error("Incorrect Result!");
         std::cout << "Our x:" << x_cg.transpose() << std::endl;
+        Error("Test_Sparse_Matrix failed");
     }
 }
 

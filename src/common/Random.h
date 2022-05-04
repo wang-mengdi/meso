@@ -47,7 +47,10 @@ namespace Meso {
             for (int i = 0; i < rows; i++)
             {
                 for (int j = std::max(i - 1, 0); j <= std::min(i + 1, cols - 1); j++) {
-                    if (i == j) { tripletList.push_back(Eigen::Triplet<T>(i, j, Random::Random() * 100)); }
+                    if (i == j) {
+                        T a = Random::Random() * 100;
+                        tripletList.push_back(Eigen::Triplet<T>(i, j, a));
+                    }
                     else { tripletList.push_back(Eigen::Triplet<T>(i, j, Random::Random())); }
                 }
             }

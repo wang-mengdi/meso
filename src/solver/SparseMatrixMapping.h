@@ -158,6 +158,7 @@ namespace Meso {
 				if (!found) {
 					inv_i = 1.0;
 				}
+				return inv_i;
 			};
 
 			thrust::counting_iterator<int> idx_begin(0);
@@ -173,7 +174,7 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
-
+			ArrayFunc::Binary_Transform(p, diag_inv, thrust::multiplies<T>(), Ap);
 		}
 	};
 
