@@ -8,15 +8,14 @@
 //// This projection solver currently only takes zero Neumann bc. The velocities on the Neumann boundary need to be set to the correct values before the projection.
 //// The calculated pressure value is the real pressure value divided by delta_x.
 //////////////////////////////////////////////////////////////////////////
+#pragma once
 
-#ifndef __ProjectionTwoPhase_h__
-#define __ProjectionTwoPhase_h__
 #include <functional>
 #include "MacGrid.h"
 #include "SPX_FaceField.h"
 #include "SPX_Field.h"
 #include "BoundaryCondition.h"
-#include "GmgPcgSolverCPU.h"
+//#include "GmgPcgSolverCPU.h"
 #include "TypeFunc.h"
 #include "LevelSet.h"
 
@@ -118,9 +117,9 @@ public:
 	virtual void Project();					////call both build, solve, and correction
 
 	////read data
-	void Pressure(Field<real,d>& pressure) const;				////write values of p into pressure
-	void Pressure_Gradient(FaceField<real,d>& grad_p) const;	////write values of p into pressure
-	void Divergence(Field<real,d>& div) const;					////write values of velocity into div
+	//void Pressure(Field<real,d>& pressure) const;				////write values of p into pressure
+	//void Pressure_Gradient(FaceField<real,d>& grad_p) const;	////write values of p into pressure
+	//void Divergence(Field<real,d>& div) const;					////write values of velocity into div
     inline real Pressure_Jump(const VectorD& pos) const 
 	{ real curvature = (*levelset).Curvature(pos); return current_dt * sigma * curvature; }
 	
@@ -149,5 +148,3 @@ public:
 	virtual bool Is_Valid_Cell(const VectorDi& cell) const {return mac_grid->grid.Valid_Cell(cell)&&!(*bc).Is_Psi_D(cell);}
 	virtual bool Is_Fluid_Cell(const VectorDi& cell) const {return Is_Valid_Cell(cell);}
 };
-
-#endif

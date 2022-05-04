@@ -4,6 +4,9 @@
 // This file is part of CompleX,whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #include "ProjectionTwoPhase.h"
+#include "SparseFunc.h"
+#include "KrylovSolver.h"
+#include "SPX_Timer.h"
 
 //////////////////////////////////////////////////////////////////////////
 ////Constructor
@@ -174,8 +177,8 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Jump_Condition_To_b()
 template<int d> void ProjectionTwoPhase<d>::Apply_Implicit_Surface_Tension(const real dt)
 {
 	if (Is_Interface_Face_Index == nullptr || Dirac == nullptr) { std::cerr << "[Error] ProjectionTwoPhase: Is_Interface_Face_Index or Dirac is null" << std::endl; return; }
-	Field<int, d> grid_to_matrix;
-	Array<int> matrix_to_grid;
+	FaceField<int, d> macgrid_to_matrix;
+	Array<std::pair<int, int> > matrix_to_macgrid;
 	macgrid_to_matrix.Resize(mac_grid->grid.cell_counts, -1);
 	matrix_to_macgrid.clear();
 	Build_MacGrid_Face_Matrix_Bijective_Mapping(*mac_grid, Is_Interface_Face_Index, macgrid_to_matrix, matrix_to_macgrid);
@@ -230,8 +233,8 @@ template<int d> void ProjectionTwoPhase<d>::Update_b()
 	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
 	meso_div_host.Init(meso_grid);
 	meso_div_host.Calc_Cells(
-		[&](const VectorDi cell) {
-			if (!mac_grid->grid.Valid(cell)) return 0;
+		[&](const VectorDi cell)->float {
+			if (!mac_grid->grid.Valid_Cell(cell)) return 0;
 			real div = (real)0;
 			for (int axis = 0; axis < d; axis++) {
 				div += (*velocity)(axis, cell + VectorDi::Unit(axis)) - (*velocity)(axis, cell);
@@ -348,36 +351,36 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 
 //////////////////////////////////////////////////////////////////////////
 ////Check functions
-template<int d> void ProjectionTwoPhase<d>::Pressure(Field<real,d>& pressure) const
-{
-	pressure.Resize(mac_grid->grid.cell_counts,(real)0);
-	iterate_cell(iter,mac_grid->grid){const VectorDi& cell=iter.Coord();
-		int idx=grid_to_matrix(cell);if(idx==-1)continue;
-		pressure(cell)=p[idx];}
-}
+//template<int d> void ProjectionTwoPhase<d>::Pressure(Field<real,d>& pressure) const
+//{
+//	pressure.Resize(mac_grid->grid.cell_counts,(real)0);
+//	iterate_cell(iter,mac_grid->grid){const VectorDi& cell=iter.Coord();
+//		int idx=grid_to_matrix(cell);if(idx==-1)continue;
+//		pressure(cell)=p[idx];}
+//}
 
-template<int d> void ProjectionTwoPhase<d>::Pressure_Gradient(FaceField<real,d>& grad_p) const
-{
-	grad_p.Fill((real)0);
-	for (int axis = 0; axis < d; axis++) {
-		int face_num = mac_grid->face_grids[axis].node_counts.prod();
-		#pragma omp parallel for
-		for (int i = 0; i < face_num; i++) {
-			VectorDi face = mac_grid->face_grids[axis].Node_Coord(i);
-			grad_p(axis, face) = -Velocity_Offset(axis, face);}}
-}
+//template<int d> void ProjectionTwoPhase<d>::Pressure_Gradient(FaceField<real,d>& grad_p) const
+//{
+//	grad_p.Fill((real)0);
+//	for (int axis = 0; axis < d; axis++) {
+//		int face_num = mac_grid->face_grids[axis].node_counts.prod();
+//		#pragma omp parallel for
+//		for (int i = 0; i < face_num; i++) {
+//			VectorDi face = mac_grid->face_grids[axis].Node_Coord(i);
+//			grad_p(axis, face) = -Velocity_Offset(axis, face);}}
+//}
 
-template<int d> void ProjectionTwoPhase<d>::Divergence(Field<real,d>& div) const
-{
-	div.Resize(mac_grid->grid.cell_counts,(real)0);
-	int b_size=(int)matrix_to_grid.size();
-	#pragma omp parallel for
-	for(auto r=0;r<b_size;r++){
-		const VectorDi& cell=mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
-		real divg=(real)0;
-		for(int axis=0;axis<d;axis++){divg+=((*velocity)(axis,cell+VectorDi::Unit(axis))-(*velocity)(axis,cell));}
-		div(cell)=divg;}
-}
+//template<int d> void ProjectionTwoPhase<d>::Divergence(Field<real,d>& div) const
+//{
+//	div.Resize(mac_grid->grid.cell_counts,(real)0);
+//	int b_size=(int)matrix_to_grid.size();
+//	#pragma omp parallel for
+//	for(auto r=0;r<b_size;r++){
+//		const VectorDi& cell=mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
+//		real divg=(real)0;
+//		for(int axis=0;axis<d;axis++){divg+=((*velocity)(axis,cell+VectorDi::Unit(axis))-(*velocity)(axis,cell));}
+//		div(cell)=divg;}
+//}
 
 //////////////////////////////////////////////////////////////////////////
 ////Physical interface functions that defines the problem
