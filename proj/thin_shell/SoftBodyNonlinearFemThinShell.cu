@@ -10,6 +10,7 @@
 #include "Timer.h"
 #include "Hashtable.h"
 #include "SimplicialPrimitives.h"
+#include "IOHelper.h"
 #include "Common.h"
 #include <Eigen/IterativeLinearSolvers>
 #include <iostream>
@@ -29,47 +30,9 @@ template<int d> real SoftBodyNonlinearFemThinShell<d>::CFL_Time(const real cfl) 
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Output(const bf::path base_path, const int frame) {
-	bf::path frame_dir = base_path / std::to_string(frame);
-	FileFunc::Create_Directory(frame_dir);
-
-	{bf::path file_name = frame_dir / (d == 2 ? "segment_mesh" : "triangle_mesh");
-	mesh->Write_To_File_3d(file_name.string()); }
-
-	/*{bf::path file_name = frame_dir / "particles";
-	particles.Write_To_File_3d(file_name.string()); }*/
-
-	//{bf::path file_name = frame_dir / "mat";
-	//int n = (int)material_id.size();
-	//Field<real, 1> mat; mat.Resize(n);
-	//for (int i = 0; i < n; i++) {
-	//	mat.array[i] = (real)material_id[i];
-	//}
-	//mat.Write_To_File_3d(file_name); }
-
-	{bf::path file_name = frame_dir / "psi_D";
-	Particles<d> psi_D_particles;
-	for (auto& p : bc.psi_D_values) {
-		int idx = p.first;
-		int i = psi_D_particles.Add_Element(); psi_D_particles.X(i) = particles.X(idx);
-	}
-	psi_D_particles.Write_To_File_3d(file_name.string()); }
-
-	{bf::path file_name = frame_dir / "psi_N";
-	Particles<d> psi_N_particles;
-	for (auto& p : bc.forces) {
-		int idx = p.first;
-		int i = psi_N_particles.Add_Element(); psi_N_particles.X(i) = particles.X(idx);
-		psi_N_particles.F(i) = p.second;
-	}
-	psi_N_particles.Write_To_File_3d(file_name.string()); }
-
-	//if (frame == last_frame) {
-	//	bf::path file_name = base_path / "energy.txt";
-	//	std::ofstream energy_file(file_name);
-	//	for (int count = 0; count < energies_n.size(); count++) {
-	//		energy_file << energies_n[count] << "\n";
-	//	}
-	//}
+	std::string vtu_name = fmt::format("vtu{:04d}.vtu", frame);
+	bf::path vtu_path = base_path / bf::path(vtu_name);
+	VTKFunc::Output_VTU<d, VectorD>(mesh, V(), vtu_path.string());
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance(const int current_frame, const real current_time, const real dt) {
@@ -104,19 +67,6 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>
 	Dm_inv.resize(ele_n,MatrixD::Zero());
 	N.resize(ele_n, VectorD::Zero());
 	areas_hat.resize(ele_n);
-	hs.resize(vtx_n, (real)0.1);
-	for(int i=0;i<ele_n;i++){
-		ArrayF<VectorD,d> vtx;
-		for(int j=0;j<d;j++){vtx[j]=X0[E()[i][j]];}
-		NonlinearFemFunc<d>::D_Inv_And_Area_And_Normal(vtx,Dm_inv[i], areas_hat[i],N[i]);
-		
-		for(int j=0;j<d;j++){
-			int v_idx=E()[i][j];
-			for (int k = 0; k < d; k++) {
-				M.diagonal()[v_idx*d+k]+= hs[v_idx]* areas_hat[i]/(real)(d);	//Mass on vertices
-			}
-		}
-	}
 
 	ArrayFunc::Fill(F(),VectorD::Zero());
 	ArrayFunc::Fill(V(),VectorD::Zero());
@@ -187,6 +137,20 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Allocate_A() {
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize_Material() {
+	//initialize thickness
+	hs.resize(Vtx_Num(), thickness);
+	for (int i = 0; i < Ele_Num(); i++) {
+		ArrayF<VectorD, d> vtx;
+		for (int j = 0; j < d; j++) { vtx[j] = X0[E()[i][j]]; }
+		NonlinearFemFunc<d>::D_Inv_And_Area_And_Normal(vtx, Dm_inv[i], areas_hat[i], N[i]);
+
+		for (int j = 0; j < d; j++) {
+			int v_idx = E()[i][j];
+			for (int k = 0; k < d; k++) {
+				M.diagonal()[v_idx * d + k] += hs[v_idx] * areas_hat[i] / (real)(d);	//Mass on vertices
+			}
+		}
+	}
 
 	//initialize lambda, theta
 	if constexpr (d == 3) {
@@ -246,13 +210,13 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const re
 	const int vtx_num=Vtx_Num();
 
 	////body force, damping force, boundary
-	if(use_body_force){for(int i=0;i<vtx_num;i++)F()[i]+=Mass(i)*g;}
+	if(use_body_force){for(int i=0;i<vtx_num;i++)F()[i]+=Mass(i)*g; }
 
+	//damping
 	for(int i=0;i<vtx_num;i++)F()[i]-=Mass(i)*damping*V()[i];
 
-	const int ele_num=Ele_Num();
-
 	//stretching forces
+	const int ele_num = Ele_Num();
 	for(int ele_idx=0; ele_idx < ele_num; ele_idx++){
 		MatrixD grad_s;
 		Grad_Stretch(ele_idx,grad_s);
@@ -307,7 +271,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const re
 	Update_Implicit_Bending(dt);
 	Update_Implicit_Boundary_Condition(dt);
 
-	Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper> cg;
+	Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::DiagonalPreconditioner<real>> cg;
 	cg.setTolerance((real)1e-5);
 	dv = cg.compute(A).solve(b);
 	Info("Linear system solve: {} ms", timer.Lap_Time(PhysicalUnits::ms));

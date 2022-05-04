@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Interpolation.h"
+#include "Mesh.h"
 #include <vtkXMLStructuredGridWriter.h>
 #include <vtkStructuredGrid.h>
 #include <vtkDataSet.h>

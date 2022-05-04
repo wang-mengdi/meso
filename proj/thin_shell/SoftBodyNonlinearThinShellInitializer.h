@@ -20,7 +20,7 @@ public:
 		int scale = Json::Value(j, "scale", 32);
 		Initialize_Mesh(test,scale, thin_shell_simulator);
 		Initialize_Boundary_Conditions(test,scale, thin_shell_simulator);
-		Initialize_Materials(test, thin_shell_simulator);
+		Initialize_Materials(j, thin_shell_simulator);
 	}
 
 	void Initialize_Mesh(int test,int scale, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
@@ -64,8 +64,12 @@ public:
 		}
 	}
 
-	void Initialize_Materials(int test, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
+	void Initialize_Materials(json& j, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
 	{
+		thin_shell_simulator.damping = Json::Value(j, "damping", (real)0.01);
+		thin_shell_simulator.thickness = Json::Value(j, "thickness", (real)0.01);
+		int test = Json::Value(j, "test", 0);
+
 		switch (test) {
 			case 1:{
 				thin_shell_simulator.materials.clear();

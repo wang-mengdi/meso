@@ -24,7 +24,7 @@ public:
 
 	Array<real> hs;					//thickness of the thin shell,defined on vertices
 	DiagonalMatrix<real> M;			//mass of face
-	SparseMatrix<real> A;				//stiffness matrix
+	SparseMatrix<real> A;			//stiffness matrix
 	VectorX dv;						//displacement, delta x
 	VectorX b;
 
@@ -52,10 +52,11 @@ public:
 	Array<Array2DF<ArrayF<Vector3, 2>,3,3>> grad_rs; //2 grads (+-) of Vector3 for each q and each vertex in a triangle
 	
 	bool use_exact_hessian = true;		//turn on when the solver is used for optimization, otherwise the we use Gauss-Newton approximation for the forward solve 
-	bool use_explicit=true;		
+	bool use_explicit= false;		
 	bool use_body_force=true;
 	VectorD g=VectorD::Unit(1)*-9.8;
-	real damping=(real)0.1;			//damping constant
+	real damping;						//damping constant
+	real thickness;						//thickness
 
 	virtual real CFL_Time(const real cfl);
 	virtual void Output(const bf::path base_path, const int frame);
