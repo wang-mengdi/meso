@@ -4,3 +4,4 @@
 - `Interpolation`中用到了`FaceField`，而`FaceField`中的`Output_Vtk`使用了`Interpolation`，此处循环定义通过在`Interpolation.h`中对`FaceField`类的forward declare解决。若不解决，会报一个"FaceField不是模板"的错误。
 - 目前无法使用Eigen的incomplete cholesky preconditioner，会报一个“无法访问private typedef”的错误。
 - 目前我们无法在Eigen的3.4.0版本中使用Quaternion或者Matrix3初始化一个AngleAxis类。
+- 目前OBJFunc使用tinyobjload的1.0.7版本（xmake repo版本原因），等xmake更新后再换成2.0.0的API

@@ -107,6 +107,7 @@ namespace Meso {
 		template<class IFFuncT>
 		void Calc_Faces(IFFuncT f) {
 			for (int axis = 0; axis < d; axis++) {
+				Assert(face_data[axis] != nullptr, "FaceField::Calc_Faces error: nullptr data at axis {}", axis);
 				const int dof = grid.Face_DoF(axis);
 				thrust::counting_iterator<int> idxfirst(0);
 				thrust::counting_iterator<int> idxlast = idxfirst + dof;

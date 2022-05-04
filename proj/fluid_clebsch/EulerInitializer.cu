@@ -1,6 +1,7 @@
 #include <iostream>
 #include "EulerInitializer.h"
 #include "SPX_AuxFunc.h"
+#include "Common.h"
 
 
 template<int d>
@@ -29,7 +30,7 @@ void EulerInitializer<d>::Set_Boundary_Value(real vx0, real vx1, real vy0, real 
 template<int d>
 void EulerInitializer<d>::Generate_Parameters(void)
 {
-	Assert(domain_set && bw_set && bv_set, "EulerInitializer::Generate_Parameters(): parameters not fully set");
+	Meso::Assert(domain_set && bw_set && bv_set, "EulerInitializer::Generate_Parameters(): parameters not fully set");
 	Vector3i add3 = bc_width.rowwise().sum();
 	VectorDi add_width = AuxFunc::Vi<d>(add3[0], add3[1], add3[2]);
 	cell_counts = prop * scale + add_width;
@@ -74,9 +75,9 @@ bool EulerInitializer<d>::In_Thick_Boundary_MacGrid(int axis, const VectorDi& fa
 template<int d>
 void EulerInitializer<d>::Fill_Boundary_Condition(BoundaryConditionMacGrid<d>& bc)
 {
-	Assert(grid_set, "EulerInitializer: grid_set==false");
-	Assert(bw_set, "EulerInitializer: bw_set==false");
-	Assert(bv_set, "EulerInitializer: bv_set==false");
+	Meso::Assert(grid_set, "EulerInitializer: grid_set==false");
+	Meso::Assert(bw_set, "EulerInitializer: bw_set==false");
+	Meso::Assert(bv_set, "EulerInitializer: bv_set==false");
 	iterate_cell(iter, mac_grid.grid) {
 		const VectorDi& cell = iter.Coord();
 		int in_cnt = 0;

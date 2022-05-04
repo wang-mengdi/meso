@@ -8,21 +8,20 @@
 //// This projection solver currently only takes zero Neumann bc. The velocities on the Neumann boundary need to be set to the correct values before the projection.
 //// The calculated pressure value is the real pressure value divided by delta_x.
 //////////////////////////////////////////////////////////////////////////
+#pragma once
 
-#ifndef __ProjectionTwoPhase_h__
-#define __ProjectionTwoPhase_h__
 #include <functional>
 #include "MacGrid.h"
 #include "SPX_FaceField.h"
 #include "SPX_Field.h"
 #include "BoundaryCondition.h"
-#include "GmgPcgSolverCPU.h"
+//#include "GmgPcgSolverCPU.h"
 #include "TypeFunc.h"
 #include "LevelSet.h"
 
-#ifdef USE_CUDA
-#include "GmgPcgSolverGPU.h"
-#endif
+//meso things
+#include "ConjugateGradient.h"
+#include "Multigrid.h"
 
 template<int d> class ProjectionTwoPhase
 {Typedef_VectorDii(d);
@@ -45,8 +44,8 @@ public:
     bool use_explicit_surface_tension = true;
 
 	////linear solver
-	FaceField<int, d> macgrid_to_matrix;
-	Array<std::pair<int, int> > matrix_to_macgrid;
+	//FaceField<int, d> macgrid_to_matrix;
+	//Array<std::pair<int, int> > matrix_to_macgrid;
 
 	real sigma = (real)1e-2;					////surface tension coefficient for the default pressure jump
 	real current_dt = (real)1;					////need to set dt when using the jump condition because dt is absorbed in p when calculating the projection
@@ -61,21 +60,24 @@ public:
 	bool verbose=true;
 
 	////linear solver
-	Field<int,d> grid_to_matrix;
-	Array<int> matrix_to_grid;
-	SparseMatrixT A;
-	VectorX p;				////unknown
-	VectorX div_u;			////rhs: the solver solves Ap=div_u
-	bool is_A_initialized=false;
-	bool update_A=true;
+	
+	//VectorX p;				////unknown
+	//VectorX div_u;			////rhs: the solver solves Ap=div_u
+	//bool is_A_initialized=false;
+	//bool update_A=true;
 
-	////multigrid solver
-	bool is_irregular_domain = false;
-	MultiGrid::Params multigrid_params;
-	GMGPCG_Solver_CPU<d> gmg_solver_cpu;
-	#ifdef USE_CUDA
-	GMGPCG_Solver_GPU<real,d> gmg_solver_gpu;
-	#endif
+	Meso::MaskedPoissonMapping<float, d> meso_poisson;
+	Meso::VCycleMultigrid<float> meso_mg;
+	Meso::ConjugateGradient<float> meso_cg;
+	Meso::Field<bool, d> meso_fixed_host;
+	Meso::FaceField<float, d> meso_rho_host;
+	//Meso::FaceField<float, d> meso_velocity_host;
+	//Meso::FaceFieldDv<float, d> meso_velocity_dev;
+	Meso::Field<float, d> meso_div_host;
+	Meso::FieldDv<float, d> meso_div_dev;
+	Meso::Field<float, d> meso_pressure_host;
+	Meso::FieldDv<float, d> meso_pressure_dev;
+
 
 	////divergence control
 	bool use_vol_control = false;
@@ -95,15 +97,7 @@ public:
 
 	virtual void Initialize(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc);
 
-	////set attributes
-	void Set_Velocity(FaceField<real,d>& _velocity){if(velocity!=nullptr&&own_velocity)delete velocity;velocity=&_velocity;own_velocity=false;}
-	void Set_Rho_face(FaceField<real,d>& _rho_face){if(rho_face!=nullptr&&own_rho_face)delete rho_face;rho_face=&_rho_face;own_rho_face=false;}
-	void Set_Level_Set(LevelSet<d>& _levelset){if(levelset != nullptr && own_levelset)delete levelset; levelset = &_levelset; own_levelset = false;}
-	void Set_Type(Field<ushort,d>& _type){if(type!=nullptr&&own_type)delete type;type=&_type;own_type=false;}
-	void Set_BC(BoundaryConditionMacGrid<d>& _bc){if(bc!=nullptr&&own_bc)delete bc;bc=&_bc;own_bc=false;}
-
 	////projection functions
-	virtual void Allocate_System();
 	virtual void Update_A();
 	virtual void Update_b();			////calculate b as div velocity
 	void Apply_Jump_Condition_To_b();
@@ -111,14 +105,9 @@ public:
 	void Apply_Implicit_Surface_Tension(const real dt);
 	virtual void Correction();
 	virtual void Build();					////call allocate, update_A, and update_b
-	void Solve_CPX(void);
 	virtual void Solve();
 	virtual void Project();					////call both build, solve, and correction
 
-	////read data
-	void Pressure(Field<real,d>& pressure) const;				////write values of p into pressure
-	void Pressure_Gradient(FaceField<real,d>& grad_p) const;	////write values of p into pressure
-	void Divergence(Field<real,d>& div) const;					////write values of velocity into div
     inline real Pressure_Jump(const VectorD& pos) const 
 	{ real curvature = (*levelset).Curvature(pos); return current_dt * sigma * curvature; }
 	
@@ -147,5 +136,3 @@ public:
 	virtual bool Is_Valid_Cell(const VectorDi& cell) const {return mac_grid->grid.Valid_Cell(cell)&&!(*bc).Is_Psi_D(cell);}
 	virtual bool Is_Fluid_Cell(const VectorDi& cell) const {return Is_Valid_Cell(cell);}
 };
-
-#endif

@@ -238,27 +238,33 @@ public:
 		////project velocity
 		projection.current_dt=dt;
 		projection.Project();
-		if(!use_velocity_field){
+		if (!use_velocity_field) {
 			int cell_num = mac_grid.grid.Number_Of_Cells();
 			real one_over_dx = (real)1 / mac_grid.grid.dx;
-			#pragma omp parallel for
+#pragma omp parallel for
 			for (int i = 0; i < cell_num; i++) {
-			VectorDi cell = mac_grid.grid.Cell_Coord(i);
-			if (Is_Fluid_Cell(cell)) {
-				real phi0 = levelset.phi(cell);
-				real cell_p = projection.p[projection.grid_to_matrix(cell)];
-				if(phi0<0){
-					Vector<C,2> psi_c = V2C(psi_L(cell));
-					cell_p /= rho_L;
-					C c = std::exp(-1i*cell_p*mac_grid.grid.dx/h_bar);
-					for (int i = 0; i < 2; i++) {psi_c[i]*=c;} 
-					psi_L(cell)=C2V(psi_c);}
-				else{
-					Vector<C,2> psi_c = V2C(psi_A(cell));
-					cell_p /= rho_A;
-					C c = std::exp(-1i*cell_p*mac_grid.grid.dx/h_bar);
-					for (int i = 0; i < 2; i++) {psi_c[i]*=c;} 
-					psi_A(cell)=C2V(psi_c);}}}}
+				VectorDi cell = mac_grid.grid.Cell_Coord(i);
+				if (Is_Fluid_Cell(cell)) {
+					real phi0 = levelset.phi(cell);
+					//real cell_p = projection.p[projection.grid_to_matrix(cell)];
+					real cell_p = projection.meso_pressure_host(cell);
+					if (phi0 < 0) {
+						Vector<C, 2> psi_c = V2C(psi_L(cell));
+						cell_p /= rho_L;
+						C c = std::exp(-1i * cell_p * mac_grid.grid.dx / h_bar);
+						for (int i = 0; i < 2; i++) { psi_c[i] *= c; }
+						psi_L(cell) = C2V(psi_c);
+					}
+					else {
+						Vector<C, 2> psi_c = V2C(psi_A(cell));
+						cell_p /= rho_A;
+						C c = std::exp(-1i * cell_p * mac_grid.grid.dx / h_bar);
+						for (int i = 0; i < 2; i++) { psi_c[i] *= c; }
+						psi_A(cell) = C2V(psi_c);
+					}
+				}
+			}
+		}
 	}
 
 	void Blend_Velocity()

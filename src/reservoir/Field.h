@@ -71,6 +71,7 @@ namespace Meso {
 		inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 		const T Get(const VectorDi coord)const { return (*data)[grid.Index(coord)]; }
 		template<class T1> void operator *= (const T1 a) { ArrayFunc::Multiply_Scalar(Data(), a); }
+		void operator -= (const Field<T, d, side>& f1) { ArrayFunc::Minus(Data(), f1.Data()); }
 
 		T Max_Abs(void) {
 			return ArrayFunc::Max_Abs<T>(Data());
@@ -86,6 +87,7 @@ namespace Meso {
 
 		template<class CFuncT>//CFuncT is a function: VectorDi->T, takes the cell index
 		void Calc_Cells(CFuncT f) {
+			Assert(data != nullptr, "Field::Calc_Cells error: nullptr data");
 			const int dof = grid.DoF();
 			thrust::counting_iterator<int> idxfirst(0);
 			thrust::counting_iterator<int> idxlast = idxfirst + dof;
@@ -97,6 +99,11 @@ namespace Meso {
 					return f(grid.Coord(idx));
 				}
 			);
+		}
+
+		template<class Fcell>//Fcell is a (void) function takes a cell index
+		void Exec_Nodes(Fcell f) const {
+			return grid.Exec_Nodes(f);
 		}
 
 		template<class F, class ...Args>
