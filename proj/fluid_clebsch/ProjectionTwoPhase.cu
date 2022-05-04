@@ -24,8 +24,6 @@ template<int d> ProjectionTwoPhase<d>::~ProjectionTwoPhase()
 
 template<int d> void ProjectionTwoPhase<d>::Initialize(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc)
 {
-	if (solver_mode == SolverType::AUTO) { Auto_Select_Mode(); }
-
 	if (mac_grid != nullptr && own_grid) delete mac_grid;
 	if (_mac_grid == nullptr) { mac_grid = new MacGrid<d>(); own_grid = true; }
 	else { mac_grid = _mac_grid; own_grid = false; }
@@ -229,21 +227,6 @@ template<int d> void ProjectionTwoPhase<d>::Correction()
 	}
 }
 
-template<int d> void ProjectionTwoPhase<d>::Update_Mat_Id()
-{
-	if (solver_mode != SolverType::MULTIGRID_AUTO)return;
-
-	multigrid_params.use_irregular_domain=grid_to_matrix.Has(-1);
-	if(!multigrid_params.use_irregular_domain)return;
-
-	is_irregular_domain = true;
-
-	mat_id.Resize(mac_grid->grid.cell_counts,0);
-	#pragma omp parallel for
-	for (int i = 0; i < (int)mat_id.array.size(); i++) {
-		if (!Is_Valid_Cell(mac_grid->grid.Cell_Coord(i))) { mat_id.array[i] = -1; }}
-}
-
 template<int d> void ProjectionTwoPhase<d>::Build()
 {
 	Timer timer;timer.Reset();
@@ -293,31 +276,10 @@ template<int d> void ProjectionTwoPhase<d>::Solve_CPX(void)
 
 template<int d> void ProjectionTwoPhase<d>::Solve()
 {
-	if (solver_mode == SolverType::AUTO) { Auto_Select_Mode(); }
-	if (solver_mode == SolverType::KRYLOV_CPU) {
-		KrylovSolver::Params params;
-		params.verbose = verbose;
-		KrylovSolver::ICPCG(A, p, div_u, params);	////CPU IC-PCG
-	}
-	else if (solver_mode == SolverType::MULTIGRID_AUTO) {
-		MultiGrid::Params multigrid_params;
-		multigrid_params.use_auto_calculated_levels = true;
-		multigrid_params.dof_on_cell = true;
-		multigrid_params.block_size = 1;
-		multigrid_params.use_color = multigrid_params.use_gpu;
-		multigrid_params.use_irregular_domain = true;
-		multigrid_params.use_gpu = true;
-		Update_Mat_Id();
-#ifdef USE_CUDA
-		if (multigrid_params.use_gpu) {
-			GMGPCG_GPU<d>(A, p, div_u, mac_grid->grid.cell_counts, mat_id, multigrid_params,/*verbose*/false);
-		}
-		else { GMGPCG_CPU<d>(A, p, div_u, mac_grid->grid.cell_counts, mat_id, multigrid_params); }
-#else
-		GMGPCG_CPU<d>(A, p, div_u, mac_grid->grid.cell_counts, mat_id, multigrid_params);
-#endif
-	}
-	else if (solver_mode == SolverType::CPX_GPU) { Solve_CPX(); }
+	//KrylovSolver::Params params;
+	//params.verbose = verbose;
+	//KrylovSolver::ICPCG(A, p, div_u, params);	////CPU IC-PCG
+	Solve_CPX();
 }
 
 template<int d> void ProjectionTwoPhase<d>::Project()
