@@ -6,7 +6,7 @@
 
 #ifndef __GeometricMultiGrid_h__
 #define __GeometricMultiGrid_h__
-#include "MultiGrid.h"
+#include "SPX_MultiGrid.h"
 #include "KrylovSolver.h"
 #include "SPX_Field.h"
 #include "SPX_Timer.h"

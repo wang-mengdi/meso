@@ -20,9 +20,9 @@
 #include "TypeFunc.h"
 #include "LevelSet.h"
 
-#ifdef USE_CUDA
-#include "GmgPcgSolverGPU.h"
-#endif
+//meso things
+#include "ConjugateGradient.h"
+#include "Multigrid.h"
 
 template<int d> class ProjectionTwoPhase
 {Typedef_VectorDii(d);
@@ -45,8 +45,8 @@ public:
     bool use_explicit_surface_tension = true;
 
 	////linear solver
-	FaceField<int, d> macgrid_to_matrix;
-	Array<std::pair<int, int> > matrix_to_macgrid;
+	//FaceField<int, d> macgrid_to_matrix;
+	//Array<std::pair<int, int> > matrix_to_macgrid;
 
 	real sigma = (real)1e-2;					////surface tension coefficient for the default pressure jump
 	real current_dt = (real)1;					////need to set dt when using the jump condition because dt is absorbed in p when calculating the projection
@@ -61,21 +61,24 @@ public:
 	bool verbose=true;
 
 	////linear solver
-	Field<int,d> grid_to_matrix;
-	Array<int> matrix_to_grid;
-	SparseMatrixT A;
-	VectorX p;				////unknown
-	VectorX div_u;			////rhs: the solver solves Ap=div_u
-	bool is_A_initialized=false;
-	bool update_A=true;
+	
+	//VectorX p;				////unknown
+	//VectorX div_u;			////rhs: the solver solves Ap=div_u
+	//bool is_A_initialized=false;
+	//bool update_A=true;
 
-	////multigrid solver
-	bool is_irregular_domain = false;
-	MultiGrid::Params multigrid_params;
-	GMGPCG_Solver_CPU<d> gmg_solver_cpu;
-	#ifdef USE_CUDA
-	GMGPCG_Solver_GPU<real,d> gmg_solver_gpu;
-	#endif
+	Meso::MaskedPoissonMapping<float, d> meso_poisson;
+	Meso::VCycleMultigrid<float> meso_mg;
+	Meso::ConjugateGradient<float> meso_cg;
+	Meso::Field<bool, d> meso_fixed_host;
+	Meso::FaceField<float, d> meso_rho_host;
+	//Meso::FaceField<float, d> meso_velocity_host;
+	//Meso::FaceFieldDv<float, d> meso_velocity_dev;
+	Meso::Field<float, d> meso_div_host;
+	Meso::FieldDv<float, d> meso_div_dev;
+	Meso::Field<float, d> meso_pressure_host;
+	Meso::FieldDv<float, d> meso_pressure_dev;
+
 
 	////divergence control
 	bool use_vol_control = false;
@@ -103,7 +106,6 @@ public:
 	void Set_BC(BoundaryConditionMacGrid<d>& _bc){if(bc!=nullptr&&own_bc)delete bc;bc=&_bc;own_bc=false;}
 
 	////projection functions
-	virtual void Allocate_System();
 	virtual void Update_A();
 	virtual void Update_b();			////calculate b as div velocity
 	void Apply_Jump_Condition_To_b();

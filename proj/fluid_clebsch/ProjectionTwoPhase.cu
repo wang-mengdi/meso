@@ -53,76 +53,91 @@ template<int d> void ProjectionTwoPhase<d>::Initialize(MacGrid<d>* _mac_grid, Fa
 
 //////////////////////////////////////////////////////////////////////////
 ////Build linear system
-template<int d> void ProjectionTwoPhase<d>::Allocate_System()
-{
-	if(is_A_initialized&&!update_A)return;
-	std::function<bool(const int)> valid_cell=[=](const int idx)->bool{return this->Is_Valid_Cell(mac_grid->grid.Cell_Coord(idx));};
-	Build_Grid_Cell_Matrix_Bijective_Mapping(mac_grid->grid,valid_cell,grid_to_matrix,matrix_to_grid);
-
-	////Setup A and div_u
-	int n=(int)matrix_to_grid.size();
-	A.resize(n,n);p.resize(n);p.fill((real)0);div_u.resize(n);div_u.fill((real)0);
-}
 
 template<int d> void ProjectionTwoPhase<d>::Update_A()
 {
-	if(is_A_initialized&&!update_A) { return; }
-	Timer timer; timer.Reset();
-	Array<TripletT> elements;
-	for (auto r = 0; r < matrix_to_grid.size(); r++) {
-		const VectorDi& cell = mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
-		////off-diagonal elements
-		for (int i = 0; i < Grid<d>::Number_Of_Nb_C(); i++) {
-			real term = Off_Diag_Term(cell, i);
-			VectorDi nb_cell = Grid<d>::Nb_C(cell, i);
-			if (Is_Valid_Cell(nb_cell)) {
-				int c = grid_to_matrix(nb_cell);
-				elements.push_back(TripletT((int)r, (int)c, term));}}
+	//if (is_A_initialized && !update_A)return;
+	//std::function<bool(const int)> valid_cell = [=](const int idx)->bool {return this->Is_Valid_Cell(mac_grid->grid.Cell_Coord(idx)); };
+	//Build_Grid_Cell_Matrix_Bijective_Mapping(mac_grid->grid, valid_cell, grid_to_matrix, matrix_to_grid);
 
-		////diagonal elements
-		real dia_coef = (real)0;
-		for (int i = 0; i < Grid<d>::Number_Of_Nb_C(); i++) {
-			int axis; VectorDi face; MacGrid<d>::Cell_Incident_Face(cell, i, axis, face);
-			dia_coef += Diag_Face_Term(axis, face);}
-		elements.push_back(TripletT((int)r, (int)r, dia_coef));}
+	//////Setup A and div_u
+	//int n = (int)matrix_to_grid.size();
+	//A.resize(n, n); p.resize(n); p.fill((real)0); div_u.resize(n); div_u.fill((real)0);
 
-	if (verbose)timer.Elapse_And_Output_And_Reset("Update A elements");
-	A.setFromTriplets(elements.begin(), elements.end());
-	A.makeCompressed();
-	if (verbose)timer.Elapse_And_Output_And_Reset("Assemble A to sp_mtx");
-	is_A_initialized=true;
+	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
+	meso_fixed_host.Init(meso_grid);
+	meso_fixed_host.Calc_Cells(
+		[&](const VectorDi cell) {
+			return this->Is_Valid_Cell(cell);
+		}
+	);
+	meso_rho_host.Init(meso_grid);
+	meso_rho_host.Calc_Faces(
+		[&](const int axis, const VectorDi face)->float {
+			if (mac_grid->Valid_Face(axis, face)) return 1.0 / (*rho_face)(axis, face);
+			else return 0;
+		}
+	);
+	meso_poisson.Init(meso_grid, meso_rho_host, meso_fixed_host);
+	meso_mg.Init_Poisson(meso_poisson, 2, 2);
+	meso_cg.Init(&meso_poisson, &meso_mg, false, -1, 1e-5);
 }
 
 template<int d> void ProjectionTwoPhase<d>::Apply_Jump_Condition_To_b()
 {
-	if (!use_explicit_surface_tension)return;
+	//if (!use_explicit_surface_tension)return;
 	real one_over_dx = (real)1 / mac_grid->grid.dx;
-	int b_size = (int)matrix_to_grid.size();
-	#pragma omp parallel for
-	for (int r = 0; r < b_size; r++) {
-		const VectorDi& cell = mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
-		const VectorD& pos = mac_grid->grid.Center(cell);
-		for (int i = 0; i < Grid<d>::Number_Of_Nb_C(); i++) {
-			VectorDi nb_cell = Grid<d>::Nb_C(cell, i);
-			if (Is_Valid_Cell(cell) && Is_Valid_Cell(nb_cell)) {
-				real phi0 = (*levelset).phi(cell); real phi1 = (*levelset).phi(nb_cell);
-				if (LevelSet<d>::Interface(phi0, phi1)) {
-					real theta = LevelSet<d>::Theta(phi0, phi1);
-					VectorD intf_pos = ((real)1 - theta) * mac_grid->grid.Center(cell) + theta * mac_grid->grid.Center(nb_cell);
-					int axis; VectorDi face; MacGrid<d>::Cell_Incident_Face(cell, i, axis, face);
-					real rho = (*rho_face)(axis, face);
-					real p_sign = phi0 < 0 ? (real)1 : (real)-1;
-					div_u[r] += p_sign * Jump_Condition(intf_pos) * one_over_dx / rho;
+	meso_div_host.Exec_Nodes(
+		[&](const VectorDi cell) {
+			if (!Is_Valid_Cell(cell)) return;
+			VectorD pos = mac_grid->grid.Center(cell);
+			for (int i = 0; i < Grid<d>::Number_Of_Nb_C(); i++) {
+				VectorDi nb_cell = Grid<d>::Nb_C(cell, i);
+				if (Is_Valid_Cell(nb_cell)) {
+					real phi0 = (*levelset).phi(cell); 
+					real phi1 = (*levelset).phi(nb_cell);
+					if (LevelSet<d>::Interface(phi0, phi1)) {
+						real theta = LevelSet<d>::Theta(phi0, phi1);
+						VectorD intf_pos = ((real)1 - theta) * mac_grid->grid.Center(cell) + theta * mac_grid->grid.Center(nb_cell);
+						int axis; VectorDi face; MacGrid<d>::Cell_Incident_Face(cell, i, axis, face);
+						real rho = (*rho_face)(axis, face);
+						real p_sign = phi0 < 0 ? (real)1 : (real)-1;
+						// -= here because we have div(u) instead of -div(u)
+						meso_div_host(cell) -= p_sign * Jump_Condition(intf_pos) * one_over_dx / rho;
+					}
 				}
 			}
 		}
-	}
+	);
+
+	//if (!use_explicit_surface_tension)return;
+	//real one_over_dx = (real)1 / mac_grid->grid.dx;
+	//int b_size = (int)matrix_to_grid.size();
+	//#pragma omp parallel for
+	//for (int r = 0; r < b_size; r++) {
+	//	const VectorDi& cell = mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
+	//	const VectorD& pos = mac_grid->grid.Center(cell);
+	//	for (int i = 0; i < Grid<d>::Number_Of_Nb_C(); i++) {
+	//		VectorDi nb_cell = Grid<d>::Nb_C(cell, i);
+	//		if (Is_Valid_Cell(cell) && Is_Valid_Cell(nb_cell)) {
+	//			real phi0 = (*levelset).phi(cell); real phi1 = (*levelset).phi(nb_cell);
+	//			if (LevelSet<d>::Interface(phi0, phi1)) {
+	//				real theta = LevelSet<d>::Theta(phi0, phi1);
+	//				VectorD intf_pos = ((real)1 - theta) * mac_grid->grid.Center(cell) + theta * mac_grid->grid.Center(nb_cell);
+	//				int axis; VectorDi face; MacGrid<d>::Cell_Incident_Face(cell, i, axis, face);
+	//				real rho = (*rho_face)(axis, face);
+	//				real p_sign = phi0 < 0 ? (real)1 : (real)-1;
+	//				div_u[r] += p_sign * Jump_Condition(intf_pos) * one_over_dx / rho;
+	//			}
+	//		}
+	//	}
+	//}
 }
 
  ////need to specify target_vol (externally) and current_vol 
  template<int d> void ProjectionTwoPhase<d>::Apply_Vol_Control_To_b()
  {
-	 if (!use_vol_control)return;
+	 //if (!use_vol_control)return;
 	 if (target_vol == (real)-1) { std::cerr << "[Error] ProjectionTwoPhase: target_vol not set" << std::endl; return; }
 
 	 if (calc_current_vol)current_vol = levelset->Total_Volume();
@@ -134,21 +149,33 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Jump_Condition_To_b()
 
 	 if (verbose) std::cout << "vol correction: " << vol_correction << std::endl;
 
-	 int b_size = (int)matrix_to_grid.size();
-#pragma omp parallel for
-	 for (int r = 0; r < b_size; r++) {
-		 const VectorDi& cell = mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
-		 if (Is_Fluid_Cell(cell)) {
-			 //real vol = levelset->Cell_Fraction(cell) * cell_vol;
-			 real cell_div = vol_correction;
-			 div_u[r] += vol_control_ks * mac_grid->grid.dx * cell_div;
+	 meso_div_host.Exec_Nodes(
+		 [&](const VectorDi cell) {
+			 if (Is_Fluid_Cell(cell)) {
+				 real cell_div = vol_correction;
+				 //-= here because we have div(u)
+				 meso_div_host(cell) -= vol_control_ks * mac_grid->grid.dx * cell_div;
+			 }
 		 }
-	 }
+	 );
+
+//	 int b_size = (int)matrix_to_grid.size();
+//#pragma omp parallel for
+//	 for (int r = 0; r < b_size; r++) {
+//		 const VectorDi& cell = mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
+//		 if (Is_Fluid_Cell(cell)) {
+//			 //real vol = levelset->Cell_Fraction(cell) * cell_vol;
+//			 real cell_div = vol_correction;
+//			 div_u[r] += vol_control_ks * mac_grid->grid.dx * cell_div;
+//		 }
+//	 }
  }
 
 template<int d> void ProjectionTwoPhase<d>::Apply_Implicit_Surface_Tension(const real dt)
 {
 	if (Is_Interface_Face_Index == nullptr || Dirac == nullptr) { std::cerr << "[Error] ProjectionTwoPhase: Is_Interface_Face_Index or Dirac is null" << std::endl; return; }
+	Field<int, d> grid_to_matrix;
+	Array<int> matrix_to_grid;
 	macgrid_to_matrix.Resize(mac_grid->grid.cell_counts, -1);
 	matrix_to_macgrid.clear();
 	Build_MacGrid_Face_Matrix_Bijective_Mapping(*mac_grid, Is_Interface_Face_Index, macgrid_to_matrix, matrix_to_macgrid);
@@ -188,11 +215,7 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Implicit_Surface_Tension(const
 	}
 	B.setFromTriplets(elements.begin(), elements.end()); B.makeCompressed();
 
-#ifdef USE_CUDA
-	MultiGridCuda::Preconditioned_Conjugate_Gradient<SparseMatrix<real>, real>(&B, &u_old[0], &u_new[0], 3000, (real)1e-5,/*diagonal precond*/true);	////GPU D-PCG
-#else
 	KrylovSolver::Params params; KrylovSolver::ICPCG(B, u_new, u_old, params);	////CPU IC-PCG
-#endif
 
 #pragma omp parallel for
 	for (int r = 0; r < n; r++) {
@@ -204,15 +227,39 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Implicit_Surface_Tension(const
 
 template<int d> void ProjectionTwoPhase<d>::Update_b()
 {
-	int b_size=(int)matrix_to_grid.size();
-	#pragma omp parallel for
-	for (auto r = 0; r < b_size; r++) {
-		const VectorDi& cell = mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
-		real div = (real)0;
-		for (int axis = 0; axis < d; axis++) {
-			div += (*velocity)(axis, cell + VectorDi::Unit(axis)) - (*velocity)(axis, cell);}
-		////Attention: use negative div here. We are solving -lap p=-div u
-		div_u[r] = -div;}
+	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
+	meso_div_host.Init(meso_grid);
+	meso_div_host.Calc_Cells(
+		[&](const VectorDi cell) {
+			if (!mac_grid->grid.Valid(cell)) return 0;
+			real div = (real)0;
+			for (int axis = 0; axis < d; axis++) {
+				div += (*velocity)(axis, cell + VectorDi::Unit(axis)) - (*velocity)(axis, cell);
+			}
+			//solve lap p=div u
+			return div;
+		}
+	);
+
+	//meso_velocity_host.Init(meso_grid);
+	//meso_velocity_host.Calc_Faces(
+	//	[&](const int axis, const VectorDi face) {
+	//		if (mac_grid->Valid_Face(axis, face)) return (*velocity)(axis, face);
+	//		else return 0;
+	//	}
+	//);
+	//meso_velocity_dev = meso_velocity_dev;
+	//Meso::Exterior_Derivative(meso_divergence_dev, meso_velocity_dev);
+
+	//int b_size=(int)matrix_to_grid.size();
+	//#pragma omp parallel for
+	//for (auto r = 0; r < b_size; r++) {
+	//	const VectorDi& cell = mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
+	//	real div = (real)0;
+	//	for (int axis = 0; axis < d; axis++) {
+	//		div += (*velocity)(axis, cell + VectorDi::Unit(axis)) - (*velocity)(axis, cell);}
+	//	////Attention: use negative div here. We are solving -lap p=-div u
+	//	div_u[r] = -div;}
 }
 
 template<int d> void ProjectionTwoPhase<d>::Correction()
@@ -230,16 +277,18 @@ template<int d> void ProjectionTwoPhase<d>::Correction()
 template<int d> void ProjectionTwoPhase<d>::Build()
 {
 	Timer timer;timer.Reset();
-	Allocate_System();
-	if(verbose)timer.Elapse_And_Output_And_Reset("Allocate A");
 	Update_A();
 	if(verbose)timer.Elapse_And_Output_And_Reset("Assemble A");
 	Update_b();
 	if(verbose)timer.Elapse_And_Output_And_Reset("Assemble b");
-	Apply_Jump_Condition_To_b();
-	if(verbose)timer.Elapse_And_Output_And_Reset("Apply jump condition to b");
-	Apply_Vol_Control_To_b();
-	if(verbose)timer.Elapse_And_Output_And_Reset("Apply volumn control to b");
+	if (use_explicit_surface_tension) {
+		Apply_Jump_Condition_To_b();
+		if (verbose)timer.Elapse_And_Output_And_Reset("Apply jump condition to b");
+	}
+	if (use_vol_control) {
+		Apply_Vol_Control_To_b();
+		if (verbose)timer.Elapse_And_Output_And_Reset("Apply volumn control to b");
+	}
 }
 
 template<int d> void ProjectionTwoPhase<d>::Solve_CPX(void)
@@ -279,7 +328,13 @@ template<int d> void ProjectionTwoPhase<d>::Solve()
 	//KrylovSolver::Params params;
 	//params.verbose = verbose;
 	//KrylovSolver::ICPCG(A, p, div_u, params);	////CPU IC-PCG
-	Solve_CPX();
+	//Solve_CPX();
+	meso_div_dev = meso_div_host;
+	int iter; real relative_error;
+	meso_pressure_dev.Init(meso_div_dev.grid);
+	meso_cg.Solve(meso_pressure_dev.Data(), meso_div_dev.Data(), iter, relative_error);
+	Meso::Info("MESO solved {} iters with relative error {}", iter, relative_error);
+	meso_pressure_host = meso_pressure_dev;
 }
 
 template<int d> void ProjectionTwoPhase<d>::Project()
@@ -349,18 +404,22 @@ template<int d> real ProjectionTwoPhase<d>::Velocity_Offset(const int& axis, con
 {
 	if (bc->Is_Psi_N(axis, face)) return 0;
 	VectorDi cell[2]; for (int i = 0; i < 2; i++)cell[i] = MacGrid<d>::Face_Incident_Cell(axis, face, i);
-	real cell_p[2]; for (int i = 0; i < 2; i++)cell_p[i] = Is_Valid_Cell(cell[i]) ? p[grid_to_matrix(cell[i])] : (real)0;
+	//real cell_p[2]; for (int i = 0; i < 2; i++)cell_p[i] = Is_Valid_Cell(cell[i]) ? p[grid_to_matrix(cell[i])] : (real)0;
+	real cell_p[2]; for (int i = 0; i < 2; i++)cell_p[i] = Is_Valid_Cell(cell[i]) ? meso_pressure_host(cell[i]) : (real)0;
 	real one_over_dx = (real)1 / mac_grid->grid.dx;
 	real p_jump = 0.;
-	if (use_explicit_surface_tension){
+	if (use_explicit_surface_tension) {
 		if (Is_Valid_Cell(cell[0]) && Is_Valid_Cell(cell[1])) {
 			real phi0 = (*levelset).phi(cell[0]); real phi1 = (*levelset).phi(cell[1]);
-			if (LevelSet<d>::Interface(phi0, phi1)){
+			if (LevelSet<d>::Interface(phi0, phi1)) {
 				real theta = LevelSet<d>::Theta(phi0, phi1);
 				VectorD intf_pos = ((real)1 - theta) * mac_grid->grid.Center(cell[0]) + theta * mac_grid->grid.Center(cell[1]);
 				real rho = (*rho_face)(axis, face);
 				real p_sign = phi0 < 0 ? (real)1 : (real)-1;
-				p_jump = p_sign * Jump_Condition(intf_pos) * one_over_dx;}}}
+				p_jump = p_sign * Jump_Condition(intf_pos) * one_over_dx;
+			}
+		}
+	}
 
 	return -((cell_p[1] + p_jump) - cell_p[0]) / (*rho_face)(axis, face);
 }
