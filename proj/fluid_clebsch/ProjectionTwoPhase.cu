@@ -7,6 +7,7 @@
 #include "SparseFunc.h"
 #include "KrylovSolver.h"
 #include "SPX_Timer.h"
+#include "SparseMatrixMapping.h"
 
 //////////////////////////////////////////////////////////////////////////
 ////Constructor
@@ -185,13 +186,14 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Implicit_Surface_Tension(const
 	int n = matrix_to_macgrid.size();
 
 	SparseMatrixT B;
-	VectorX u_new;
-	VectorX u_old;
+	//VectorX u_new;
+	//VectorX u_old;
 
 	// setup A, x, and b
 	B.resize(n, n);
-	u_new.resize(n); u_new.fill((real)0);
-	u_old.resize(n); u_old.fill((real)0);
+	//u_new.resize(n); u_new.fill((real)0);
+	Meso::Array<real> u_old(n); Meso::ArrayFunc::Fill(u_old, 0);
+	//u_old.resize(n); u_old.fill((real)0);
 	Array<TripletT> elements;
 
 	for (int r = 0; r < n; r++) {
@@ -218,13 +220,24 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Implicit_Surface_Tension(const
 	}
 	B.setFromTriplets(elements.begin(), elements.end()); B.makeCompressed();
 
-	KrylovSolver::Params params; KrylovSolver::ICPCG(B, u_new, u_old, params);	////CPU IC-PCG
+	Meso::SparseMatrixMapping<real, Meso::DataHolder::DEVICE> meso_mat(B);
+	Meso::SparseDiagonalPreconditioner<real> meso_sparse_diag_pred(meso_mat);
+	Meso::ConjugateGradient<real> meso_sparse_cg;
+	meso_sparse_cg.Init(&meso_mat, &meso_sparse_diag_pred, false, -1, 1e-5);
+	Meso::ArrayDv<real> u_new_dev(meso_mat.XDoF());
+	Meso::ArrayDv<real> u_old_dev = u_old;
+	int iters; real relative_error;
+	meso_sparse_cg.Solve(u_new_dev, u_old_dev, iters, relative_error);
+	Meso::Info("implicit surface tension solve {} iters with relative_error {}", iters, relative_error);
+	Meso::Array<real> u_new_host = u_new_dev;
+
+	//KrylovSolver::Params params; KrylovSolver::ICPCG(B, u_new, u_old, params);	////CPU IC-PCG
 
 #pragma omp parallel for
 	for (int r = 0; r < n; r++) {
 		const int axis = matrix_to_macgrid[r].first;
 		const VectorDi& face = mac_grid->face_grids[axis].Node_Coord(matrix_to_macgrid[r].second);
-		(*velocity)(axis, face) = u_new[r];
+		(*velocity)(axis, face) = u_new_host[r];
 	}
 }
 
