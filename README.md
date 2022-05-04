@@ -51,3 +51,6 @@ An output folder named `cavity` with `.vst` files will be generated.
   - Click `apply` to save the settings
 - Click &rarr; in the toolbar at top of screen to play the animation.
 - `ctrl+s` to save the result.
+
+## Notes for Developers
+<img src="./docs/assets/meso_design.png" width =70% alt="mgpcg-smooth" align=center/>
