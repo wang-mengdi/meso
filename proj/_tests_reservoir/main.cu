@@ -39,6 +39,7 @@ int main(){
     Test_Interpolation<float, 3>(Vector3i(16, 8, 17));
     Test_Interpolation<double, 3>(Vector3i(62, 40, 21));
 
-    Test_Mesh_Loader<3>(); // Can also verify by opening copy-mesh.obj
+    Test_Mesh_Loader_Multiple<TriangleMesh<3>>(); // Can also verify by opening copy-mesh.obj
+    Test_Mesh_Loader_Single<TriangleMesh<3>>();
     return 0;
 }

@@ -20,8 +20,9 @@ namespace Meso {
 			}
 			return tokens;
 		}
+
 	}
-	
+
 	namespace FileFunc {
 		void Create_Directory(const bf::path path)
 		{
@@ -80,7 +81,7 @@ namespace Meso {
 
 		real Angle_From_To(const Vector2& v1, const Vector2& v2)
 		{
-			real s = Cross(v1,v2)[0];
+			real s = Cross(v1, v2)[0];
 			real c = v1.dot(v2);
 			return atan2(s, c);
 		}

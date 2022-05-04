@@ -40,20 +40,27 @@ namespace Meso {
         }
         VectorXd Random_VectorXd(int n, real a = 0.0, real b = 1.0);
 
+        real Random_Sign(void);
+
         template<class T>
         void Sparse_Diagonal_Dominant_Matrix(int cols, int rows, Eigen::SparseMatrix<T, Eigen::RowMajor, int>& mat) {
             std::vector<Eigen::Triplet<T>> tripletList;
             tripletList.reserve(3 * rows); //three entries per row
             for (int i = 0; i < rows; i++)
             {
+                real sum = 0;
                 for (int j = std::max(i - 1, 0); j <= std::min(i + 1, cols - 1); j++) {
-                    if (i == j) {
-                        T a = Random::Random() * 100;
-                        tripletList.push_back(Eigen::Triplet<T>(i, j, a));
+                    if (i != j) {
+                        real random = Random::Random();
+                        sum += abs(random);
+                        tripletList.push_back(Eigen::Triplet<T>(i, j, random));
                     }
-                    else { tripletList.push_back(Eigen::Triplet<T>(i, j, Random::Random())); }
                 }
+
+                sum += abs(Random::Random()); //random offset
+                tripletList.push_back(Eigen::Triplet<T>(i, i, 100*sum*Random_Sign()));
             }
+
             mat.resize(rows, cols);
             mat.setFromTriplets(tripletList.begin(), tripletList.end());
         }
