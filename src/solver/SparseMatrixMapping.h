@@ -57,12 +57,12 @@ namespace Meso {
 		//int cols() const { return n; }
 		//int outerSize() const { return m; }
 		//int nonZeros() const { return nnz; }
-		//T* valuePtr() { return val.data(); }
-		//const T* valuePtr() const { return val.data(); }
-		//int* outerIndexPtr() { return ptr.data(); }
-		//const int* outIndexPtr() const { return ptr.data(); }
-		//int* innerIndexPtr() { return col.data(); }
-		//const int* innerIndexPtr() const { return col.data(); }
+		constexpr T* valuePtr() { return ArrayFunc::Data(val); }
+		constexpr const T* valuePtr() const { return ArrayFunc::Data<T, side>(val); }
+		constexpr int* outerIndexPtr() { return ArrayFunc::Data(ptr); }
+		constexpr const int* outIndexPtr() const { return ArrayFunc::Data<int, side>(ptr); }
+		constexpr int* innerIndexPtr() { return ArrayFunc::Data(col); }
+		constexpr const int* innerIndexPtr() const { return ArrayFunc::Data<int, side>(col); }
 		//similar to SparseMatrix::resize(). May realloc ptr, but not others. With default option, do not change data side.
 		//void resize(int _m, int _n, enum DataHolder new_side = DataHolder::UNKNOWN);
 		//void resizeNonZeros(int _nnz);//resize() must be called before, so we assume data side already set here
@@ -118,5 +118,65 @@ namespace Meso {
 			}
 		}
 	};
+
+	template<class T>
+	class SparseDiagonalPreconditioner : public LinearMapping<T> {
+	public:
+		ArrayDv<T> diag_inv;
+		int cols = 0, rows = 0;
+		SparseDiagonalPreconditioner() {}
+		SparseDiagonalPreconditioner(const SparseMatrixMapping<T, DEVICE>& A) { Init(A); }
+		//TODO: support multi time Init() here
+		void Init(const SparseMatrixMapping<T, DEVICE>& A) {
+			cols = A.XDoF();
+			rows = A.YDoF();
+			Assert(cols == rows, "DiagonalPreconditioner::Init column number doesn't equal to row number");
+			Assert(cols > 0, "DiagonalPreconditioner::Init can't solve an empty system");
+
+			const int* ptr_dev = A.outIndexPtr();
+			const int* col_dev = A.innerIndexPtr();
+			const T* val_dev = A.valuePtr();
+			//note: if you write something like A_dev.mat_dev.ptr in the lambda function, it will fail
+			//seems __device__ lambda can't properly capture object member
+			auto f = [ptr_dev, col_dev, val_dev]__device__(const int i)->T {
+				T inv_i;
+				//row of i
+				int row_start = ptr_dev[i], row_end = ptr_dev[i + 1];
+				bool found = false;
+				for (int it = row_start; it < row_end; it++) {
+					int col_num = col_dev[it];
+					if (col_num == i) {
+						T val = val_dev[it];
+						if (val != 0) {
+							found = true;
+							inv_i = 1.0 / val;
+						}
+						break;
+					}
+					else if (col_num > i) break;
+				}
+				if (!found) {
+					inv_i = 1.0;
+				}
+				return inv_i;
+			};
+
+			thrust::counting_iterator<int> idx_begin(0);
+			thrust::counting_iterator<int> idx_end = idx_begin + rows;
+			diag_inv.resize(cols);
+			thrust::transform(idx_begin, idx_end, diag_inv.begin(), f);
+			//cwise_mapping_with_idx_wrapper(diag_inv_dev, f, row_num);
+			checkCudaErrors(cudaGetLastError());
+		}
+
+		virtual int XDoF() const { return cols; }
+		virtual int YDoF() const { return rows; }
+
+		//input p, get Ap
+		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+			ArrayFunc::Binary_Transform(p, diag_inv, thrust::multiplies<T>(), Ap);
+		}
+	};
+
 
 }

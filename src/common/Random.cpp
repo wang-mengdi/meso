@@ -27,5 +27,9 @@ namespace Meso {
             for (int i = 0; i < n; i++) x[i] = Uniform(a, b);
             return x;
         }
+
+        real Random_Sign(void) {
+            return Random() < (real)0.5 ? (real) - 1 : (real) 1;
+        }
     }
 }

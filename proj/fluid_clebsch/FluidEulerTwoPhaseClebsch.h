@@ -61,7 +61,7 @@ public:
 	std::conditional_t<d == 2, Field<real, 2>, Field<VectorD, 3> > vorticity;
 	Field<real, d> divegence_field;
 
-    FluidEulerTwoPhaseClebsch():projection(&mac_grid,&velocity,&rho_face,&levelset,&type,&bc,SolverType::MULTIGRID_AUTO){}
+    FluidEulerTwoPhaseClebsch():projection(&mac_grid,&velocity,&rho_face,&levelset,&type,&bc){}
 
 	virtual void Initialize(const VectorDi& cell_counts,const real dx,const VectorD& domain_min=VectorD::Zero())
 	{

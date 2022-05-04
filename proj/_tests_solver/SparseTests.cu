@@ -21,7 +21,8 @@ void Test_Sparse_Matrix(void)
     //std::cout << "b:  " << b.transpose() << std::endl;
 
     //Solve with Eigen
-    Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::IdentityPreconditioner> e_cg;
+    //Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::IdentityPreconditioner> e_cg;
+    Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::DiagonalPreconditioner<real>> e_cg;
     e_cg.compute(A);
     x = e_cg.solve(b);
     //std::cout << "Eigen CG solve iterations:     " << e_cg.iterations() << std::endl;
@@ -31,7 +32,8 @@ void Test_Sparse_Matrix(void)
     //Solve with our CG solver with linear mapping
     SparseMatrixMapping<real, DEVICE> smm(A);
     ConjugateGradient<real> cg;
-    cg.Init(&smm, nullptr, false, e_cg.maxIterations(), e_cg.tolerance()); //use the same max iteration and tolerance as Eigen
+    SparseDiagonalPreconditioner<real> diag_pred(smm);
+    cg.Init(&smm, &diag_pred, false, e_cg.maxIterations(), e_cg.tolerance()); //use the same max iteration and tolerance as Eigen
 
     //Verify linear mapping first
     ArrayDv<real> x_d(cols), b_d(cols);
@@ -55,8 +57,8 @@ void Test_Sparse_Matrix(void)
         Pass("Test_Sparse_Matrix passed");
     }
     else {
-        Error("Incorrect Result!");
         std::cout << "Our x:" << x_cg.transpose() << std::endl;
+        Error("Test_Sparse_Matrix failed");
     }
 }
 
