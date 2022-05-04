@@ -351,39 +351,6 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 }
 
 //////////////////////////////////////////////////////////////////////////
-////Check functions
-//template<int d> void ProjectionTwoPhase<d>::Pressure(Field<real,d>& pressure) const
-//{
-//	pressure.Resize(mac_grid->grid.cell_counts,(real)0);
-//	iterate_cell(iter,mac_grid->grid){const VectorDi& cell=iter.Coord();
-//		int idx=grid_to_matrix(cell);if(idx==-1)continue;
-//		pressure(cell)=p[idx];}
-//}
-
-//template<int d> void ProjectionTwoPhase<d>::Pressure_Gradient(FaceField<real,d>& grad_p) const
-//{
-//	grad_p.Fill((real)0);
-//	for (int axis = 0; axis < d; axis++) {
-//		int face_num = mac_grid->face_grids[axis].node_counts.prod();
-//		#pragma omp parallel for
-//		for (int i = 0; i < face_num; i++) {
-//			VectorDi face = mac_grid->face_grids[axis].Node_Coord(i);
-//			grad_p(axis, face) = -Velocity_Offset(axis, face);}}
-//}
-
-//template<int d> void ProjectionTwoPhase<d>::Divergence(Field<real,d>& div) const
-//{
-//	div.Resize(mac_grid->grid.cell_counts,(real)0);
-//	int b_size=(int)matrix_to_grid.size();
-//	#pragma omp parallel for
-//	for(auto r=0;r<b_size;r++){
-//		const VectorDi& cell=mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
-//		real divg=(real)0;
-//		for(int axis=0;axis<d;axis++){divg+=((*velocity)(axis,cell+VectorDi::Unit(axis))-(*velocity)(axis,cell));}
-//		div(cell)=divg;}
-//}
-
-//////////////////////////////////////////////////////////////////////////
 ////Physical interface functions that defines the problem
 //see: https://wmdcstdio.com/2021/07/11/projection-matrix-terms/
 template<int d> real ProjectionTwoPhase<d>::Off_Diag_Term(const VectorDi& fluid_cell, const int& nbidx) const

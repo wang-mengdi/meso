@@ -97,13 +97,6 @@ public:
 
 	virtual void Initialize(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc);
 
-	////set attributes
-	void Set_Velocity(FaceField<real,d>& _velocity){if(velocity!=nullptr&&own_velocity)delete velocity;velocity=&_velocity;own_velocity=false;}
-	void Set_Rho_face(FaceField<real,d>& _rho_face){if(rho_face!=nullptr&&own_rho_face)delete rho_face;rho_face=&_rho_face;own_rho_face=false;}
-	void Set_Level_Set(LevelSet<d>& _levelset){if(levelset != nullptr && own_levelset)delete levelset; levelset = &_levelset; own_levelset = false;}
-	void Set_Type(Field<ushort,d>& _type){if(type!=nullptr&&own_type)delete type;type=&_type;own_type=false;}
-	void Set_BC(BoundaryConditionMacGrid<d>& _bc){if(bc!=nullptr&&own_bc)delete bc;bc=&_bc;own_bc=false;}
-
 	////projection functions
 	virtual void Update_A();
 	virtual void Update_b();			////calculate b as div velocity
@@ -112,14 +105,9 @@ public:
 	void Apply_Implicit_Surface_Tension(const real dt);
 	virtual void Correction();
 	virtual void Build();					////call allocate, update_A, and update_b
-	void Solve_CPX(void);
 	virtual void Solve();
 	virtual void Project();					////call both build, solve, and correction
 
-	////read data
-	//void Pressure(Field<real,d>& pressure) const;				////write values of p into pressure
-	//void Pressure_Gradient(FaceField<real,d>& grad_p) const;	////write values of p into pressure
-	//void Divergence(Field<real,d>& div) const;					////write values of velocity into div
     inline real Pressure_Jump(const VectorD& pos) const 
 	{ real curvature = (*levelset).Curvature(pos); return current_dt * sigma * curvature; }
 	
