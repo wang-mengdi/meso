@@ -44,7 +44,7 @@ namespace Meso {
 		virtual void Output(const bf::path base_path, const int frame) {
 			std::string vts_name = fmt::format("vts{:04d}.vts", frame);
 			bf::path vtk_path = base_path / bf::path(vts_name);
-			VTKFunc::Output_VTS(velocity, vtk_path.string());
+			VTKFunc::Write_VTS(velocity, vtk_path.string());
 		}
 		virtual void Advance(const int current_frame, const real current_time, const real dt) {
 			//advection

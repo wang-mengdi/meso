@@ -21,7 +21,7 @@ namespace Meso {
 
 	namespace VTKFunc {
 		template<class T, int d, DataHolder side>
-		void Output_VTS(const FaceField<T, d, side>& F, std::string file_name) {
+		void Write_VTS(const FaceField<T, d, side>& F, std::string file_name) {
 			Assert(!F.Empty(), "VTKFunc::Output_VTS error: empty FaceField");
 			Typedef_VectorD(d);
 			const auto grid = F.grid;
@@ -88,7 +88,7 @@ namespace Meso {
 #endif
 
 			writer->SetFileName(file_name.c_str());
-			writer->SetDataModeToAscii();
+			writer->SetDataModeToBinary();
 			writer->Write();
 
 			structured_grid->Delete();
