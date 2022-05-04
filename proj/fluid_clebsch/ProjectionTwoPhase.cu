@@ -7,9 +7,9 @@
 
 //////////////////////////////////////////////////////////////////////////
 ////Constructor
-template<int d> ProjectionTwoPhase<d>::ProjectionTwoPhase(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc, const SolverType& _mode)
+template<int d> ProjectionTwoPhase<d>::ProjectionTwoPhase(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc)
 {
-	Initialize(_mac_grid, _velocity, _rho_face, _levelset, _type, _bc, _mode);
+	Initialize(_mac_grid, _velocity, _rho_face, _levelset, _type, _bc);
 }
 
 template<int d> ProjectionTwoPhase<d>::~ProjectionTwoPhase()
@@ -22,9 +22,8 @@ template<int d> ProjectionTwoPhase<d>::~ProjectionTwoPhase()
 	if (bc != nullptr && own_bc) delete bc;
 }
 
-template<int d> void ProjectionTwoPhase<d>::Initialize(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc, const SolverType& _mode)
+template<int d> void ProjectionTwoPhase<d>::Initialize(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc)
 {
-	solver_mode = _mode;
 	if (solver_mode == SolverType::AUTO) { Auto_Select_Mode(); }
 
 	if (mac_grid != nullptr && own_grid) delete mac_grid;
@@ -52,15 +51,6 @@ template<int d> void ProjectionTwoPhase<d>::Initialize(MacGrid<d>* _mac_grid, Fa
 	if (bc != nullptr && own_bc)delete bc;
 	if (_bc == nullptr) { bc = new BoundaryConditionMacGrid<d>(*_mac_grid); own_bc = true; }
 	else { bc = _bc; own_bc = false; }
-}
-
-template<int d> void ProjectionTwoPhase<d>::Auto_Select_Mode(void)
-{
-	//cpx(cpu)->multigrid(gpu)->krylov(cpu)
-	solver_mode = SolverType::KRYLOV_CPU;
-	#ifdef USE_CUDA
-	solver_mode = SolverType::MULTIGRID_AUTO;
-	#endif
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -333,8 +323,7 @@ template<int d> void ProjectionTwoPhase<d>::Solve()
 template<int d> void ProjectionTwoPhase<d>::Project()
 {
 	Timer timer;					timer.Reset();
-	if(use_implicit_surface_tension) 
-		Apply_Implicit_Surface_Tension(current_dt);
+	if (use_implicit_surface_tension) Apply_Implicit_Surface_Tension(current_dt);
 	Build();						if(verbose)timer.Elapse_And_Output_And_Reset("Build");
 	Solve();						if(verbose)timer.Elapse_And_Output_And_Reset("Solve");
 	Correction();					if(verbose)timer.Elapse_And_Output_And_Reset("Correction");

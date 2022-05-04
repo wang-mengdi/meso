@@ -88,19 +88,15 @@ public:
 	// default narrow band width
 	int narrow_band_cell_num = 5;
 	int dirac_band_cell_num = 3;
-
-protected:
-	SolverType solver_mode = SolverType::AUTO;
 	
 public:
 	////constructors
-	ProjectionTwoPhase(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type = nullptr, BoundaryConditionMacGrid<d>* _bc = nullptr, const SolverType& _mode = SolverType::AUTO);
+	ProjectionTwoPhase(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type = nullptr, BoundaryConditionMacGrid<d>* _bc = nullptr);
 	~ProjectionTwoPhase();
 
-	virtual void Initialize(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc, const SolverType& _mode);
+	virtual void Initialize(MacGrid<d>* _mac_grid, FaceField<real, d>* _velocity, FaceField<real, d>* _rho_face, LevelSet<d>* _levelset, Field<ushort, d>* _type, BoundaryConditionMacGrid<d>* _bc);
 
 	////set attributes
-	void Auto_Select_Mode(void);
 	void Set_Velocity(FaceField<real,d>& _velocity){if(velocity!=nullptr&&own_velocity)delete velocity;velocity=&_velocity;own_velocity=false;}
 	void Set_Rho_face(FaceField<real,d>& _rho_face){if(rho_face!=nullptr&&own_rho_face)delete rho_face;rho_face=&_rho_face;own_rho_face=false;}
 	void Set_Level_Set(LevelSet<d>& _levelset){if(levelset != nullptr && own_levelset)delete levelset; levelset = &_levelset; own_levelset = false;}
