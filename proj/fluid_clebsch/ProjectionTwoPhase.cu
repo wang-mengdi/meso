@@ -71,7 +71,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 	meso_fixed_host.Init(meso_grid);
 	meso_fixed_host.Calc_Cells(
 		[&](const VectorDi cell) {
-			return this->Is_Valid_Cell(cell);
+			return !this->Is_Valid_Cell(cell);
 		}
 	);
 	meso_rho_host.Init(meso_grid);
@@ -294,38 +294,6 @@ template<int d> void ProjectionTwoPhase<d>::Build()
 	}
 }
 
-template<int d> void ProjectionTwoPhase<d>::Solve_CPX(void)
-{
-#ifdef USE_CPX
-	if (!cpx_inited) AuxFunc::Crash_With_Info("ProjectionTwoPhase<d>::Solve_CPX not inited");
-
-	int cell_num = mac_grid->grid.cell_counts.prod();
-	cell_b.Resize(mac_grid->grid.cell_counts);
-
-	#pragma omp parallel for
-	for (int idx = 0; idx < cell_num; idx++) {
-		const VectorDi& cell = mac_grid->grid.Cell_Coord(idx);
-		int r = grid_to_matrix(cell);
-		if (r == -1)cell_b(cell) = 0;
-		else cell_b(cell) = div_u[r];}
-	std::cout << "after build b" << std::endl;
-
-	cpx_poisson.Update_b(cell_b);
-	std::cout << "after update b" << std::endl;
-
-	cpx_poisson.Solve_Fast();
-	std::cout << "after solve" << std::endl;
-
-#pragma omp parallel for
-	for (auto r = 0; r < matrix_to_grid.size(); r++) {
-		const VectorDi& cell = mac_grid->grid.Cell_Coord(matrix_to_grid[r]);
-		p[r] = cpx_poisson.x(cell);}
-	std::cout << "after x->p" << std::endl;
-#else
-	AuxFunc::Crash_With_Info("Please compile cpx module with solver mode CPX_GPU");
-#endif
-}
-
 template<int d> void ProjectionTwoPhase<d>::Solve()
 {
 	//KrylovSolver::Params params;
@@ -346,7 +314,27 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 	if (use_implicit_surface_tension) Apply_Implicit_Surface_Tension(current_dt);
 	Build();						if(verbose)timer.Elapse_And_Output_And_Reset("Build");
 	Solve();						if(verbose)timer.Elapse_And_Output_And_Reset("Solve");
+
+	//Meso::FieldDv<float, d> poisson_result;
+	//poisson_result.Init(meso_poisson.fixed.grid);
+	//meso_poisson.Apply(poisson_result.Data(), meso_pressure_dev.Data());
+	//poisson_result -= meso_div_dev;
+	//Info("poisson residual max {}", poisson_result.Max_Abs());
+
 	Correction();					if(verbose)timer.Elapse_And_Output_And_Reset("Correction");
+	
+	//Meso::FaceField<float, d> meso_velocity_host;
+	//meso_velocity_host.Init(meso_pressure_dev.grid);
+	//meso_velocity_host.Calc_Faces(
+	//	[&](const int axis, const VectorDi face)->float {
+	//		if (mac_grid->Valid_Face(axis, face)) return (*velocity)(axis, face);
+	//		else return 0;
+	//	}
+	//);
+	//Meso::FaceFieldDv<float, d> meso_velocity_dev;
+	//meso_velocity_dev = meso_velocity_dev;
+	//Meso::Exterior_Derivative(meso_div_dev, meso_velocity_dev);
+	//Meso::Info("after projection max abs: {}", meso_div_dev.Max_Abs());
 }
 
 //////////////////////////////////////////////////////////////////////////
