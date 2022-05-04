@@ -70,7 +70,6 @@ public:
 	bool update_A=true;
 
 	////multigrid solver
-	Field<short, d> mat_id;
 	bool is_irregular_domain = false;
 	MultiGrid::Params multigrid_params;
 	GMGPCG_Solver_CPU<d> gmg_solver_cpu;
@@ -111,7 +110,6 @@ public:
 	void Apply_Vol_Control_To_b();
 	void Apply_Implicit_Surface_Tension(const real dt);
 	virtual void Correction();
-	void Update_Mat_Id();			////for irregular domain
 	virtual void Build();					////call allocate, update_A, and update_b
 	void Solve_CPX(void);
 	virtual void Solve();
