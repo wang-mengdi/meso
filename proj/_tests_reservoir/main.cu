@@ -41,5 +41,9 @@ int main(){
 
     Test_Mesh_Loader_Multiple<TriangleMesh<3>>(); // Can also verify by opening copy-mesh.obj
     Test_Mesh_Loader_Single<TriangleMesh<3>>();
-    return 0;
+
+    /*Test_Center<float, 2>(Vector2i(328, 92));
+    Test_Center<float, 3>(Vector3i(36, 28, 478));
+    Test_Center<double, 2>(Vector2i(74, 22));
+    Test_Center<double, 3>(Vector3i(381, 7, 32));*/
 }

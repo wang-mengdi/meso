@@ -100,4 +100,17 @@ namespace Meso {
 		Pass("Test_Face_Grid passed for counts={}", counts);
 	}
 
+	/*template<class T, int d>
+	void Test_Center(const Vector<int, d> counts) {
+		Typedef_VectorD(d);
+		Grid<d> grid(counts, 2);
+		if constexpr (d == 2) {
+			Assert(grid.Center()[0] == (T)counts[0] / 2 &&  grid.Center()[1] == counts[1] / 2, "wrong center: {}", grid.Center());
+		}
+		else if constexpr (d == 3) {
+			Assert(grid.Center()[0] == (T)counts[0] / 2 && grid.Center()[1] == counts[1] / 2 && grid.Center()[2] == counts[2] / 2, "wrong center:{}",grid.Center());
+		}
+		Pass("Test_Center passed for counts={}", counts);
+	}*/
+
 }
