@@ -1,5 +1,5 @@
 add_rules("mode.debug")
-set_languages("cxx20")
+--set_languages("cxx20")
 includes("./../../src/common/xmake.lua")
 target("_tests_common")
     add_rules("plugin.vsxmake.autoupdate")
