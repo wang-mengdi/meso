@@ -118,9 +118,10 @@ public:
 			VectorD center = fluid.mac_grid.grid.Center();
 			real r = fluid.mac_grid.grid.Length()[1] * (real).1;
 			VectorD e_r = VectorD::Ones() * r; e_r[1] *= (real)2.;
-			//Plane<d> surface(VectorD::Unit(1), center);			// hydrostatic
+			//ImplicitShape<d> surface;
+			//Plane<d> surface(VectorD::Unit(1), center);				// hydrostatic
 			//Ellipsoid<d> surface(center, e_r);					// surface tension
-			Sphere<d> surface(center, r);							// gravity
+			Sphere<d> surface(center+0.5*center[1]*VectorD::Unit(1), r);							// gravity
 			fluid.use_body_force = true;
 			fluid.levelset.Set_By_Geom(surface);
 			fluid.levelset.Fast_Marching();

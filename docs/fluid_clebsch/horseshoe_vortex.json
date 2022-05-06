@@ -1,0 +1,11 @@
+{
+    "dimension": 3,
+    "driver": {
+        "output_dir": "horseshoe_vortex",
+        "test": 10,
+        "cfl": 1.0,
+        "fps": 100,
+        "last_frame": 1000,
+        "beta": 0.5
+    }
+}

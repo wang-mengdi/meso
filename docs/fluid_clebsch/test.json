@@ -1,0 +1,11 @@
+{
+    "dimension": 2,
+    "driver": {
+        "output_dir": "test",
+        "test": 1,
+        "cfl": 1.0,
+        "fps": 20,
+        "last_frame": 500,
+        "beta": 0.5
+    }
+}

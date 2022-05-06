@@ -5,12 +5,13 @@
 
 template<int d>
 void Run(json& j) {
+	j = j.at("driver");
 	FluidEulerTwoPhaseClebschDriver<d> driver;
 	driver.scale = Json::Value<int>(j, "scale", 64);
-	driver.output_dir = Json::Value<std::string>(j, "output_dir", "out");
+	driver.output_dir = Json::Value<std::string>(j, "output_dir", "output");
 	driver.test = Json::Value<int>(j, "test", 1);
-	driver.last_frame = Json::Value<int>(j, "last_frame", 500);
-	driver.frame_rate = Json::Value<int>(j, "frame_rate", 20);
+	driver.last_frame = Json::Value<int>(j, "last_frame", 1000);
+	driver.frame_rate = Json::Value<int>(j, "fps", 20);
 	driver.cfl = Json::Value<real>(j, "cfl", 1.);
 	driver.beta = Json::Value<real>(j, "beta", 0.95);
 	driver.Initialize();
@@ -20,18 +21,25 @@ void Run(json& j) {
 int main(int argv, char** argc) {
 
 	try {
-		json j;
+		json j = {
+			{
+				"driver",
+				{
+					{"last_frame",10}
+				}
+			},
+		};
 		if (argv > 1) {
 			std::ifstream json_input(argc[1]);
 			json_input >> j;
 			json_input.close();
 		}
-
-		Run<3>(j);
+		int dim = Json::Value(j, "dimension", 2);
+		if (dim == 2) Run<2>(j);
+		else if (dim == 3) Run<3>(j);
 	}
 	catch (nlohmann::json::exception& e)
 	{
-		//Meso::Info("json exception {}", e.what());
 		fmt::print("json exception {}", e.what());
 	}
 	return 0;
