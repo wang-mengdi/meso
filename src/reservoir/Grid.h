@@ -179,8 +179,9 @@ namespace Meso {
 			}
 			return face;
 		}
-
 		
+
+		__host__ __device__ VectorD Cell_Center(const VectorDi& cell) const { return pos_min + (cell.template cast<real>() + (real).5 * VectorD::Ones()) * dx; }
 
 
 		////parallel iterators

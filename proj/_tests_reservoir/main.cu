@@ -7,6 +7,7 @@
 #include "GridTests.h"
 #include "InterpolationTests.h"
 #include "MeshTests.h"
+#include "MarchingCubesTests.h"
 
 using namespace Meso;
 
