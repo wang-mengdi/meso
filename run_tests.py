@@ -27,3 +27,4 @@ if __name__=='__main__':
     #Run_Project("_tests_common")
     Run_Project("_tests_reservoir")
     Run_Project("_tests_solver")
+    Run_Project("_tests_dec_system")
