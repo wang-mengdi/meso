@@ -9,9 +9,9 @@ namespace Meso {
 	void Test_Marching_Cubes() {
 		Typedef_VectorD(d);
 
-		Vector<int, d> counts = Vector3i(12, 12, 12);
+		Vector<int, d> counts = Vector3i(100, 100, 100);
 		VectorD domain_min = VectorFunc::V<d>(0., 0., 0.);
-		Grid<d> grid(counts, 0.1, domain_min, COLLOC);
+		Grid<d> grid(counts, 0.01, domain_min, COLLOC);
 
 		Array<T> my_data(grid.DoF());
 		VectorD center = VectorFunc::V<d>(0.6, 0.6, 0.);
@@ -26,6 +26,9 @@ namespace Meso {
 		auto m = std::make_shared<TriangleMesh<d>>();
 		Marching_Cubes<T, d>(field, m);
 		OBJFunc::Write_Mesh("./marching_cubes.obj", m);
+
+		Pass("Test_Marching_Cubes Passed!");
+
 		return;
 	}
 }
