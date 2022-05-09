@@ -38,8 +38,6 @@ $$u^{2h}(x)=(\mathcal{B}u^h)(x)=\frac{1}{8}u^h(x-3h/2)+\frac{3}{8}(x-h/2)+\frac{
 
 延拓算子$\mathcal{P}$的严格定义为$\mathcal{P}^T=8\mathcal{B}\otimes\mathcal{B}\otimes\mathcal{B}$。实际上很简单，细网格上的每一个值就是在粗糙网格上做三线性插值，可以证明二者相等。
 
-一般要求Restrictor和Prolongator互为转置，且要求$\mathcal{R}\circ\mathcal{P}=I$.
-
 在我们的代码中，这一对Restrictor/Prolongator名为RestrictorIntp/ProlongaotrIntp，其意为采用插值的办法。
 
 ### 平滑(Smoothing)算子
@@ -52,6 +50,15 @@ $$u^{2h}(x)=(\mathcal{B}u^h)(x)=\frac{1}{8}u^h(x-3h/2)+\frac{3}{8}(x-h/2)+\frac{
 <img src="./assets/mgpcg-smooth.png" width =50% alt="mgpcg-smooth" align=center/>
 
 注意，这个图里面写的不太明显，其中$u_I$始终是同一个数组。实际上这里表示了雅可比和Gauss-Seidel的最大区别：雅可比迭代中的$\bm{u}$（方程组的解，也就是一般说的$\bm{x}$），始终使用的是上一个迭代的值，而Gauss-Seidel会使用本次迭代刚刚计算出来的新值。因此Gauss-Seidel难以并行，但计算边界区域本来就需要用串行的BFS，所以也就用了串行的Gauss-Seidel。
+
+### 收敛性
+
+文献提到，V-Cycle多重网格是一个正定preconditioner的条件如下：
+
+- Restrictor和Prolongator互为转置，可差一个常数倍数。
+- 如果用Gauss-Seidel平滑，则upstroke和downstroke当中的平滑操作应当采取相反的顺序。
+- 最粗一层的求解应当是精确的，如不然，应当用一个正定算子估计$\mathcal{L}^{(L)}$的逆矩阵。类似地，如果最粗一层是用GS求解，那么应该正反顺序成对出现。
+
 
 ### 缺陷
 这里采用的是简单的V-Cycle，所以有一些问题需要注意。文献中强调，如果想只用多重网格法解方程，则需要在边界附近至少3格宽的区域内做30\~40次Gauss-Seidel迭代（雅可比前后各15\~20次），否则V-Cycle会震荡或发散。

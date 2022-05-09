@@ -99,12 +99,12 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	class RestrictorSample : public LinearMapping<T> {
+	class RestrictorSum : public LinearMapping<T> {
 	public:
 		Grid<d> coarse_grid, fine_grid;
 
-		RestrictorSample() {}
-		RestrictorSample(const Grid<d> coarse, const Grid<d> fine) {
+		RestrictorSum() {}
+		RestrictorSum(const Grid<d> coarse, const Grid<d> fine) {
 			Init(coarse, fine);
 		}
 		void Init(const Grid<d> _coarse, const Grid<d> _fine) {
@@ -117,10 +117,11 @@ namespace Meso {
 		virtual int YDoF() const { return coarse_grid.DoF(); }
 
 		virtual void Apply(ArrayDv<T>& coarse_data, const ArrayDv<T>& fine_data) {
-			Memory_Check(coarse_data, fine_data, "Restrictor::Apply error: not enough space");
+			Memory_Check(coarse_data, fine_data, "RestrictorSum::Apply error: not enough space");
 			T* coarse_ptr = ArrayFunc::Data<T, DEVICE>(coarse_data);
 			const T* fine_ptr = ArrayFunc::Data<T, DEVICE>(fine_data);
 			coarse_grid.Exec_Kernel(&Restrictor_Sum_Coarse_Kernel<T, d>, coarse_grid, coarse_ptr, fine_grid, fine_ptr);
+			checkCudaErrors(cudaGetLastError());
 		}
 	};
 }

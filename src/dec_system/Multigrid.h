@@ -147,6 +147,6 @@ namespace Meso {
 		}
 	};
 
-	template<class T, int d>
-	using VCycleMultigridIntp = VCycleMultigrid<T, RestrictorIntp<T, d>, ProlongatorIntp<T, d>>;
+	template<class T, int d> using VCycleMultigridIntp = VCycleMultigrid<T, RestrictorIntp<T, d>, ProlongatorIntp<T, d>>;
+	template<class T, int d> using VCycleMultigridSum = VCycleMultigrid<T, RestrictorSum<T, d>, ProlongatorSum<T, d>>;
 }

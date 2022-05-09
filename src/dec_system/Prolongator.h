@@ -63,4 +63,40 @@ namespace Meso {
 			checkCudaErrors(cudaGetLastError());
 		}
 	};
+
+	template<class T, int d>
+	__global__ void Prolongator_Sum_Kernel(const Grid<d> fine_grid, T* fine_data, const Grid<d> coarse_grid, const T* coarse_data) {
+		Typedef_VectorD(d);
+		VectorDi fine_coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		VectorDi coarse_coord = fine_coord / 2;
+		real val = 0;
+		if (coarse_grid.Valid(coarse_coord)) val = coarse_data[coarse_grid.Index(coarse_coord)];
+		fine_data[fine_grid.Index(fine_coord)] = val;
+	}
+
+	template<class T, int d>
+	class ProlongatorSum : public LinearMapping<T> {
+	public:
+		Grid<d> fine_grid, coarse_grid;
+
+		ProlongatorSum() {}
+		ProlongatorSum(const Grid<d> _fine, const Grid<d> _coarse) { Init(_fine, _coarse); }
+		void Init(const Grid<d> _fine, const Grid<d> _coarse) {
+			fine_grid = _fine;
+			coarse_grid = _coarse;
+		}
+
+		//number of cols
+		virtual int XDoF() const { return coarse_grid.DoF(); }
+		//number of rows
+		virtual int YDoF() const { return fine_grid.DoF(); }
+		//input coarse_data, output fine_data
+		virtual void Apply(ArrayDv<T>& fine_data, const ArrayDv<T>& coarse_data) {
+			Memory_Check(fine_data, coarse_data, "ProlongatorSum::Apply error: not enough memory");
+			T* fine_ptr = ArrayFunc::Data<T, DEVICE>(fine_data);
+			const T* coarse_ptr = ArrayFunc::Data<T, DEVICE>(coarse_data);
+			fine_grid.Exec_Kernel(&Prolongator_Sum_Kernel<T, d>, fine_grid, fine_ptr, coarse_grid, coarse_ptr);
+			checkCudaErrors(cudaGetLastError());
+		}
+	};
 }

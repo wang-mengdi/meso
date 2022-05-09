@@ -21,7 +21,7 @@ namespace Meso {
 		Check_Cuda_Memory("test begin");
 
 		Grid<d> grid(counts);
-		MaskedPoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid,1000);
+		MaskedPoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid, 10);
 
 		Field<T, d> b_host(grid);
 		Random::Fill_Random_Array<T>(b_host.Data(), -5, 10);
@@ -34,7 +34,8 @@ namespace Meso {
 		poisson.Residual(res_dev.Data(), x_dev.Data(), b_dev.Data());
 		Info("initial residual: {}", sqrt(ArrayFunc::Dot(res_dev.Data(), res_dev.Data())));
 
-		VCycleMultigridIntp<T, d> solver;
+		//VCycleMultigridIntp<T, d> solver;
+		VCycleMultigrid<T, RestrictorSum<T, d>, ProlongatorSum<T, d>> solver;
 		solver.Init_Poisson(poisson, 2, 2);
 
 		solver.Apply(x_dev.Data(), b_dev.Data());
@@ -59,6 +60,7 @@ namespace Meso {
 		FieldDv<T, d> x_dev(grid, 0);
 		ConjugateGradient<T> MGPCG;
 		VCycleMultigridIntp<T, d> precond;
+		//VCycleMultigridSum<T, d> precond;
 		precond.Init_Poisson(poisson, 2, 2);
 		//MGPCG.Init(&poisson, &precond, false);
 		MGPCG.Init(&poisson, &precond, false, -1, 1e-6);
