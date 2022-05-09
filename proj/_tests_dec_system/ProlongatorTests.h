@@ -11,7 +11,7 @@
 using namespace Meso;
 
 template<class T,int d>
-void Test_Prolongator(const Vector<int, d> fine_counts) {
+void Test_Prolongator_Intp(const Vector<int, d> fine_counts) {
 	//test that restrict(prolongate())==identity
 	Typedef_VectorD(d);
 	Grid<d> fine_grid(fine_counts, 0.5, VectorD::Zero());
@@ -31,7 +31,7 @@ void Test_Prolongator(const Vector<int, d> fine_counts) {
 
 	FieldDv<T, d> coarse_dev = coarse_host;
 	FieldDv<T, d> fine_dev(fine_grid);
-	Prolongator<T, d> P; P.Init(fine_grid, coarse_grid);
+	ProlongatorIntp<T, d> P; P.Init(fine_grid, coarse_grid);
 	P.Apply(fine_dev.Data(), coarse_dev.Data());
 
 	Field<T, d> fine_cpu(fine_grid);

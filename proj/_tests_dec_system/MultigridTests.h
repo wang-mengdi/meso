@@ -34,7 +34,7 @@ namespace Meso {
 		poisson.Residual(res_dev.Data(), x_dev.Data(), b_dev.Data());
 		Info("initial residual: {}", sqrt(ArrayFunc::Dot(res_dev.Data(), res_dev.Data())));
 
-		VCycleMultigrid<T> solver;
+		VCycleMultigridIntp<T, d> solver;
 		solver.Init_Poisson(poisson, 2, 2);
 
 		solver.Apply(x_dev.Data(), b_dev.Data());
@@ -58,7 +58,7 @@ namespace Meso {
 		FieldDv<T, d> b_dev = b_host;
 		FieldDv<T, d> x_dev(grid, 0);
 		ConjugateGradient<T> MGPCG;
-		VCycleMultigrid<T> precond;
+		VCycleMultigridIntp<T, d> precond;
 		precond.Init_Poisson(poisson, 2, 2);
 		//MGPCG.Init(&poisson, &precond, false);
 		MGPCG.Init(&poisson, &precond, false, -1, 1e-6);

@@ -11,7 +11,7 @@
 
 namespace Meso {
 	template<class T, int d>
-	__global__ void Prolongator_Kernel(const Grid<d> fine_grid, T* fine_data, const Grid<d> coarse_grid, const T* coarse_data) {
+	__global__ void Prolongator_Intp_Kernel(const Grid<d> fine_grid, T* fine_data, const Grid<d> coarse_grid, const T* coarse_data) {
 		Typedef_VectorD(d);
 		VectorDi fine_coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		VectorDi coarse_coord;
@@ -32,13 +32,13 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	class Prolongator : public LinearMapping<T> {
+	class ProlongatorIntp : public LinearMapping<T> {
 		Typedef_VectorD(d);
 	public:
 		Grid<d> fine_grid, coarse_grid;
 
-		Prolongator() {}
-		Prolongator(const Grid<d> _fine, const Grid<d> _coarse) { Init(_fine, _coarse); }
+		ProlongatorIntp() {}
+		ProlongatorIntp(const Grid<d> _fine, const Grid<d> _coarse) { Init(_fine, _coarse); }
 
 		void Init(const Grid<d> _fine, const Grid<d> _coarse) {
 			fine_grid = _fine;
@@ -59,7 +59,7 @@ namespace Meso {
 			Memory_Check(fine_data, coarse_data, "Prolongator::Apply error: not enough memory");
 			T* fine_ptr = ArrayFunc::Data<T, DEVICE>(fine_data);
 			const T* coarse_ptr = ArrayFunc::Data<T, DEVICE>(coarse_data);
-			fine_grid.Exec_Kernel(&Prolongator_Kernel<T, d>, fine_grid, fine_ptr, coarse_grid, coarse_ptr);
+			fine_grid.Exec_Kernel(&Prolongator_Intp_Kernel<T, d>, fine_grid, fine_ptr, coarse_grid, coarse_ptr);
 			checkCudaErrors(cudaGetLastError());
 		}
 	};

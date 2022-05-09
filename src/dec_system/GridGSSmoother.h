@@ -34,16 +34,18 @@ namespace Meso {
 		LinearMapping<T>* mapping;
 		int dof;
 		int iter_num;
+		int order;//0: forward order, 1: reverse order
 		ArrayDv<T> diag;
 		ArrayDv<T> x_temp;
 		GridGSMask<d> mask;
 		GridGSSmoother() {}
-		GridGSSmoother(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num) {
-			Init_Poisson(_mapping, _iter_num);
+		GridGSSmoother(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num, const int _order = 0) {
+			Init_Poisson(_mapping, _iter_num, _order);
 		}
-		void Init_Poisson(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num) {
+		void Init_Poisson(MaskedPoissonMapping<T, d>& _mapping, const int _iter_num, const int _order = 0) {
 			mapping = &_mapping;
 			iter_num = _iter_num;
+			order = _order;
 			dof = mapping->XDoF();
 			Poisson_Diagonal(diag, _mapping);
 			x_temp.resize(dof);
@@ -59,6 +61,7 @@ namespace Meso {
 			thrust::counting_iterator<int> idxend = idxbegin + dof;
 			for (int iter = 0; iter < iter_num; iter++) {
 				for (int c = 0; c < color_num; c++) {
+					int goal_color = (order == 0 ? c : color_num - 1 - c);
 					mapping->Residual(x_temp, x, b);
 					ArrayFunc::Divide(x_temp, diag);
 					thrust::transform_if(
@@ -68,7 +71,7 @@ namespace Meso {
 						idxbegin,//stencil
 						x.begin(),//result
 						_1 + _2,//binary op
-						[=]__device__(const int idx)->bool { return (mask(idx) == c); }
+						[=]__device__(const int idx)->bool { return (mask(idx) == goal_color); }
 					);
 				}
 			}

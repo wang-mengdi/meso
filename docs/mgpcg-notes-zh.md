@@ -40,6 +40,8 @@ $$u^{2h}(x)=(\mathcal{B}u^h)(x)=\frac{1}{8}u^h(x-3h/2)+\frac{3}{8}(x-h/2)+\frac{
 
 一般要求Restrictor和Prolongator互为转置，且要求$\mathcal{R}\circ\mathcal{P}=I$.
 
+在我们的代码中，这一对Restrictor/Prolongator名为RestrictorIntp/ProlongaotrIntp，其意为采用插值的办法。
+
 ### 平滑(Smoothing)算子
 
 平滑算子为阻尼雅可比法（Dampled Jacobi），其中阻尼常数$\omega=2/3$.值得指出的是，在边界条件和边界形状比较复杂的情况下，人们通常会在边界附近做额外的平滑操作。这里我们对空气/边界格附近一定距离内（曼哈顿距离）的流体格子，做若干次Gauss-Seidel迭代。

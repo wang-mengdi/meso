@@ -16,7 +16,7 @@
 
 namespace Meso {
 
-	template<class T>
+	template<class T, class Restrictor, class Prolongator>
 	class VCycleMultigrid :public LinearMapping<T> {
 		using LinearMappingPtr = std::shared_ptr<LinearMapping<T>>;
 	public:
@@ -103,14 +103,14 @@ namespace Meso {
 			restrictors.resize(L);
 			for (int i = 0; i < L; i++) {
 				//i is fine and i+1 is coarse
-				restrictors[i] = std::make_shared<Restrictor<T, d>>(grids[i + 1], grids[i]);
+				restrictors[i] = std::make_shared<Restrictor>(grids[i + 1], grids[i]);
 			}
 
 			//prolongators
 			prolongators.resize(L);
 			for (int i = 0; i < L; i++) {
 				//i is fine and i+1 is coarse
-				prolongators[i] = std::make_shared<Prolongator<T, d>>(grids[i], grids[i + 1]);
+				prolongators[i] = std::make_shared<Prolongator>(grids[i], grids[i + 1]);
 			}
 
 			//presmoothers and postsmoothers
@@ -123,8 +123,8 @@ namespace Meso {
 				//presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, pre_iter, (T)(2.0 / 3.0));
 				//postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, post_iter, (T)(2.0 / 3.0));
 				
-				presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter);
-				postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter);
+				presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter, 0);
+				postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter, 1);
 			}
 
 			//direct_solver
@@ -147,4 +147,6 @@ namespace Meso {
 		}
 	};
 
+	template<class T, int d>
+	using VCycleMultigridIntp = VCycleMultigrid<T, RestrictorIntp<T, d>, ProlongatorIntp<T, d>>;
 }

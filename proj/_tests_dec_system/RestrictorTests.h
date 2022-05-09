@@ -16,7 +16,7 @@ T Weight_By_Offset(const int i) {
 }
 
 template<class T, int d>
-void Test_Restrictor(const Vector<int, d> counts) {
+void Test_Restrictor_Intp(const Vector<int, d> counts) {
 	Typedef_VectorD(d);
 	Grid<d> finer_grid(counts);
 	Grid<d> coarser_grid(counts / 2);
@@ -55,7 +55,7 @@ void Test_Restrictor(const Vector<int, d> counts) {
 		}
 	);
 	
-	Restrictor<T, d> restrictor;
+	RestrictorIntp<T, d> restrictor;
 	restrictor.Init(coarser_grid, finer_grid);
 	FieldDv<T, d> finer_dev = finer_host;
 	FieldDv<T, d> coarser_dev = coarser_host;
