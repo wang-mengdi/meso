@@ -17,6 +17,7 @@ namespace Meso {
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) = 0;
 
 		void Residual(ArrayDv<T>& res, const ArrayDv<T>& x, const ArrayDv<T> &b) {
+			res.resize(b.size());
 			//b-Ax
 			Apply(res, x);
 			ArrayFunc::Binary_Transform(res, b, [=]__device__(T a, T b) { return b - a; }, res);
