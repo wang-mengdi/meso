@@ -23,7 +23,7 @@ namespace Meso {
 		FieldDv<real, d> pressure;
 		FieldDv<real, d> vel_div;
 		MaskedPoissonMapping<real, d> poisson;
-		VCycleMultigrid<real> MG_precond;
+		VCycleMultigridIntp<real, d> MG_precond;
 		ConjugateGradient<real> MGPCG;
 		void Init(Field<bool, d>& fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
 			velocity.Deep_Copy(initial_velocity);

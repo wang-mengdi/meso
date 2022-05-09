@@ -159,19 +159,21 @@ namespace Meso {
 			bc_width << 0, -1, 0, 0, 0, 0;
 			bc_val << 1, 1, 0, 0, 0, 0;
 
-			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
-
 			////sphere
 			VectorD center = grid.Center(); 
-			//center[0] = (real)0.3;
 			real r = (real)0.3;
 			Sphere<d> sphere(center, r);
+
+			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 
 			grid.Exec_Nodes(
 				[&](const VectorDi cell) {
 					const VectorD pos = grid.Position(cell);
 					if (sphere.Inside(pos)) {
 						fixed(cell) = true;
+					}
+					else {
+						fixed(cell) = false;
 					}
 				}
 			);
