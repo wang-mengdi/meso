@@ -177,7 +177,16 @@ namespace Meso {
 					}
 				}
 			);
-			
+
+			//one cell
+			// VectorDi face = VectorFunc::Vi<d>(1,1,1);
+			// face_fixed(0,face) = true;
+			// face_fixed(1,face) = true;
+			// initial_vel(1,face) = 0.0;
+			// initial_vel(0,face) = 0.0;
+			// vol(1,face) = 0;
+			// vol(0, face) = 0;
+
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
 					const VectorD pos = grid.Face_Center(axis, face);
