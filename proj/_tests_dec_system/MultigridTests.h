@@ -24,29 +24,28 @@ namespace Meso {
 		MaskedPoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid);
 
 		Field<T, d> b_host(grid);
-		Random::Fill_Random_Array<T>(b_host.data, -5, 10);
+		Random::Fill_Random_Array<T>(b_host.Data(), -5, 10);
 		FieldDv<T, d> b_dev = b_host;
 		FieldDv<T, d> x_dev(grid, 0);
 
 		Check_Cuda_Memory("allocated poisson");
 
 		FieldDv<T, d> res_dev(grid);
-		poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
-		Info("initial residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
+		poisson.Residual(res_dev.Data(), x_dev.Data(), b_dev.Data());
+		Info("initial residual: {}", sqrt(ArrayFunc::Dot(res_dev.Data(), res_dev.Data())));
 
 		VCycleMultigrid<T> solver;
 		solver.Init_Poisson(poisson, 2, 2);
 
-		//solver.Apply(x_dev.data, b_dev.data);
-		//poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
-		//Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
+		solver.Apply(x_dev.Data(), b_dev.Data());
+		poisson.Residual(res_dev.Data(), x_dev.Data(), b_dev.Data());
+		Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.Data(), res_dev.Data())));
 
 		//Info("run mg again:");
-
-		//for (int k = 0; k < 100; k++) {
-		//	solver.Apply(x_dev.data, b_dev.data);
-		//	poisson.Residual(res_dev.data, x_dev.data, b_dev.data);
-		//	Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.data, res_dev.data)));
+		//for (int k = 0; k < 10; k++) {
+		//	solver.Apply(x_dev.Data(), b_dev.Data());
+		//	poisson.Residual(res_dev.Data(), x_dev.Data(), b_dev.Data());
+		//	Info("mg residual: {}", sqrt(ArrayFunc::Dot(res_dev.Data(), res_dev.Data())));
 		//}
 	}
 

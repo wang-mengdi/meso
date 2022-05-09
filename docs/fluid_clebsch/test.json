@@ -5,7 +5,7 @@
         "fps": 20,
         "last_frame": 1,
         "test": 1,
-        "scale": 64,
+        "scale": 16,
         "cfl": 1.0,
         "rho_A": 0.001,
         "rho_L": 1.0,

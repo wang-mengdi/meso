@@ -87,7 +87,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 	);
 	meso_poisson.Init(meso_grid, meso_rho_host, meso_fixed_host);
 	meso_mg.Init_Poisson(meso_poisson, 2, 2);
-	meso_cg.Init(&meso_poisson, &meso_mg, false, -1, 1e-5);
+	meso_cg.Init(&meso_poisson, &meso_mg, true, 100, 1e-5);
 	//meso_cg.Init(&meso_poisson, nullptr, true, -1, 1e-5);
 }
 

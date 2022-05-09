@@ -22,7 +22,8 @@ namespace Meso {
 			VectorDi coord = grid.Coord(idx);
 			int col = (coord[0] & 1);
 			col |= ((coord[1] & 1) << 1);
-			if (d == 3) col |= ((coord[2] & 1) << 2);
+			if constexpr (d == 3) col |= ((coord[2] & 1) << 2);
+			return col;
 		}
 	};
 

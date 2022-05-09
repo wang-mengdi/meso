@@ -11,9 +11,15 @@
 #include "MultigridTests.h"
 #include "ExteriorCalculusTests.h"
 #include "DenseSolverTests.h"
+#include "SmootherTests.h"
 using namespace Meso;
 
 int main(){
+    Test_GridGSSmoother<double>(Vector2i(16, 16));
+    //Test_DampedJacobiSmoother<double>(Vector2i(16, 16));
+    Test_Multigrid<double>(Vector2i(14, 53));
+    return 0;
+
     Test_Poisson_Diagonal<float>(Vector2i(14, 53));
     Test_Poisson_Diagonal<double>(Vector2i(14, 53));
     Test_Poisson_Diagonal<float>(Vector3i(16, 44, 23));
@@ -41,6 +47,8 @@ int main(){
     Test_Prolongator<double>(Vector2i(14, 53));
     Test_Prolongator<float>(Vector3i(15, 44, 23));
     Test_Prolongator<double>(Vector3i(15, 44, 23));
+
+    //Test_GridGSSmoother<double, 2>(Vector2i(64, 64));
 
     Test_MGPCG<float>(Vector2i(512, 513));
     Test_MGPCG<double>(Vector2i(512, 513));

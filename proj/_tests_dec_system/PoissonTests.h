@@ -15,7 +15,7 @@ namespace Meso {
 		FaceField<T, d> vol(grid);
 		Field<bool, d> fixed(grid);
 		MaskedPoissonMapping<T, d> mapping;
-		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = Random::Uniform(0, 1); });
+		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = Random::Uniform(0, 1000); });
 		fixed.Iterate_Cells([&](const VectorDi cell) {	fixed(cell) = !(bool)Random::RandInt(0, 9);	});
 		mapping.Init(grid, vol, fixed);
 		return mapping;
