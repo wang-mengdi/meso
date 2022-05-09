@@ -285,20 +285,28 @@ template<int d> void ProjectionTwoPhase<d>::Correction()
 		#pragma omp parallel for
 		for (int i = 0; i < face_num; i++) {
 			VectorDi face = mac_grid->face_grids[axis].Node_Coord(i);
-			(*velocity)(axis, face) += Velocity_Offset(axis, face);
+			VectorDi middle = mac_grid->grid.cell_counts / 2;
+			real offset = Velocity_Offset(axis, face);
+			for (int i = 0; i < d; i++) { if (i != 1) middle[i] = 0; }
+			if (axis == 0 && face == middle) { std::cout << "face vel offset: " << offset << std::endl; }
+			(*velocity)(axis, face) += offset;
 		}
 	}
 }
 
 template<int d> void ProjectionTwoPhase<d>::Build()
 {
+	Meso::Vector<int,d> middle = mac_grid->grid.cell_counts / 2;
+	for (int i = 0; i < d; i++) { if (i != 1) middle[i] = 0; }
 	Timer timer;timer.Reset();
 	Update_A();
 	if(verbose)timer.Elapse_And_Output_And_Reset("Assemble A");
 	Update_b();
+	std::cout << "div after Update b: " << meso_div_host(middle) << std::endl;
 	if(verbose)timer.Elapse_And_Output_And_Reset("Assemble b");
 	if (use_explicit_surface_tension) {
 		Apply_Jump_Condition_To_b();
+		std::cout << "div after Jump Condition b: " << meso_div_host(middle) << std::endl;
 		if (verbose)timer.Elapse_And_Output_And_Reset("Apply jump condition to b");
 	}
 	if (use_vol_control) {
@@ -323,10 +331,13 @@ template<int d> void ProjectionTwoPhase<d>::Solve()
 
 template<int d> void ProjectionTwoPhase<d>::Project()
 {
+	Meso::Vector<int, d> middle = mac_grid->grid.cell_counts / 2;
+	for (int i = 0; i < d; i++) { if (i != 1) middle[i] = 0; }
 	Timer timer;					timer.Reset();
 	if (use_implicit_surface_tension) Apply_Implicit_Surface_Tension(current_dt);
 	Build();						if(verbose)timer.Elapse_And_Output_And_Reset("Build");
 	Solve();						if(verbose)timer.Elapse_And_Output_And_Reset("Solve");
+	std::cout << "pressure after solve: " << meso_pressure_host(middle) << std::endl;
 
 	//Meso::FieldDv<float, d> poisson_result;
 	//poisson_result.Init(meso_poisson.fixed.grid);
@@ -335,6 +346,7 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 	//Info("poisson residual max {}", poisson_result.Max_Abs());
 
 	Correction();					if(verbose)timer.Elapse_And_Output_And_Reset("Correction");
+	std::cout << "vel after correct: " << (*velocity)(0, middle) << std::endl;
 	
 	//Meso::FaceField<float, d> meso_velocity_host;
 	//meso_velocity_host.Init(meso_pressure_dev.grid);
@@ -379,6 +391,8 @@ template<int d> real ProjectionTwoPhase<d>::Velocity_Offset(const int& axis, con
 	real cell_p[2]; for (int i = 0; i < 2; i++)cell_p[i] = Is_Valid_Cell(cell[i]) ? meso_pressure_host(cell[i]) : (real)0;
 	real one_over_dx = (real)1 / mac_grid->grid.dx;
 	real p_jump = 0.;
+	VectorDi middle = mac_grid->grid.cell_counts / 2;
+	for (int i = 0; i < d; i++) { if (i != 1) middle[i] = 0; }
 	if (use_explicit_surface_tension) {
 		if (Is_Valid_Cell(cell[0]) && Is_Valid_Cell(cell[1])) {
 			real phi0 = (*levelset).phi(cell[0]); real phi1 = (*levelset).phi(cell[1]);
@@ -391,7 +405,12 @@ template<int d> real ProjectionTwoPhase<d>::Velocity_Offset(const int& axis, con
 			}
 		}
 	}
-
+	if (axis == 0 && face == middle) {
+		std::cout << "cell p[1]: " << cell_p[0] << std::endl;
+		std::cout << "p_jump: " << p_jump << std::endl;
+		std::cout << "cell p[1]: " << cell_p[1] << std::endl;
+		std::cout << "rho: " << (*rho_face)(axis, face) << std::endl;
+	}
 	return -((cell_p[1] + p_jump) - cell_p[0]) / (*rho_face)(axis, face);
 }
 
