@@ -77,7 +77,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 	);
 	meso_rho_host.Init(meso_grid);
 	meso_rho_host.Calc_Faces(
-		[&](const int axis, const VectorDi face)->float {
+		[&](const int axis, const VectorDi face)->real {
 			VectorDi cell[2]; for (int i = 0; i < 2; i++)cell[i] = MacGrid<d>::Face_Incident_Cell(axis, face, i);
 			if (!Is_Valid_Cell(cell[0])) std::swap(cell[0], cell[1]);
 			if (!Is_Valid_Cell(cell[0])) return (real)0;
@@ -88,6 +88,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 	meso_poisson.Init(meso_grid, meso_rho_host, meso_fixed_host);
 	meso_mg.Init_Poisson(meso_poisson, 2, 2);
 	meso_cg.Init(&meso_poisson, &meso_mg, false, -1, 1e-5);
+	//meso_cg.Init(&meso_poisson, nullptr, true, -1, 1e-5);
 }
 
 template<int d> void ProjectionTwoPhase<d>::Apply_Jump_Condition_To_b()
@@ -249,7 +250,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_b()
 	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
 	meso_div_host.Init(meso_grid);
 	meso_div_host.Calc_Cells(
-		[&](const VectorDi cell)->float {
+		[&](const VectorDi cell)->real {
 			if (!mac_grid->grid.Valid_Cell(cell)) return 0;
 			real div = (real)0;
 			for (int axis = 0; axis < d; axis++) {
@@ -339,28 +340,9 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 	Timer timer;					timer.Reset();
 	if (use_implicit_surface_tension) Apply_Implicit_Surface_Tension(current_dt);
 	Build();						if(verbose)timer.Elapse_And_Output_And_Reset("Build");
-	Meso::Info("div: \n{}", meso_div_host);
 	Solve();						if(verbose)timer.Elapse_And_Output_And_Reset("Solve");
-	Meso::Info("pressure: \n{}", meso_pressure_host);
+	//Meso::Info("solved pressure: \n{}", meso_pressure_dev);
 	std::cout << "pressure after solve: " << meso_pressure_host(middle) << std::endl;
-
-	//for (int axis = 0; axis < d; axis++) {
-	//	Meso::FieldDv<float, d> vol_axis_dev(meso_poisson.vol.grid.Face_Grid(axis), meso_poisson.vol.face_data[axis]);
-	//	Meso::Info("vol of axis {}: \n{}", axis, vol_axis_dev);
-	//}
-
-	real psps[] = { 1.9611507785309459,1.9611507785309459,1.9611507785309457,1.961150778530946,0.003110778530946684,0.003110778530946685,0.003110778530946685,0.0031107785309466844 };
-	Meso::Field<real, d> spx_pressure(meso_pressure_dev.grid);
-	spx_pressure.Calc_Cells(
-		[&](const VectorDi cell) {
-			return psps[cell[1]];
-		}
-	);
-	Meso::FieldDv<real, d> spx_pressure_dev = spx_pressure;
-
-	Meso::FieldDv<real, d> meso_lap_dev(meso_pressure_dev.grid);
-	meso_poisson.Apply(meso_lap_dev.Data(), spx_pressure.Data());
-	Meso::Info("SPX lap after solve:\n{}", meso_lap_dev);
 
 	//Meso::FieldDv<float, d> poisson_result;
 	//poisson_result.Init(meso_poisson.fixed.grid);
