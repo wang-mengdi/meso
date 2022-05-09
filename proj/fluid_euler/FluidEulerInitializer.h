@@ -159,13 +159,12 @@ namespace Meso {
 			bc_width << 0, -1, 0, 0, 0, 0;
 			bc_val << 1, 1, 0, 0, 0, 0;
 
-			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
-
 			////sphere
 			VectorD center = grid.Center(); 
-			//center[0] = (real)0.3;
 			real r = (real)0.3;
 			Sphere<d> sphere(center, r);
+
+			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 
 			grid.Exec_Nodes(
 				[&](const VectorDi cell) {
@@ -173,9 +172,21 @@ namespace Meso {
 					if (sphere.Inside(pos)) {
 						fixed(cell) = true;
 					}
+					else {
+						fixed(cell) = false;
+					}
 				}
 			);
-			
+
+			//one cell
+			// VectorDi face = VectorFunc::Vi<d>(1,1,1);
+			// face_fixed(0,face) = true;
+			// face_fixed(1,face) = true;
+			// initial_vel(1,face) = 0.0;
+			// initial_vel(0,face) = 0.0;
+			// vol(1,face) = 0;
+			// vol(0, face) = 0;
+
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
 					const VectorD pos = grid.Face_Center(axis, face);
