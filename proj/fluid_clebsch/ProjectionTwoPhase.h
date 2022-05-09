@@ -66,17 +66,15 @@ public:
 	//bool is_A_initialized=false;
 	//bool update_A=true;
 
-	Meso::MaskedPoissonMapping<float, d> meso_poisson;
-	Meso::VCycleMultigrid<float> meso_mg;
-	Meso::ConjugateGradient<float> meso_cg;
+	Meso::MaskedPoissonMapping<real, d> meso_poisson;
+	Meso::VCycleMultigrid<real> meso_mg;
+	Meso::ConjugateGradient<real> meso_cg;
 	Meso::Field<bool, d> meso_fixed_host;
-	Meso::FaceField<float, d> meso_rho_host;
-	//Meso::FaceField<float, d> meso_velocity_host;
-	//Meso::FaceFieldDv<float, d> meso_velocity_dev;
-	Meso::Field<float, d> meso_div_host;
-	Meso::FieldDv<float, d> meso_div_dev;
-	Meso::Field<float, d> meso_pressure_host;
-	Meso::FieldDv<float, d> meso_pressure_dev;
+	Meso::FaceField<real, d> meso_rho_host;
+	Meso::Field<real, d> meso_div_host;
+	Meso::FieldDv<real, d> meso_div_dev;
+	Meso::Field<real, d> meso_pressure_host;
+	Meso::FieldDv<real, d> meso_pressure_dev;
 
 
 	////divergence control

@@ -144,7 +144,7 @@ struct fmt::formatter<Meso::Field<T, 2, side>> {
 	auto format(const Meso::Field<T, 2, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
 		std::string out;
 		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
-		else if constexpr (side == DEVICE) {
+		else if constexpr (side == Meso::DataHolder::DEVICE) {
 			Meso::Field<T, 2> F_host = F;
 			Update_String(F_host, out);
 		}
