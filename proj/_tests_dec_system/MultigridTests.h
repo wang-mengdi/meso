@@ -21,7 +21,7 @@ namespace Meso {
 		Check_Cuda_Memory("test begin");
 
 		Grid<d> grid(counts);
-		MaskedPoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid);
+		MaskedPoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid,1000);
 
 		Field<T, d> b_host(grid);
 		Random::Fill_Random_Array<T>(b_host.Data(), -5, 10);

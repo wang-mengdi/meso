@@ -10,12 +10,12 @@
 
 namespace Meso {
 	template<class T, int d>
-	MaskedPoissonMapping<T, d> Random_Poisson_Mapping(const Grid<d> grid) {
+	MaskedPoissonMapping<T, d> Random_Poisson_Mapping(const Grid<d> grid, real max_vol = 1) {
 		Typedef_VectorD(d);
 		FaceField<T, d> vol(grid);
 		Field<bool, d> fixed(grid);
 		MaskedPoissonMapping<T, d> mapping;
-		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = Random::Uniform(0, 1000); });
+		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = Random::Uniform(0, max_vol); });
 		fixed.Iterate_Cells([&](const VectorDi cell) {	fixed(cell) = !(bool)Random::RandInt(0, 9);	});
 		mapping.Init(grid, vol, fixed);
 		return mapping;

@@ -15,10 +15,10 @@
 using namespace Meso;
 
 int main(){
-    //Test_GridGSSmoother<double>(Vector2i(16, 16));
-    //Test_DampedJacobiSmoother<double>(Vector2i(16, 16));
-    //Test_Multigrid<double>(Vector2i(14, 53));
-    //return 0;
+    Test_GridGSSmoother<double>(Vector2i(16, 16));
+    Test_DampedJacobiSmoother<double>(Vector2i(16, 16));
+    Test_Multigrid<double>(Vector2i(14, 53));
+    return 0;
 
     Test_Poisson_Diagonal<float>(Vector2i(14, 53));
     Test_Poisson_Diagonal<double>(Vector2i(14, 53));

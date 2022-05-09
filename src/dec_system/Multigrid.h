@@ -119,12 +119,12 @@ namespace Meso {
 			for (int i = 0; i < L; i++) {
 				PoissonPtr poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
 
-				ArrayDv<T> poisson_diag; Poisson_Diagonal(poisson_diag, *poisson);
-				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, pre_iter, (T)(2.0 / 3.0));
-				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, post_iter, (T)(2.0 / 3.0));
+				//ArrayDv<T> poisson_diag; Poisson_Diagonal(poisson_diag, *poisson);
+				//presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, pre_iter, (T)(2.0 / 3.0));
+				//postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, post_iter, (T)(2.0 / 3.0));
 				
-				//presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter);
-				//postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter);
+				presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter);
+				postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter);
 			}
 
 			//direct_solver
