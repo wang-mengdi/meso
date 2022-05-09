@@ -86,8 +86,8 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 		}
 	);
 	meso_poisson.Init(meso_grid, meso_rho_host, meso_fixed_host);
-	meso_mg.Init_Poisson(meso_poisson, 2, 2);
-	meso_cg.Init(&meso_poisson, &meso_mg, true, 100, 1e-5);
+	meso_mg.Init_Poisson(meso_poisson, 20, 20);
+	meso_cg.Init(&meso_poisson, &meso_mg, true, 50, 1e-9);
 	//meso_cg.Init(&meso_poisson, nullptr, true, -1, 1e-5);
 }
 
@@ -340,8 +340,12 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 	Timer timer;					timer.Reset();
 	if (use_implicit_surface_tension) Apply_Implicit_Surface_Tension(current_dt);
 	Build();						if(verbose)timer.Elapse_And_Output_And_Reset("Build");
+
+	Meso::Info("div_u: \n{}", meso_div_host);
+
 	Solve();						if(verbose)timer.Elapse_And_Output_And_Reset("Solve");
-	//Meso::Info("solved pressure: \n{}", meso_pressure_dev);
+	
+	Meso::Info("solved pressure: \n{}", meso_pressure_dev);
 	std::cout << "pressure after solve: " << meso_pressure_host(middle) << std::endl;
 
 	//Meso::FieldDv<float, d> poisson_result;

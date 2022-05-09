@@ -65,8 +65,9 @@ namespace Meso {
 		real threshold_norm2 = relative_tolerance * relative_tolerance * rhs_norm2;
 		threshold_norm2 = std::max(threshold_norm2, std::numeric_limits<real>::min());
 
+
 		////z0=Minv*r0
-		if (preconditioner) { preconditioner->Apply(z, r); }
+		if (preconditioner) preconditioner->Apply(z, r);
 		else ArrayFunc::Copy(z, r);
 
 		//p0=z0
@@ -84,6 +85,10 @@ namespace Meso {
 			//alpha_k=gamma_k/(p_k^T*A*p_k)
 			real fp = ArrayFunc::Dot(p, Ap);//fp_k=p_k^T*A*p_k
 			real alpha = gamma / fp;
+
+			Assert(std::isnormal(alpha), "ConjugateGradient: alpha={} at iter {}", alpha, i);
+
+			//Info("iter {} alpha {}", i, alpha);
 
 			//x_{k+1} = x_k + alpha_k * p_k
 			//Axpy means y=y+a*x

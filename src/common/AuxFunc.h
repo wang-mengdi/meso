@@ -101,6 +101,30 @@ namespace Meso {
 			//else return thrust::raw_pointer_cast(arr.data());
 		}
 
+		template<class T, DataHolder side>
+		bool Has_Zero(const Array<T, side>& a) {
+			if constexpr (side == HOST) {
+				for (int i = 0; i < a.size(); i++) if (a[i] == 0) return true;
+			}
+			else {
+				Array<T, HOST> b = a;
+				for (int i = 0; i < b.size(); i++) if (b[i] == 0) return true;
+			}
+			return false;
+		}
+
+		template<class T, DataHolder side>
+		bool Is_Finite(const Array<T, side>& a) {
+			if constexpr (side == HOST) {
+				for (int i = 0; i < a.size(); i++) if (!std::isfinite(a[i])) return false;
+			}
+			else {
+				Array<T, HOST> b = a;
+				for (int i = 0; i < b.size(); i++) if (!std::isfinite(b[i])) return false;
+			}
+			return true;
+		}
+
 		template<class T>
 		bool Equals(const Array<T, HOST>& a, decltype(a) b) {
 			if (a.size() != b.size()) return false;

@@ -67,7 +67,7 @@ public:
 	//bool update_A=true;
 
 	Meso::MaskedPoissonMapping<real, d> meso_poisson;
-	Meso::VCycleMultigrid<real> meso_mg;
+	Meso::VCycleMultigridSum<real, d> meso_mg;
 	Meso::ConjugateGradient<real> meso_cg;
 	Meso::Field<bool, d> meso_fixed_host;
 	Meso::FaceField<real, d> meso_rho_host;

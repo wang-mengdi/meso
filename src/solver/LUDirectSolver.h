@@ -57,19 +57,21 @@ namespace Meso {
 			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver getrf failed {}", flg);
 			checkCudaErrors(cudaGetLastError());
 
-			//Info("matrix A:");
-			//for (int i = 0; i < dof; i++) {
-			//	for (int j = 0; j < dof; j++) {
-			//		T ele = A[i + dof * j];
-			//		fmt::print("{} ", ele);
-			//	}
-			//	fmt::print("\n");
-			//}
+			Info("matrix A:");
+			for (int i = 0; i < dof; i++) {
+				for (int j = 0; j < dof; j++) {
+					T ele = A[i + dof * j];
+					fmt::print("{} ", ele);
+				}
+				fmt::print("\n");
+			}
 		}
 
 		//input b, get x
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
 			Memory_Check(x, b, "LUDenseSolver::Apply failed: not enough memory space");
+
+			Assert(ArrayFunc::Is_Finite<T, DEVICE>(b), "LUDirect solver failed: b={}", b);
 
 			ArrayFunc::Copy(x, b);
 
@@ -85,6 +87,7 @@ namespace Meso {
 			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver solve failed {}", flg);
 			checkCudaErrors(cudaGetLastError());
 
+			Assert(ArrayFunc::Is_Finite<T, DEVICE>(x), "LUDirect solver failed: x={}", x);
 			//Info("direct solve input:\n{}\noutput:\n{}", b, x);
 		}
 	};
