@@ -20,7 +20,10 @@ template<int d> class FluidEulerTwoPhaseClebschDriver : public Driver
 {Typedef_VectorDii(d);using Base=Driver;
 public:
 	FluidEulerTwoPhaseClebsch<d> fluid;
+	real h_bar;
 	real beta;
+	real rho_A;
+	real rho_L;
     bool use_bdry_v=true;
     bool use_velocity_field = false;
 
@@ -109,21 +112,18 @@ public:
 			perimeter.Set_Parameters(fluid.mac_grid);
 			perimeter.Fill_Boundary_Condition(fluid.bc);
 
-			fluid.rho_L = (real)1.;
-			fluid.rho_A = (real).001;
-			fluid.beta = beta;
 			fluid.projection.sigma = (real)1.e-1;
 
 			////init levelset
 			VectorD center = fluid.mac_grid.grid.Center();
 			real r = fluid.mac_grid.grid.Length()[1] * (real).1;
 			VectorD e_r = VectorD::Ones() * r; e_r[1] *= (real)2.;
-			//ImplicitShape<d> surface;
-			//Plane<d> surface(VectorD::Unit(1), center);				// hydrostatic
-			//Ellipsoid<d> surface(center, e_r);					// surface tension
-			Sphere<d> surface(center+0.5*center[1]*VectorD::Unit(1), r);							// gravity
+			ImplicitShape<d> surface;
+			surface += std::make_shared<Plane<d>>(VectorD::Unit(1), center);						// hydrostatic
+			//surface += std::make_shared<Ellipsoid<d>>(center, e_r);							// surface tension
+			//surface += std::make_shared<Sphere<d>>(center+0.5*center[1]*VectorD::Unit(1), r);		// gravity
 			fluid.use_body_force = true;
-			fluid.levelset.Set_By_Geom(surface);
+			fluid.levelset.Set_By_Shape(surface);
 			fluid.levelset.Fast_Marching();
 
 			////volume preserving
@@ -144,17 +144,12 @@ public:
 			if (d == 3) cell_counts[2] *= 2;
 			fluid.Initialize(cell_counts, (real)length / cell_counts[0]);
 
-			fluid.rho_L = (real)1.;
-			fluid.rho_A = (real)0.001;
-			fluid.h_bar = 0.2;
-			fluid.beta = 0.5;
 			fluid.use_body_force = true;
-			frame_rate = 100;
 
 			const auto mac_grid = fluid.mac_grid;
 
 			EulerInitializer<d> perimeter;
-			perimeter.Set_Boundary_Width(0, 0, 0, 0, 0, 0);
+			perimeter.Set_Boundary_Width(0, 0, 0, -1, 0, 0);
 			perimeter.Set_Boundary_Value(0, 0, 0, 0, 0, 0);
 			perimeter.Set_Parameters(mac_grid);
 			perimeter.Fill_Boundary_Condition(fluid.bc);
@@ -165,7 +160,7 @@ public:
 			fluid.levelset.Set_By_Geom(plane);
 
 			////initialize water bulk psi
-			VectorD bdry_v = VectorD::Unit(0) * (real)-1.;
+			VectorD bdry_v = VectorD::Unit(0) * (real)-0.;
 			VectorD bdry_v_hbar = bdry_v / fluid.h_bar;
 			fluid.initial_psi = std::bind(&FluidEulerTwoPhaseClebschDriver<d>::Initial_Vortex_Ring, this, std::placeholders::_1, bdry_v_hbar, length);
 
@@ -178,7 +173,9 @@ public:
 		}
 		fluid.use_velocity_field = use_velocity_field;
 		fluid.Initialize_Wave_Func();
-		real saved_beta = fluid.beta;
+		fluid.h_bar = h_bar;
+		fluid.rho_A = rho_A;
+		fluid.rho_L = rho_L;
 		fluid.beta = 0.5;
 		for (int i = 0; i < 10; i++) {
 			fluid.Blend_Velocity();
@@ -187,7 +184,7 @@ public:
 			fluid.Blend_Velocity();
 			std::cout << "after projection" << std::endl; fluid.Divergence_Power();
 		}
-		fluid.beta = saved_beta;
+		fluid.beta = beta;
 		fluid.Extrapolation();
 	}
 

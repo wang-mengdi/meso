@@ -13,6 +13,9 @@ void Run(json& j) {
 	driver.last_frame = Json::Value<int>(j, "last_frame", 1000);
 	driver.frame_rate = Json::Value<int>(j, "fps", 20);
 	driver.cfl = Json::Value<real>(j, "cfl", 1.);
+	driver.rho_A = Json::Value<real>(j, "rho_A", 0.001);
+	driver.rho_L = Json::Value<real>(j, "rho_L", 1.);
+	driver.h_bar = Json::Value<real>(j, "h_bar", 0.01);
 	driver.beta = Json::Value<real>(j, "beta", 0.95);
 	driver.Initialize();
 	driver.Run();

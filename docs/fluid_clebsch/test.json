@@ -2,10 +2,14 @@
     "dimension": 2,
     "driver": {
         "output_dir": "test",
-        "test": 1,
-        "cfl": 1.0,
         "fps": 20,
         "last_frame": 500,
+        "test": 1,
+        "scale": 64,
+        "cfl": 1.0,
+        "rho_A": 0.001,
+        "rho_L": 1.0,
+        "h_bar": 0.01,
         "beta": 0.5
     }
 }
