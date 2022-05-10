@@ -173,15 +173,21 @@ namespace Meso {
 		Dense_Matrix_From_Poisson_Like(cols, rows, A_dev, grid, poisson_like);
 		Array<T> A_host = A_dev;
 		std::vector<Eigen::Triplet<T, int>> elements;
+		//Info("rows {} cols {}", rows, cols);
+		//fmt::print("[");
 		for (int i = 0; i < rows; i++) {
+			//fmt::print("[");
 			for (int j = 0; j < cols; j++) {
 				int idx = j * rows + i;
 				T a = A_host[idx];
 				if (a != 0) {
 					elements.push_back(Eigen::Triplet<T, int>(i, j, a));
 				}
+				//fmt::print("{},", a);
 			}
+			//fmt::print("],\n");
 		}
+		//fmt::print("]");
 		Eigen::SparseMatrix<T, Eigen::RowMajor, int> sparse_host;
 		sparse_host.resize(rows, cols);
 		sparse_host.setFromTriplets(elements.begin(), elements.end());

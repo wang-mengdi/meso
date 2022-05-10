@@ -68,6 +68,7 @@ public:
 
 	Meso::MaskedPoissonMapping<real, d> meso_poisson;
 	Meso::VCycleMultigridSum<real, d> meso_mg;
+	//Meso::VCycleMultigridIntp<real, d> meso_mg;
 	Meso::ConjugateGradient<real> meso_cg;
 	Meso::Field<bool, d> meso_fixed_host;
 	Meso::FaceField<real, d> meso_rho_host;

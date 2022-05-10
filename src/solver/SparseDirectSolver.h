@@ -11,12 +11,13 @@ namespace Meso {
 	template<class T>
 	class CholeskySparseSolver :public LinearMapping<T> {
 	public:
+		T tolerance = 0;
 		SparseMatrixMapping<T, DEVICE> mapping;
 		cusparseMatDescr_t mat_descr;
 		cusolverSpHandle_t solve_handle;
 		//currently we don't have a default constructor of SparseMatrixMapping
 		//CholeskySparseSolver(){}
-		CholeskySparseSolver(SparseMatrix<T>& _mapping) : mapping(_mapping) {
+		CholeskySparseSolver(SparseMatrix<T>& _mapping, T _tol = 0) : mapping(_mapping), tolerance(_tol) {
 			cusolverSpCreate(&solve_handle);
 			cusparseCreateMatDescr(&mat_descr);
 			cusparseSetMatType(mat_descr, CUSPARSE_MATRIX_TYPE_GENERAL);
@@ -42,7 +43,7 @@ namespace Meso {
 					mapping.outIndexPtr(),
 					mapping.innerIndexPtr(),
 					ArrayFunc::Data<T, DEVICE>(b),
-					0,//tolerance
+					tolerance,
 					/*reorder*/0,
 					ArrayFunc::Data<T, DEVICE>(x),
 					&singularity
@@ -58,7 +59,7 @@ namespace Meso {
 					mapping.outIndexPtr(),
 					mapping.innerIndexPtr(),
 					ArrayFunc::Data<T, DEVICE>(b),
-					0,//tolerance
+					tolerance,
 					/*reorder*/0,
 					ArrayFunc::Data<T, DEVICE>(x),
 					&singularity

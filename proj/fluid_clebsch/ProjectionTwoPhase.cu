@@ -86,8 +86,8 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 		}
 	);
 	meso_poisson.Init(meso_grid, meso_rho_host, meso_fixed_host);
-	meso_mg.Init_Poisson(meso_poisson, 20, 20);
-	meso_cg.Init(&meso_poisson, &meso_mg, true, 50, 1e-9);
+	meso_mg.Init_Poisson(meso_poisson, 2, 2);
+	meso_cg.Init(&meso_poisson, &meso_mg, true, -1, 1e-9);
 	//meso_cg.Init(&meso_poisson, nullptr, true, -1, 1e-5);
 }
 
@@ -110,8 +110,7 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Jump_Condition_To_b()
 						int axis; VectorDi face; MacGrid<d>::Cell_Incident_Face(cell, i, axis, face);
 						real rho = (*rho_face)(axis, face);
 						real p_sign = phi0 < 0 ? (real)1 : (real)-1;
-						// -= here because we have div(u) instead of -div(u)
-						meso_div_host(cell) -= p_sign * Jump_Condition(intf_pos) * one_over_dx / rho;
+						meso_div_host(cell) += p_sign * Jump_Condition(intf_pos) * one_over_dx / rho;
 					}
 				}
 			}
@@ -161,8 +160,7 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Jump_Condition_To_b()
 		 [&](const VectorDi cell) {
 			 if (Is_Fluid_Cell(cell)) {
 				 real cell_div = vol_correction;
-				 //-= here because we have div(u)
-				 meso_div_host(cell) -= vol_control_ks * mac_grid->grid.dx * cell_div;
+				 meso_div_host(cell) += vol_control_ks * mac_grid->grid.dx * cell_div;
 			 }
 		 }
 	 );
@@ -256,8 +254,8 @@ template<int d> void ProjectionTwoPhase<d>::Update_b()
 			for (int axis = 0; axis < d; axis++) {
 				div += (*velocity)(axis, cell + VectorDi::Unit(axis)) - (*velocity)(axis, cell);
 			}
-			//solve lap p=div u
-			return div;
+			//solve -lap p=-div u
+			return -div;
 		}
 	);
 
@@ -341,11 +339,11 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 	if (use_implicit_surface_tension) Apply_Implicit_Surface_Tension(current_dt);
 	Build();						if(verbose)timer.Elapse_And_Output_And_Reset("Build");
 
-	Meso::Info("div_u: \n{}", meso_div_host);
+	//Meso::Info("div_u: \n{}", meso_div_host);
 
 	Solve();						if(verbose)timer.Elapse_And_Output_And_Reset("Solve");
 	
-	Meso::Info("solved pressure: \n{}", meso_pressure_dev);
+	//Meso::Info("solved pressure: \n{}", meso_pressure_dev);
 	std::cout << "pressure after solve: " << meso_pressure_host(middle) << std::endl;
 
 	//Meso::FieldDv<float, d> poisson_result;

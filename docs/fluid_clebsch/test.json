@@ -3,7 +3,7 @@
     "driver": {
         "output_dir": "test",
         "fps": 20,
-        "last_frame": 27,
+        "last_frame": 100,
         "test": 1,
         "scale": 16,
         "cfl": 1.0,
