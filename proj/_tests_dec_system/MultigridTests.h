@@ -63,7 +63,7 @@ namespace Meso {
 		//VCycleMultigridSum<T, d> precond;
 		precond.Init_Poisson(poisson, 2, 2);
 		//MGPCG.Init(&poisson, &precond, false);
-		MGPCG.Init(&poisson, &precond, false, -1, 1e-6);
+		MGPCG.Init(&poisson, &precond, true, -1, 1e-6);
 		//MGPCG.Init(&poisson, nullptr, true);
 		int iters = 0;
 		real res = 0;

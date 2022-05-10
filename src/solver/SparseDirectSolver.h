@@ -11,13 +11,12 @@ namespace Meso {
 	template<class T>
 	class CholeskySparseSolver :public LinearMapping<T> {
 	public:
-		SparseMatrixMapping<T, DEVICE>* mapping;
+		SparseMatrixMapping<T, DEVICE> mapping;
 		cusparseMatDescr_t mat_descr;
 		cusolverSpHandle_t solve_handle;
 		//currently we don't have a default constructor of SparseMatrixMapping
 		//CholeskySparseSolver(){}
-		CholeskySparseSolver(SparseMatrixMapping<T, DEVICE>& _mapping) {
-			mapping = &_mapping;
+		CholeskySparseSolver(SparseMatrix<T>& _mapping) : mapping(_mapping) {
 			cusolverSpCreate(&solve_handle);
 			cusparseCreateMatDescr(&mat_descr);
 			cusparseSetMatType(mat_descr, CUSPARSE_MATRIX_TYPE_GENERAL);
@@ -28,20 +27,20 @@ namespace Meso {
 		~CholeskySparseSolver() {
 			if (solve_handle) cusolverSpDestroy(solve_handle);
 		}
-		virtual int XDoF() const { return mapping->YDoF(); }
-		virtual int YDoF() const { return mapping->XDoF(); }
+		virtual int XDoF() const { return mapping.YDoF(); }
+		virtual int YDoF() const { return mapping.XDoF(); }
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
 			Memory_Check(x, b, "CholeskySparseSolver::Apply failed: not enough memory space");
 			int singularity = 0;
 			if constexpr (std::is_same<T, double>::value) {
 				cusolverSpDcsrlsvchol(
 					solve_handle,
-					mapping->m,
-					mapping->nnz,
+					mapping.m,
+					mapping.nnz,
 					mat_descr,
-					mapping->valuePtr(),
-					mapping->outIndexPtr(),
-					mapping->innerIndexPtr(),
+					mapping.valuePtr(),
+					mapping.outIndexPtr(),
+					mapping.innerIndexPtr(),
 					ArrayFunc::Data<T, DEVICE>(b),
 					0,//tolerance
 					/*reorder*/0,
@@ -52,12 +51,12 @@ namespace Meso {
 			else {
 				cusolverSpScsrlsvchol(
 					solve_handle,
-					mapping->m,
-					mapping->nnz,
+					mapping.m,
+					mapping.nnz,
 					mat_descr,
-					mapping->valuePtr(),
-					mapping->outIndexPtr(),
-					mapping->innerIndexPtr(),
+					mapping.valuePtr(),
+					mapping.outIndexPtr(),
+					mapping.innerIndexPtr(),
 					ArrayFunc::Data<T, DEVICE>(b),
 					0,//tolerance
 					/*reorder*/0,

@@ -13,6 +13,8 @@
 #include "DampedJacobiSmoother.h"
 #include "GridGSSmoother.h"
 #include "LUDirectSolver.h"
+#include "SparseDirectSolver.h"
+#include "Timer.h"
 
 namespace Meso {
 
@@ -132,10 +134,12 @@ namespace Meso {
 			}
 
 			//direct_solver
-			DenseMatrixMapping<T> dense_mapping;
-			DenseMatrixMapping_From_Poisson_Like(dense_mapping, grids[L], *mappings[L]);
-			//dense_mapping.Init_PoissonLike(grids[L], *mappings[L]);
-			direct_solver = std::make_shared<LUDenseSolver<T>>(dense_mapping);
+			direct_solver = std::make_shared<CholeskySparseSolver<T>>(SparseMatrix_From_Poisson_Like(grids[L], *mappings[L]));
+
+			//DenseMatrixMapping<T> dense_mapping;
+			//DenseMatrixMapping_From_Poisson_Like(dense_mapping, grids[L], *mappings[L]);
+			//direct_solver = std::make_shared<LUDenseSolver<T>>(dense_mapping);
+			
 			//PoissonPtr last_layer_poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[L]);
 			//direct_solver = std::make_shared<GridGSSmoother<T, d>>(*last_layer_poisson, 5);
 			

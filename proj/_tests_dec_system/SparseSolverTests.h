@@ -13,7 +13,6 @@ namespace Meso {
 	void Test_Cholesky_Sparse_Solve(const Vector<int, d> counts) {
 		Grid<d> grid(counts);
 		MaskedPoissonMapping<T, d> poisson_mapping = Random_Poisson_Mapping<T, d>(grid, 1000);
-		SparseMatrixMapping<T, DEVICE> sparse_mapping(SparseMatrix_From_Poisson_Like(grid, poisson_mapping));
 
 		//Array<T> p_host = Random::Random_Array<T>(sparse_mapping.YDoF(), 0, 10);
 		//ArrayDv<T> p_dev = p_host;
@@ -25,10 +24,10 @@ namespace Meso {
 		//Info("Ap_sparse: {}", Ap_sparse);
 		//Info("Ap_poisson: {}", Ap_poisson);
 
-		CholeskySparseSolver<T> solver(sparse_mapping);
-		Array<T> b_host = Random::Random_Array<T>(sparse_mapping.YDoF(), 0, 10);
+		CholeskySparseSolver<T> solver(SparseMatrix_From_Poisson_Like(grid, poisson_mapping));
+		Array<T> b_host = Random::Random_Array<T>(poisson_mapping.YDoF(), 0, 10);
 		ArrayDv<T> b_dev = b_host;
-		ArrayDv<T> x_dev(sparse_mapping.YDoF()), res;
+		ArrayDv<T> x_dev(poisson_mapping.YDoF()), res;
 		solver.Apply(x_dev, b_dev);
 		poisson_mapping.Residual(res, x_dev, b_dev);
 		T b2 = ArrayFunc::Dot(b_dev, b_dev);
