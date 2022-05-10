@@ -5,6 +5,8 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "PoissonMapping.h"
+#include "DenseMatrixMapping.h"
+#include "SparseMatrixMapping.h"
 
 namespace Meso {
 	//color==0: white
@@ -108,4 +110,82 @@ namespace Meso {
 
 		}
 	};
+
+	template<class T, int d>
+	__global__ void Set_Cell_By_Color(const Grid<d> grid, const PoissonLikeMask<d> mask, T* cell_data) {
+		Typedef_VectorD(d);
+		VectorDi coord = VectorFunc::Vi<d>(
+			blockIdx.x * grid.block_size + threadIdx.x,
+			blockIdx.y * grid.block_size + threadIdx.y,
+			blockIdx.z * grid.block_size + threadIdx.z
+			);
+		int index = grid.Index(coord);
+		if (mask(coord) == 0) cell_data[index] = 1;
+		else cell_data[index] = 0;
+	}
+	//column-major
+	template<class T, int d>
+	__global__ void Fill_Dense_Matrix_From_Result(const Grid<d> grid, const PoissonLikeMask<d> mask, const T* Ap, const int ydof, T* mat) {
+		Typedef_VectorD(d);
+		VectorDi coord = VectorFunc::Vi<d>(
+			blockIdx.x * grid.block_size + threadIdx.x,
+			blockIdx.y * grid.block_size + threadIdx.y,
+			blockIdx.z * grid.block_size + threadIdx.z
+			);
+		//the cell that is switched to 1 for this time
+		VectorDi on_coord = coord + mask.Coord_Offset_To_Zero(mask.row_nnz - mask(coord));
+		if (grid.Valid(on_coord)) {
+			int row_idx = grid.Index(coord), col_idx = grid.Index(on_coord);
+			mat[row_idx + ydof * col_idx] = Ap[row_idx];
+		}
+	}
+	//column-major
+	template<class T, int d>
+	void Dense_Matrix_From_Poisson_Like(int& cols, int& rows, ArrayDv<T>& A, const Grid<d> grid, LinearMapping<T>& poisson_like) {
+		ArrayDv<T> temp_p, temp_Ap;
+		cols = poisson_like.XDoF();
+		rows = poisson_like.YDoF();
+		Assert(cols == rows, "Dense_Matrix_From_Poisson_Like: cols={} mismatch rows={}", cols, rows);
+		A.resize(cols * rows);
+		temp_Ap.resize(cols);
+		temp_p.resize(rows);
+		ArrayFunc::Fill(A, (T)0);
+		int row_nnz = (d == 2 ? 5 : 7);
+		for (int flag = 0; flag < row_nnz; flag++) {//set all cells with color==flag to 1 and others to 0
+			PoissonLikeMask<d> mask(flag);
+			grid.Exec_Kernel(&Set_Cell_By_Color<T, d>, grid, mask, ArrayFunc::Data<T, DEVICE>(temp_p));
+			poisson_like.Apply(temp_Ap, temp_p);
+			grid.Exec_Kernel(&Fill_Dense_Matrix_From_Result<T, d>, grid, mask, ArrayFunc::Data<T, DEVICE>(temp_Ap), rows, ArrayFunc::Data<T, DEVICE>(A));
+		}
+	}
+	//column-major
+	template<class T, int d>
+	void DenseMatrixMapping_From_Poisson_Like(DenseMatrixMapping<T>& dense_mapping, const Grid<d> grid, LinearMapping<T>& poisson_like) {
+		Dense_Matrix_From_Poisson_Like(dense_mapping.cols, dense_mapping.rows, dense_mapping.A, grid, poisson_like);
+	}
+
+	//return a host class
+	template<class T, int d>
+	SparseMatrix<T> SparseMatrix_From_Poisson_Like(const Grid<d> grid, LinearMapping<T>& poisson_like) {
+		int cols, rows;
+		ArrayDv<T> A_dev;
+		//column-major
+		Dense_Matrix_From_Poisson_Like(cols, rows, A_dev, grid, poisson_like);
+		Array<T> A_host = A_dev;
+		std::vector<Eigen::Triplet<T, int>> elements;
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				int idx = j * rows + i;
+				T a = A_host[idx];
+				if (a != 0) {
+					elements.push_back(Eigen::Triplet<T, int>(i, j, a));
+				}
+			}
+		}
+		Eigen::SparseMatrix<T, Eigen::RowMajor, int> sparse_host;
+		sparse_host.resize(rows, cols);
+		sparse_host.setFromTriplets(elements.begin(), elements.end());
+		sparse_host.makeCompressed();
+		return sparse_host;
+	}
 }

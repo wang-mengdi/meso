@@ -14,7 +14,7 @@
 using namespace thrust::placeholders;
 
 namespace Meso {
-	//Poisson mapping, except some masked points
+	//Negative Poisson mapping -lap(p), except some masked points
 	//Masked points will be viewed as 0 in poisson mapping
 	template<class T, int d>
 	class MaskedPoissonMapping : public LinearMapping<T> {
@@ -90,6 +90,7 @@ namespace Meso {
 			//temp_cell = div(temp_face)
 			//d*d(p) *. vol ----- 3-form
 			Exterior_Derivative(temp_cell, temp_face);
+			temp_cell *= -1;
 
 			//Hodge star is identity here
 			//*d*d(p) *. vol ----- 0-form

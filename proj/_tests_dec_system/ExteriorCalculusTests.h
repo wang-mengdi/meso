@@ -31,7 +31,7 @@ void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
 		}
 	);
 	for (int axis = 0; axis < d; axis++) {
-		if (!ArrayFunc::IsApprox<T>(facefield_naive.Data(axis), facefield_ext_host.Data(axis))) {
+		if (!ArrayFunc::Is_Approx<T>(facefield_naive.Data(axis), facefield_ext_host.Data(axis))) {
 			Error("Test_Exterior_Derivative_Cell failed for counts={}", counts);
 			return;
 		}
@@ -66,7 +66,7 @@ void Test_Exterior_Derivative_Face(const Vector<int, d> counts) {
 			return div;
 		}
 	);
-	if (ArrayFunc::IsApprox<T>(C_naive.Data(), C_ext_host.Data())) {
+	if (ArrayFunc::Is_Approx<T>(C_naive.Data(), C_ext_host.Data())) {
 		Pass("Test_Exterior_Derivative_Face passed for counts={}", counts);
 	}
 	else {

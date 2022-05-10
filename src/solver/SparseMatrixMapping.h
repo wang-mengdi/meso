@@ -57,11 +57,11 @@ namespace Meso {
 		//int cols() const { return n; }
 		//int outerSize() const { return m; }
 		//int nonZeros() const { return nnz; }
-		constexpr T* valuePtr() { return ArrayFunc::Data(val); }
+		constexpr T* valuePtr() { return ArrayFunc::Data<T, side>(val); }
 		constexpr const T* valuePtr() const { return ArrayFunc::Data<T, side>(val); }
-		constexpr int* outerIndexPtr() { return ArrayFunc::Data(ptr); }
+		constexpr int* outerIndexPtr() { return ArrayFunc::Data<int, side>(ptr); }
 		constexpr const int* outIndexPtr() const { return ArrayFunc::Data<int, side>(ptr); }
-		constexpr int* innerIndexPtr() { return ArrayFunc::Data(col); }
+		constexpr int* innerIndexPtr() { return ArrayFunc::Data<int, side>(col); }
 		constexpr const int* innerIndexPtr() const { return ArrayFunc::Data<int, side>(col); }
 		//similar to SparseMatrix::resize(). May realloc ptr, but not others. With default option, do not change data side.
 		//void resize(int _m, int _n, enum DataHolder new_side = DataHolder::UNKNOWN);

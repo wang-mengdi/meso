@@ -253,7 +253,7 @@ namespace Meso {
 		}
 
 		template<class T>
-		bool IsApprox(const Array<T>& a, const Array<T>& b) {
+		bool Is_Approx(const Array<T>& a, const Array<T>& b) {
 			//similar to isApprox() in Eigen
 			if (a.size() != b.size()) return false;
 			T a_norm2 = Dot<T>(a, a);
@@ -263,6 +263,11 @@ namespace Meso {
 			T res_norm2 = Dot<T>(res, res);
 			T p = Eigen::NumTraits<T>::dummy_precision();
 			return res_norm2 <= p * p * std::min(a_norm2, b_norm2);
+		}
+		template<class T>
+		bool Is_Approx(const ArrayDv<T>& a, const ArrayDv<T>& b) {
+			Array<T> a_host = a, b_host = b;
+			return Is_Approx<T>(a_host, b_host);
 		}
 
 		////Dim conversion for vectors and vector arrays

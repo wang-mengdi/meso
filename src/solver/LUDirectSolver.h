@@ -57,14 +57,14 @@ namespace Meso {
 			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver getrf failed {}", flg);
 			checkCudaErrors(cudaGetLastError());
 
-			Info("matrix A:");
-			for (int i = 0; i < dof; i++) {
-				for (int j = 0; j < dof; j++) {
-					T ele = A[i + dof * j];
-					fmt::print("{} ", ele);
-				}
-				fmt::print("\n");
-			}
+			//Info("matrix A:");
+			//for (int i = 0; i < dof; i++) {
+			//	for (int j = 0; j < dof; j++) {
+			//		T ele = A[i + dof * j];
+			//		fmt::print("{} ", ele);
+			//	}
+			//	fmt::print("\n");
+			//}
 		}
 
 		//input b, get x

@@ -46,7 +46,7 @@ void Test_Prolongator_Intp(const Vector<int, d> fine_counts) {
 	Field<T, d> result_host = fine_dev;
 	//Info("fine_cpu: \n{}\n", fine_cpu);
 	//Info("result_host: \n{}\n", result_host);
-	if (ArrayFunc::IsApprox<T>(result_host.Data(), fine_cpu.Data())) {
+	if (ArrayFunc::Is_Approx<T>(result_host.Data(), fine_cpu.Data())) {
 		Pass("Test_Prolongator passed for fine_counts={}", fine_counts);
 	}
 	else {

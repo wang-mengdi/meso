@@ -64,7 +64,7 @@ void Test_Restrictor_Intp(const Vector<int, d> counts) {
 
 	//Info("coarser_host: \n{}\n", coarser_host);
 	//Info("restrictor result: \n{}\n", restrictor_result);
-	if (!ArrayFunc::IsApprox<T>(restrictor_result.Data(), coarser_host.Data())) {
+	if (!ArrayFunc::Is_Approx<T>(restrictor_result.Data(), coarser_host.Data())) {
 		Error("Test_Restrictor failed for counts={}", counts);
 	}
 	else Pass("Test_Restrictor passed for counts={}", counts);

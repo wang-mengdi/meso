@@ -11,6 +11,7 @@
 #include "MultigridTests.h"
 #include "ExteriorCalculusTests.h"
 #include "DenseSolverTests.h"
+#include "SparseSolverTests.h"
 #include "SmootherTests.h"
 using namespace Meso;
 
@@ -18,6 +19,16 @@ int main(){
     //Test_GridGSSmoother<double>(Vector2i(16, 16));
     //Test_DampedJacobiSmoother<double>(Vector2i(16, 16));
     //Test_Multigrid<double>(Vector2i(14, 53));
+
+    Test_LU_Dense_Solver<float>(Vector2i(14, 13));
+    Test_LU_Dense_Solver<double>(Vector2i(14, 13));
+    Test_LU_Dense_Solver<float>(Vector3i(8, 7, 11));
+    Test_LU_Dense_Solver<double>(Vector3i(8, 7, 11));
+
+    Test_Cholesky_Sparse_Solve<float>(Vector2i(14, 13));
+    Test_Cholesky_Sparse_Solve<double>(Vector2i(14, 13));
+    Test_Cholesky_Sparse_Solve<float>(Vector3i(8, 7, 11));
+    Test_Cholesky_Sparse_Solve<double>(Vector3i(8, 7, 11));
 
     Test_Poisson_Diagonal<float>(Vector2i(14, 53));
     Test_Poisson_Diagonal<double>(Vector2i(14, 53));
@@ -53,10 +64,5 @@ int main(){
     Test_MGPCG<double>(Vector2i(512, 513));
     Test_MGPCG<float>(Vector3i(256, 256, 256));
     Test_MGPCG<double>(Vector3i(128, 129, 128));
-
-    Test_LU_Dense_Solver<float>(Vector2i(14, 13));
-    Test_LU_Dense_Solver<double>(Vector2i(14, 13));
-    Test_LU_Dense_Solver<float>(Vector3i(8, 7, 11));
-    Test_LU_Dense_Solver<double>(Vector3i(8, 7, 11));
     return 0;
 }
