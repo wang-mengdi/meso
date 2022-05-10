@@ -180,6 +180,7 @@ namespace Meso {
 			for (int j = 0; j < cols; j++) {
 				int idx = j * rows + i;
 				T a = A_host[idx];
+				if (i == j) a += 1e-5;
 				if (a != 0) {
 					elements.push_back(Eigen::Triplet<T, int>(i, j, a));
 				}
