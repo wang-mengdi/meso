@@ -6,7 +6,7 @@
         "fps": 25,
         "last_frame": 250,
         "min_step_frame_fraction": 0.0,
-        "output_base_dir": "cavity"
+        "output_base_dir": "karman"
     },
     "scene": {
         "scale": 32,

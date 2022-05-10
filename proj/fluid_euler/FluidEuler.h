@@ -64,7 +64,7 @@ namespace Meso {
 			Exterior_Derivative(temp_velocity, pressure);
 			temp_velocity *= poisson.vol;
 
-			velocity -= temp_velocity;
+			velocity += temp_velocity;
 			psi_N.Apply(velocity);
 
 			Exterior_Derivative(vel_div, velocity);

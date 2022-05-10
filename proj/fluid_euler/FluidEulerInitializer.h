@@ -166,26 +166,14 @@ namespace Meso {
 
 			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 
-			grid.Exec_Nodes(
+			/*grid.Exec_Nodes(
 				[&](const VectorDi cell) {
 					const VectorD pos = grid.Position(cell);
 					if (sphere.Inside(pos)) {
 						fixed(cell) = true;
 					}
-					else {
-						fixed(cell) = false;
-					}
 				}
 			);
-
-			//one cell
-			// VectorDi face = VectorFunc::Vi<d>(1,1,1);
-			// face_fixed(0,face) = true;
-			// face_fixed(1,face) = true;
-			// initial_vel(1,face) = 0.0;
-			// initial_vel(0,face) = 0.0;
-			// vol(1,face) = 0;
-			// vol(0, face) = 0;
 
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
@@ -199,7 +187,19 @@ namespace Meso {
 						initial_vel(axis, face) = 1.0;
 					}
 				}
-			);
+			);*/
+
+			//one cell
+			VectorDi face = VectorFunc::Vi<d>(0,0,0);
+			face_fixed(0,face) = true;
+			face_fixed(1, face) = true;
+			initial_vel(0,face) = 3.0;
+			initial_vel(1, face) = 3.0;
+			vol(0, face) = 0;
+			vol(1, face) = 0;
+			VectorDi cell = VectorFunc::Vi<d>(0, 0, 0);
+			fixed(cell) = true;
+
 
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
 		}
