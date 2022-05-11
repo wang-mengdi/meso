@@ -164,9 +164,10 @@ namespace Meso {
 		Dense_Matrix_From_Poisson_Like(dense_mapping.cols, dense_mapping.rows, dense_mapping.A, grid, poisson_like);
 	}
 
-	//return a host class
+	//Will add epsilon*I to the system
+	//The reason of that feature is that a Poisson system may have a eigen value 0, add epsilon*I will make it positive definite
 	template<class T, int d>
-	SparseMatrix<T> SparseMatrix_From_Poisson_Like(const Grid<d> grid, LinearMapping<T>& poisson_like) {
+	SparseMatrix<T> SparseMatrix_From_Poisson_Like(const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
 		int cols, rows;
 		ArrayDv<T> A_dev;
 		//column-major
@@ -180,7 +181,7 @@ namespace Meso {
 			for (int j = 0; j < cols; j++) {
 				int idx = j * rows + i;
 				T a = A_host[idx];
-				if (i == j) a += 1e-5;
+				if (i == j) a += diag_add_epsilon;
 				if (a != 0) {
 					elements.push_back(Eigen::Triplet<T, int>(i, j, a));
 				}
