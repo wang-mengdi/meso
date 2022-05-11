@@ -35,7 +35,7 @@ namespace Meso {
 		int dof;
 		int iter_num;
 		int order;//0: forward order, 1: reverse order
-		ArrayDv<T> diag;
+		ArrayDv<T> one_over_diag;
 		ArrayDv<T> x_temp;
 		GridGSMask<d> mask;
 		GridGSSmoother() {}
@@ -47,7 +47,8 @@ namespace Meso {
 			iter_num = _iter_num;
 			order = _order;
 			dof = mapping->XDoF();
-			Poisson_Diagonal(diag, _mapping);
+			Poisson_Diagonal(one_over_diag, _mapping);
+			ArrayFunc::Unary_Transform(one_over_diag, 1.0 / thrust::placeholders::_1, one_over_diag);
 			x_temp.resize(dof);
 			mask = GridGSMask<d>(_mapping.Grid());
 		}
@@ -55,10 +56,6 @@ namespace Meso {
 		virtual int YDoF()const { return dof; }
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
 			Memory_Check(x, b, "GridGSSmoother::Apply error: not enough memory space");
-			Assert(diag.size() >= b.size(), "GridGSSmoother::Apply error: diag has only size of {} against required {}", diag.size(), b.size());
-			//Info("diag: {}", diag);
-
-			//Assert(!ArrayFunc::Has_Zero<T, DEVICE>(diag), "GridGSSmoother error: zero in diag. diag: {}", diag);
 
 			ArrayFunc::Fill(x, (T)0);
 			if (iter_num == 0) return;
@@ -67,13 +64,9 @@ namespace Meso {
 			for (int iter = 0; iter < iter_num; iter++) {
 				for (int c = 0; c < color_num; c++) {
 					int goal_color = (order == 0 ? c : color_num - 1 - c);
-					//Assert(ArrayFunc::Is_Finite<T, DEVICE>(x), "GridGSSmoother error: at iter {} color {}, at beginning x={}", iter, goal_color, x);
-					//Assert(ArrayFunc::Is_Finite<T, DEVICE>(b), "GridGSSmoother error: at iter {} color {}, at beginning b={}", iter, goal_color, b);
 					mapping->Residual(x_temp, x, b);
-					//Assert(ArrayFunc::Is_Finite<T, DEVICE>(x_temp), "GridGSSmoother error: at iter {} color {}, after residual x_temp={}", iter, goal_color, x_temp);
-					//Assert(!ArrayFunc::Has_Zero<T, DEVICE>(diag), "GridGSSmoother error: at iter {} color {}, after residual, diag has zero {}", iter, goal_color, diag);
-					ArrayFunc::Divide(x_temp, diag);
-					//Assert(ArrayFunc::Is_Finite<T, DEVICE>(x_temp), "GridGSSmoother error: at iter {} color {}, after dividing x_temp={}", iter, goal_color, x_temp);
+					//ArrayFunc::Divide(x_temp, diag);
+					ArrayFunc::Multiply(x_temp, one_over_diag);
 					thrust::transform_if(
 						x.begin(),//first1
 						x.end(),//last1
@@ -83,11 +76,8 @@ namespace Meso {
 						_1 + _2,//binary op
 						[=]__device__(const int idx)->bool { return (mask(idx) == goal_color); }
 					);
-					//Assert(ArrayFunc::Is_Finite<T, DEVICE>(x), "GridGSSmoother failed at iter {} color {}, x={}", iter, goal_color, x);
-					//Info("iter {} color {} solved x {}", iter, c, x);
 				}
 			}
-			//Info("solved x: {}", x);
 		}
 	};
 }

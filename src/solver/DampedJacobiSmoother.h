@@ -43,7 +43,6 @@ namespace Meso {
 				mapping->Residual(x, x_temp, b);
 				//(b-Ax)/.diag
 				ArrayFunc::Multiply(x, one_over_diag);
-				//ArrayFunc::Binary_Transform(x, diag, [=]__device__(T a, T b) { return a / b; }, x);
 				//x+=(b-Ax)/.diag*.omega
 				real _omega = omega;
 				ArrayFunc::Binary_Transform(x, x_temp, [=]__device__(T a, T b) { return b + a * _omega; }, x);
