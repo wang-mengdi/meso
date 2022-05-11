@@ -50,7 +50,7 @@ namespace Meso {
 			ArrayFunc::Copy(bs[0], b0);
 
 			for (int i = 0; i < L; i++) {
-				Assert(ArrayFunc::Is_Finite<T, DEVICE>(bs[i]), "Multigrid error: at downstroke level {} bs[i]={}", i, bs[i]);
+				//Assert(ArrayFunc::Is_Finite<T, DEVICE>(bs[i]), "Multigrid error: at downstroke level {} bs[i]={}", i, bs[i]);
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
@@ -62,14 +62,14 @@ namespace Meso {
 			direct_solver->Apply(xs[L], bs[L]);
 			checkCudaErrors(cudaGetLastError());
 
-			Assert(ArrayFunc::Is_Finite<T, DEVICE>(xs[L]), "Multigrid error: at coarsest level solved xs[{}]={}", L, xs[L]);
+			//Assert(ArrayFunc::Is_Finite<T, DEVICE>(xs[L]), "Multigrid error: at coarsest level solved xs[{}]={}", L, xs[L]);
 
 			//upstroke (coarse->fine)
 			for (int i = L - 1; i >= 0; i--) {
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
 				ArrayFunc::Add(xs[i], rs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
-				Assert(ArrayFunc::Is_Finite<T, DEVICE>(rs[i]), "Multigrid error: at upstroke level {} rs[i]={}", i, rs[i]);
+				//Assert(ArrayFunc::Is_Finite<T, DEVICE>(rs[i]), "Multigrid error: at upstroke level {} rs[i]={}", i, rs[i]);
 				//use bs to temporarily store the data
 				postsmoothers[i]->Apply(bs[i], rs[i]);
 				ArrayFunc::Add(xs[i], bs[i]);
