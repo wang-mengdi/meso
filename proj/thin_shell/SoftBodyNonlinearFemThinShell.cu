@@ -12,6 +12,8 @@
 #include "SimplicialPrimitives.h"
 #include "IOHelper.h"
 #include "Common.h"
+#include "SparseMatrixMapping.h"
+#include "ConjugateGradient.h"
 #include <Eigen/IterativeLinearSolvers>
 #include <iostream>
 #include <fstream>
@@ -271,13 +273,29 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const re
 	Update_Implicit_Bending(dt);
 	Update_Implicit_Boundary_Condition(dt);
 
-	Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::DiagonalPreconditioner<real>> cg;
+	/*Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::DiagonalPreconditioner<real>> cg;
 	cg.setTolerance((real)1e-5);
 	dv = cg.compute(A).solve(b);
 	Info("Linear system solve: {} ms", timer.Lap_Time(PhysicalUnits::ms));
 
 	std::cout << "#	CG iterations:     " << cg.iterations() << std::endl;
-	std::cout << "#	CG estimated error: " << cg.error() << std::endl;
+	std::cout << "#	CG estimated error: " << cg.error() << std::endl;*/
+
+
+	SparseMatrixMapping<real, DataHolder::DEVICE> meso_mat(A);
+	SparseDiagonalPreconditioner<real> meso_sparse_diag_pred(meso_mat);
+	ConjugateGradient<real> meso_sparse_cg;
+	meso_sparse_cg.Init(&meso_mat, &meso_sparse_diag_pred, false, -1, 1e-5);
+	ArrayDv<real> dv_x(meso_mat.XDoF());
+
+	Array<real> hst_b(b.size()); //Needs to be changed here
+	for (int i = 0; i < b.size(); i++) { hst_b[i] = b[i]; }
+	ArrayDv<real> dv_b (hst_b);
+
+	int iters; real relative_error;
+	meso_sparse_cg.Solve(dv_x, dv_b, iters, relative_error);
+	Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
+	Array<real> hst_x = dv_x;
 
 	//Eigen::LLT<Eigen::MatrixXd> lltOfA(A); // compute the Cholesky decomposition of A
 	//if (lltOfA.info() == Eigen::NumericalIssue){throw std::runtime_error("Negative matrix!");}
@@ -285,7 +303,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const re
 
 #pragma omp parallel for
 	for (int i = 0; i < vtx_num; i++) {
-		for (int j = 0; j < d; j++) { V()[i][j] += dv[i * d + j]; }
+		for (int j = 0; j < d; j++) { V()[i][j] += hst_x[i * d + j]; }
 		X()[i] += V()[i] * dt;
 	}
 
