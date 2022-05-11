@@ -4,6 +4,7 @@
 #include "Common.h"
 #include "Grid.h"
 #include "Field.h"
+#include "SparseTests.h"
 #include "PoissonMapping.h"
 #include "PoissonTests.h"
 #include "RestrictorTests.h"
@@ -19,6 +20,9 @@ int main(){
     //Test_GridGSSmoother<double>(Vector2i(16, 16));
     //Test_DampedJacobiSmoother<double>(Vector2i(16, 16));
     //Test_Multigrid<double>(Vector2i(14, 53));
+
+    Test_Sparse_Matrix();
+    Test_CG_Memory_Safe();
 
     Test_LU_Dense_Solver<float>(Vector2i(14, 13));
     Test_LU_Dense_Solver<double>(Vector2i(14, 13));

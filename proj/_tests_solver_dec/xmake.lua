@@ -1,7 +1,7 @@
 add_rules("mode.debug","mode.release")
 set_languages("cxx20")
 includes("./../../src/dec_system/xmake.lua")
-target("_tests_dec_system")
+target("_tests_solver_dec")
     add_rules("plugin.vsxmake.autoupdate")
     set_kind("binary")
     add_headerfiles("*.h")
