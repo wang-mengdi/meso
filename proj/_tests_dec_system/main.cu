@@ -62,9 +62,9 @@ int main(){
 
     Test_MGPCG<float>(Vector2i(512, 513));
     Test_MGPCG<double>(Vector2i(512, 513));
-    //Test_MGPCG<float>(Vector3i(256, 256, 256));
-    //Test_MGPCG<double>(Vector3i(128, 129, 128));
-    Test_MGPCG<float>(Vector3i(64, 64, 64));
+    Test_MGPCG<float>(Vector3i(256, 256, 256));
     Test_MGPCG<double>(Vector3i(128, 129, 128));
+    //Test_MGPCG<float>(Vector3i(64, 64, 64));
+    //Test_MGPCG<double>(Vector3i(128, 129, 128));
     return 0;
 }
