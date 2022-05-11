@@ -141,7 +141,7 @@ namespace Meso {
 	}
 	//column-major
 	template<class T, int d>
-	void Dense_Matrix_From_Poisson_Like(int& cols, int& rows, ArrayDv<T>& A, const Grid<d> grid, LinearMapping<T>& poisson_like) {
+	void Dense_Matrix_From_Poisson_Like(int& cols, int& rows, ArrayDv<T>& A, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
 		ArrayDv<T> temp_p, temp_Ap;
 		cols = poisson_like.XDoF();
 		rows = poisson_like.YDoF();
@@ -157,11 +157,14 @@ namespace Meso {
 			poisson_like.Apply(temp_Ap, temp_p);
 			grid.Exec_Kernel(&Fill_Dense_Matrix_From_Result<T, d>, grid, mask, ArrayFunc::Data<T, DEVICE>(temp_Ap), rows, ArrayFunc::Data<T, DEVICE>(A));
 		}
+		for (int i = 0; i < rows; i++) {
+			A[i * rows + i] += diag_add_epsilon;
+		}
 	}
 	//column-major
 	template<class T, int d>
-	void DenseMatrixMapping_From_Poisson_Like(DenseMatrixMapping<T>& dense_mapping, const Grid<d> grid, LinearMapping<T>& poisson_like) {
-		Dense_Matrix_From_Poisson_Like(dense_mapping.cols, dense_mapping.rows, dense_mapping.A, grid, poisson_like);
+	void DenseMatrixMapping_From_Poisson_Like(DenseMatrixMapping<T>& dense_mapping, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
+		Dense_Matrix_From_Poisson_Like(dense_mapping.cols, dense_mapping.rows, dense_mapping.A, grid, poisson_like, diag_add_epsilon);
 	}
 
 	//Will add epsilon*I to the system
@@ -171,7 +174,7 @@ namespace Meso {
 		int cols, rows;
 		ArrayDv<T> A_dev;
 		//column-major
-		Dense_Matrix_From_Poisson_Like(cols, rows, A_dev, grid, poisson_like);
+		Dense_Matrix_From_Poisson_Like(cols, rows, A_dev, grid, poisson_like, diag_add_epsilon);
 		Array<T> A_host = A_dev;
 		std::vector<Eigen::Triplet<T, int>> elements;
 		//Info("rows {} cols {}", rows, cols);
@@ -181,7 +184,6 @@ namespace Meso {
 			for (int j = 0; j < cols; j++) {
 				int idx = j * rows + i;
 				T a = A_host[idx];
-				if (i == j) a += diag_add_epsilon;
 				if (a != 0) {
 					elements.push_back(Eigen::Triplet<T, int>(i, j, a));
 				}
