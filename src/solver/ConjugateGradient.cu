@@ -1,5 +1,6 @@
 #include "ConjugateGradient.h"
 #include "AuxFunc.h"
+#include "Timer.h"
 #include <memory>
 #include <iostream>
 //#include "cuda_runtime_api.h"

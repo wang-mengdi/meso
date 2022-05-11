@@ -50,7 +50,6 @@ namespace Meso {
 			ArrayFunc::Copy(bs[0], b0);
 
 			for (int i = 0; i < L; i++) {
-				//Assert(ArrayFunc::Is_Finite<T, DEVICE>(bs[i]), "Multigrid error: at downstroke level {} bs[i]={}", i, bs[i]);
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
@@ -127,12 +126,12 @@ namespace Meso {
 			for (int i = 0; i < L; i++) {
 				PoissonPtr poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
 
-				//ArrayDv<T> poisson_diag; Poisson_Diagonal(poisson_diag, *poisson);
-				//presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, pre_iter, (T)(2.0 / 3.0));
-				//postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, post_iter, (T)(2.0 / 3.0));
-
-				presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter, 0);
-				postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter, 1);
+				ArrayDv<T> poisson_diag; Poisson_Diagonal(poisson_diag, *poisson);
+				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, pre_iter, (T)(2.0 / 3.0));
+				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, post_iter, (T)(2.0 / 3.0));
+				
+				//presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter, 0);
+				//postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter, 1);
 			}
 
 			//direct_solver

@@ -67,7 +67,7 @@ public:
 	{
 		mac_grid.Initialize(cell_counts,dx,domain_min);
 		//verbose=false;
-		//projection.verbose=false;
+		projection.verbose=true;
 		projection.Jump_Condition = std::bind(&FluidEulerTwoPhaseClebsch::Pressure_Jump_On_Interface, this, std::placeholders::_1);
 		sqrt_rho_L = std::sqrt(rho_L);
 		sqrt_rho_A = std::sqrt(rho_A);

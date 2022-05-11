@@ -43,7 +43,7 @@ namespace Meso {
 		Reset();
 	}
 
-	void Timer::Record(const std::string& name)
+	void Timer::Record(const std::string& name, const real unit)
 	{
 		int k = -1;
 		auto iter = name_index.find(name);
@@ -55,12 +55,12 @@ namespace Meso {
 		else {
 			k = iter->second;
 		}
-		records[k].Add(Lap_Time(PhysicalUnits::s) / 1000.0);//Elapse_And_Reset() returns in ms
+		records[k].Add(Lap_Time(unit));
 	}
 
 	void Timer::Output_Profile(std::ostream& out)
 	{
-		std::string str = "#     Time record cur(avg) in seconds: ";
+		std::string str = "#     Time record cur(avg): ";
 		for (int i = 0; i < records.size(); i++) {
 			std::pair<double, double> rec = records[i].Profile();
 			str += fmt::format("{}: {:.3f}({:.3f}), ", records[i].name, rec.first, rec.second);

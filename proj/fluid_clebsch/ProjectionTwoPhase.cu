@@ -337,11 +337,13 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 	//for (int i = 0; i < d; i++) { if (i != 1) middle[i] = 0; }
 	Timer timer;					timer.Reset();
 	if (use_implicit_surface_tension) Apply_Implicit_Surface_Tension(current_dt);
-	Build();						if(verbose)timer.Elapse_And_Output_And_Reset("Build");
+	Build();						
+	if (verbose) timer.Elapse_And_Output_And_Reset("Build");
 
 	//Meso::Info("div_u: \n{}", meso_div_host);
 
-	Solve();						if(verbose)timer.Elapse_And_Output_And_Reset("Solve");
+	Solve();
+	if(verbose)timer.Elapse_And_Output_And_Reset("Solve");
 	
 	//Meso::Info("solved pressure: \n{}", meso_pressure_dev);
 	//std::cout << "pressure after solve: " << meso_pressure_host(middle) << std::endl;
@@ -352,7 +354,8 @@ template<int d> void ProjectionTwoPhase<d>::Project()
 	//poisson_result -= meso_div_dev;
 	//Info("poisson residual max {}", poisson_result.Max_Abs());
 
-	Correction();					if(verbose)timer.Elapse_And_Output_And_Reset("Correction");
+	Correction();					
+	if(verbose)timer.Elapse_And_Output_And_Reset("Correction");
 	//std::cout << "vel after correct: " << (*velocity)(0, middle) << std::endl;
 	
 	//Meso::FaceField<float, d> meso_velocity_host;
