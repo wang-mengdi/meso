@@ -39,7 +39,7 @@ namespace Meso {
 		real Lap_Time(const real unit = PhysicalUnits::s);
 		//loop functions
 		void Begin_Loop(void);
-		void Record(const std::string& name);
+		void Record(const std::string& name, const real unit = PhysicalUnits::s);
 		void Output_Profile(std::ostream& out = std::cout);
 	};
 }

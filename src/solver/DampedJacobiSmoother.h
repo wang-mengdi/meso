@@ -16,7 +16,7 @@ namespace Meso {
 		T omega;
 		int dof;
 		int iter_num;
-		ArrayDv<T> diag;
+		ArrayDv<T> one_over_diag;
 		ArrayDv<T> x_temp;
 		DampedJacobiSmoother() {}
 		DampedJacobiSmoother(LinearMapping<T>& _mapping, const ArrayDv<T>& _diag, const int _iter_num, const real _omega = 2.0 / 3.0) { Init(_mapping, _diag, _iter_num, _omega); }
@@ -25,7 +25,8 @@ namespace Meso {
 			iter_num = _iter_num;
 			omega = _omega;
 			dof = mapping->XDoF();
-			diag = _diag;
+			one_over_diag.resize(dof);
+			ArrayFunc::Unary_Transform(_diag, 1.0 / thrust::placeholders::_1, one_over_diag);
 			x_temp.resize(dof);
 		}
 		virtual int XDoF()const { return dof; }
@@ -41,7 +42,7 @@ namespace Meso {
 				//b-Ax
 				mapping->Residual(x, x_temp, b);
 				//(b-Ax)/.diag
-				ArrayFunc::Binary_Transform(x, diag, [=]__device__(T a, T b) { return a / b; }, x);
+				ArrayFunc::Multiply(x, one_over_diag);
 				//x+=(b-Ax)/.diag*.omega
 				real _omega = omega;
 				ArrayFunc::Binary_Transform(x, x_temp, [=]__device__(T a, T b) { return b + a * _omega; }, x);

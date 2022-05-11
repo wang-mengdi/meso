@@ -47,7 +47,7 @@ double Timer::Elapse_And_Reset()
 void Timer::Elapse_And_Output(const std::string& message)
 {
 	double elapse=Elapse();
-	//Info("{} cost {:.2f}ms", message, elapse);
+	Info("{} cost {:.2f}ms", message, elapse);
 }
 
 void Timer::Elapse_And_Output_And_Reset(const std::string& message)

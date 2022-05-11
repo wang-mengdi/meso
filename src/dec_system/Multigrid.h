@@ -50,7 +50,6 @@ namespace Meso {
 			ArrayFunc::Copy(bs[0], b0);
 
 			for (int i = 0; i < L; i++) {
-				Assert(ArrayFunc::Is_Finite<T, DEVICE>(bs[i]), "Multigrid error: at downstroke level {} bs[i]={}", i, bs[i]);
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
@@ -62,14 +61,14 @@ namespace Meso {
 			direct_solver->Apply(xs[L], bs[L]);
 			checkCudaErrors(cudaGetLastError());
 
-			Assert(ArrayFunc::Is_Finite<T, DEVICE>(xs[L]), "Multigrid error: at coarsest level solved xs[{}]={}", L, xs[L]);
+			//Assert(ArrayFunc::Is_Finite<T, DEVICE>(xs[L]), "Multigrid error: at coarsest level solved xs[{}]={}", L, xs[L]);
 
 			//upstroke (coarse->fine)
 			for (int i = L - 1; i >= 0; i--) {
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
 				ArrayFunc::Add(xs[i], rs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
-				Assert(ArrayFunc::Is_Finite<T, DEVICE>(rs[i]), "Multigrid error: at upstroke level {} rs[i]={}", i, rs[i]);
+				//Assert(ArrayFunc::Is_Finite<T, DEVICE>(rs[i]), "Multigrid error: at upstroke level {} rs[i]={}", i, rs[i]);
 				//use bs to temporarily store the data
 				postsmoothers[i]->Apply(bs[i], rs[i]);
 				ArrayFunc::Add(xs[i], bs[i]);
@@ -79,8 +78,10 @@ namespace Meso {
 			checkCudaErrors(cudaGetLastError());
 		}
 
+		//Will add epsilon*I to the system of the coarsest level
+		//To make a Poisson system truly positive definite
 		template<int d>
-		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2) {
+		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0) {
 			Typedef_VectorD(d);
 			using PoissonPtr = std::shared_ptr<MaskedPoissonMapping<T, d>>;
 
@@ -125,24 +126,25 @@ namespace Meso {
 			for (int i = 0; i < L; i++) {
 				PoissonPtr poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
 
-				//ArrayDv<T> poisson_diag; Poisson_Diagonal(poisson_diag, *poisson);
-				//presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, pre_iter, (T)(2.0 / 3.0));
-				//postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, post_iter, (T)(2.0 / 3.0));
+				ArrayDv<T> poisson_diag; Poisson_Diagonal(poisson_diag, *poisson);
+				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, pre_iter, (T)(2.0 / 3.0));
+				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, post_iter, (T)(2.0 / 3.0));
 				
-				presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter, 0);
-				postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter, 1);
+				//presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter, 0);
+				//postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter, 1);
 			}
 
 			//direct_solver
-			direct_solver = std::make_shared<CholeskySparseSolver<T>>(SparseMatrix_From_Poisson_Like(grids[L], *mappings[L]));
+
+			direct_solver = std::make_shared<CholeskySparseSolver<T>>(SparseMatrix_From_Poisson_Like(grids[L], *mappings[L], coarsest_add_epsilon));
 
 			//DenseMatrixMapping<T> dense_mapping;
-			//DenseMatrixMapping_From_Poisson_Like(dense_mapping, grids[L], *mappings[L]);
+			//DenseMatrixMapping_From_Poisson_Like(dense_mapping, grids[L], *mappings[L], coarsest_add_epsilon);
 			//direct_solver = std::make_shared<LUDenseSolver<T>>(dense_mapping);
-			
+
 			//PoissonPtr last_layer_poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[L]);
 			//direct_solver = std::make_shared<GridGSSmoother<T, d>>(*last_layer_poisson, 5);
-			
+
 			//auxillary arrays
 			xs.resize(L + 1);
 			bs.resize(L + 1);

@@ -121,7 +121,7 @@ public:
 			ImplicitShape<d> surface;
 			surface += std::make_shared<Plane<d>>(VectorD::Unit(1), center);						// hydrostatic
 			//surface += std::make_shared<Ellipsoid<d>>(center, e_r);							// surface tension
-			//surface += std::make_shared<Sphere<d>>(center+0.5*center[1]*VectorD::Unit(1), r);		// gravity
+			surface += std::make_shared<Sphere<d>>(center+0.5*center[1]*VectorD::Unit(1), r);		// gravity
 			fluid.use_body_force = true;
 			fluid.levelset.Set_By_Shape(surface);
 			fluid.levelset.Fast_Marching();

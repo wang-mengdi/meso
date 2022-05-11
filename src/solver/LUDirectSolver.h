@@ -71,7 +71,7 @@ namespace Meso {
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
 			Memory_Check(x, b, "LUDenseSolver::Apply failed: not enough memory space");
 
-			Assert(ArrayFunc::Is_Finite<T, DEVICE>(b), "LUDirect solver failed: b={}", b);
+			//Assert(ArrayFunc::Is_Finite<T, DEVICE>(b), "LUDirect solver failed: b={}", b);
 
 			ArrayFunc::Copy(x, b);
 
@@ -84,10 +84,10 @@ namespace Meso {
 
 			if constexpr (std::is_same<T, double>::value) flg = cusolverDnDgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
 			else flg = cusolverDnSgetrs(solve_handle, CUBLAS_OP_N, dof, 1, A_ptr, dof, piv_ptr, x_ptr, dof, info_ptr);
-			Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver solve failed {}", flg);
+			//Assert(flg == CUSOLVER_STATUS_SUCCESS, "LUDenseSolver solve failed {}", flg);
 			checkCudaErrors(cudaGetLastError());
 
-			Assert(ArrayFunc::Is_Finite<T, DEVICE>(x), "LUDirect solver failed: x={}", x);
+			//Assert(ArrayFunc::Is_Finite<T, DEVICE>(x), "LUDirect solver failed: x={}", x);
 			//Info("direct solve input:\n{}\noutput:\n{}", b, x);
 		}
 	};
