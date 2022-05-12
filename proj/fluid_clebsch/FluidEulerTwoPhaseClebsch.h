@@ -13,6 +13,7 @@
 #include "SPX_Interpolation.h"
 #include "FluidFunc.h"
 #include "LevelSet.h"
+#include "omp.h"
 
 template<int d> class FluidEulerTwoPhaseClebsch
 {Typedef_VectorDii(d);
@@ -65,6 +66,10 @@ public:
 
 	virtual void Initialize(const VectorDi& cell_counts,const real dx,const VectorD& domain_min=VectorD::Zero())
 	{
+		#pragma omp parallel
+		{
+			std::cout << "currently using " << omp_get_num_threads() << " threads" << std::endl;
+		}
 		mac_grid.Initialize(cell_counts,dx,domain_min);
 		//verbose=false;
 		projection.verbose=true;
@@ -110,9 +115,9 @@ public:
 		if(verbose)timer.Elapse_And_Output_And_Reset("Advection");
 		if(!use_velocity_field)Blend_Velocity();
 		if(verbose)timer.Elapse_And_Output_And_Reset("Blend_Velocity");	
-		if(verbose){std::cout << "before projection" << std::endl;Divergence_Power();}
+		//if(verbose){std::cout << "before projection" << std::endl;Divergence_Power();}
 		Enforce_Incompressibility(dt);
-		if(verbose){std::cout << "after projection" << std::endl;Divergence_Power();}
+		//if(verbose){std::cout << "after projection" << std::endl;Divergence_Power();}
 		if(verbose)timer.Elapse_And_Output_And_Reset("Projection");		
 		Extrapolation();
 		if(verbose)timer.Elapse_And_Output_And_Reset("Extrapolation");

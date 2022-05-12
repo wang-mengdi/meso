@@ -1,4 +1,5 @@
 add_rules("mode.debug","mode.release")
+add_requires("openmp")
 --set_languages("cxx20")
 includes("./../../src/dec_system/xmake.lua")
 includes("./../../src/grid_physics/xmake.lua")
