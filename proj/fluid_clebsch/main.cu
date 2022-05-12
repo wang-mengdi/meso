@@ -22,6 +22,7 @@ void Run(json& j) {
 }
 
 int main(int argv, char** argc) {
+	//Info("omp max num threads: {}", omp_get_max_threads());
 
 	try {
 		json j = {
