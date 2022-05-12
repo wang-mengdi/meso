@@ -177,7 +177,7 @@ public:
 		fluid.rho_A = rho_A;
 		fluid.rho_L = rho_L;
 		fluid.beta = 0.5;
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 5; i++) {
 			fluid.Blend_Velocity();
 			std::cout << "before projection" << std::endl; fluid.Divergence_Power();
 			fluid.Enforce_Incompressibility((real)0.);
