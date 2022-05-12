@@ -66,7 +66,7 @@ public:
 
 	virtual void Initialize(const VectorDi& cell_counts,const real dx,const VectorD& domain_min=VectorD::Zero())
 	{
-		#pragma omp parallel
+		#pragma omp parallel nums_thread(128)
 		{
 			std::cout << "currently using " << omp_get_num_threads() << " threads" << std::endl;
 		}
