@@ -13,6 +13,7 @@
 #include "SPX_Interpolation.h"
 #include "FluidFunc.h"
 #include "LevelSet.h"
+#include "omp.h"
 
 template<int d> class FluidEulerTwoPhaseClebsch
 {Typedef_VectorDii(d);
@@ -110,9 +111,9 @@ public:
 		if(verbose)timer.Elapse_And_Output_And_Reset("Advection");
 		if(!use_velocity_field)Blend_Velocity();
 		if(verbose)timer.Elapse_And_Output_And_Reset("Blend_Velocity");	
-		if(verbose){std::cout << "before projection" << std::endl;Divergence_Power();}
+		//if(verbose){std::cout << "before projection" << std::endl;Divergence_Power();}
 		Enforce_Incompressibility(dt);
-		if(verbose){std::cout << "after projection" << std::endl;Divergence_Power();}
+		//if(verbose){std::cout << "after projection" << std::endl;Divergence_Power();}
 		if(verbose)timer.Elapse_And_Output_And_Reset("Projection");		
 		Extrapolation();
 		if(verbose)timer.Elapse_And_Output_And_Reset("Extrapolation");
@@ -121,17 +122,21 @@ public:
 
 	virtual void Advection(const real dt)
 	{
+		//Timer timer;
+		//timer.Reset();
         ////advect interface
-		Field<real,d> ghost_phi=levelset.phi;
-		std::function<bool(const VectorDi&)> valid_cell=[&](const VectorDi& cell)->bool{return Is_Fluid_Cell(cell);};
-		Advection::Semi_Lagrangian(dt,velocity,mac_grid,ghost_phi,mac_grid,levelset.phi,false,valid_cell);
+		Field<real,d> ghost_phi=levelset.phi;MacGrid<d> ghost_grid=mac_grid;
+		Advection::Semi_Lagrangian(dt,velocity,ghost_grid,ghost_phi,mac_grid,levelset.phi,false);
 		levelset.Fast_Marching(narrow_band_width);
+		//timer.Elapse_And_Output_And_Reset("Adv: levelset");
         Update_Rho_Face();
 		Update_Cell_Types();
+		//timer.Elapse_And_Output_And_Reset("Adv: update rho & type");
 
 		////advect velocity
-		MacGrid<d> ghost_grid=mac_grid;FaceField<real,d> ghost_velocity=velocity;
-		Advection::Semi_Lagrangian(dt, ghost_velocity, mac_grid, ghost_velocity, mac_grid, velocity, use_zero_extrapolation);
+		FaceField<real,d> ghost_velocity=velocity;
+		Advection::Semi_Lagrangian(dt,ghost_grid,ghost_velocity,mac_grid,velocity);
+		//timer.Elapse_And_Output_And_Reset("Adv: velocity");
 		
 		////advect psi
 		if(!use_velocity_field){
@@ -150,20 +155,16 @@ public:
 				VectorD backtraced_pos=pos-vel*dt;
 				VectorDi backtraced_cell=mac_grid.grid.Cell_Coord(backtraced_pos);
 				real phi = levelset.phi(cell);
+				C c = std::exp(1i*0.5*(vel.dot(vel))*dt/h_bar);
 				if(phi<0){
-					Vector4 advected_psi_L;
-					advected_psi_L=intp.Interpolate_Centers(ghost_psi_L,backtraced_pos);
+					Vector4 advected_psi_L=intp.Interpolate_Centers(ghost_psi_L,backtraced_pos);
 					Vector<C,2> psi_c_L = V2C(advected_psi_L);
-					C c_L = std::exp(1i*0.5*(vel.dot(vel))*dt/h_bar);
-					for (int i = 0; i < 2; i++) {psi_c_L[i]*=c_L;} 
-					psi_L(cell)=C2V(psi_c_L).normalized()*sqrt_rho_L;}
+					psi_L(cell)=C2V(psi_c_L*c).normalized()*sqrt_rho_L;}
 				else{
-					Vector4 advected_psi_A;
-					advected_psi_A=intp.Interpolate_Centers(ghost_psi_A,backtraced_pos);
+					Vector4 advected_psi_A=intp.Interpolate_Centers(ghost_psi_A,backtraced_pos);
 					Vector<C,2> psi_c_A = V2C(advected_psi_A);
-					C c_A = std::exp(1i*0.5*(vel.dot(vel))*dt/h_bar);
-					for (int i = 0; i < 2; i++) {psi_c_A[i]*=c_A;} 
-					psi_A(cell)=C2V(psi_c_A).normalized()*sqrt_rho_A;}}}
+					psi_A(cell)=C2V(psi_c_A*c).normalized()*sqrt_rho_A;}}}
+		//timer.Elapse_And_Output_And_Reset("Adv: psi");
 	}
 
 	virtual void Extrapolation()
@@ -182,15 +183,15 @@ public:
 			normal.normalize();
 			if (phi >= (real)0) {
 				if(phi < narrow_band_width){
-					VectorD interface_pos =  pos-normal*(phi+epsilon);
-					VectorD interface_vel=intp_vel.Interpolate_Face_Vectors(velocity,interface_pos);
+					VectorD interface_pos = pos-normal*(phi+epsilon);
+					VectorD interface_vel = intp_vel.Interpolate_Face_Vectors(velocity,interface_pos);
 					Vector4 interface_psi = intp_psi.Interpolate_Centers(psi_L, interface_pos);
 					psi_L(cell) = C2V(Vel_To_Psi_C<d>(interface_vel/h_bar,pos-interface_pos,interface_psi)).normalized()*sqrt_rho_L;}
 				else{psi_L(cell) = C2V(Vel_To_Psi_C<d>(VectorD::Zero(), pos)).normalized()*sqrt_rho_L;}}
 			else if (phi < (real)0) {
 				if(phi > -narrow_band_width){
-					VectorD interface_pos =  pos-normal*(phi-epsilon);
-					VectorD interface_vel=intp_vel.Interpolate_Face_Vectors(velocity,interface_pos);
+					VectorD interface_pos = pos-normal*(phi-epsilon);
+					VectorD interface_vel = intp_vel.Interpolate_Face_Vectors(velocity,interface_pos);
 					Vector4 interface_psi = intp_psi.Interpolate_Centers(psi_A, interface_pos);
 					psi_A(cell) = C2V(Vel_To_Psi_C<d>(interface_vel/h_bar,pos-interface_pos,interface_psi)).normalized()*sqrt_rho_A;}
 				else{psi_A(cell) = C2V(Vel_To_Psi_C<d>(VectorD::Zero(), pos)).normalized()*sqrt_rho_A;}}}	

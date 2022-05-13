@@ -6,6 +6,7 @@ target("grid_physics")
     add_cugencodes("native")
     add_cugencodes("compute_61")
     add_cuflags("-extended-lambda")
+    add_cuflags("-Xcompiler /openmp")
     add_includedirs(".",{public=true})
     add_deps("reservoir")
     
