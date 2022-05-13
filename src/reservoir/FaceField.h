@@ -109,16 +109,25 @@ namespace Meso {
 			for (int axis = 0; axis < d; axis++) {
 				Assert(face_data[axis] != nullptr, "FaceField::Calc_Faces error: nullptr data at axis {}", axis);
 				const int dof = grid.Face_DoF(axis);
-				thrust::counting_iterator<int> idxfirst(0);
-				thrust::counting_iterator<int> idxlast = idxfirst + dof;
-				thrust::transform(
-					idxfirst,
-					idxlast,
-					face_data[axis]->begin(),
-					[f, axis, this](const int idx) {
-						return f(axis, grid.Face_Coord(axis, idx));
+				if constexpr (side == DEVICE) {
+					thrust::counting_iterator<int> idxfirst(0);
+					thrust::counting_iterator<int> idxlast = idxfirst + dof;
+					thrust::transform(
+						idxfirst,
+						idxlast,
+						face_data[axis]->begin(),
+						[f, axis, this](const int idx) {
+							return f(axis, grid.Face_Coord(axis, idx));
+						}
+					);
+				}
+				else {
+#pragma omp parallel for
+					for (int i = 0; i < dof; i++) {
+						VectorDi face = grid.Face_Coord(axis, i);
+						(*this)(axis, face) = f(axis, face);
 					}
-				);
+				}
 			}
 		}
 	};
