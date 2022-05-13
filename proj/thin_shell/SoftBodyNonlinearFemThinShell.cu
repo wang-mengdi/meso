@@ -20,6 +20,7 @@
 
 using namespace ThinShellAuxFunc; 
 using namespace Meso;
+using namespace NonlinearFemFunc;
 
 template<class T_ARRAY> int Element_Edges(const Vector2i& v,T_ARRAY& edges);
 template<class T_ARRAY> int Element_Edges(const Vector3i& v,T_ARRAY& edges);
@@ -77,8 +78,8 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>
 	if (!use_explicit) {
 		A.resize(dof_n,dof_n);
 		Allocate_A();
-		dv.resize(dof_n);dv.fill((real)0);
-		b.resize(dof_n);b.fill((real)0);
+		dx.resize(dof_n); ArrayFunc::Fill(dx, 0);
+		b.resize(dof_n); ArrayFunc::Fill(b, 0);
 
 		if constexpr (d == 3) {
 			if (use_exact_hessian) {
@@ -144,7 +145,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize_Material() {
 	for (int i = 0; i < Ele_Num(); i++) {
 		ArrayF<VectorD, d> vtx;
 		for (int j = 0; j < d; j++) { vtx[j] = X0[E()[i][j]]; }
-		NonlinearFemFunc<d>::D_Inv_And_Area_And_Normal(vtx, Dm_inv[i], areas_hat[i], N[i]);
+		NonlinearFemFunc::D_Inv_And_Area_And_Normal<d>(vtx, Dm_inv[i], areas_hat[i], N[i]);
 
 		for (int j = 0; j < d; j++) {
 			int v_idx = E()[i][j];
@@ -261,60 +262,46 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const re
 // b = dt f + dt^2 J v + dt damp J v
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const real dt)
 {
-	Timer timer;
-
 	Clear_A_And_Rhs();
-	std::cout << "# number of non-zeros of A:  " << A.nonZeros() << std::endl;
-	const int vtx_num=Vtx_Num();
-	const int ele_num=Ele_Num();
 
+	Timer timer;
 	Update_Implicit_Force_And_Mass(dt);
+	Info("Update force time cost {} ms", timer.Lap_Time(PhysicalUnits::ms));
 	Update_Implicit_Stretching(dt);
+	Info("Update stretching time cost {} ms", timer.Lap_Time(PhysicalUnits::ms));
 	Update_Implicit_Bending(dt);
+	Info("Update bending time cost {} ms", timer.Lap_Time(PhysicalUnits::ms));
 	Update_Implicit_Boundary_Condition(dt);
+	Info("Update boundary condition time cost {} ms", timer.Lap_Time(PhysicalUnits::ms));
 
-	/*Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper, Eigen::DiagonalPreconditioner<real>> cg;
-	cg.setTolerance((real)1e-5);
-	dv = cg.compute(A).solve(b);
-	Info("Linear system solve: {} ms", timer.Lap_Time(PhysicalUnits::ms));
-
-	std::cout << "#	CG iterations:     " << cg.iterations() << std::endl;
-	std::cout << "#	CG estimated error: " << cg.error() << std::endl;*/
-
-
+	
 	SparseMatrixMapping<real, DataHolder::DEVICE> meso_mat(A);
 	SparseDiagonalPreconditioner<real> meso_sparse_diag_pred(meso_mat);
 	ConjugateGradient<real> meso_sparse_cg;
 	meso_sparse_cg.Init(&meso_mat, &meso_sparse_diag_pred, false, -1, 1e-5);
-	ArrayDv<real> dv_x(meso_mat.XDoF());
-
-	Array<real> hst_b(b.size()); //Needs to be changed here
-	for (int i = 0; i < b.size(); i++) { hst_b[i] = b[i]; }
-	ArrayDv<real> dv_b (hst_b);
+	ArrayDv<real> dv_x(dx);
+	ArrayDv<real> dv_b (b);
 
 	int iters; real relative_error;
 	meso_sparse_cg.Solve(dv_x, dv_b, iters, relative_error);
 	Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
-	Array<real> hst_x = dv_x;
+	Info("Implicit solve time cost {} ms",timer.Lap_Time(PhysicalUnits::ms));
+	dx = dv_x;
 
-	//Eigen::LLT<Eigen::MatrixXd> lltOfA(A); // compute the Cholesky decomposition of A
-	//if (lltOfA.info() == Eigen::NumericalIssue){throw std::runtime_error("Negative matrix!");}
-	//if (!A.isApprox(A.transpose())) {throw std::runtime_error("Non symmetric matrix!");}
-
+	const int vtx_num = Vtx_Num();
 #pragma omp parallel for
 	for (int i = 0; i < vtx_num; i++) {
-		for (int j = 0; j < d; j++) { V()[i][j] += hst_x[i * d + j]; }
+		for (int j = 0; j < d; j++) { V()[i][j] += dx[i * d + j]; }
 		X()[i] += V()[i] * dt;
 	}
-
-	Info("update nodes: {} ms", timer.Lap_Time(PhysicalUnits::ms));
+	Info("Time spent on position uptate {} ms", timer.Lap_Time(PhysicalUnits::ms));
 }
 
 // A = hess
 // b = -grad
 // Adx=b
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
-{	//dv is dx in this case
+{	//dx is dx in this case
 	int iter = 0;
 	real err = 1;
 	const int vtx_num = Vtx_Num();
@@ -334,7 +321,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 		//timer.Reset();
 
 		SparseFunc::Set_Value(A, (real)0);
-		b.setZero(); //dense vector b can be directly set to zero
+		ArrayFunc::Fill(b,0); //dense vector b can be directly set to zero
 		//std::cout << "# number of non-zeros of A:  " << A.nonZeros() << std::endl;
 
 		//add external forces
@@ -411,22 +398,29 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 			int node = bc_d.first; VectorD dis = bc_d.second;
 			for (int axis = 0; axis < d; axis++) {
 				int idx = node * d + axis;
-				if(iter==0){ NonlinearFemFunc<d>::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]); }
-				else{ NonlinearFemFunc<d>::Set_Dirichlet_Boundary_Helper(A, b, idx, (real)0); }
+				if(iter==0){ NonlinearFemFunc::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]); }
+				else{ NonlinearFemFunc::Set_Dirichlet_Boundary_Helper(A, b, idx, (real)0); }
 			}
 		}
 		
-		Eigen::ConjugateGradient<SparseMatrix<real>, Eigen::Lower | Eigen::Upper> cg;
-		cg.setTolerance((real)1e-6);
-		cg.compute(A);
-		dv = cg.solve(b);
+		SparseMatrixMapping<real, DataHolder::DEVICE> meso_mat(A);
+		SparseDiagonalPreconditioner<real> meso_sparse_diag_pred(meso_mat);
+		ConjugateGradient<real> meso_sparse_cg;
+		meso_sparse_cg.Init(&meso_mat, &meso_sparse_diag_pred, false, -1, 1e-5);
+		ArrayDv<real> dv_x(dx);
+		ArrayDv<real> dv_b(b);
+
+		int iters; real relative_error;
+		meso_sparse_cg.Solve(dv_x, dv_b, iters, relative_error);
+		Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
+		dx = dv_x;
 
 		///*std::cout << "A:" << std::endl;
 		//std::cout << A << std::endl;
 		//std::cout << "b:" << std::endl;
 		//std::cout << b.transpose() << std::endl;
-		//std::cout << "dv:" << std::endl;
-		//std::cout << dv.transpose() << std::endl;*/
+		//std::cout << "dx:" << std::endl;
+		//std::cout << dx.transpose() << std::endl;*/
 		//
 		////timer.Elapse_And_Output_And_Reset("linear system solve");
 
@@ -436,13 +430,13 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 		//#pragma omp parallel for
 		//for (int i = 0; i < vtx_num; i++) {
 		//	for (int j = 0; j < d; j++) {
-		//		X()[i][j] += damping*dv[i * d + j]; //damping becomes the step size here
+		//		X()[i][j] += damping*dx[i * d + j]; //damping becomes the step size here
 		//	}
 		//}
 
 		////timer.Elapse_And_Output_And_Reset("update nodes");
 
-		//err = dv.norm() / dv.size();
+		//err = dx.norm() / dx.size();
 		////Info("b norm is:{}", b.norm());
 		////Info("relative error is:{}", err);
 		//iter++;
@@ -453,13 +447,11 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Clear_A_And_Rhs(){
 	SparseFunc::Set_Value(A, (real)0);
-	b.setZero();
+	ArrayFunc::Fill(b, (real)0);
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Force_And_Mass(const real dt){
-	Timer timer;
 	const int vtx_num=Vtx_Num();
-	const int ele_num=Ele_Num();
 
 	//add external forces
 	if(use_body_force){
@@ -467,28 +459,20 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Force_And
 			Add_Block(b, i, dt * Mass(i) * g);
 		}
 	}
-	Info("Add body force for b", timer.Lap_Time(PhysicalUnits::ms));
 
 	for(auto& iter:bc.forces){
 		Add_Block(b,iter.first, dt*iter.second);
 	}
-	Info("Add external force for b", timer.Lap_Time(PhysicalUnits::ms));
 
 	for(int i=0;i<vtx_num;i++){Add_Block_Helper(A,i,i,Mass(i)*MatrixD::Identity());}
-	Info("Add mass for A", timer.Lap_Time(PhysicalUnits::ms));
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Stretching(const real dt){
-	Timer timer;
-	const int vtx_num=Vtx_Num();
 	const int ele_num=Ele_Num();
 		
-	Timer timer2;
-	timer2.Begin_Loop();
 	for(int ele_idx=0; ele_idx <ele_num; ele_idx++){
 		MatrixD grad_s; MatrixD hess_s[d][d];
 		Stretch_Force(ele_idx, grad_s, hess_s);
-		timer2.Record("calculate streching force");
 		for(int j=0;j<d;j++){
 			Add_Block(b, E()[ele_idx][j], -dt*grad_s.col(j));
 			for(int k=0;k<d;k++){
@@ -496,18 +480,10 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Stretchin
 				Add_Block_Helper(A, E()[ele_idx][j], E()[ele_idx][k], dt * (dt + damping) * hess_s[j][k]);
 			}
 		}
-		timer2.Record("assemble strething matrix");
 	}
-	timer2.Output_Profile(std::cout);
-	Info("Assemble linear system for stretching", timer.Lap_Time(PhysicalUnits::ms));
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Bending(const real dt) {
-	Timer timer;
-	const int vtx_num = Vtx_Num();
-	const int ele_num = Ele_Num();
-
-	timer.Begin_Loop();
 	if constexpr (d == 3) {
 		for (int i = 0; i < edges.size(); i++) {
 			Eigen::Matrix<real, d, d + 1> grad_b;
@@ -516,7 +492,6 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Bending(c
 			ArrayF<int, 2> ele_idx;
 			if (Junction_Info(i, vtx_idx, ele_idx)) {
 				Bend_Force_Approx(i, grad_b, vtx_idx, ele_idx, hess_b);
-				timer.Record("calculate bending force");
 				for (int j = 0; j < d + 1; j++) {
 					Add_Block(b, vtx_idx[j], -dt * grad_b.col(j));
 
@@ -525,24 +500,17 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Bending(c
 						Add_Block_Helper(A, vtx_idx[j], vtx_idx[k], dt * (dt + damping) * hess_b[j][k]);
 					}
 				}
-				timer.Record("assemble bending matrix");
 			}
 		}
 	}
-	timer.Output_Profile(std::cout);
-	Info("Assemble linear system for bending", timer.Lap_Time(PhysicalUnits::ms));
 }
 
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Boundary_Condition(const real dt){
-	Timer timer;
-	const int vtx_num=Vtx_Num();
-	const int ele_num=Ele_Num();
-
 	for (auto& bc_d : bc.psi_D_values) {
 		int node = bc_d.first; VectorD dis = bc_d.second;
 		for (int axis = 0; axis < d; axis++) {
 			int idx = node * d + axis;
-			NonlinearFemFunc<d>::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]);
+			NonlinearFemFunc::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]);
 		}
 	}
 }
@@ -569,7 +537,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Grad_Stretch(const int el
 	real ks = Ks(material.youngs_modulus, avg_h, material.poisson_ratio);
 
 	MatrixD ds;
-	NonlinearFemFunc<d>::D(vtx, ds);
+	NonlinearFemFunc::D<d>(vtx, ds);
 	MatrixD deformation = ds * Dm_inv[ele_idx];
 	MatrixD strain;
 	Deformation_To_Strain(deformation, strain);
@@ -617,7 +585,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Stretch_Force(const int e
 	real ks = Ks(material.youngs_modulus, avg_h, material.poisson_ratio);
 
 	MatrixD ds;
-	NonlinearFemFunc<d>::D(vtx, ds);
+	NonlinearFemFunc::D<d>(vtx, ds);
 	MatrixD deformation = ds * Dm_inv[ele_idx];
 	MatrixD strain;
 	Deformation_To_Strain(deformation, strain);
@@ -889,7 +857,7 @@ template<int d> inline real SoftBodyNonlinearFemThinShell<d>::Stretching_Energy(
 	real ks = Ks(material.youngs_modulus, avg_h, material.poisson_ratio);
 
 	MatrixD ds;
-	NonlinearFemFunc<d>::D(vtx, ds);
+	NonlinearFemFunc::D<d>(vtx, ds);
 	MatrixD deformation = ds * Dm_inv[ele_idx];
 	MatrixD strain;
 	Deformation_To_Strain(deformation, strain);
@@ -931,7 +899,7 @@ template<int d> real SoftBodyNonlinearFemThinShell<d>::Total_Stretching_Energy()
 		real ks = Ks(material.youngs_modulus, avg_h, material.poisson_ratio);
 
 		MatrixD ds;
-		NonlinearFemFunc<d>::D(vtx, ds);
+		NonlinearFemFunc::D<d>(vtx, ds);
 		MatrixD deformation = ds * Dm_inv[i];
 		MatrixD strain;
 		Deformation_To_Strain(deformation, strain);
@@ -1252,81 +1220,20 @@ template<int d> bool SoftBodyNonlinearFemThinShell<d>::Junction_Info(int edge_id
 	}
 }
 
-////////////////////////////////////////////////////////////////////////
-//omp accelerated functions
-
-inline void Add_Element_Force_To_Vertices(Array<Vector2>& F,const Vector3i& e,const Matrix2& ff)
-{
-	Vector2& f0=F[e[0]];
-	Vector2& f1=F[e[1]];
-	Vector2& f2=F[e[2]];
-	Vector2 c0=ff.col(0);
-	Vector2 c1=ff.col(1);
-	Vector2 c2=c0+c1;
-#pragma omp atomic
-	f0[0]-=c0[0];
-#pragma omp atomic
-	f0[1]-=c0[1];
-#pragma omp atomic
-	f1[0]-=c1[0];
-#pragma omp atomic
-	f1[1]-=c1[1];
-#pragma omp atomic
-	f2[0]+=c2[0];
-#pragma omp atomic
-	f2[1]+=c2[1];
-}
-
-inline void Add_Element_Force_To_Vertices(Array<Vector3>& F,const Vector4i& e,const Matrix3& ff)
-{ 
-	Vector3& f0=F[e[0]];
-	Vector3& f1=F[e[1]];
-	Vector3& f2=F[e[2]];
-	Vector3& f3=F[e[3]];
-	Vector3 c0=ff.col(0);
-	Vector3 c1=ff.col(1);
-	Vector3 c2=ff.col(2);
-	Vector3 c3=c0+c1+c2;
-#pragma omp atomic
-	f0[0]-=c0[0];
-#pragma omp atomic
-	f0[1]-=c0[1];
-#pragma omp atomic
-	f0[2]-=c0[2];
-#pragma omp atomic
-	f1[0]-=c1[0];
-#pragma omp atomic
-	f1[1]-=c1[1];
-#pragma omp atomic
-	f1[2]-=c1[2];
-#pragma omp atomic
-	f2[0]-=c2[0];
-#pragma omp atomic
-	f2[1]-=c2[1];
-#pragma omp atomic
-	f2[2]-=c2[2];
-#pragma omp atomic
-	f3[0]+=c3[0];
-#pragma omp atomic
-	f3[1]+=c3[1];
-#pragma omp atomic
-	f3[2]+=c3[2];
-}
-
 template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block_Helper(SparseMatrix<real>& K, const int i, const int j, const MatrixD& Ks)
 {
 	SparseFunc::Add_Block<d, MatrixD>(K, i, j, Ks);
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Block(VectorX& b, const int i, const VectorD& bi)
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Block(Array<real>& b, const int i, const VectorD& bi)
 {
 	for (int ii = 0; ii < d; ii++)b[i * d + ii] = bi[ii];
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block(VectorX& b, const int i, const VectorD& bi)
+template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block(Array<real>& b, const int i, const VectorD& bi)
 {
 	for (int ii = 0; ii < d; ii++)b[i * d + ii] += bi[ii];
 }
 
-template class SoftBodyNonlinearFemThinShell<2>;
+//template class SoftBodyNonlinearFemThinShell<2>;
 template class SoftBodyNonlinearFemThinShell<3>;

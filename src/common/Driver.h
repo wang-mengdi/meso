@@ -86,6 +86,10 @@ namespace Meso {
 						dt = next_time - current_time;
 						last_iter = true;
 					}
+					else if (current_time + 2 * dt >= next_time) {
+						dt = (real).5 * (next_time - current_time);
+					}
+
 					simulator.Advance(current_frame, current_time, dt);
 					current_time += dt;
 					Print_Iteration_Info(iter_timer, dt, current_time - frame_start_time, time_per_frame);

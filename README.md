@@ -3,7 +3,7 @@
 ## Getting started
 
 ##### Install Environment
-- Visual Studio 2022
+- Visual Studio 2022 (with the "Desktop development with C++" workload)
 - CUDA 11.6
 - Paraview 5.10.1-MPI
 - Microsoft MPI (should be installed by default)

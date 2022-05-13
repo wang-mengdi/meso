@@ -1,8 +1,3 @@
-//////////////////////////////////////////////////////////////////////////
-// Rendering functions
-// Copyright (c) (2022-), Mengdi Wang
-// This file is part of MESO, whose distribution is governed by the LICENSE file.
-//////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Mesh.h"
 #include "AuxFunc.h"
@@ -18,6 +13,7 @@
 
 using namespace Meso;
 namespace VTKFunc {
+	//output vtu file for this project specifically
 	template<int d,class T>
 	void Output_VTU(const std::shared_ptr< SurfaceMesh<d> >& mesh,const Array<T>& velocity, std::string file_name) {
 		Typedef_VectorD(d);
