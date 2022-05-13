@@ -156,11 +156,12 @@ namespace Meso {
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << 0, -1, 0, 0, 0, 0;
+			bc_width << 0, 0, 0, 0, 0, 0;
 			bc_val << 1, 1, 0, 0, 0, 0;
 
 			////sphere
-			VectorD center = grid.Center()/2; 
+			VectorD center = grid.Center(); 
+			center[0] = center[0] / 2;
 			real r = (real)0.1;
 			Sphere<d> sphere(center, r);
 
@@ -183,9 +184,9 @@ namespace Meso {
 						initial_vel(axis, face) = 0.0;
 						vol(axis, face) = 0;
 					}
-					else {
+					/*else {
 						initial_vel(axis, face) = 1.0;
-					}
+					}*/
 				}
 			);
 
