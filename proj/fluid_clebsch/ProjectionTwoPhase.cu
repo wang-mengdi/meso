@@ -68,6 +68,9 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 	//int n = (int)matrix_to_grid.size();
 	//A.resize(n, n); p.resize(n); p.fill((real)0); div_u.resize(n); div_u.fill((real)0);
 
+	static Meso::Timer timer;
+	timer.Begin_Loop();
+
 	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
 	meso_fixed_host.Init(meso_grid);
 	meso_fixed_host.Calc_Cells(
@@ -75,6 +78,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 			return !this->Is_Valid_Cell(cell);
 		}
 	);
+	timer.Record("fill host fixed");
 	meso_rho_host.Init(meso_grid);
 	meso_rho_host.Calc_Faces(
 		[&](const int axis, const VectorDi face)->real {
@@ -85,9 +89,16 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 			return 1.0 / (*rho_face)(axis, face);
 		}
 	);
+
+	timer.Record("fill host rho");
+
 	meso_poisson.Init(meso_grid, meso_rho_host, meso_fixed_host);
+	timer.Record("poisson dev");
 	meso_mg.Init_Poisson(meso_poisson, 2, 2, 1e-5);
+	timer.Record("mg dev");
 	meso_cg.Init(&meso_poisson, &meso_mg, false, -1, 1e-5);
+	timer.Record("cg dev");
+	timer.Output_Profile();
 	//meso_cg.Init(&meso_poisson, nullptr, true, -1, 1e-5);
 }
 
