@@ -25,8 +25,8 @@ public:
 	Array<real> hs;					//thickness of the thin shell,defined on vertices
 	DiagonalMatrix<real> M;			//mass of face
 	SparseMatrix<real> A;			//stiffness matrix
-	VectorX dv;						//displacement, delta x
-	VectorX b;
+	Array<real> dx;					//displacement, delta x
+	Array<real> b;
 
 	Array<ElasticParam> materials;	//different mateirals
 	Array<int> material_id;			//refer to the index in materials
@@ -51,7 +51,7 @@ public:
 	Array<ArrayF<Matrix3, 3>> grad_ns;
 	Array<Array2DF<ArrayF<Vector3, 2>,3,3>> grad_rs; //2 grads (+-) of Vector3 for each q and each vertex in a triangle
 	
-	bool use_exact_hessian = true;		//turn on when the solver is used for optimization, otherwise the we use Gauss-Newton approximation for the forward solve 
+	bool use_exact_hessian = false;		//turn on when the solver is used for optimization, otherwise the we use Gauss-Newton approximation for the forward solve 
 	bool use_explicit= false;		
 	bool use_body_force=true;
 	VectorD g=VectorD::Unit(1)*-9.8;
@@ -137,6 +137,6 @@ public:
 
 protected:
 	void Add_Block_Helper(SparseMatrix<real>& K, const int i, const int j, const MatrixD& Ks);
-	void Set_Block(VectorX& b, const int i, const VectorD& bi);
-	void Add_Block(VectorX& b, const int i, const VectorD& bi);
+	void Set_Block(Array<real>& b, const int i, const VectorD& bi);
+	void Add_Block(Array<real>& b, const int i, const VectorD& bi);
 };

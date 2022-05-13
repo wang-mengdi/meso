@@ -3,6 +3,7 @@
 #include "Driver.h"
 #include "SoftBodyNonlinearFemThinShell.h"
 #include "SoftBodyNonlinearThinShellInitializer.h"
+#include "omp.h"
 using namespace Meso;
 
 template<int d>
@@ -29,6 +30,11 @@ int main(int argv, char** argc) {
 			json_input >> j;
 			json_input.close();
 		}
+
+		int thread_num=Json::Value(j, "thread_num", omp_get_max_threads());
+		omp_set_num_threads(thread_num);
+		
+		Info("Using {} threads, out of {} available threads", omp_get_num_threads(), omp_get_max_threads());
 
 		Run<3>(j);
 	}
