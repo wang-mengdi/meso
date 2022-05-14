@@ -119,17 +119,17 @@ public:
 			real r = fluid.mac_grid.grid.Length()[1] * (real).1;
 			VectorD e_r = VectorD::Ones() * r; e_r[1] *= (real)2.;
 			ImplicitShape<d> surface;
-			surface += std::make_shared<Plane<d>>(VectorD::Unit(1), center);						// hydrostatic
-			//surface += std::make_shared<Ellipsoid<d>>(center, e_r);							// surface tension
-			surface += std::make_shared<Sphere<d>>(center+0.5*center[1]*VectorD::Unit(1), r);		// gravity
-			fluid.use_body_force = true;
+			//surface += std::make_shared<Plane<d>>(VectorD::Unit(1), center);						// hydrostatic
+			surface += std::make_shared<Ellipsoid<d>>(center, e_r);							// surface tension
+			//surface += std::make_shared<Sphere<d>>(center+0.5*center[1]*VectorD::Unit(1), r);		// gravity
+			//fluid.use_body_force = true;
 			fluid.levelset.Set_By_Shape(surface);
 			fluid.levelset.Fast_Marching();
 
-			////volume preserving
+			//volume preserving
 			//fluid.projection.use_vol_control = true;
 			//fluid.projection.target_vol = fluid.levelset.Total_Volume();
-			//fluid.projection.vol_control_ks = (real)1e2;
+			//fluid.projection.vol_control_ks = (real)1;
 
 			fluid.initial_psi = std::bind(&FluidEulerTwoPhaseClebschDriver<d>::Initial_Zero, this, std::placeholders::_1);
 

@@ -1,11 +1,11 @@
 {
-    "dimension": 2,
+    "dimension": 3,
     "driver": {
-        "output_dir": "test",
-        "fps": 20,
-        "last_frame": 100,
+        "output_dir": "droplet_256",
+        "fps": 25,
+        "last_frame": 200,
         "test": 1,
-        "scale": 64,
+        "scale": 256,
         "cfl": 1.0,
         "rho_A": 0.001,
         "rho_L": 1.0,
