@@ -36,7 +36,7 @@ namespace Meso {
 	};
 
 	template<class T, int d >
-	void Poisson_Diagonal(ArrayDv<T>& diag, MaskedPoissonMapping<T, d>& mapping) {
+	void PoissonLike_Diagonal(ArrayDv<T>& diag, MaskedPoissonMapping<T, d>& mapping) {
 		const auto& grid = mapping.vol.grid;
 		size_t n = mapping.XDoF();
 		diag.resize(n);
@@ -141,7 +141,7 @@ namespace Meso {
 	}
 	//column-major
 	template<class T, int d>
-	void Dense_Matrix_From_Poisson_Like(int& cols, int& rows, ArrayDv<T>& A, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
+	void Dense_Matrix_From_PoissonLike(int& cols, int& rows, ArrayDv<T>& A, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
 		ArrayDv<T> temp_p, temp_Ap;
 		cols = poisson_like.XDoF();
 		rows = poisson_like.YDoF();
@@ -163,18 +163,18 @@ namespace Meso {
 	}
 	//column-major
 	template<class T, int d>
-	void DenseMatrixMapping_From_Poisson_Like(DenseMatrixMapping<T>& dense_mapping, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
+	void DenseMatrixMapping_From_PoissonLike(DenseMatrixMapping<T>& dense_mapping, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
 		Dense_Matrix_From_Poisson_Like(dense_mapping.cols, dense_mapping.rows, dense_mapping.A, grid, poisson_like, diag_add_epsilon);
 	}
 
 	//Will add epsilon*I to the system
 	//The reason of that feature is that a Poisson system may have a eigen value 0, add epsilon*I will make it positive definite
 	template<class T, int d>
-	SparseMatrix<T> SparseMatrix_From_Poisson_Like(const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
+	SparseMatrix<T> SparseMatrix_From_PoissonLike(const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
 		int cols, rows;
 		ArrayDv<T> A_dev;
 		//column-major
-		Dense_Matrix_From_Poisson_Like(cols, rows, A_dev, grid, poisson_like, diag_add_epsilon);
+		Dense_Matrix_From_PoissonLike(cols, rows, A_dev, grid, poisson_like, diag_add_epsilon);
 		Array<T> A_host = A_dev;
 		std::vector<Eigen::Triplet<T, int>> elements;
 		//Info("rows {} cols {}", rows, cols);
