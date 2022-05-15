@@ -39,7 +39,7 @@ namespace Meso {
 		Array<T, side> values;
 		void Init(Field<bool, d>& fixed, Field<T, d> val_field) {
 			Array<std::pair<int, T>> bc_pairs;
-			fixed.Iterate_Cells(
+			fixed.Iterate_Nodes(
 				[&](const VectorDi cell) {
 					if (fixed(cell)) {
 						bc_pairs.push_back(std::make_pair(fixed.grid.Index(cell), val_field(cell)));
