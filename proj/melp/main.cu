@@ -37,33 +37,35 @@ template<int d>
 void Test_NAParticles(void) {
 	Typedef_VectorD(d);
 	NAParticles<d> naps;
-	//naps.Add_Attribute("s", (float)10);
-	//naps.Add_Attribute("t", VectorFunc::V<d>(1,1,1));
-	naps.template Add_Attribute<float>("s", 10);
-	naps.template Add_Attribute<Vector3>("t", Vector3::Ones());
 	naps.Resize(2);
-	Info("size: {}", naps.Size());
-	//legal
-	Array<float>& data = naps.template Get_Attribute<float>("s");
-	Info("size 2: {}", data.size());
-	Info("data 0: {}", naps.template Get_Entry<float>("s", 0));
-	Info("data 1: {}", naps.template Get_Entry<float>("s", 1));
-	Info("X 0: {}", naps.Get["x"](0));
-	Info("X 1: {}", naps.Get["x"](1));
+	Info("shit: {}", naps.x(0));
+	Info("data 0: {}", naps.template Get_Entry<VectorD>("x", 0));
+	Array<VectorD> ref = naps.xRef();
+	Info("shit1: {}", ref[0]);
+	Info("shit2: {}", ref[1]);
+	//naps.Resize(2);
+	//Info("size: {}", naps.Size());
+	////legal
+	//Array<float>& data = naps.template Get_Attribute<float>("s");
+	//Info("size 2: {}", data.size());
+	//Info("data 0: {}", naps.template Get_Entry<float>("s", 0));
+	//Info("data 1: {}", naps.template Get_Entry<float>("s", 1));
+	//Info("X 0: {}", naps.Get["x"](0));
+	//Info("X 1: {}", naps.Get["x"](1));
 
-	if constexpr (d == 3) {
-		Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, naps, "x");
-	}
-	//Array<VectorD> positions = naps.Ref["x"]();
-	//for (int i = 0; i < positions.size(); i++) {
-	//	std::cout << "Pos: \n" << positions[i] << std::endl;
+	//if constexpr (d == 3) {
+	//	Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, naps, "x");
 	//}
-	naps.Update_Searcher();
-	Array<int> nbs;
-	naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 1.5, nbs);
-	Info("num nbs: {}",nbs.size());
-	naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 15, nbs);
-	Info("num nbs 2: {}", nbs.size());
+	////Array<VectorD> positions = naps.Ref["x"]();
+	////for (int i = 0; i < positions.size(); i++) {
+	////	std::cout << "Pos: \n" << positions[i] << std::endl;
+	////}
+	//naps.Update_Searcher();
+	//Array<int> nbs;
+	//naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 1.5, nbs);
+	//Info("num nbs: {}",nbs.size());
+	//naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 15, nbs);
+	//Info("num nbs 2: {}", nbs.size());
 	//Info("data 2: {}", naps.template Get<float>("s", 2)); //illegal
 	//Info("shitman: {}", shitman(0.5,3.7));
 	//illegal

@@ -13,7 +13,6 @@ namespace Meso {
 	class NAParticles : public Points {
 		Typedef_VectorD(d);
 	public:
-
 		std::shared_ptr<NeighborSearcher<d>> nbs_searcher;
 
 		std::map<std::string, std::function<VectorD(const int)>> Get;
@@ -21,18 +20,20 @@ namespace Meso {
 
 		NAParticles() {
 			Add_Attribute<VectorD>("x", VectorD::Zero());
-			Get["x"] = [&](const int idx)->VectorD {
-				return this->template Get_Entry<VectorD>("x", idx);
-			};
-			Ref["x"] = [&]()->Array<VectorD>& {
-				return this->template Get_Attribute<VectorD>("x");
-			};
-			nbs_searcher = std::make_shared<NeighborKDTree<d>>();
-			nbs_searcher->Update_Points(Ref["x"]());
+			//Get["x"] = [&](const int idx)->VectorD {
+			//	return this->template Get_Entry<VectorD>("x", idx);
+			//};
+			//Ref["x"] = [&]()->Array<VectorD>& {
+			//	return this->template Get_Attribute<VectorD>("x");
+			//};
+			//nbs_searcher = std::make_shared<NeighborKDTree<d>>();
+			//nbs_searcher->Update_Points(Ref["x"]());
 		}
 
+		Register_Attribute(VectorD, x);
+
 		void Update_Searcher(void) {
-			nbs_searcher->Update_Points(Ref["x"]());
+			//nbs_searcher->Update_Points(Ref["x"]());
 		}
 	};
 }

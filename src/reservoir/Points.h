@@ -8,7 +8,15 @@
 #include "AuxFunc.h"
 #include <functional>
 
+////macros to define helper functions for manipulating particle attributes
+#define Register_Attribute(T, a)\
+	public: T& a(const int i) {return Get_Entry<T>(#a, i);}\
+	Array<T>& a##Ref(){return Get_Attribute<T>(#a);}\
+
 namespace Meso {
+//public: T& a(const int i) { return (*_a)[i]; }\
+//protected: std::shared_ptr<Array<T>> _a; \
+	
 	class AttributeBase {
 	public:
 		virtual ~AttributeBase() {};
@@ -22,6 +30,8 @@ namespace Meso {
 		T default_value;
 		std::shared_ptr<Array<T>> data_ptr = nullptr;
 	public:
+		//Add_Attribute<type>(#name, def_val); \
+
 		virtual ~Attribute() {}
 		Attribute(T def_val) : default_value(def_val) {
 			data_ptr = std::make_shared<Array<T>>();
@@ -71,7 +81,7 @@ namespace Meso {
 		}
 
 		template<class T>
-		T Get_Entry(const std::string name, const int i) {
+		T& Get_Entry(const std::string name, const int i) {
 			Array<T>& att = Get_Attribute<T>(name);
 			if (i >= att.size()) {
 				Error("Error: Out Of Bounds for index: {} in Points.h", i);
