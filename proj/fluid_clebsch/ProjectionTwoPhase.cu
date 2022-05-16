@@ -73,7 +73,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 
 	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
 	meso_fixed_host.Init(meso_grid);
-	meso_fixed_host.Calc_Cells(
+	meso_fixed_host.Calc_Nodes(
 		[&](const VectorDi cell) {
 			return !this->Is_Valid_Cell(cell);
 		}
@@ -259,7 +259,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_b()
 {
 	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
 	meso_div_host.Init(meso_grid);
-	meso_div_host.Calc_Cells(
+	meso_div_host.Calc_Nodes(
 		[&](const VectorDi cell)->real {
 			if (!mac_grid->grid.Valid_Cell(cell)) return 0;
 			real div = (real)0;

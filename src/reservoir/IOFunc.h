@@ -52,7 +52,7 @@ namespace Meso {
 
 			FaceField<T, d> F_host = F;
 			Field<VectorD, d> vf_host(grid);
-			vf_host.Calc_Cells(
+			vf_host.Calc_Nodes(
 				[&](const VectorDi& cell) {
 					VectorD pos = grid.Position(cell);
 					return IntpLinear::Face_Vector(F_host, pos);

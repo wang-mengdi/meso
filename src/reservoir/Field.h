@@ -78,16 +78,16 @@ namespace Meso {
 		}
 
 		template<class CFunc>
-		void Iterate_Cells(CFunc f) {
+		void Iterate_Nodes(CFunc f) {
 			const int dof = grid.DoF();
 			for (int c = 0; c < dof; c++) {
 				f(grid.Coord(c));
 			}
 		}
 
-		template<class CFuncT>//CFuncT is a function: VectorDi->T, takes the cell index
-		void Calc_Cells(CFuncT f) {
-			Assert(data != nullptr, "Field::Calc_Cells error: nullptr data");
+		template<class CFuncT>//CFuncT is a function: VectorDi->T, takes the node index
+		void Calc_Nodes(CFuncT f) {
+			Assert(data != nullptr, "Field::Calc_Nodes error: nullptr data");
 			const int dof = grid.DoF();
 			thrust::counting_iterator<int> idxfirst(0);
 			thrust::counting_iterator<int> idxlast = idxfirst + dof;
@@ -101,8 +101,8 @@ namespace Meso {
 			);
 		}
 
-		template<class Fcell>//Fcell is a (void) function takes a cell index
-		void Exec_Nodes(Fcell f) const {
+		template<class Fnode>//Fnode is a (void) function takes a node index
+		void Exec_Nodes(Fnode f) const {
 			return grid.Exec_Nodes(f);
 		}
 

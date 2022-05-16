@@ -112,7 +112,7 @@ public:
 			perimeter.Set_Parameters(fluid.mac_grid);
 			perimeter.Fill_Boundary_Condition(fluid.bc);
 
-			fluid.projection.sigma = (real)1.e-1;
+			fluid.projection.sigma = (real)1.e-2;
 
 			////init levelset
 			VectorD center = fluid.mac_grid.grid.Center();
