@@ -43,8 +43,10 @@ void Test_NAParticles(void) {
 	//legal
 	Array<float>& data = naps.template Get_Attribute<float>("s");
 	Info("size 2: {}", data.size());
-	Info("data 0: {}", naps.template Get<float>("s", 0));
-	Info("data 1: {}", naps.template Get<float>("s", 1));
+	Info("data 0: {}", naps.template Get_Entry<float>("s", 0));
+	Info("data 1: {}", naps.template Get_Entry<float>("s", 1));
+	Info("X 0: {}", naps.Get["x"](0));
+	Info("X 1: {}", naps.Get["x"](1));
 	//Info("data 2: {}", naps.template Get<float>("s", 2)); //illegal
 	//Info("shitman: {}", shitman(0.5,3.7));
 	//illegal

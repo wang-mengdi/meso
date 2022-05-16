@@ -6,6 +6,7 @@
 #pragma once
 #include "Common.h"
 #include "AuxFunc.h"
+#include <functional>
 
 namespace Meso {
 	class AttributeBase {
@@ -65,7 +66,7 @@ namespace Meso {
 		}
 
 		template<class T>
-		T Get(const std::string name, const int i) {
+		T Get_Entry(const std::string name, const int i) {
 			Array<T>& att = Get_Attribute<T>(name);
 			if (i >= att.size()) {
 				Error("Error: Out Of Bounds for index: {} in Points.h", i);
