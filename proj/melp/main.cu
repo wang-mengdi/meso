@@ -7,6 +7,8 @@
 #include "Points.h"
 #include "NAParticles.h"
 #include "Common.h"
+#include "InitializePoints.h"
+
 using namespace Meso;
 
 template<int d>
@@ -33,6 +35,7 @@ void Test_Points(void) {
 
 template<int d>
 void Test_NAParticles(void) {
+	Typedef_VectorD(d);
 	NAParticles<d> naps;
 	//naps.Add_Attribute("s", (float)10);
 	//naps.Add_Attribute("t", VectorFunc::V<d>(1,1,1));
@@ -47,6 +50,14 @@ void Test_NAParticles(void) {
 	Info("data 1: {}", naps.template Get_Entry<float>("s", 1));
 	Info("X 0: {}", naps.Get["x"](0));
 	Info("X 1: {}", naps.Get["x"](1));
+
+	if constexpr (d == 3) {
+		Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, naps, "x");
+	}
+	Array<VectorD> positions = naps.Ref["x"]();
+	for (int i = 0; i < positions.size(); i++) {
+		std::cout << "Pos: \n" << positions[i] << std::endl;
+	}
 	//Info("data 2: {}", naps.template Get<float>("s", 2)); //illegal
 	//Info("shitman: {}", shitman(0.5,3.7));
 	//illegal

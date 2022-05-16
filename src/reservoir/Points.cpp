@@ -13,6 +13,7 @@ namespace Meso {
 			(iter->second)->Resize(size);
 		}
 	}
+
 	int Points::Size(void)
 	{
 		return size;
