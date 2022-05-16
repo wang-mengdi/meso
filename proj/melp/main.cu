@@ -54,10 +54,16 @@ void Test_NAParticles(void) {
 	if constexpr (d == 3) {
 		Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, naps, "x");
 	}
-	Array<VectorD> positions = naps.Ref["x"]();
-	for (int i = 0; i < positions.size(); i++) {
-		std::cout << "Pos: \n" << positions[i] << std::endl;
-	}
+	//Array<VectorD> positions = naps.Ref["x"]();
+	//for (int i = 0; i < positions.size(); i++) {
+	//	std::cout << "Pos: \n" << positions[i] << std::endl;
+	//}
+	naps.Update_Searcher();
+	Array<int> nbs;
+	naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 1.5, nbs);
+	Info("num nbs: {}",nbs.size());
+	naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 15, nbs);
+	Info("num nbs 2: {}", nbs.size());
 	//Info("data 2: {}", naps.template Get<float>("s", 2)); //illegal
 	//Info("shitman: {}", shitman(0.5,3.7));
 	//illegal

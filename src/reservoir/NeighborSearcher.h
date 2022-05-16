@@ -120,7 +120,9 @@ namespace Meso {
 		>;
 		my_kd_tree_t index;
 	public:
-		NeighborKDTree() :index(d, points, nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf)) { index.buildIndex(); }
+		NeighborKDTree() :index(d, points, nanoflann::KDTreeSingleIndexAdaptorParams(max_leaf)) { 
+			//index.buildIndex(); 
+		}
 		virtual void Build_Data(Array<VectorD>& arr);
 		virtual std::shared_ptr<Array<VectorD> > Points_Ptr(void) { return points.points_ptr; }
 		virtual size_t Find_Neighbors(const VectorD& pos, const real& radius, Array<int>& results, bool append = false)const;

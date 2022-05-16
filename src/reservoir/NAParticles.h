@@ -30,5 +30,9 @@ namespace Meso {
 			nbs_searcher = std::make_shared<NeighborKDTree<d>>();
 			nbs_searcher->Update_Points(Ref["x"]());
 		}
+
+		void Update_Searcher(void) {
+			nbs_searcher->Update_Points(Ref["x"]());
+		}
 	};
 }

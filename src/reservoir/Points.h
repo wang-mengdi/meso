@@ -12,7 +12,8 @@ namespace Meso {
 	class AttributeBase {
 	public:
 		virtual ~AttributeBase() {};
-		virtual void Resize(const int size)=0;
+		virtual void Resize(const int size) = 0;
+		virtual int Size(void) = 0;
 	};
 
 	template<class T>
@@ -28,6 +29,10 @@ namespace Meso {
 
 		virtual void Resize(const int size) {
 			data_ptr->resize(size, default_value);
+		}
+
+		virtual int Size(void) {
+			return data_ptr->size();
 		}
 
 		virtual Array<T>& Get_Data() const {
