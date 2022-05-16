@@ -126,7 +126,7 @@ namespace Meso {
 			for (int i = 0; i < L; i++) {
 				PoissonPtr poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
 
-				ArrayDv<T> poisson_diag; Poisson_Diagonal(poisson_diag, *poisson);
+				ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
 				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, pre_iter, (T)(2.0 / 3.0));
 				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, post_iter, (T)(2.0 / 3.0));
 				
@@ -136,7 +136,7 @@ namespace Meso {
 
 			//direct_solver
 
-			direct_solver = std::make_shared<CholeskySparseSolver<T>>(SparseMatrix_From_Poisson_Like(grids[L], *mappings[L], coarsest_add_epsilon));
+			direct_solver = std::make_shared<CholeskySparseSolver<T>>(SparseMatrix_From_PoissonLike(grids[L], *mappings[L], coarsest_add_epsilon));
 
 			//DenseMatrixMapping<T> dense_mapping;
 			//DenseMatrixMapping_From_Poisson_Like(dense_mapping, grids[L], *mappings[L], coarsest_add_epsilon);

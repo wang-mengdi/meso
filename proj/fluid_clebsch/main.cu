@@ -11,7 +11,7 @@ void Run(json& j) {
 	driver.output_dir = Json::Value<std::string>(j, "output_dir", "output");
 	driver.test = Json::Value<int>(j, "test", 1);
 	driver.last_frame = Json::Value<int>(j, "last_frame", 1000);
-	driver.frame_rate = Json::Value<int>(j, "fps", 20);
+	driver.frame_rate = Json::Value<int>(j, "fps", 25);
 	driver.cfl = Json::Value<real>(j, "cfl", 1.);
 	driver.rho_A = Json::Value<real>(j, "rho_A", 0.001);
 	driver.rho_L = Json::Value<real>(j, "rho_L", 1.);

@@ -134,4 +134,5 @@ public:
 	virtual real Velocity_Offset(const int& axis, const VectorDi& face)const;
 	virtual bool Is_Valid_Cell(const VectorDi& cell) const {return mac_grid->grid.Valid_Cell(cell)&&!(*bc).Is_Psi_D(cell);}
 	virtual bool Is_Fluid_Cell(const VectorDi& cell) const {return Is_Valid_Cell(cell);}
+	virtual bool Is_Liquid_Cell(const VectorDi& cell) const {return Is_Valid_Cell(cell)&&(*type)(cell)==(ushort)CellType::Liquid;}
 };

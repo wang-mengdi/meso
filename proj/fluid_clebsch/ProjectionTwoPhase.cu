@@ -73,7 +73,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 
 	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
 	meso_fixed_host.Init(meso_grid);
-	meso_fixed_host.Calc_Cells(
+	meso_fixed_host.Calc_Nodes(
 		[&](const VectorDi cell) {
 			return !this->Is_Valid_Cell(cell);
 		}
@@ -167,9 +167,10 @@ template<int d> void ProjectionTwoPhase<d>::Apply_Jump_Condition_To_b()
 
 	 if (verbose) std::cout << "vol correction: " << vol_correction << std::endl;
 
+	 //only correct the fluid cells
 	 meso_div_host.Exec_Nodes(
 		 [&](const VectorDi cell) {
-			 if (Is_Fluid_Cell(cell)) {
+			 if (Is_Liquid_Cell(cell)) {
 				 real cell_div = vol_correction;
 				 meso_div_host(cell) += vol_control_ks * mac_grid->grid.dx * cell_div;
 			 }
@@ -258,7 +259,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_b()
 {
 	Meso::Grid<d> meso_grid(mac_grid->grid.cell_counts);
 	meso_div_host.Init(meso_grid);
-	meso_div_host.Calc_Cells(
+	meso_div_host.Calc_Nodes(
 		[&](const VectorDi cell)->real {
 			if (!mac_grid->grid.Valid_Cell(cell)) return 0;
 			real div = (real)0;

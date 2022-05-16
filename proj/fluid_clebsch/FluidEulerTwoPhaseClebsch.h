@@ -44,9 +44,9 @@ public:
 	real sqrt_rho_A;
 
     //blending coefficient
-    real beta = 0.05;
-	real blending_band_width = (real)0;
-	
+    real beta = 0.5;
+    int blending_band_cell_num = 3;
+	real blending_band_width;
 	//projection
 	ProjectionTwoPhase<d> projection;
 	
@@ -102,6 +102,7 @@ public:
 	{
 		levelset.Initialize(mac_grid.grid);
 		narrow_band_width = mac_grid.grid.dx*(real)narrow_band_cell_num;
+		blending_band_width = mac_grid.grid.dx*(real)blending_band_cell_num;
 	}
 
 	virtual void Advance(const real dt)
@@ -124,9 +125,12 @@ public:
 	{
 		//Timer timer;
 		//timer.Reset();
-        ////advect interface
+        
 		Field<real,d> ghost_phi=levelset.phi;MacGrid<d> ghost_grid=mac_grid;
-		Advection::Semi_Lagrangian(dt,velocity,ghost_grid,ghost_phi,mac_grid,levelset.phi,false);
+		FaceField<real,d> ghost_velocity=velocity;
+
+		////advect interface
+		Advection::Semi_Lagrangian(dt,ghost_velocity,ghost_grid,ghost_phi,mac_grid,levelset.phi,false);
 		levelset.Fast_Marching(narrow_band_width);
 		//timer.Elapse_And_Output_And_Reset("Adv: levelset");
         Update_Rho_Face();
@@ -134,7 +138,7 @@ public:
 		//timer.Elapse_And_Output_And_Reset("Adv: update rho & type");
 
 		////advect velocity
-		FaceField<real,d> ghost_velocity=velocity;
+		
 		Advection::Semi_Lagrangian(dt,ghost_grid,ghost_velocity,mac_grid,velocity);
 		//timer.Elapse_And_Output_And_Reset("Adv: velocity");
 		
@@ -198,6 +202,81 @@ public:
 		Enforce_Boundary_Conditions();
 	}
 
+ //    virtual void Extrapolation()
+	// {
+	// 	if (use_velocity_field) return;
+	// 	Grid<d>& grid=mac_grid.grid;
+	// 	Field<ushort,d> done_L(grid.cell_counts,0);
+	// 	Field<ushort,d> done_A(grid.cell_counts,0);
+	// 	int cell_num=grid.Number_Of_Cells();
+	// 	auto cell_phi=[&](const VectorDi& cell)->real
+	// 	{return levelset.phi(cell);};
+
+	// 	auto cmp=[&](const Pair<int,real>& i,const Pair<int,real>& j)->bool{return i.second<j.second;};
+	// 	Array<Pair<int,real> > front_L;
+	// 	Array<Pair<int,real> > front_A;
+        
+        
+	// 	for(int i=0;i<cell_num;i++){
+	// 		VectorDi cell=grid.Cell_Coord(i);
+	// 		real phi=cell_phi(cell);
+	// 		VectorD pos=mac_grid.grid.Center(cell);
+	// 		if(phi<(real)0){done_L(cell) = 1;}
+	// 		if(phi>(real)0){done_A(cell) = 1;}
+	// 		if(phi>=0&&phi<(real)narrow_band_width){front_L.push_back(Pair<int,real>(i,abs(phi)));}
+	// 		if(phi<=0&&phi>(real)-narrow_band_width){front_A.push_back(Pair<int,real>(i,abs(phi)));}}
+				
+	// 	std::sort(front_A.begin(),front_A.end(),cmp);
+	// 	std::sort(front_L.begin(),front_L.end(),cmp);
+
+	// 	for(int i=0;i<front_L.size();i++){
+	// 		const int cell_idx=front_L[i].first;
+	// 		const VectorDi cell=grid.Cell_Coord(cell_idx);
+	// 		VectorD pos=grid.Center(cell);
+	// 		Vector4 cell_psi=Vector4::Zero();
+	// 		int valid_nb_num=0;
+	// 		for(int j=0;j<grid.Number_Of_Nb_C();j++){
+	// 			VectorDi nb_cell=grid.Nb_C(cell,j);
+	// 			int side=grid.Nb_C_Side(j);
+	// 			int axis=grid.Nb_C_Axis(j);
+	// 			if(grid.Valid_Cell(nb_cell)){
+	// 				if(done_L(nb_cell)){
+	// 				VectorDi face=cell+side*VectorDi::Unit(axis);
+	// 				real face_vel=velocity(axis,face);
+	// 				real vec=grid.dx*(side==0?(real)1:(real)-1);
+	// 				Vector<C,2> psi=V2C(psi_L(nb_cell));
+	// 				real phase =  face_vel/h_bar;
+	// 				for(int i=0;i<2;i++){psi[i]*=exp(1i*phase);}
+	// 				Vector4 extp_psi=C2V(psi);
+	// 				cell_psi+=extp_psi;
+	// 				valid_nb_num++;}}}
+	// 		if(valid_nb_num>0){psi_L(cell)=cell_psi.normalized()*sqrt_rho_L;done_L(cell)=1;}}
+	// 	for(int i=0;i<front_A.size();i++){
+	// 		const int cell_idx=front_A[i].first;
+	// 		const VectorDi cell=grid.Cell_Coord(cell_idx);
+	// 		VectorD pos=grid.Center(cell);
+	// 		Vector4 cell_psi=Vector4::Zero();
+	// 		int valid_nb_num=0;
+	// 		for(int j=0;j<grid.Number_Of_Nb_C();j++){
+	// 			VectorDi nb_cell=grid.Nb_C(cell,j);
+	// 			int side=grid.Nb_C_Side(j);
+	// 			int axis=grid.Nb_C_Axis(j);
+	// 			if(grid.Valid_Cell(nb_cell)){
+	// 				if(done_A(nb_cell)){
+	// 				VectorDi face=cell+side*VectorDi::Unit(axis);
+	// 				real face_vel=velocity(axis,face);
+	// 				real vec=grid.dx*(side==0?(real)1:(real)-1);
+	// 				Vector<C,2> psi=V2C(psi_A(nb_cell));
+	// 				real phase =  face_vel/h_bar;
+	// 				for(int i=0;i<2;i++){psi[i]*=exp(1i*phase);}
+	// 				Vector4 extp_psi=C2V(psi);
+	// 				cell_psi+=extp_psi;
+	// 				valid_nb_num++;}}}
+	// 		if(valid_nb_num>0){psi_A(cell)=cell_psi.normalized()*sqrt_rho_A;done_A(cell)=1;}}
+	// 	Enforce_Boundary_Conditions();
+	// }
+
+
 	virtual void Update_Cell_Types()
 	{
 		int cell_num=mac_grid.grid.Number_Of_Cells();
@@ -211,7 +290,6 @@ public:
 
 	virtual void Update_Rho_Face()
 	{
-		real band_beta = blending_band_width*blending_band_width;
 		for (int axis = 0; axis < d; axis++) {
 			int face_num = mac_grid.Number_Of_Faces(axis);
 			#pragma omp parallel for
@@ -242,7 +320,7 @@ public:
 		if (!use_velocity_field) {
 			int cell_num = mac_grid.grid.Number_Of_Cells();
 			real one_over_dx = (real)1 / mac_grid.grid.dx;
-#pragma omp parallel for
+            #pragma omp parallel for
 			for (int i = 0; i < cell_num; i++) {
 				VectorDi cell = mac_grid.grid.Cell_Coord(i);
 				if (Is_Fluid_Cell(cell)) {
@@ -266,6 +344,7 @@ public:
 				}
 			}
 		}
+		Enforce_Boundary_Conditions();
 	}
 
 	void Blend_Velocity()
