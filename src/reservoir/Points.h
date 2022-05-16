@@ -12,6 +12,7 @@
 #define Register_Attribute(T, a)\
 	public: T& a(const int i) {return Get_Entry<T>(#a, i);}\
 	Array<T>& a##Ref(){return Get_Attribute<T>(#a);}\
+	//namespace Shit {std::string a = #a;}\
 
 namespace Meso {
 //public: T& a(const int i) { return (*_a)[i]; }\
