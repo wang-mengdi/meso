@@ -10,9 +10,6 @@
 #include "Hashtable.h"
 #include "Mesh.h"
 #include "MeshFunc.h"
-//#ifdef USE_TRI2D
-//#include "Triangulation2D.h"	
-//#endif
 
 namespace MeshFunc{
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,32 +285,6 @@ Inst_Helper(2,2);Inst_Helper(2,3);Inst_Helper(3,2);Inst_Helper(3,3);Inst_Helper(
 	template bool Inside<d>(const ArrayF<Vector<real,d>,d+1>&,const Vector<real,d>&);
 	Inst_Helper(2);Inst_Helper(3);
 	#undef Inst_Helper
-	
-	//////////////////////////////////////////////////////////////////////////
-	////Mesh transformation
-	//template<int d> Box<d> Bounding_Box(const Array<Vector<real,d> >& vertices)
-	//{
-	//	Box<d> box=Box<d>::Infi_Min();
-	//	for(auto& v:vertices){box.min_corner=box.min_corner.cwiseMin(v);box.max_corner=box.max_corner.cwiseMax(v);}return box;
-	//}
-	//template Box<2> Bounding_Box<2>(const Array<Vector2>&);
-	//template Box<3> Bounding_Box<3>(const Array<Vector3>&);
-
-	//template<int d> Box<d> Bounding_Box(const Vector<real,d>* vertices,int vn)
-	//{
-	//	Box<d> box=Box<d>::Infi_Min();
-	//	for(int i=0;i<vn;i++){box.min_corner=box.min_corner.cwiseMin(vertices[i]);box.max_corner=box.max_corner.cwiseMax(vertices[i]);}return box;
-	//}
-	//template Box<2> Bounding_Box<2>(const Vector2*,int);
-	//template Box<3> Bounding_Box<3>(const Vector3*,int);
-		
-	//template<int d> void Rescale(Array<Vector<real,d> >& vertices,const real longest_length)
-	//{
-	//	Box<d> box=Bounding_Box<d>(vertices);Vector<real,d> length=box.Edge_Lengths();int axis=VectorFunc::Max_Index(length);
-	//	real rescale=(length[axis]>(real)0)?longest_length/length[axis]:(real)1;for(auto& v:vertices)v*=rescale;
-	//}
-	//template void Rescale<2>(Array<Vector2>&,const real);
-	//template void Rescale<3>(Array<Vector3>&,const real);
 
 	template<int d> Vector<real,d> Center(const Array<Vector<real,d> >& vertices)
 	{
@@ -356,56 +327,6 @@ Inst_Helper(2,2);Inst_Helper(2,3);Inst_Helper(3,2);Inst_Helper(3,3);Inst_Helper(
 
 	//////////////////////////////////////////////////////////////////////////
 	////Mesh initialization
-
-	////Cone mesh, n+1 vertices, n triangles
-	void Initialize_Cone_Mesh(const real r,const real h,const int n,TriangleMesh<3>* mesh,const int axis)	
-	{
-		int a0,a1;if(axis==0){a0=1;a1=2;}else if(axis==1){a0=2;a1=0;}else{a0=0;a1=1;}
-		mesh->Vertices().push_back(Vector3::Unit(axis)*h);
-		real delta=CommonConstants::two_pi/(real)n;
-		for(int i=0;i<n;i++){
-			Vector3 v=Vector3::Unit(a0)*r*cos(delta*(real)i)+Vector3::Unit(a1)*r*sin(delta*(real)i);
-			mesh->Vertices().push_back(v);}
-		for(int i=1;i<n;i++)mesh->elements.push_back(Vector3i(0,i,i+1));
-		mesh->elements.push_back(Vector3i(0,n,1));
-	}
-
-	////Cylinder mesh, 2n vertices, 2n triangles
-	void Initialize_Cylinder_Mesh(const real r,const real h,const int n,TriangleMesh<3>* mesh,const int axis)	
-	{
-		int a0,a1;if(axis==0){a0=1;a1=2;}else if(axis==1){a0=2;a1=0;}else{a0=0;a1=1;}
-		real delta= CommonConstants::two_pi/(real)n;
-		for(int i=0;i<n;i++){
-			Vector3 p0=Vector3::Unit(a0)*(r*cos(delta*(real)i))+Vector3::Unit(a1)*(r*sin(delta*(real)i));
-			Vector3 p1=p0+Vector3::Unit(axis)*h;
-			mesh->Vertices().push_back(p0);
-			mesh->Vertices().push_back(p1);}
-		for(int j=0;j<n-1;j++){int i=2*j;
-			mesh->elements.push_back(Vector3i(i,i+2,i+1));
-			mesh->elements.push_back(Vector3i(i+1,i+2,i+3));}
-		mesh->elements.push_back(Vector3i(2*n-2,0,2*n-1));
-		mesh->elements.push_back(Vector3i(2*n-1,0,1));
-	}
-
-	void Initialize_Circle_Mesh(const real r,const int n,SegmentMesh<2>* mesh)
-	{
-		real angle= CommonConstants::two_pi/(real)n;
-		for(int i=0;i<n;i++){
-			real theta=angle*(real)i;
-			Vector2 pos(r*cos(theta),r*sin(theta));
-			mesh->Vertices().push_back(pos);
-			mesh->Elements().push_back(Vector2i(i,(i+1)%n));}
-	}
-
-	void Initialize_Oval_Mesh(const real a,const real b,const int n,SegmentMesh<2>* mesh)
-	{
-		real angle= CommonConstants::two_pi/(real)n;
-		for(int i=0;i<n;i++){
-			real theta=angle*((real)i+(real).5);
-			Vector2 pos(a*cos(theta),b*sin(theta));
-			mesh->Vertices().push_back(pos);
-			mesh->Elements().push_back(Vector2i(i,(i+1)%n));}
-	}
 
 	template<int d> real Initialize_Segment_Mesh(const Vector<real, d>& v0, const Vector<real, d>& v1, int seg_num, SegmentMesh<d>* mesh, bool include_v0, bool include_v1) {
 		//int N = seg_num - 1 + (int)include_v0 + (int)include_v1;

@@ -1,5 +1,6 @@
 includes("./../../src/common/xmake.lua")
-target("solver")
+add_requires("mma >=2018.08.01")
+target("optimization")
     set_kind("static")
     add_headerfiles("*.h")
     add_files("*.cpp","*.cu","*.cxx")

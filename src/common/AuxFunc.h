@@ -169,9 +169,10 @@ namespace Meso {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
 		}
-		template<class Array1>
-		auto Norm(const Array1& a) {
-			real squared_norm = (real)Dot(a, a);
+
+		template<class T, DataHolder side>
+		auto Norm(const Array<T,side>& a) {
+			real squared_norm = (real)Dot<T>(a, a);
 			return sqrt(squared_norm);
 		}
 

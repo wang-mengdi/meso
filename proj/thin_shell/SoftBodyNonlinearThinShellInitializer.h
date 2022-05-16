@@ -68,12 +68,14 @@ public:
 	{
 		thin_shell_simulator.damping = Json::Value(j, "damping", (real)0.01);
 		thin_shell_simulator.thickness = Json::Value(j, "thickness", (real)0.01);
+		real youngs = Json::Value(j, "youngs", (real)100);
+		real poisson = Json::Value(j, "poisson", (real)0.35);
 		int test = Json::Value(j, "test", 0);
 
 		switch (test) {
 			case 1:{
 				thin_shell_simulator.materials.clear();
-				thin_shell_simulator.Add_Material((real)1e2, (real).35);
+				thin_shell_simulator.Add_Material((real)youngs, (real)poisson);
 				ArrayFunc::Fill(thin_shell_simulator.material_id, 0);
 				thin_shell_simulator.Initialize_Material();
 			}break;

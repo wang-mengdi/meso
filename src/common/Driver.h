@@ -10,42 +10,21 @@
 #include "Json.h"
 #include "Simulator.h"
 #include "Timer.h"
+#include "MetaData.h"
 #include <fstream>
 
 namespace Meso {
 
 	class Driver {
 	public:
-		int fps = 25;
-		real cfl = 1.0;
-		real time_per_frame = 0.04;
-		real min_step_frame_fraction = 0;//if set to 0.1, it means the minimal iteration time is 0.1*time_per_frame
-
-		int first_frame;
-		int last_frame;
-
-		std::string output_base_dir;
-		
-		void Init(json& j) {
-			fps = Json::Value(j, "fps", 25);
-			cfl = Json::Value(j, "cfl", 1.0);
-			time_per_frame = 1.0 / fps;
-			min_step_frame_fraction = Json::Value(j, "min_step_frame_fraction", (real)0);
-			first_frame = Json::Value(j, "first_frame", 0);
-			last_frame = Json::Value(j, "last_frame", fps * 10);
-			output_base_dir = Json::Value(j, "output_base_dir", std::string("output"));
-		}
-		real Time_At_Frame(const int frame) {
-			return frame * time_per_frame;
-		}
 		//will change timer
-		void Print_Frame_Info(Timer &frame_timer, const int frame, const int start_frame, const int end_frame) {
-			int total_frames = end_frame - start_frame;
-			int done_frames = frame - start_frame;
+		void Print_Frame_Info(Timer &frame_timer, const DriverMetaData& meta_data) {
+			int total_frames = meta_data.last_frame - meta_data.first_frame;
+			int done_frames = meta_data.frame - meta_data.first_frame;
 			real frame_seconds = frame_timer.Lap_Time();
 			real completed_seconds = frame_timer.Total_Time();
 			real eta = completed_seconds * (total_frames - done_frames) / done_frames;
-			Info("Frame {} in {}-{} done in {:.3f}s, ETA {:.3f}/{:.3f}s", frame, start_frame, end_frame, frame_seconds, eta, completed_seconds + eta);
+			Info("Frame {} in {}-{} done in {:.3f}s, ETA {:.3f}/{:.3f}s", meta_data.frame, meta_data.first_frame, meta_data.last_frame, frame_seconds, eta, completed_seconds + eta);
 		}
 		//will change timer
 		void Print_Iteration_Info(Timer& iteration_timer, const real dt, const real current_time, const real frame_time) {
@@ -55,32 +34,29 @@ namespace Meso {
 		}
 
 		void Output(Simulator &simulator, bf::path base_path, const int frame) {
-			//bf::path frame_dir(std::to_string(frame));
-			//bf::path frame_path = base_path / frame_dir;
-			//IOFunc::Create_Directory(frame_path);
 			Info("Output frame {} to {}", frame, base_path.string());
 			simulator.Output(base_path, frame);
 		}
 
 		//at the beginning the system is at the status of start_frame
 		//will output all frames in [start_frame, end_frame]
-		void Advance(Simulator &simulator, int start_frame, int end_frame) {
+		void Advance(Simulator &simulator, DriverMetaData& meta_data) {
 			Timer frame_timer;
-			bf::path base_path(output_base_dir);
+			bf::path base_path(meta_data.output_base_dir);
 			FileFunc::Create_Directory(base_path);
 
-			Print_Frame_Info(frame_timer, start_frame, start_frame, end_frame);
-			Output(simulator, base_path, start_frame);
-			for (int current_frame = start_frame; current_frame <= end_frame; current_frame++) {
+			Print_Frame_Info(frame_timer, meta_data);
+			Output(simulator, base_path, meta_data.first_frame);
+			for (int& current_frame = meta_data.frame; current_frame <= meta_data.last_frame; current_frame++) {
 				Timer iter_timer;
 				int next_frame = current_frame + 1;
-				real current_time = Time_At_Frame(current_frame);
+				real current_time = meta_data.Time_At_Frame(current_frame);
 				real frame_start_time = current_time;
-				real next_time = Time_At_Frame(next_frame);
+				real next_time = meta_data.Time_At_Frame(next_frame);
 				while (true) {
 					//can return an inf
-					real dt = simulator.CFL_Time(cfl);
-					dt = MathFunc::Clamp(dt, min_step_frame_fraction * time_per_frame, time_per_frame);
+					real dt = simulator.CFL_Time(meta_data.cfl);
+					dt = MathFunc::Clamp(dt, meta_data.min_step_frame_fraction * meta_data.time_per_frame, meta_data.time_per_frame);
 					bool last_iter = false;
 					if (current_time + dt >= next_time) {
 						dt = next_time - current_time;
@@ -92,10 +68,10 @@ namespace Meso {
 
 					simulator.Advance(current_frame, current_time, dt);
 					current_time += dt;
-					Print_Iteration_Info(iter_timer, dt, current_time - frame_start_time, time_per_frame);
+					Print_Iteration_Info(iter_timer, dt, current_time - frame_start_time, meta_data.time_per_frame);
 					if (last_iter) break;
 				}
-				Print_Frame_Info(frame_timer, current_frame, start_frame, end_frame);
+				Print_Frame_Info(frame_timer, meta_data);
 				Output(simulator, base_path, current_frame);
 			}
 		}
@@ -103,14 +79,15 @@ namespace Meso {
 		template<class Initializer, class TSimulator>
 		void Run(json& j, Initializer& scene, TSimulator& simulator) {
 			Info("Driver::Run parse json: \n{}", j.dump(2));
-			Init(j.at("driver"));
+			DriverMetaData meta_data;
+			meta_data.Init(j.at("driver"));
 			scene.Apply(j.at("scene"), simulator);
-			FileFunc::Create_Directory(output_base_dir);
-			bf::path dump_file = bf::path(output_base_dir) / bf::path("config.json");
+			FileFunc::Create_Directory(meta_data.output_base_dir);
+			bf::path dump_file = bf::path(meta_data.output_base_dir) / bf::path("config.json");
 			std::ofstream dump_output(dump_file.string());
 			dump_output <<std::setw(4)<< j;
 			dump_output.close();
-			Advance(simulator, first_frame, last_frame);
+			Advance(simulator, meta_data);
 		}
 	};
 }
