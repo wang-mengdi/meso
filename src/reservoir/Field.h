@@ -84,21 +84,30 @@ namespace Meso {
 				f(grid.Coord(c));
 			}
 		}
-
-		template<class CFuncT>//CFuncT is a function: VectorDi->T, takes the node index
-		void Calc_Nodes(CFuncT f) {
-			Assert(data != nullptr, "Field::Calc_Nodes error: nullptr data");
+		/// Modify by Zhiqi Li, add surpoort for GPU
+		template<class CFuncT>//CFuncT is a function: VectorDi->T, takes the cell index
+		__host__ void Calc_Cells(CFuncT f) {
+			Assert(data != nullptr, "Field::Calc_Cells error: nullptr data");
 			const int dof = grid.DoF();
 			thrust::counting_iterator<int> idxfirst(0);
 			thrust::counting_iterator<int> idxlast = idxfirst + dof;
+			Grid<d>* grid_gpu;
+			if constexpr (side == DEVICE) {
+				checkCudaErrors(cudaMalloc((void**)&grid_gpu, sizeof(Grid<d>)));
+				checkCudaErrors(cudaMemcpy(grid_gpu, &grid, sizeof(Grid<d>), cudaMemcpyHostToDevice));
+			}
+			else grid_gpu = &grid;
 			thrust::transform(
 				idxfirst,
 				idxlast,
 				data->begin(),
-				[f, this](const int idx) {
-					return f(grid.Coord(idx));
-				}
+				[f, grid_gpu]__device__ __host__(const int idx) {
+				return f(grid_gpu->Coord(idx));
+			}
 			);
+			if constexpr (side == DEVICE) {
+				cudaFree(grid_gpu);
+			}
 		}
 
 		template<class Fnode>//Fnode is a (void) function takes a node index
