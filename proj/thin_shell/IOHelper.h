@@ -56,4 +56,45 @@ namespace VTKFunc {
 		writer->SetInputData(unstructured_grid);
 		writer->Write();
 	}
+
+	template<int d, class T>
+	void Output_VTU_T(const std::shared_ptr< SurfaceMesh<d> >& mesh, const Array<real>& hs, std::string file_name) {
+		Typedef_VectorD(d);
+
+		// setup VTK
+		vtkNew<vtkXMLUnstructuredGridWriter> writer;
+		vtkNew<vtkUnstructuredGrid> unstructured_grid;
+
+		vtkNew<vtkPoints> nodes;
+		nodes->Allocate(hs.size());
+		vtkNew<vtkDoubleArray> thicknessArray;
+		thicknessArray->SetName("Thickness");
+
+		vtkNew<vtkCellArray> cellArray;
+
+		for (int i = 0; i < mesh->Vertices().size(); i++) {
+			Vector3 pos3 = VectorFunc::V<3>(mesh->Vertices()[i]);
+			nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
+
+			thicknessArray->InsertNextTuple1(hs[i]);
+		}
+
+		for (int i = 0; i < mesh->Elements().size(); i++) {
+			vtkNew<vtkTriangle> triangle;
+			triangle->GetPointIds()->SetId(0, mesh->Elements()[i][0]);
+			triangle->GetPointIds()->SetId(1, mesh->Elements()[i][1]);
+			triangle->GetPointIds()->SetId(2, mesh->Elements()[i][2]);
+			cellArray->InsertNextCell(triangle);
+		}
+
+		unstructured_grid->SetPoints(nodes);
+		unstructured_grid->SetCells(VTK_TRIANGLE, cellArray);
+
+		unstructured_grid->GetPointData()->AddArray(thicknessArray);
+		unstructured_grid->GetPointData()->SetActiveScalars("thickness");
+
+		writer->SetFileName(file_name.c_str());
+		writer->SetInputData(unstructured_grid);
+		writer->Write();
+	}
 }

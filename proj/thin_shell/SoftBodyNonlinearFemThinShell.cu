@@ -1,5 +1,5 @@
 ﻿//////////////////////////////////////////////////////////////////////////
-// Nonlinear Thin Shell FEM
+// Nonlinear Discrete Shell
 // Copyright (c) (2021-), Fan Feng
 // This file is part of SimpleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
@@ -14,19 +14,12 @@
 #include "Common.h"
 #include "SparseMatrixMapping.h"
 #include "ConjugateGradient.h"
-#include <Eigen/IterativeLinearSolvers>
 #include <iostream>
 #include <fstream>
 
 using namespace ThinShellAuxFunc; 
 using namespace Meso;
 using namespace NonlinearFemFunc;
-
-template<class T_ARRAY> int Element_Edges(const Vector2i& v,T_ARRAY& edges);
-template<class T_ARRAY> int Element_Edges(const Vector3i& v,T_ARRAY& edges);
-void Grad_Q(const ArrayF<Vector3, 3>& vtx, const int i, const int j, const Vector3& ps, const real& qs_i, const ArrayF<Vector3, 3>& ls, const real& a, Vector3& grad_q);
-void Grad_R(const ArrayF<Vector3, 3>& vtx, const int i, const int j, const Vector3& ps, const ArrayF<Vector3, 3>& ls, const real& a, ArrayF<Vector3, 2>& grad_r);
-void Grad_N(const ArrayF<Vector3, 3>& vtx, const ArrayF<Vector3, 3>& ls, const real& a, ArrayF<Matrix3, 3>& grad_n);
 
 template<int d> real SoftBodyNonlinearFemThinShell<d>::CFL_Time(const real cfl) {
 	return 0.01;
@@ -415,32 +408,15 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 		Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
 		dx = dv_x;
 
-		///*std::cout << "A:" << std::endl;
-		//std::cout << A << std::endl;
-		//std::cout << "b:" << std::endl;
-		//std::cout << b.transpose() << std::endl;
-		//std::cout << "dx:" << std::endl;
-		//std::cout << dx.transpose() << std::endl;*/
-		//
-		////timer.Elapse_And_Output_And_Reset("linear system solve");
+		#pragma omp parallel for
+		for (int i = 0; i < vtx_num; i++) {
+			for (int j = 0; j < d; j++) {
+				X()[i][j] += damping*dx[i * d + j]; //damping becomes the step size here
+			}
+		}
 
-		////std::cout << "#	CG iterations:     " << cg.iterations() << std::endl;
-		////std::cout << "#	CG estimated error: " << cg.error() << std::endl;
-
-		//#pragma omp parallel for
-		//for (int i = 0; i < vtx_num; i++) {
-		//	for (int j = 0; j < d; j++) {
-		//		X()[i][j] += damping*dx[i * d + j]; //damping becomes the step size here
-		//	}
-		//}
-
-		////timer.Elapse_And_Output_And_Reset("update nodes");
-
-		//err = dx.norm() / dx.size();
-		////Info("b norm is:{}", b.norm());
-		////Info("relative error is:{}", err);
-		//iter++;
-		////energies_n.push_back(energy);
+		err = ArrayFunc::Norm<real, DataHolder::HOST>(dx) / dx.size();
+		iter++;
 	}
 	Info("Quasi_static solve finished with {} Newton iterations: ", iter);
 }
@@ -1129,53 +1105,6 @@ template<int d> Array2DF<Matrix<real, d>, d + 1, d + 1>  SoftBodyNonlinearFemThi
 	return hess_n;
 }
 
-template<class T_ARRAY> int Element_Edges(const Vector2i& v,T_ARRAY& edges)
-{edges[0][0]=v[0];edges[1][0]=v[1];return 2;}
-
-template<class T_ARRAY> int Element_Edges(const Vector3i& v,T_ARRAY& edges)
-{edges[0]=Vector2i(v[0],v[1]);edges[1]=Vector2i(v[1],v[2]);edges[2]=Vector2i(v[2],v[0]);return 3;}
-
-
-
-void Grad_Q(const ArrayF<Vector3, 3>& vtx, const int i, const int j, const Vector3& ps, const real& qs_i, const ArrayF<Vector3, 3>& ls, const real& a, Vector3& grad_q) {
-	int jr = (j + 1) % 3;
-	int jl = (j + 2) % 3;
-
-	real tmp1 = ps[jr] * qs_i / (real)8 / a / a;
-	if (i == jr) { tmp1 -= (real)0.5 / (a * ls[i].norm()); }
-
-	real tmp2 = ps[jl] * qs_i / (real)8 / a / a;
-	if (i == jl) { tmp2 -= (real)0.5 / (a * ls[i].norm()); }
-
-	grad_q = tmp1 * ls[jr] - tmp2 * ls[jl];
-}
-
-void Grad_R(const ArrayF<Vector3, 3>& vtx, const int i, const int j, const Vector3& ps, const ArrayF<Vector3, 3>& ls, const real& a, ArrayF<Vector3, 2>& grad_r) {
-	int jr = (j + 1) % 3;
-	int jl = (j + 2) % 3;
-
-	Vector3 grad_a = (real)1 / (real)8 / a * (ps[jl] * ls[jl] - ps[jr] * ls[jr]);
-	Vector3 grad_l = ((int)(i == jl)) / ls[jl].norm() * ls[jl] - ((int)(i == jr)) / ls[jr].norm() * ls[jr];
-
-	Vector3 coef2 = (grad_a * ls[i].norm() + grad_l * a) / ((real)4 * a * a * ls[i].dot(ls[i]));
-	real coef1 = a * ls[i].norm() * (real)2;
-
-	int i_p = (i + 2) % 3;
-	Vector3 tmp1 = ((((int)(i_p == jr)) + ((int)(i_p == j)) - ((int)(i_p == jl))) * ls[jl] + (((int)(i_p == jr)) - ((int)(i_p == j)) - ((int)(i_p == jl))) * ls[jr]);
-	grad_r[0] = tmp1 / coef1 - ps[i_p] * coef2;
-
-	i_p = (i + 1) % 3;
-	tmp1 = ((((int)(i_p == jr)) + ((int)(i_p == j)) - ((int)(i_p == jl))) * ls[jl] + (((int)(i_p == jr)) - ((int)(i_p == j)) - ((int)(i_p == jl))) * ls[jr]);
-	grad_r[1] = tmp1 / coef1 - ps[i_p] * coef2;
-}
-
-void Grad_N(const ArrayF<Vector3, 3>& vtx, const ArrayF<Vector3, 3>& ls, const real& a, ArrayF<Matrix3, 3>& grad_n) {
-	Vector3 n = Triangle<3>::Normal(vtx[0], vtx[1], vtx[2]);
-	for (int i = 0; i < 3; i++) {
-		grad_n[i] = -n * ((real)0.5 * ls[i].cross(n) / a).transpose();
-	}
-}
-
 template<int d> bool SoftBodyNonlinearFemThinShell<d>::Junction_Info(int edge_idx, ArrayF<int, d + 1>& vtx_idx, ArrayF<int, 2>& ele_idx)
 {
 	if constexpr (d == 3) {
@@ -1235,5 +1164,5 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block(Array<real>& b,
 	for (int ii = 0; ii < d; ii++)b[i * d + ii] += bi[ii];
 }
 
-//template class SoftBodyNonlinearFemThinShell<2>;
+//template class SoftBodyNonlinearFemThinShell<2>; not supprted yet
 template class SoftBodyNonlinearFemThinShell<3>;

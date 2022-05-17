@@ -14,7 +14,7 @@ void Run(json &j) {
 	driver.Run(j, scene, fluid);
 }
 
-int main(int argv, char **argc) {
+int main(int argc, char **argv) {
 	try {
 		json j = {
 			{
@@ -25,8 +25,8 @@ int main(int argv, char **argc) {
 			},
 			{"scene",json::object()}
 		};
-		if (argv > 1) {
-			std::ifstream json_input(argc[1]);
+		if (argc > 1) {
+			std::ifstream json_input(argv[1]);
 			json_input >> j;
 			json_input.close();
 		}
