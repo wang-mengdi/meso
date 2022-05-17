@@ -175,6 +175,27 @@ namespace Meso {
 			return sqrt(squared_norm);
 		}
 
+		template<class T>
+		int Largest_Norm_Element(const Array<T>& arr)
+		{
+			int idx = -1; real max_norm = -1.0;
+			for (int i = 0; i < arr.size(); i++) {
+				real v = arr[i].norm();
+				if (v >= max_norm) {
+					idx = i;
+					max_norm = v;
+				}
+			}
+			return idx;
+		}
+
+		template<class T> 
+		real Largest_Norm(const Array<T>& arr) {
+			int idx = Largest_Norm_Element<T>(arr);
+			if (idx < 0) return 0;
+			else return arr[idx].norm();
+		}
+
 		//scalar multiplication, a*=b (where b is a scalar)
 		template<class Array1, class T>
 		void Multiply_Scalar(Array1& a, const T b) {

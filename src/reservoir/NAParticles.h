@@ -15,25 +15,16 @@ namespace Meso {
 	public:
 		std::shared_ptr<NeighborSearcher<d>> nbs_searcher;
 
-		std::map<std::string, std::function<VectorD(const int)>> Get;
-		std::map<std::string, std::function<Array<VectorD>&()>> Ref;
-
 		NAParticles() {
-			Add_Attribute<VectorD>("x", VectorD::Zero());
-			//Get["x"] = [&](const int idx)->VectorD {
-			//	return this->template Get_Entry<VectorD>("x", idx);
-			//};
-			//Ref["x"] = [&]()->Array<VectorD>& {
-			//	return this->template Get_Attribute<VectorD>("x");
-			//};
-			//nbs_searcher = std::make_shared<NeighborKDTree<d>>();
-			//nbs_searcher->Update_Points(Ref["x"]());
+			Init_Attribute_x();
+			nbs_searcher = std::make_shared<NeighborKDTree<d>>();
+			nbs_searcher->Update_Points(xRef());
 		}
 
-		Register_Attribute(VectorD, x);
+		Setup_Attribute(x, VectorD, VectorD::Zero());
 
 		void Update_Searcher(void) {
-			//nbs_searcher->Update_Points(Ref["x"]());
+			nbs_searcher->Update_Points(xRef());
 		}
 	};
 }

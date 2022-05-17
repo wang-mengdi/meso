@@ -9,14 +9,15 @@
 #include <functional>
 
 ////macros to define helper functions for manipulating particle attributes
-#define Register_Attribute(T, a)\
-	public: T& a(const int i) {return Get_Entry<T>(#a, i);}\
-	Array<T>& a##Ref(){return Get_Attribute<T>(#a);}\
-	//namespace Shit {std::string a = #a;}\
+#define Register_Attribute_Shortcuts(a, T)\
+	public: T& a(const int i) {return this->template Get_Entry<T>(#a, i);}\
+	Array<T>& a##Ref(){return this->template Get_Attribute<T>(#a);}\
+
+#define Setup_Attribute(a, T, def_val)\
+	Register_Attribute_Shortcuts(a, T);\
+	virtual void Init_Attribute_##a(){this->template Add_Attribute<T>(#a, def_val);}\
 
 namespace Meso {
-//public: T& a(const int i) { return (*_a)[i]; }\
-//protected: std::shared_ptr<Array<T>> _a; \
 	
 	class AttributeBase {
 	public:
@@ -31,7 +32,6 @@ namespace Meso {
 		T default_value;
 		std::shared_ptr<Array<T>> data_ptr = nullptr;
 	public:
-		//Add_Attribute<type>(#name, def_val); \
 
 		virtual ~Attribute() {}
 		Attribute(T def_val) : default_value(def_val) {

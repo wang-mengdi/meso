@@ -7,7 +7,9 @@
 #include "Interpolation.h"
 #include "Mesh.h"
 #include <vtkXMLStructuredGridWriter.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkStructuredGrid.h>
+#include <vtkUnstructuredGrid.h>
 #include <vtkDataSet.h>
 #include <vtkPointData.h>
 #include <vtkCellData.h>
@@ -95,6 +97,41 @@ namespace Meso {
 			writer->Delete();
 			nodes->Delete();
 			velArray->Delete();
+		}
+
+		template<int d>
+		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const Array<Vector<real, d>>& vel, std::string file_name) {
+			//output particles
+			Typedef_VectorD(d);
+			// setup VTK
+			vtkNew<vtkXMLUnstructuredGridWriter> writer;
+			vtkNew<vtkUnstructuredGrid> unstructured_grid;
+
+			vtkNew<vtkPoints> nodes;
+			nodes->Allocate(pos.size());
+			vtkNew<vtkDoubleArray> posArray;
+			posArray->SetName("Position");
+			posArray->SetNumberOfComponents(d);
+			vtkNew<vtkDoubleArray> velArray;
+			velArray->SetName("Velocity");
+			velArray->SetNumberOfComponents(d);
+
+			for (int i = 0; i < pos.size(); i++) {
+				Vector3 pos3 = VectorFunc::V<3>(pos[i]);
+				nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
+
+				Vector3 vel3 = VectorFunc::V<3>(vel[i]);
+				velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
+			}
+
+			unstructured_grid->SetPoints(nodes);
+
+			unstructured_grid->GetPointData()->AddArray(velArray);
+			unstructured_grid->GetPointData()->SetActiveVectors("velocity");
+
+			writer->SetFileName(file_name.c_str());
+			writer->SetInputData(unstructured_grid);
+			writer->Write();
 		}
 	}
 
