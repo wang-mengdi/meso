@@ -40,6 +40,15 @@ namespace Meso {
         virtual VectorD Normal(const VectorD& pos) const {
             return (pos - center).normalized();
         }
+        virtual VectorD Gradient(const VectorD& pos) const {
+            return (pos - center).normalized();
+        }
+        virtual real Curvature(const VectorD& pos) const {
+            if constexpr (d == 2)
+                return 1 / (pos - center).norm();
+            else
+                return 2 / (pos - center).norm();
+        }
     };
 }
 #endif

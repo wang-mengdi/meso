@@ -183,6 +183,25 @@ namespace Meso {
 
 		__host__ __device__ VectorD Cell_Center(const VectorDi& cell) const { return pos_min + (cell.template cast<real>() + (real).5 * VectorD::Ones()) * dx; }
 
+		//// here is for adjacent, added by Zhiqi Li
+		__host__ __device__ VectorDi Nb_C(const VectorDi& coord, const int i) {
+			if constexpr (d == 2) {
+				VectorDi neighbor_offset[4] = { VectorDi(-1,0),VectorDi(0,-1),VectorDi(0,1),VectorDi(1,0) };
+				return coord + neighbor_offset[i];
+			}
+			else if constexpr (d == 3) {
+				VectorDi neighbor_offset[6] = { VectorDi(-1,0,0),VectorDi(0,-1,0),VectorDi(0,0,-1),VectorDi(0,0,1),VectorDi(0,1,0),VectorDi(1,0,0) };
+				return coord + neighbor_offset[i];
+			}
+		}
+		__host__ __device__ int Nb_C_Axis(const int i) {
+			if constexpr (d == 2) {
+				int axies[4] = { 0,1,1,0 }; return axies[i];
+			}
+			else if constexpr (d == 3) {
+				int axies[6] = { 0,1,2,2,1,0 }; return axies[i];
+			}
+		}
 
 		////parallel iterators
 		template<class Fcell>

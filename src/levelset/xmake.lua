@@ -1,0 +1,18 @@
+includes("./../../src/common/xmake.lua")
+includes("./../../src/reservoir/xmake.lua")
+-- add_rules("plugin.vsxmake.autoupdate")
+
+add_requires("vtk >=9.1.0")
+add_requires("tinyobjloader >= 1.0.7")
+target("levelset")
+    set_kind("static")
+    add_headerfiles("*.h")
+    add_files("*.cpp","*.cu","*.cxx")
+    add_cugencodes("native")
+    add_cugencodes("compute_61")
+    add_cuflags("--extended-lambda")
+    add_includedirs(".",{public=true})
+    add_packages("vtk",{public=true})
+    add_packages("tinyobjloader", {public=true})
+    add_deps("common","reservoir")
+    
