@@ -24,11 +24,11 @@ namespace Meso {
 	}
 
 	template<int d>
-	size_t NeighborSearcher<d>::Find_Neighbors(const VectorD& pos, const real& radius, FilterFunc& filter_func, Array<int>& results, bool append) const
+	size_t NeighborSearcher<d>::Find_Nbs(const VectorD& pos, const real& radius, FilterFunc& filter_func, Array<int>& results, bool append) const
 	{
 		if (!append) results.clear();
 		Array<int> temp_results;
-		this->Find_Neighbors(pos, radius, temp_results, false);//append=false, temp_results is cleared
+		this->Find_Nbs(pos, radius, temp_results, false);//append=false, temp_results is cleared
 		size_t num = 0;
 		for (size_t i = 0; i < temp_results.size(); i++) {
 			if (filter_func(temp_results[i])) {
@@ -40,18 +40,18 @@ namespace Meso {
 	}
 
 	template<int d>
-	Array<int> NeighborSearcher<d>::Find_Neighbors(const VectorD& pos, const real& radius) const
+	Array<int> NeighborSearcher<d>::Find_Nbs(const VectorD& pos, const real& radius) const
 	{
 		Array<int> temp_results;
-		this->Find_Neighbors(pos, radius, temp_results, false);//append=false, temp_results is cleared
+		this->Find_Nbs(pos, radius, temp_results, false);//append=false, temp_results is cleared
 		return temp_results;
 	}
 
 	template<int d>
-	Array<int> NeighborSearcher<d>::Find_Neighbors(const VectorD& pos, const real& radius, FilterFunc& filter_func) const
+	Array<int> NeighborSearcher<d>::Find_Nbs(const VectorD& pos, const real& radius, FilterFunc& filter_func) const
 	{
 		Array<int> temp_results;
-		this->Find_Neighbors(pos, radius, filter_func, temp_results, false);//append=false, temp_results are cleared
+		this->Find_Nbs(pos, radius, filter_func, temp_results, false);//append=false, temp_results are cleared
 		return temp_results;
 	}
 
@@ -64,7 +64,7 @@ namespace Meso {
 		search_results.resize(n);
 #pragma omp parallel for
 		for (int i = 0; i < n; i++) {
-			this->Find_Neighbors((*points_arr)[i], radius, search_results[i]);
+			this->Find_Nbs((*points_arr)[i], radius, search_results[i]);
 		}
 	}
 
@@ -95,7 +95,7 @@ namespace Meso {
 	}
 
 	template<int d>
-	size_t NeighborKDTree<d>::Find_Neighbors(const VectorD& pos, const real& radius, Array<int>& results, bool append) const
+	size_t NeighborKDTree<d>::Find_Nbs(const VectorD& pos, const real& radius, Array<int>& results, bool append) const
 	{
 		nanoflann::SearchParams params; params.sorted = false;
 		std::vector<std::pair<size_t, real> > ret_matches;//it will be cleared in radiusSearch()
@@ -125,7 +125,7 @@ namespace Meso {
 	}
 
 	template<int d>
-	int NeighborKDTree<d>::Find_K_Nearest_Nb(const VectorD& pos, int k, Array<int>& results)const
+	int NeighborKDTree<d>::Find_K_Nearest_Nbs(const VectorD& pos, int k, Array<int>& results)const
 	{
 		size_t* ret_index = new size_t[k];
 		real* out_dist_sqr = new real[k];

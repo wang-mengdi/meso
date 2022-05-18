@@ -12,6 +12,8 @@
 #define Register_Attribute_Shortcuts(a, T)\
 	public: T& a(const int i) {return this->template Get_Entry<T>(#a, i);}\
 	Array<T>& a##Ref(){return this->template Get_Attribute<T>(#a);}\
+	const T& a(const int i) const {return this->template Get_Entry<T>(#a, i);}\
+	const Array<T>& a##Ref() const {return this->template Get_Attribute<T>(#a);}\
 
 #define Setup_Attribute(a, T, def_val)\
 	Register_Attribute_Shortcuts(a, T);\
@@ -68,12 +70,12 @@ namespace Meso {
 		}
 
 		template<class T>
-		Array<T>& Get_Attribute(const std::string name) {
+		Array<T>& Get_Attribute(const std::string name) const {
 			if (att_map.find(name) == att_map.end()) {
 				Error("Error: Unfound variable: {} in Points.h", name);
 			}
 			try {
-				Attribute<T>& att = dynamic_cast<Attribute<T>&>(*(att_map[name]));
+				Attribute<T>& att = dynamic_cast<Attribute<T>&>(*(att_map.at(name)));
 				return att.Get_Data();
 			}
 			catch (const std::bad_cast& b) {
@@ -82,7 +84,7 @@ namespace Meso {
 		}
 
 		template<class T>
-		T& Get_Entry(const std::string name, const int i) {
+		T& Get_Entry(const std::string name, const int i) const {
 			Array<T>& att = Get_Attribute<T>(name);
 			if (i >= att.size()) {
 				Error("Error: Out Of Bounds for index: {} in Points.h", i);

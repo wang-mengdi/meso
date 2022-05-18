@@ -81,10 +81,26 @@ namespace Meso {
 		real Angle_From_To(const Vector2& v1, const Vector2& v2);	////[-pi,pi], default is +z
 		real Angle_From_To(const Vector3& v1, const Vector3& v2);	////[-pi,pi], no axis specified, [0,pi]
 
+
+		template<class T, int dim> inline T Abs_Min(const Vector<T, dim>& v) { T v_min = abs(v[0]); for (int i = 1; i < dim; i++)if (abs(v[i]) < v_min)v_min = v[i]; return v_min; }
+		template<class T, int dim> inline T Abs_Max(const Vector<T, dim>& v) { T v_max = abs(v[0]); for (int i = 1; i < dim; i++)if (abs(v[i]) > v_max)v_max = v[i]; return v_max; }
 		template<class T, int dim> int Abs_Min_Index(const Vector<T, dim>& v) { int i_min = 0; for (int i = 1; i < dim; i++)if (abs(v[i]) < abs(v[i_min]))i_min = i; return i_min; }
 		template<class T, int dim> int Abs_Max_Index(const Vector<T, dim>& v) { int i_max = 0; for (int i = 1; i < dim; i++)if (abs(v[i]) > abs(v[i_max]))i_max = i; return i_max; }
 		template<class T, int dim> inline int Min_Index(const Vector<T, dim>& v) { int i_min = 0; for (int i = 1; i < dim; i++)if (v[i] < v[i_min])i_min = i; return i_min; }
 		template<class T, int dim> inline int Max_Index(const Vector<T, dim>& v) { int i_max = 0; for (int i = 1; i < dim; i++)if (v[i] > v[i_max])i_max = i; return i_max; }
+
+		////eigenvectors, svd, polar decomposition
+		////eigenvector/value corresponding to the eigenvalue with the max magnitude
+		Vector2 Principal_Eigenvector(const Matrix2& v);
+		Vector3 Principal_Eigenvector(const Matrix3& v);
+		real Principal_Eigenvalue(const Matrix2& v);
+		real Principal_Eigenvalue(const Matrix3& v);
+
+		////eigenvector/value corresponding to the eigenvalue with the min magnitude
+		Vector2 Min_Eigenvector(const Matrix2& v);
+		Vector3 Min_Eigenvector(const Matrix3& v);
+		real Min_Eigenvalue(const Matrix2& v);
+		real Min_Eigenvalue(const Matrix3& v);
 	}
 
 	namespace ArrayFunc {
@@ -195,6 +211,27 @@ namespace Meso {
 			int idx = Largest_Norm_Element<T>(arr);
 			if (idx < 0) return 0;
 			else return arr[idx].norm();
+		}
+
+		template<class T> 
+		T Mean(const Array<T>& v) { 
+			return 1. / (real)v.size() *
+				thrust::reduce(
+					v.begin(),
+					v.end(),
+					(T)0,
+					thrust::plus<T>()
+				);
+		}
+		template<class T> 
+		T Abs_Mean(const Array<T>& v) { 
+			return 1. / (real)v.size() *
+				thrust::reduce(
+					v.begin(),
+					v.end(),
+					(T)0,
+					[=](const T a, const T b) { return std::abs(a) + std::abs(b); }
+			);
 		}
 
 		//scalar multiplication, a*=b (where b is a scalar)

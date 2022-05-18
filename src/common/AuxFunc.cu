@@ -92,6 +92,40 @@ namespace Meso {
 			real c = v1.dot(v2);
 			return atan2(s, c);
 		}
+
+		Vector2 Principal_Eigenvector(const Matrix2& v)
+		{
+			Eigen::SelfAdjointEigenSolver<Matrix2> eig(v); return eig.eigenvectors().col(Abs_Max_Index(eig.eigenvalues()));
+		}
+		Vector3 Principal_Eigenvector(const Matrix3& v)
+		{
+			Eigen::SelfAdjointEigenSolver<Matrix3> eig(v); return eig.eigenvectors().col(Abs_Max_Index(eig.eigenvalues()));
+		}
+		real Principal_Eigenvalue(const Matrix2& v)
+		{
+			Eigen::SelfAdjointEigenSolver<Matrix2> eig(v); return Abs_Max(eig.eigenvalues());
+		}
+		real Principal_Eigenvalue(const Matrix3& v)
+		{
+			Eigen::SelfAdjointEigenSolver<Matrix3> eig(v); return Abs_Max(eig.eigenvalues());
+		}
+
+		Vector2 Min_Eigenvector(const Matrix2& v)
+		{
+			Eigen::SelfAdjointEigenSolver<Matrix2> eig(v); return eig.eigenvectors().col(Abs_Min_Index(eig.eigenvalues()));
+		}
+		Vector3 Min_Eigenvector(const Matrix3& v)
+		{
+			Eigen::SelfAdjointEigenSolver<Matrix3> eig(v); return eig.eigenvectors().col(Abs_Min_Index(eig.eigenvalues()));
+		}
+		real Min_Eigenvalue(const Matrix2& v)
+		{
+			Eigen::SelfAdjointEigenSolver<Matrix2> eig(v); return Abs_Min(eig.eigenvalues());
+		}
+		real Min_Eigenvalue(const Matrix3& v)
+		{
+			Eigen::SelfAdjointEigenSolver<Matrix3> eig(v); return Abs_Min(eig.eigenvalues());
+		}
 	}
 
 }

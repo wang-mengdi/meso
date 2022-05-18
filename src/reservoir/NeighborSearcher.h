@@ -47,9 +47,9 @@ namespace Meso {
 		// NOTE: all query functions except for Record_Neighbors should be thread safe. If not, please refer to Mengdi.
 
 		// Store results in Array<int>&results. Clear former results when append==false
-		virtual size_t Find_Neighbors(const VectorD& pos, const real& radius, Array<int>& results, bool append = false)const = 0;
+		virtual size_t Find_Nbs(const VectorD& pos, const real& radius, Array<int>& results, bool append = false)const = 0;
 		virtual int Find_Nearest_Nb(const VectorD& pos)const = 0;
-		virtual int Find_K_Nearest_Nb(const VectorD& pos, int k, Array<int>& results)const = 0;
+		virtual int Find_K_Nearest_Nbs(const VectorD& pos, int k, Array<int>& results)const = 0;
 
 
 	public:
@@ -65,17 +65,17 @@ namespace Meso {
 			return search_results[idx];
 		}
 		//Search points in radius and with filter_func()==true
-		size_t Find_Neighbors(const VectorD& pos, const real& radius, FilterFunc& filter_func, Array<int>& results, bool append = false)const;
+		size_t Find_Nbs(const VectorD& pos, const real& radius, FilterFunc& filter_func, Array<int>& results, bool append = false)const;
 		//Pass-by-value style, more convenient for use
-		Array<int> Find_Neighbors(const VectorD& pos, const real& radius)const;
-		Array<int> Find_Neighbors(const VectorD& pos, const real& radius, FilterFunc& filter_func)const;
+		Array<int> Find_Nbs(const VectorD& pos, const real& radius)const;
+		Array<int> Find_Nbs(const VectorD& pos, const real& radius, FilterFunc& filter_func)const;
 		//Save to search_results
 		void Record_All_Neighbors(const real& radius);
 		//search points, return with std::array style
 		template<int nbsize>
-		int Find_Neighbors(const VectorD& pos, const real& radius, std::array<int, nbsize>& results)const {
+		int Find_Nbs(const VectorD& pos, const real& radius, std::array<int, nbsize>& results)const {
 			Array<int> temp_arr;
-			this->Find_Neighbors(pos, radius, temp_arr, false);
+			this->Find_Nbs(pos, radius, temp_arr, false);
 			size_t n = temp_arr.size();
 			results[0] = 0;
 			for (size_t i = 0; i < n; i++) {
@@ -125,8 +125,8 @@ namespace Meso {
 		}
 		virtual void Build_Data(Array<VectorD>& arr);
 		virtual std::shared_ptr<Array<VectorD> > Points_Ptr(void) { return points.points_ptr; }
-		virtual size_t Find_Neighbors(const VectorD& pos, const real& radius, Array<int>& results, bool append = false)const;
+		virtual size_t Find_Nbs(const VectorD& pos, const real& radius, Array<int>& results, bool append = false)const;
 		virtual int Find_Nearest_Nb(const VectorD& pos)const;
-		virtual int Find_K_Nearest_Nb(const VectorD& pos, int k, Array<int>& results)const;
+		virtual int Find_K_Nearest_Nbs(const VectorD& pos, int k, Array<int>& results)const;
 	};
 }

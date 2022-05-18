@@ -32,10 +32,9 @@ namespace Meso {
 		void Case_0(json& j, MELP<d>& fluid) {
 			std::cout << "Initializing case 0." << std::endl;
 			if constexpr (d == 3) {
-				real dx = fineness;
-				fluid.dx = dx;
-				Initialize_Lattice_Points(Vector3::Zero(), scale, scale, dx * Vector3::Unit(0), dx * Vector3::Unit(2), fluid.e_particles, "x");
+				fluid.e_particles.dx = Initialize_Sphere_Points_Regular(Vector3::Zero(), scale, 1000, fluid.e_particles, "x");
 			}
+			fluid.Init();
 		}
 	};
 }
