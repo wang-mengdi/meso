@@ -1,6 +1,45 @@
 #include "AuxFunc.h"
 
 namespace Meso {
+	namespace MathFunc {
+	
+		real Quick_Pow(real a, int n)
+		{
+			real ans = 1;
+			while (n) {
+				if (n & 1) ans *= a;
+				n >>= 1;
+				a *= a;
+			}
+			return ans;
+		}
+
+		real Power2(const real a)
+		{
+			return a * a;
+		}
+		real Power3(const real a)
+		{
+			return a * a * a;
+		}
+
+		real Power4(const real a)
+		{
+			real b = a * a;
+			return b * b;
+		}
+
+		real Power5(const real a)
+		{
+			real b = a * a;
+			return b * b * a;
+		}
+
+		real Deg2Rad(real deg) {
+			return deg * CommonConstants::pi / 180;
+		}
+	}
+
 	namespace StringFunc {
 
 		std::string To_String_Simple(const bool& a) {

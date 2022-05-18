@@ -4,62 +4,76 @@
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "Interpolation.h"
-#include "Mesh.h"
-#include "EulerParticles.h"
-
-#include <vtkXMLStructuredGridWriter.h>
-#include <vtkXMLUnstructuredGridWriter.h>
-#include <vtkStructuredGrid.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkDataSet.h>
-#include <vtkPointData.h>
-#include <vtkCellData.h>
-#include <vtkCellArray.h>
-#include <vtkDoubleArray.h>
+#include "Kernels.h"
 
 namespace Meso {
+
 	template<int d>
-	void Write_MELP_E(const EulerParticles<d>& e_particles, std::string file_name) {
-		Typedef_VectorD(d); Typedef_MatrixD(d);
-		const Array<VectorD>& pos = e_particles.xRef();
-		const Array<VectorD>& vel = e_particles.uRef();
-		const Array<MatrixD>& frame = e_particles.ERef();
-		// setup VTK
-		vtkNew<vtkXMLUnstructuredGridWriter> writer;
-		vtkNew<vtkUnstructuredGrid> unstructured_grid;
-
-		vtkNew<vtkPoints> nodes;
-		nodes->Allocate(pos.size());
-		vtkNew<vtkDoubleArray> posArray;
-		posArray->SetName("Position");
-		posArray->SetNumberOfComponents(d);
-		vtkNew<vtkDoubleArray> velArray;
-		velArray->SetName("Velocity");
-		velArray->SetNumberOfComponents(d);
-		vtkNew<vtkDoubleArray> normArray;
-		normArray->SetName("Normal");
-		normArray->SetNumberOfComponents(d);
-
-		for (int i = 0; i < pos.size(); i++) {
-			Vector3 pos3 = VectorFunc::V<3>(pos[i]);
-			nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
-
-			Vector3 vel3 = VectorFunc::V<3>(vel[i]);
-			velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
-
-			Vector3 norm3 = VectorFunc::V<3>((VectorD)frame[i].col(d - 1));
-			normArray->InsertNextTuple3(norm3[0], norm3[1], norm3[2]);
+	static Vector<real, d - 1> Project_To_TPlane(const Vector<real, d>& u, const Matrix<real, d> &E){
+		Vector<real, d-1> t_coords;
+		for (int i = 0; i < d - 1; i++) {
+			t_coords[i] = u.dot(E.col(i));
 		}
+		return t_coords;
+	}
+	template<int d>
+	static Vector<real, d - 1> Rotate_To_TPlane(const Vector<real, d>& u, const Matrix<real, d>& E) {//same as Project_To_TPlane, but preserves length
+		Vector<real, d-1> t_coords;
+		for (int i = 0; i < d - 1; i++) {
+			t_coords[i] = u.dot(E.col(i));
+		}
+		if (t_coords.norm() == 0.) return Vector<real, d - 1>::Zero();
+		else return u.norm() * t_coords.normalized();
+	}
 
-		unstructured_grid->SetPoints(nodes);
+	template<int d, class T>
+	T Surface_Sum_SPH(const Vector<real,d>& my_pos, const Matrix<real, d>& frame, 
+		const Array<T>& f, const Array<Vector<real,d>>& pos, const Array<int>& nbs,
+		const KernelSPH& kernel, const real radius, KernelType kernel_type = KernelType::QUINTIC) {
+		Typedef_VectorD(d);
+		T sum = VectorFunc::Zero<T>();
+		for (int k = 0; k < nbs.size(); k++) {
+			int j = nbs[k];
+			VectorD wr = my_pos - pos[j];
+			VectorT sr = Rotate_To_TPlane<d>(wr, frame);
+			real w = kernel.Weight<d - 1>(sr, radius, kernel_type);
+			sum += f[j] * w;
+		}
+		return sum;
+	}
 
-		unstructured_grid->GetPointData()->AddArray(velArray);
-		unstructured_grid->GetPointData()->AddArray(normArray);
-		unstructured_grid->GetPointData()->SetActiveVectors("Velocity");
+	template<int d, class T>
+	T Surface_Laplacian_SPH(const Vector<real, d>& my_pos, const Matrix<real, d>& frame,
+		const std::function<T(const int)>& f, const T& my_f, const Array<real>& a,
+		const Array<Vector<real, d>>& pos, const Array<int>& nbs,
+		const KernelSPH& kernel, const real radius, KernelType kernel_type = KernelType::QUINTIC) {
+		Typedef_VectorD(d);
+		T lap = VectorFunc::Zero<T>();
+		for (int k = 0; k < nbs.size(); k++) {
+			int j = nbs[k];
+			VectorD wr = my_pos - pos[j];
+			VectorT sr = Rotate_To_TPlane<d>(wr, frame);
+			real norm = std::max(sr.norm(), radius * 0.001);
+			VectorT grad_w = kernel.Grad<d - 1>(sr, radius, kernel_type);
+			lap += a[j] * (f(j) - my_f) * 2 * grad_w.norm() / norm;
+		}
+		return lap;
+	}
 
-		writer->SetFileName(file_name.c_str());
-		writer->SetInputData(unstructured_grid);
-		writer->Write();
+	template<int d>
+	Vector<real,d-1> Surface_Gradient_Diff_SPH(const Vector<real, d>& my_pos, const Matrix<real, d>& frame,
+		const Array<real>& f, const real& my_f, const Array<real>& a,
+		const Array<Vector<real, d>>& pos, const Array<int>& nbs,
+		const KernelSPH& kernel, const real radius, KernelType kernel_type = KernelType::QUINTIC) {
+		Typedef_VectorD(d);
+		VectorT grad_f = VectorT::Zero();
+		for (int k = 0; k < nbs.size(); k++) {
+			int j = nbs[k];
+			VectorD wr = my_pos - pos[j];
+			VectorT sr = Rotate_To_TPlane<d>(wr, frame);
+			VectorT grad_w = kernel.Grad<d - 1>(sr, radius, kernel_type);
+			grad_f += a[j] * (f[j] - my_f) * grad_w;
+		}
+		return grad_f;
 	}
 }

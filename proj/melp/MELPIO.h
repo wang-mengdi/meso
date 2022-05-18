@@ -25,6 +25,7 @@ namespace Meso {
 		const Array<VectorD>& pos = e_particles.xRef();
 		const Array<VectorD>& vel = e_particles.uRef();
 		const Array<MatrixD>& frame = e_particles.ERef();
+		const Array<real>& nden = e_particles.ndenRef();
 		// setup VTK
 		vtkNew<vtkXMLUnstructuredGridWriter> writer;
 		vtkNew<vtkUnstructuredGrid> unstructured_grid;
@@ -40,6 +41,9 @@ namespace Meso {
 		vtkNew<vtkDoubleArray> normArray;
 		normArray->SetName("Normal");
 		normArray->SetNumberOfComponents(d);
+		vtkNew<vtkDoubleArray> ndenArray;
+		ndenArray->SetName("NDen");
+		ndenArray->SetNumberOfComponents(1);
 
 		for (int i = 0; i < pos.size(); i++) {
 			Vector3 pos3 = VectorFunc::V<3>(pos[i]);
@@ -50,12 +54,15 @@ namespace Meso {
 
 			Vector3 norm3 = VectorFunc::V<3>((VectorD)frame[i].col(d - 1));
 			normArray->InsertNextTuple3(norm3[0], norm3[1], norm3[2]);
+
+			ndenArray->InsertNextTuple1(nden[i]);
 		}
 
 		unstructured_grid->SetPoints(nodes);
 
 		unstructured_grid->GetPointData()->AddArray(velArray);
 		unstructured_grid->GetPointData()->AddArray(normArray);
+		unstructured_grid->GetPointData()->AddArray(ndenArray);
 		unstructured_grid->GetPointData()->SetActiveVectors("Velocity");
 
 		writer->SetFileName(file_name.c_str());

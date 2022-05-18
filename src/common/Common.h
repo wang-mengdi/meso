@@ -91,7 +91,9 @@ template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
 
 #define Typedef_VectorD(d) \
 using VectorD=Vector<real,d>; \
-using VectorDi=Vector<int,d>; 
+using VectorDi=Vector<int,d>; \
+using VectorT = Vector<real, d-1>; \
+using VectorTi = Vector<int, d-1>;
 #define Typedef_MatrixD(d) \
 using MatrixD=Matrix<real,d>;
 #define Typedef_VectorEi(d) \

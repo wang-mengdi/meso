@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Common.h"
+#include "Constants.h"
 #include <thrust/inner_product.h>
 #include <thrust/transform.h>
 #include <thrust/functional.h>
@@ -32,6 +33,13 @@ namespace Meso {
 			if (x > b) return b;
 			return x;
 		}
+		////Scalar Math
+		real Quick_Pow(real a, int n);//must ensure n>=0
+		real Power2(const real a);//a^2
+		real Power3(const real a);//a^3
+		real Power4(const real a);//a^4
+		real Power5(const real a);//a^5
+		real Deg2Rad(real deg);
 	}
 
 	namespace VectorFunc {

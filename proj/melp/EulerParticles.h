@@ -16,6 +16,8 @@ namespace Meso {
 			Init_Attribute_rho();
 			Init_Attribute_eta();
 			Init_Attribute_nden();
+			Init_Attribute_a();
+			Init_Attribute_H();
 			Init_Attribute_u();
 			Init_Attribute_E();
 		}
@@ -23,6 +25,8 @@ namespace Meso {
 		Setup_Attribute(rho, real, 1.0);
 		Setup_Attribute(eta, real, 1.0);
 		Setup_Attribute(nden, real, 1.0);
+		Setup_Attribute(a, real, 1.0);
+		Setup_Attribute(H, real, 0.0); //mean curvature
 		Setup_Attribute(u, VectorD, VectorD::Zero());
 		Setup_Attribute(E, MatrixD, MatrixD::Identity());
 
