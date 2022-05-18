@@ -114,7 +114,7 @@ namespace Meso {
 	template<class T, int d>
 	__global__ void Set_Cell_By_Color(const Grid<d> grid, const PoissonLikeMask<d> mask, T* cell_data) {
 		Typedef_VectorD(d);
-		VectorDi coord = VectorFunc::Vi<d>(
+		VectorDi coord = MathFunc::Vi<d>(
 			blockIdx.x * grid.block_size + threadIdx.x,
 			blockIdx.y * grid.block_size + threadIdx.y,
 			blockIdx.z * grid.block_size + threadIdx.z
@@ -127,7 +127,7 @@ namespace Meso {
 	template<class T, int d>
 	__global__ void Fill_Dense_Matrix_From_Result(const Grid<d> grid, const PoissonLikeMask<d> mask, const T* Ap, const int ydof, T* mat) {
 		Typedef_VectorD(d);
-		VectorDi coord = VectorFunc::Vi<d>(
+		VectorDi coord = MathFunc::Vi<d>(
 			blockIdx.x * grid.block_size + threadIdx.x,
 			blockIdx.y * grid.block_size + threadIdx.y,
 			blockIdx.z * grid.block_size + threadIdx.z

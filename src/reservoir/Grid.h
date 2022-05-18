@@ -26,10 +26,10 @@ namespace Meso {
 		Grid(const VectorDi _counts = VectorDi::Zero(), const real _dx = 0, const VectorD domain_min = VectorD::Zero(), const GridType gtype = MAC) :
 			dx(_dx)
 		{
-			counts = VectorFunc::Round_Up_To_Align<d>(_counts, block_size);
+			counts = MathFunc::Round_Up_To_Align<d>(_counts, block_size);
 			if (counts != _counts) Warn("Grid size not divisible by {} in dimension {}, automtically round up to {}", block_size, d, counts);
 			if (gtype == COLLOC) pos_min = domain_min;
-			else pos_min = domain_min + VectorFunc::V<d>(0.5, 0.5, 0.5) * dx;
+			else pos_min = domain_min + MathFunc::V<d>(0.5, 0.5, 0.5) * dx;
 		}
 
 		__host__ __device__ VectorDi Counts(void) { return counts; }

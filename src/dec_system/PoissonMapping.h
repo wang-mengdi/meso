@@ -52,7 +52,7 @@ namespace Meso {
 		//void Init(const Grid<d>& grid, IFFunc vol_func, CFunc is_unknown_func) {
 		//	Allocate_Memory(grid);
 		//	vol.Calc_Faces(vol_func);
-		//	fixed.Calc_Cells(
+		//	fixed.Calc_Nodes(
 		//		[=](const VectorDi& cell)->bool {return !is_unknown_func(cell); }
 		//	);
 		//}

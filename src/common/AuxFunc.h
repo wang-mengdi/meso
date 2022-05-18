@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////
+﻿//////////////////////////////////////////////////////////////////////////
 // Common auxillary functions
 // Copyright (c) (2022-), Bo Zhu, Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
@@ -23,7 +23,6 @@ namespace Meso {
 
 	namespace FileFunc {
 		void Create_Directory(const bf::path path);
-		
 	}
 
 	namespace MathFunc {
@@ -40,9 +39,7 @@ namespace Meso {
 		real Power4(const real a);//a^4
 		real Power5(const real a);//a^5
 		real Deg2Rad(real deg);
-	}
 
-	namespace VectorFunc {
 		////create vectors with compatible dimensions
 		template<int d> __host__ __device__ Vector<real, d> V(const real x = (real)0, const real y = (real)0, const real z = (real)0);
 		template<int d> __host__ __device__ Vector<int, d> Vi(const int x = 0, const int y = 0, const int z = 0, const int w = 0) {
@@ -65,15 +62,6 @@ namespace Meso {
 
 		////Eigen zero compiler fix
 		template<class T> T Zero() { return (T)0; }
-
-		//Comparison
-		template<class ArrayT> bool All_Less(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] >= a1[i])return false; }return true; }
-		template<class ArrayT> bool All_Less_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] > a1[i])return false; }return true; }
-		template<class ArrayT> bool All_Greater(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] <= a1[i])return false; }return true; }
-		template<class ArrayT> bool All_Greater_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] < a1[i])return false; }return true; }
-		template<class ArrayT> bool Has_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] == a1[i])return true; return false; }
-		template<class ArrayT> bool Has_Less_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] <= a1[i])return true; return false; }
-		template<class ArrayT> bool Has_Greater_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] >= a1[i])return true; return false; }
 
 		Vector1 Orthogonal_Vector(const Vector1& v);
 		Vector2 Orthogonal_Vector(const Vector2& v);	////this is the orthogonal vector on the *left* hand
@@ -112,6 +100,15 @@ namespace Meso {
 	}
 
 	namespace ArrayFunc {
+		//Comparison，array or vector
+		template<class ArrayT> bool All_Less(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] >= a1[i])return false; }return true; }
+		template<class ArrayT> bool All_Less_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] > a1[i])return false; }return true; }
+		template<class ArrayT> bool All_Greater(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] <= a1[i])return false; }return true; }
+		template<class ArrayT> bool All_Greater_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++) { if (a0[i] < a1[i])return false; }return true; }
+		template<class ArrayT> bool Has_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] == a1[i])return true; return false; }
+		template<class ArrayT> bool Has_Less_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] <= a1[i])return true; return false; }
+		template<class ArrayT> bool Has_Greater_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] >= a1[i])return true; return false; }
+
 		template<class T, DataHolder side>
 		constexpr T* Data(Array<T, side>& arr)noexcept {
 			return thrust::raw_pointer_cast(arr.data());
