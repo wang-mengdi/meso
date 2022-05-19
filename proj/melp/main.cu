@@ -30,13 +30,15 @@ void Test_NAParticles(void) {
 	Typedef_VectorD(d);
 	NAParticles<d> naps;
 	if constexpr (d == 3) {
-		Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, naps, "x");
+		Initialize_Lattice_Points(Vector3::Zero(), 3, 3, Vector3::Unit(0), Vector3::Unit(1), naps, naps.xRef());
+		//Initialize_Sphere_Points_Regular(Vector3::Zero(), 1, 100, naps, naps.xRef());
 	}
 	naps.Update_Searcher();
+
 	Array<int> nbs;
-	naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 1.5, nbs);
+	naps.nbs_searcher->Find_Nbs(Vector3::Zero(), 1.5, nbs);
 	Info("num nbs: {}",nbs.size());
-	naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 15, nbs);
+	naps.nbs_searcher->Find_Nbs(Vector3::Zero(), 15, nbs);
 	Info("num nbs 2: {}", nbs.size());
 }
 
@@ -44,16 +46,16 @@ template<int d>
 void Test_EParticles(void) {
 	Typedef_VectorD(d);
 	EulerParticles<d> eps;
-	if constexpr (d == 3) {
-		Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, eps, "x");
-	}
-	eps.Update_Searcher();
-	Array<int> nbs;
-	eps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 1.5, nbs);
-	Info("num nbs: {}", nbs.size());
-	eps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 15, nbs);
-	Info("num nbs 2: {}", nbs.size());
-	Info("E0: {}", eps.E(0).col(0));
+	//if constexpr (d == 3) {
+	//	Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, eps, "x");
+	//}
+	//eps.Update_Searcher();
+	//Array<int> nbs;
+	//eps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 1.5, nbs);
+	//Info("num nbs: {}", nbs.size());
+	//eps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 15, nbs);
+	//Info("num nbs 2: {}", nbs.size());
+	//Info("E0: {}", eps.E(0).col(0));
 }
 
 int main(int argv, char **argc) {

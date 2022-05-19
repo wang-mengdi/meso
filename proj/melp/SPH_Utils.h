@@ -5,26 +5,9 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Kernels.h"
+#include "ParticleFrames.h"
 
 namespace Meso {
-
-	template<int d>
-	static Vector<real, d - 1> Project_To_TPlane(const Vector<real, d>& u, const Matrix<real, d> &E){
-		Vector<real, d-1> t_coords;
-		for (int i = 0; i < d - 1; i++) {
-			t_coords[i] = u.dot(E.col(i));
-		}
-		return t_coords;
-	}
-	template<int d>
-	static Vector<real, d - 1> Rotate_To_TPlane(const Vector<real, d>& u, const Matrix<real, d>& E) {//same as Project_To_TPlane, but preserves length
-		Vector<real, d-1> t_coords;
-		for (int i = 0; i < d - 1; i++) {
-			t_coords[i] = u.dot(E.col(i));
-		}
-		if (t_coords.norm() == 0.) return Vector<real, d - 1>::Zero();
-		else return u.norm() * t_coords.normalized();
-	}
 
 	template<int d, class T>
 	T Surface_Sum_SPH(const Vector<real,d>& my_pos, const Matrix<real, d>& frame, 

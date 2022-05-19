@@ -3,12 +3,41 @@
 // Copyright (c) (2018-), Bo Zhu, Hui Wang, Mengdi Wang, Yitong Deng
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
+#pragma once
 
 #include "Common.h"
 #include "AuxFunc.h"
 #include "IOFunc.h"
 
 namespace Meso {
+
+	////2D->3D projection, back to world space
+	inline void Unproject_To_World(const Vector2& t, const Matrix3& e, Vector3& u) { u = e.col(0) * t[0] + e.col(1) * t[1]; }
+	////1D->2D projection, back to world space
+	inline void Unproject_To_World(const Vector1& t, const Matrix2& e, Vector2& u) { u = e.col(0) * t[0]; }
+
+	template<int d>
+	static Vector<real, d> Project_To_Norm(const Vector<real, d>& u, const Matrix<real, d>& E) {
+		return u.dot(E.col(d - 1)) * E.col(d - 1);
+	}
+
+	template<int d>
+	static Vector<real, d - 1> Project_To_TPlane(const Vector<real, d>& u, const Matrix<real, d>& E) {
+		Vector<real, d - 1> t_coords;
+		for (int i = 0; i < d - 1; i++) {
+			t_coords[i] = u.dot(E.col(i));
+		}
+		return t_coords;
+	}
+	template<int d>
+	static Vector<real, d - 1> Rotate_To_TPlane(const Vector<real, d>& u, const Matrix<real, d>& E) {//same as Project_To_TPlane, but preserves length
+		Vector<real, d - 1> t_coords;
+		for (int i = 0; i < d - 1; i++) {
+			t_coords[i] = u.dot(E.col(i));
+		}
+		if (t_coords.norm() == 0.) return Vector<real, d - 1>::Zero();
+		else return u.norm() * t_coords.normalized();
+	}
 
 	////Kernel for PCA normal calculation
 	real W_PCA(const real d, const real r)

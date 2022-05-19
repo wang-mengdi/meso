@@ -16,12 +16,16 @@ namespace Meso {
 		std::shared_ptr<NeighborSearcher<d>> nbs_searcher;
 
 		NAParticles() {
-			Init_Attribute_x();
+			//Init_Attribute_x();
 			nbs_searcher = std::make_shared<NeighborKDTree<d>>();
-			nbs_searcher->Update_Points(xRef());
 		}
 
 		Setup_Attribute(x, VectorD, VectorD::Zero());
+		
+	//protected: 
+		// 1. Attribute<VectorD> _shit = Attribute<VectorD>(VectorD::Zero());
+		// 2. Attribute<VectorD> _shit(VectorD::Zero());
+	//public:
 
 		void Update_Searcher(void) {
 			nbs_searcher->Update_Points(xRef());
