@@ -2,7 +2,6 @@
 
 namespace Meso {
 	namespace MathFunc {
-	
 		real Quick_Pow(real a, int n)
 		{
 			real ans = 1;
@@ -38,46 +37,7 @@ namespace Meso {
 		real Deg2Rad(real deg) {
 			return deg * CommonConstants::pi / 180;
 		}
-	}
 
-	namespace StringFunc {
-
-		std::string To_String_Simple(const bool& a) {
-			return std::to_string((int)a);
-		}
-
-		Array<std::string> Split_String(const std::string& s, const std::string& delimiters)
-		{
-			//https://stackoverflow.com/questions/26328793/how-to-split-string-with-delimiter-using-c
-			Array<std::string> tokens; tokens.clear();
-			std::string::size_type lastPos = s.find_first_not_of(delimiters, 0);
-			std::string::size_type pos = s.find_first_of(delimiters, lastPos);
-			while (std::string::npos != pos || std::string::npos != lastPos) {
-				tokens.push_back(s.substr(lastPos, pos - lastPos));
-				lastPos = s.find_first_not_of(delimiters, pos);
-				pos = s.find_first_of(delimiters, lastPos);
-			}
-			return tokens;
-		}
-
-	}
-
-	namespace FileFunc {
-		void Create_Directory(const bf::path path)
-		{
-			//recursively
-			try {
-				if (!boost::filesystem::exists(path))
-					boost::filesystem::create_directories(path);
-			}
-			catch (std::exception& e) { // Not using fs::filesystem_error since std::bad_alloc can throw too.
-				std::cout << e.what() << std::endl;
-			}
-		}
-
-	}
-
-	namespace VectorFunc {
 		template<> __host__ __device__ Vector1 V<1>(const real x, const real y, const real z) { return Vector1(x); }
 		template<> __host__ __device__ Vector2 V<2>(const real x, const real y, const real z) { return Vector2(x, y); }
 		template<> __host__ __device__ Vector3 V<3>(const real x, const real y, const real z) { return Vector3(x, y, z); }
@@ -167,4 +127,40 @@ namespace Meso {
 		}
 	}
 
+	namespace StringFunc {
+
+		std::string To_String_Simple(const bool& a) {
+			return std::to_string((int)a);
+		}
+
+		Array<std::string> Split_String(const std::string& s, const std::string& delimiters)
+		{
+			//https://stackoverflow.com/questions/26328793/how-to-split-string-with-delimiter-using-c
+			Array<std::string> tokens; tokens.clear();
+			std::string::size_type lastPos = s.find_first_not_of(delimiters, 0);
+			std::string::size_type pos = s.find_first_of(delimiters, lastPos);
+			while (std::string::npos != pos || std::string::npos != lastPos) {
+				tokens.push_back(s.substr(lastPos, pos - lastPos));
+				lastPos = s.find_first_not_of(delimiters, pos);
+				pos = s.find_first_of(delimiters, lastPos);
+			}
+			return tokens;
+		}
+
+	}
+
+	namespace FileFunc {
+		void Create_Directory(const bf::path path)
+		{
+			//recursively
+			try {
+				if (!boost::filesystem::exists(path))
+					boost::filesystem::create_directories(path);
+			}
+			catch (std::exception& e) { // Not using fs::filesystem_error since std::bad_alloc can throw too.
+				std::cout << e.what() << std::endl;
+			}
+		}
+
+	}
 }

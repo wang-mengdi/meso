@@ -64,14 +64,14 @@ namespace Meso {
 			for (int k = 0; k < nz; k++) {
 				for (int j = 0; j < ny; j++) {
 					for (int i = 0; i < nx; i++) {
-						VectorDi cell = VectorFunc::Vi<d>(i, j, k);
+						VectorDi cell = MathFunc::Vi<d>(i, j, k);
 						VectorD pos = grid.Position(cell);
-						Vector3 pos3 = VectorFunc::V<3>(pos);
+						Vector3 pos3 = MathFunc::V<3>(pos);
 						nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
 
 						//VectorD vec = Interpolation<PointIntpLinear>::Face_Vector<T, d, HOST>(field_host, pos);
 						VectorD vec = vf_host(cell);
-						Vector3 vec3 = VectorFunc::V<3>(vec);
+						Vector3 vec3 = MathFunc::V<3>(vec);
 						velArray->InsertNextTuple3(vec3[0], vec3[1], vec3[2]);
 						//velArray->InsertNextTuple3(pos3[0], pos3[1], pos3[2]);
 					}
@@ -117,10 +117,10 @@ namespace Meso {
 			velArray->SetNumberOfComponents(d);
 
 			for (int i = 0; i < pos.size(); i++) {
-				Vector3 pos3 = VectorFunc::V<3>(pos[i]);
+				Vector3 pos3 = MathFunc::V<3>(pos[i]);
 				nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
 
-				Vector3 vel3 = VectorFunc::V<3>(vel[i]);
+				Vector3 vel3 = MathFunc::V<3>(vel[i]);
 				velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
 			}
 

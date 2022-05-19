@@ -92,7 +92,7 @@ namespace Meso {
 		int bc_num = (1 << d);
 		for (int s = 0; s < bc_num; s++) {
 			int dx = ((s >> 0) & 1), dy = ((s >> 1) & 1), dz = ((s >> 2) & 1);
-			VectorDi fine_coord = coarse_coord * 2 + VectorFunc::Vi<d>(dx, dy, dz);
+			VectorDi fine_coord = coarse_coord * 2 + MathFunc::Vi<d>(dx, dy, dz);
 			if (fine_grid.Valid(fine_coord)) sum += fine_data[fine_grid.Index(fine_coord)];
 		}
 		coarse_data[coarse_grid.Index(coarse_coord)] = sum / bc_num;
