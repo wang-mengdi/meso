@@ -149,3 +149,83 @@ namespace Meso {
 	template<class T, int d> using FaceFieldDv = FaceField<T, d, DEVICE>;
 
 }
+
+//fmt adaptor for FaceField
+template <class T, Meso::DataHolder side>
+struct fmt::formatter<Meso::FaceField<T, 2, side>> {
+	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+		//https://fmt.dev/latest/api.html#udt
+		auto it = ctx.begin(), end = ctx.end();
+		if (it != end && *it != '}') throw format_error("invalid format");
+		// Return an iterator past the end of the parsed range:
+		return it;
+	}
+
+	void Update_String(const Meso::FaceField<T, 2>& F, std::string& out) {
+		out = "";
+		for (int axis = 0; axis < 2; axis++) {
+			out += "axis: "; out += std::to_string(axis); out += "\n";
+			for (int i = 0; i < F.grid.counts[0]; i++) {
+				for (int j = 0; j < F.grid.counts[1]; j++) {
+					out += Meso::StringFunc::To_String_Simple(F(axis,Eigen::Vector2i(i, j))) + " ";
+				}
+				out += "\n";
+			}
+			out += "===========\n";
+		}
+	}
+
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext>
+	auto format(const Meso::FaceField<T, 2, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
+		std::string out;
+		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
+		else if constexpr (side == Meso::DataHolder::DEVICE) {
+			Meso::FaceField<T, 2> F_host = F;
+			Update_String(F_host, out);
+		}
+		return format_to(ctx.out(), "{}", out);
+	}
+};
+
+template<class T, Meso::DataHolder side>
+struct fmt::formatter<Meso::FaceField<T, 3, side>> {
+	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+		//https://fmt.dev/latest/api.html#udt
+		auto it = ctx.begin(), end = ctx.end();
+		if (it != end && *it != '}') throw format_error("invalid format");
+		// Return an iterator past the end of the parsed range:
+		return it;
+	}
+
+	void Update_String(const Meso::FaceField<T, 3>& F, std::string& out) {
+		out = "";
+		for (int axis = 0; axis < 3; axis++) {
+			out += "axis: "; out += std::to_string(axis); out += "\n";
+			for (int i = 0; i < F.grid.counts[0]; i++) {
+				for (int j = 0; j < F.grid.counts[1]; j++) {
+					for (int k = 0; k < F.grid.counts[2]; k++) {
+						out += Meso::StringFunc::To_String_Simple(F(axis,Eigen::Vector3i(i, j, k))) + " ";
+					}
+					out += "\n";
+				}
+				out += "===========\n";
+			}
+			out += "======================\n";
+		}
+	}
+
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext>
+	auto format(const Meso::FaceField<T, 3, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
+		std::string out;
+		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
+		else {
+			Meso::FaceField<T, 3> F_host = F;
+			Update_String(F_host, out);
+		}
+		return format_to(ctx.out(), "{}", out);
+	}
+};

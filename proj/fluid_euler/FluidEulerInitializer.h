@@ -107,7 +107,7 @@ namespace Meso {
 		void Case_0(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * VectorFunc::Vi<d>(2, 1, 1);
+			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
@@ -123,7 +123,7 @@ namespace Meso {
 		void Case_1(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * VectorFunc::Vi<d>(1, 1, 1);
+			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
@@ -151,7 +151,7 @@ namespace Meso {
 		void Case_2(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * VectorFunc::Vi<d>(2, 1, 1);
+			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
@@ -191,14 +191,14 @@ namespace Meso {
 			);
 
 			//one cell
-			/*VectorDi face = VectorFunc::Vi<d>(center[0]*scale, center[1]*scale);
+			/*VectorDi face = MathFunc::Vi<d>(center[0]*scale, center[1]*scale);
 			face_fixed(0,face) = true;
 			face_fixed(1, face) = true;
 			initial_vel(0, face) = 0.0;
 			initial_vel(1, face) = 0.0;
 			vol(0, face) = 0;
 			vol(1, face) = 0;
-			VectorDi cell = VectorFunc::Vi<d>(center[0]*scale, center[1]*scale);
+			VectorDi cell = MathFunc::Vi<d>(center[0]*scale, center[1]*scale);
 			fixed(cell) = true;*/
 
 

@@ -14,6 +14,17 @@ using namespace thrust::placeholders;
 namespace Meso {
 	namespace StringFunc{
 		std::string To_String_Simple(const bool& a);
+
+		template<class T,int d> std::string To_String_Simple(const Vector<T,d> & a) {
+			std::string out="[ ";
+			for (int i = 0; i < d; i++) {
+				out += std::to_string(a[i]);
+				if (i != d - 1) { out += " "; }
+			}
+			out += ']';
+			return out;
+		}
+
 		template<class T> std::string To_String_Simple(const T& a) {
 			return std::to_string(a);
 		}
@@ -62,6 +73,16 @@ namespace Meso {
 
 		////Eigen zero compiler fix
 		template<class T> T Zero() { return (T)0; }
+
+		//atomic add two vectors
+		template<class T, int d> __device__ __host__ void Atomic_Add(Vector<T,d>* a, Vector<T,d> b) {
+			for (int i = 0; i < d; i++) { atomicAdd(&((*a)[i]), b[i]); }
+		}
+
+		//atomic add two values
+		template<class T> __device__ __host__ void Atomic_Add(T* a, T b) {
+			atomicAdd(a, b);
+		}
 
 		Vector1 Orthogonal_Vector(const Vector1& v);
 		Vector2 Orthogonal_Vector(const Vector2& v);	////this is the orthogonal vector on the *left* hand

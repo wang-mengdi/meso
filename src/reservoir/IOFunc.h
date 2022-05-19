@@ -6,6 +6,7 @@
 #pragma once
 #include "Interpolation.h"
 #include "Mesh.h"
+#include <vtkNew.h>
 #include <vtkXMLStructuredGridWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkStructuredGrid.h>
@@ -40,15 +41,15 @@ namespace Meso {
 			}
 
 			// setup VTK
-			vtkXMLStructuredGridWriter* writer = vtkXMLStructuredGridWriter::New();
-			vtkStructuredGrid* structured_grid = vtkStructuredGrid::New();
+			vtkNew<vtkXMLStructuredGridWriter> writer;
+			vtkNew<vtkStructuredGrid> structured_grid;
 			structured_grid->SetDimensions(nx, ny, nz);
-			vtkPoints* nodes = vtkPoints::New();
+			vtkNew<vtkPoints> nodes;
 			nodes->Allocate(nx * ny * nz);
 			//vtkDoubleArray* prsArray = vtkDoubleArray::New();
 			//prsArray->SetNumberOfComponents(1);
 			//prsArray->SetName("Pressure");
-			vtkDoubleArray* velArray = vtkDoubleArray::New();
+			vtkNew<vtkDoubleArray> velArray;
 			velArray->SetName("Velocity");
 			velArray->SetNumberOfComponents(3);
 
@@ -92,11 +93,6 @@ namespace Meso {
 			writer->SetFileName(file_name.c_str());
 			writer->SetDataModeToBinary();
 			writer->Write();
-
-			structured_grid->Delete();
-			writer->Delete();
-			nodes->Delete();
-			velArray->Delete();
 		}
 
 		template<int d>

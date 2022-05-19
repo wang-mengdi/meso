@@ -98,7 +98,7 @@ namespace Meso {
 					idxfirst,
 					idxlast,
 					data->begin(),
-					[f, grid_gpu]__device__(const int idx) {
+					[f, grid_gpu] __device__ (const int idx) {
 					return f(grid_gpu.Coord(idx));
 				}
 				);
