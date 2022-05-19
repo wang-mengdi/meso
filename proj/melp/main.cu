@@ -29,15 +29,15 @@ template<int d>
 void Test_NAParticles(void) {
 	Typedef_VectorD(d);
 	NAParticles<d> naps;
-	if constexpr (d == 3) {
-		Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, naps, "x");
-	}
-	naps.Update_Searcher();
-	Array<int> nbs;
-	naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 1.5, nbs);
-	Info("num nbs: {}",nbs.size());
-	naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 15, nbs);
-	Info("num nbs 2: {}", nbs.size());
+	//if constexpr (d == 3) {
+	//	Initialize_Lattice_Points(Vector3::Zero(), 3, 3, 1, 1, naps, "x");
+	//}
+	//naps.Update_Searcher();
+	//Array<int> nbs;
+	//naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 1.5, nbs);
+	//Info("num nbs: {}",nbs.size());
+	//naps.nbs_searcher->Find_Neighbors(Vector3::Zero(), 15, nbs);
+	//Info("num nbs 2: {}", nbs.size());
 }
 
 template<int d>
@@ -73,9 +73,9 @@ int main(int argv, char **argc) {
 			json_input.close();
 		}
 		int dim = Json::Value(j, "dimension", 2);
-		if (dim == 2) Run<2>(j);
-		else if (dim == 3) Run<3>(j);
-		//Test_NAParticles<3>();
+		//if (dim == 2) Run<2>(j);
+		//else if (dim == 3) Run<3>(j);
+		Test_NAParticles<3>();
 		//Test_EParticles<3>();
 	}
 	catch (nlohmann::json::exception& e)

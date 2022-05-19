@@ -22,6 +22,11 @@ namespace Meso {
 		}
 
 		Setup_Attribute(x, VectorD, VectorD::Zero());
+		
+	//protected: 
+		// 1. Attribute<VectorD> _shit = Attribute<VectorD>(VectorD::Zero());
+		// 2. Attribute<VectorD> _shit(VectorD::Zero());
+	//public:
 
 		void Update_Searcher(void) {
 			nbs_searcher->Update_Points(xRef());

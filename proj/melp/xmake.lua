@@ -1,5 +1,5 @@
 add_rules("mode.debug","mode.release")
---set_languages("cxx20")
+set_languages("cxx17")
 includes("./../../src/grid_physics/xmake.lua")
 includes("./../../src/dec_system/xmake.lua")
 includes("./../../src/reservoir/xmake.lua")
