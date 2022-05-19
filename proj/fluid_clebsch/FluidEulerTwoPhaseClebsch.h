@@ -407,13 +407,15 @@ public:
 		#pragma omp parallel for reduction(+:kinetic_energy)
 		for (int i = 0; i < cell_num; i++) {
 			const VectorDi cell = mac_grid.grid.Cell_Coord(i);
-			VectorD cell_v = VectorD::Zero();
-			for (int axis = 0; axis < d; axis++) {
-				VectorDi left_face = mac_grid.Cell_Left_Face(axis, cell);
-				VectorDi right_face = mac_grid.Cell_Right_Face(axis, cell);
-				cell_v[axis] = (real)0.5 * (field_q(axis, left_face) + field_q(axis, right_face));
+			if (levelset.phi(cell) < -mac_grid.grid.dx) {
+				VectorD cell_v = VectorD::Zero();
+ 				for (int axis = 0; axis < d; axis++) {
+					VectorDi left_face = mac_grid.Cell_Left_Face(axis, cell);
+					VectorDi right_face = mac_grid.Cell_Right_Face(axis, cell);
+					cell_v[axis] = (real)0.5 * (field_q(axis, left_face) + field_q(axis, right_face));
+				}
+				kinetic_energy += cell_v.dot(cell_v) * rho_L;
 			}
-			kinetic_energy += cell_v.dot(cell_v);
 		}
 		return (real)0.5 * kinetic_energy * pow(mac_grid.grid.dx, d);
 	}
@@ -426,9 +428,11 @@ public:
 		#pragma omp parallel for reduction(+:enstrophy)
 		for (int i = 0; i < cell_num; i++) {
 			const VectorDi cell = mac_grid.grid.Cell_Coord(i);
-			if constexpr (d == 2) { enstrophy += pow(vorticity(cell), 2); }
-			else { enstrophy += vorticity(cell).dot(vorticity(cell)); }}
-
+			if (levelset.phi(cell) < -mac_grid.grid.dx) {
+				if constexpr (d == 2) { enstrophy += pow(vorticity(cell), 2); }
+				else { enstrophy += vorticity(cell).dot(vorticity(cell)); }
+			}
+		}
 		return (real)0.5 * enstrophy * pow(mac_grid.grid.dx, d);
 	}
 
