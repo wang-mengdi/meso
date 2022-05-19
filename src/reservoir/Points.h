@@ -7,21 +7,16 @@
 #include "Common.h"
 #include "AuxFunc.h"
 #include <functional>
-#include <any>
 
 ////macros to define helper functions for manipulating particle attributes
-#define Register_Attribute_Shortcuts(a, T, def_val)\
-	public: T& a(const int i) {return this->template Get_Entry<T>(#a, i);}\
-	Array<T>& a##Ref(){return this->template Get_Attribute<T>(#a);}\
-	const T& a(const int i) const {return this->template Get_Entry<T>(#a, i);}\
-	const Array<T>& a##Ref() const {return this->template Get_Attribute<T>(#a);}\
+#define Setup_Attribute(a, T, def_val)\
+	public: T& a(const int i) {return _##a->Get_Entry(i);}\
+	Array<T>& a##Ref(){return _##a->Get_Data();}\
+	const T& a(const int i) const {return _##a->Get_Entry(i);}\
+	const Array<T>& a##Ref() const {return _##a->Get_Data();}\
 	protected: std::shared_ptr<Attribute<T>> _##a = std::make_shared<Attribute<T>>(def_val, #a);\
 	AttributeRegistrar<T> _##a##_reg = AttributeRegistrar<T>(#a, _##a, att_map);\
 	public:\
-
-#define Setup_Attribute(a, T, def_val)\
-	Register_Attribute_Shortcuts(a, T, def_val);\
-	virtual void Init_Attribute_##a(){this->template Add_Attribute<T>(#a, def_val);}\
 
 namespace Meso {
 	
@@ -43,7 +38,6 @@ namespace Meso {
 		virtual ~Attribute() {}
 		Attribute(T def_val, std::string _name) : 
 			default_value(def_val), name(_name) {
-			Info("Fucking shit! {}", name);
 			data_ptr = std::make_shared<Array<T>>();
 		}
 
@@ -58,6 +52,10 @@ namespace Meso {
 		virtual Array<T>& Get_Data() const {
 			return *data_ptr;
 		}
+
+		virtual T& Get_Entry(const int i) const {
+			return Get_Data()[i];
+		}
 	};
 
 	template<class T>
@@ -65,7 +63,7 @@ namespace Meso {
 	public:
 		virtual ~AttributeRegistrar() {}
 		AttributeRegistrar(std::string name, std::shared_ptr<Attribute<T>> att_ptr,
-							std::map<std::string, std::shared_ptr<AttributeBase>> att_map) {
+							std::map<std::string, std::shared_ptr<AttributeBase>>& att_map) {
 			if (att_map.find(name) == att_map.end()) {
 				att_map[name] = att_ptr;
 			}
@@ -77,43 +75,8 @@ namespace Meso {
 
 	class Points {
 	public:
-
 		int size = 0; // num elements
 		std::map<std::string, std::shared_ptr<AttributeBase>> att_map;
-		std::map<std::string, Array<std::any>&> data_map;
-
-		template<class T>
-		void Add_Attribute(const std::string name, T default_v) {
-			if (att_map.find(name) == att_map.end()) {
-				att_map[name] = std::make_shared<Attribute<T>>(default_v, name);
-			}
-			else {
-				Error("Error: Duplicate variable: {} encountered in Points.h", name);
-			}
-		}
-
-		template<class T>
-		Array<T>& Get_Attribute(const std::string name) const {
-			if (att_map.find(name) == att_map.end()) {
-				Error("Error: Unfound variable: {} in Points.h", name);
-			}
-			try {
-				Attribute<T>& att = dynamic_cast<Attribute<T>&>(*(att_map.at(name)));
-				return att.Get_Data();
-			}
-			catch (const std::bad_cast& b) {
-				Error("Error: Bad type for variable: {} in Points.h", name);
-			}
-		}
-
-		template<class T>
-		T& Get_Entry(const std::string name, const int i) const {
-			Array<T>& att = Get_Attribute<T>(name);
-			if (i >= att.size()) {
-				Error("Error: Out Of Bounds for index: {} in Points.h", i);
-			}
-			return att[i];
-		}
 
 		int Size(void);
 		void Resize(const int _size);

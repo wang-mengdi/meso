@@ -56,7 +56,7 @@ namespace Meso {
 				Array<int> nbs;
 				e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
 				std::function<real(const int)> z = [&](const int idx)->real {
-					return (e_particles.x(idx)-e_particles.x(i)).dot(e_particles.E(i).col(d-1)); 
+					return (e_particles.x(idx)-e_particles.x(i)).dot(e_particles.Normal(i));
 				};
 				e_particles.H(i) = Surface_Laplacian_SPH<d, real>(e_particles.x(i), e_particles.E(i),
 					z, 0., e_particles.aRef(), e_particles.xRef(), nbs,
@@ -71,9 +71,9 @@ namespace Meso {
 			VectorD origin = VectorD::Zero();
 			real vol = 0.;
 			for (int i = 0; i < e_particles.Size(); i++) {
-				real height = fabs(e_particles.E(i).col(d - 1).dot(e_particles.x(i) - origin)); // volume of the skewed cone with the origin
+				real height = fabs(e_particles.Normal(i).dot(e_particles.x(i) - origin)); // volume of the skewed cone with the origin
 				real cone_vol = real(1. / d) * e_particles.a(i) * height;
-				if ((e_particles.x(i) - origin).dot(e_particles.E(i).col(d - 1)) > 0.) {
+				if ((e_particles.x(i) - origin).dot(e_particles.Normal(i)) > 0.) {
 					vol += cone_vol;
 				}
 				else {
@@ -89,8 +89,8 @@ namespace Meso {
 			Info("Pressure_diff: {}", pressure_diff);
 #pragma omp parallel for
 			for (int i = 0; i < e_particles.Size(); i++) {
-				e_particles.u(i) += 100 * dt * e_particles.E(i).col(d-1) * e_particles.H(i);
-				e_particles.u(i) += 50 * dt * e_particles.E(i).col(d - 1) * pressure_diff;
+				e_particles.u(i) += 100 * dt * e_particles.Normal(i) * e_particles.H(i);
+				e_particles.u(i) += 50 * dt * e_particles.Normal(i) * pressure_diff;
 			}
 			//tang velocity
 			if constexpr (d == 3) {
@@ -101,19 +101,17 @@ namespace Meso {
 					VectorT acc_2 = Surface_Gradient_Diff_SPH<d>(e_particles.x(i), e_particles.E(i),
 						e_particles.ndenRef(), e_particles.nden(i), e_particles.aRef(), e_particles.xRef(), nbs,
 						kernel, e_particles.Radius(i));
-					VectorD acc_3 = acc_2[0] * e_particles.E(i).col(0) + acc_2[1] * e_particles.E(i).col(1);
+					VectorD acc_3; Unproject_To_World(acc_2, e_particles.E(i), acc_3);
 					e_particles.u(i) += -30 * dt * acc_3;
 				}
 			}
 		}
 
 		virtual void Advance(const int current_frame, const real current_time, const real dt) {
+			Info("Got here");
 			Update_Geometry();
+			Info("Got here 1");
 			Update_Dynamics(dt);
-//#pragma omp parallel for
-//			for (int i = 0; i < e_particles.Size(); i++) {
-//				e_particles.u(i) += -VectorD::Unit(1) * dt;
-//			}
 #pragma omp parallel for
 			for (int i = 0; i < e_particles.Size(); i++) {
 				e_particles.x(i) += e_particles.u(i) * dt;

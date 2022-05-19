@@ -13,29 +13,23 @@
 namespace Meso {
 	using namespace CommonConstants;
 
-	void Initialize_Lattice_Points(const Vector3& origin, const int nx, const int ny, const Vector3 dx, const Vector3 dy, Points& pts, std::string name) {
-		try {
-			Array<Vector3>& pos = pts.Get_Attribute<Vector3>("x");
-			pts.Resize((nx + 1) * (ny + 1));
-			int idx = 0;
+	void Initialize_Lattice_Points(const Vector3& origin, const int nx, const int ny, const Vector3 dx, const Vector3 dy, Points& pts, Array<Vector3>& pos) {
+		pts.Resize((nx + 1) * (ny + 1));
+		int idx = 0;
 #pragma omp parallel for
-			for (int i = 0; i <= nx; i++) {
-				for (int j = 0; j <= ny; j++) {
-					Vector3 curr_pos = origin + i * dx + j * dy;
-					pos[idx] = curr_pos;
-					idx++;
-				}
+		for (int i = 0; i <= nx; i++) {
+			for (int j = 0; j <= ny; j++) {
+				Vector3 curr_pos = origin + i * dx + j * dy;
+				pos[idx] = curr_pos;
+				idx++;
 			}
-		}
-		catch (const std::exception& e) {
-			Error("Error: Failed to extract positions with: {} in InitializePoints.h", name);
 		}
 	}
 
 
 	// algorithm: https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf
 	// note that the num_pts you put in is only an average, it is not necessarily the num of pts you get
-	real Initialize_Sphere_Points_Regular(const Vector3& origin, const real R, const int num_pts, Points& pts, std::string name) {
+	real Initialize_Sphere_Points_Regular(const Vector3& origin, const real R, const int num_pts, Points& pts, Array<Vector3>& pos) {
 		Array<real> dxs;
 		Array<Vector3> tmp_pos;
 		real a = 4 * pi / num_pts;
@@ -61,19 +55,11 @@ namespace Meso {
 		real avg_dx = ArrayFunc::Mean<real>(dxs);
 
 		int actual_num_pts = tmp_pos.size();
-
-		try {
-			Array<Vector3>& pos = pts.Get_Attribute<Vector3>("x");
-			pts.Resize(actual_num_pts);
-			int idx = 0;
+		pts.Resize(actual_num_pts);
 #pragma omp parallel for
-			for (int i = 0; i <= actual_num_pts; i++) {
-				pos[i] = tmp_pos[i];
-			}
-			return R * avg_dx;
+		for (int i = 0; i <= actual_num_pts; i++) {
+			pos[i] = tmp_pos[i];
 		}
-		catch (const std::exception& e) {
-			Error("Error: Failed to extract positions with: {} in InitializePoints.h", name);
-		}
+		return R * avg_dx;
 	}
 }

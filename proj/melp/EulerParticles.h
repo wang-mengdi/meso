@@ -12,15 +12,7 @@ namespace Meso {
 	class EulerParticles : public NAParticles<d> {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
 	public:
-		EulerParticles() : NAParticles<d>()  {
-			Init_Attribute_rho();
-			Init_Attribute_eta();
-			Init_Attribute_nden();
-			Init_Attribute_a();
-			Init_Attribute_H();
-			Init_Attribute_u();
-			Init_Attribute_E();
-		}
+		EulerParticles() : NAParticles<d>()  {}
 
 		Setup_Attribute(rho, real, 1.0);
 		Setup_Attribute(eta, real, 1.0);
@@ -31,6 +23,11 @@ namespace Meso {
 		Setup_Attribute(E, MatrixD, MatrixD::Identity());
 
 		real dx = 1;
+
+		// normal vector i
+		VectorD Normal(int i) {
+			return E(i).col(d-1);
+		}
 
 		// search radius for i
 		real Radius(int i) {
