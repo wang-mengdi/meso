@@ -21,6 +21,7 @@ namespace Meso {
 		Setup_Attribute(H, real, 0.0); //mean curvature
 		Setup_Attribute(u, VectorD, VectorD::Zero());
 		Setup_Attribute(E, MatrixD, MatrixD::Identity());
+		Setup_Attribute(g, MatrixT, MatrixT::Identity());
 
 		real dx = 1;
 

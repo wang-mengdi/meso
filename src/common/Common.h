@@ -96,6 +96,7 @@ using VectorT = Vector<real, d-1>; \
 using VectorTi = Vector<int, d-1>;
 #define Typedef_MatrixD(d) \
 using MatrixD=Matrix<real,d>;
+using MatrixT = Matrix<real, d-1>;
 #define Typedef_VectorEi(d) \
 using VectorEi=Vector<int,d>;
 

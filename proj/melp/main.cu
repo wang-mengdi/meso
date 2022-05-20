@@ -9,6 +9,7 @@
 #include "EulerParticles.h"
 #include "Common.h"
 #include "InitializePoints.h"
+#include "SparseTests.h"
 
 using namespace Meso;
 
@@ -58,6 +59,12 @@ void Test_EParticles(void) {
 	//Info("E0: {}", eps.E(0).col(0));
 }
 
+template<int d>
+void Test_CG_Solver(void) {
+	Typedef_VectorD(d);
+	Test_Sparse_Matrix();
+}
+
 int main(int argv, char **argc) {
 	try {
 		json j = {
@@ -75,10 +82,11 @@ int main(int argv, char **argc) {
 			json_input.close();
 		}
 		int dim = Json::Value(j, "dimension", 2);
-		if (dim == 2) Run<2>(j);
-		else if (dim == 3) Run<3>(j);
+		//if (dim == 2) Run<2>(j);
+		//else if (dim == 3) Run<3>(j);
 		//Test_NAParticles<3>();
 		//Test_EParticles<3>();
+		Test_CG_Solver<3>();
 	}
 	catch (nlohmann::json::exception& e)
 	{

@@ -70,19 +70,19 @@ namespace Meso {
 			wc += w0;
 		}
 		if (wc != (real)0)C /= wc;
-		VectorD normal = VectorFunc::Min_Eigenvector(C);
+		VectorD normal = MathFunc::Min_Eigenvector(C);
 
 		// Always align with previous normal
 		if (normal.dot(my_frame.col(d-1)) < (real) 0) normal *= (real)-1;
 
 		////update local frame according to the PCA normal
 		if constexpr (d == 2) {
-			VectorD tang = -VectorFunc::Orthogonal_Vector(normal);
+			VectorD tang = -MathFunc::Orthogonal_Vector(normal);
 			my_frame.col(0) = tang.normalized();
 			my_frame.col(1) = normal.normalized();
 		}
 		else if constexpr (d == 3) {
-			VectorD t1 = -VectorFunc::Orthogonal_Vector(normal);
+			VectorD t1 = -MathFunc::Orthogonal_Vector(normal);
 			VectorD t2 = t1.cross(normal);
 			my_frame.col(0) = t1.normalized();
 			my_frame.col(1) = t2.normalized();

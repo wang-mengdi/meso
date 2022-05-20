@@ -46,13 +46,13 @@ namespace Meso {
 		ndenArray->SetNumberOfComponents(1);
 
 		for (int i = 0; i < pos.size(); i++) {
-			Vector3 pos3 = VectorFunc::V<3>(pos[i]);
+			Vector3 pos3 = MathFunc::V<3>(pos[i]);
 			nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
 
-			Vector3 vel3 = VectorFunc::V<3>(vel[i]);
+			Vector3 vel3 = MathFunc::V<3>(vel[i]);
 			velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
 
-			Vector3 norm3 = VectorFunc::V<3>((VectorD)frame[i].col(d - 1));
+			Vector3 norm3 = MathFunc::V<3>((VectorD)frame[i].col(d - 1));
 			normArray->InsertNextTuple3(norm3[0], norm3[1], norm3[2]);
 
 			ndenArray->InsertNextTuple1(nden[i]);

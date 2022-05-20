@@ -1,0 +1,12 @@
+includes("./../../src/reservoir/xmake.lua")
+target("particle_physics")
+    set_kind("static")
+    add_headerfiles("*.h")
+    add_files("*.cpp","*.cu","*.cxx")
+    add_cugencodes("native")
+    add_cugencodes("compute_61")
+    add_cuflags("-extended-lambda")
+    add_cuflags("-Xcompiler /openmp")
+    add_includedirs(".",{public=true})
+    add_deps("reservoir")
+    

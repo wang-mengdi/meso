@@ -19,8 +19,10 @@ namespace Meso {
 
 		real enclosed_vol = 1.;
 		real enclosed_amount = 1.;
-		real p_out = 1.;
-		KernelSPH kernel;
+		real p_out = 1.; 
+		
+		SPH<d> sph = SPH<d>(KernelType::QUINTIC);
+
 		EulerParticles<d> e_particles;
 
 		void Init() {
@@ -41,26 +43,75 @@ namespace Meso {
 			Write_MELP_E<d>(e_particles, vtk_path.string());
 		}
 
+		std::function<real(const int)> z_funcs(const int i) {
+			std::function<real(const int)> z_func_i = [&](const int idx)->real {
+				return (e_particles.x(idx) - e_particles.x(i)).dot(e_particles.Normal(i));
+			};
+			return z_func_i;
+		}
+
+		void Update_Metrics(void) {
+			if constexpr (d == 3) {
+#pragma omp parallel for
+				for (int i = 0; i < e_particles.Size(); i++) {
+					VectorT dzdx = sph.Gradient_Diff(e_particles.x(i), e_particles.E(i),
+						z_funcs(i), 0., e_particles.aRef(), e_particles.xRef(), nbs, e_particles.Radius(i));
+					MatrixT mt;
+					real g11 = 1 + pow(dzdx[0], 2);
+					real g22 = 1 + pow(dzdx[1], 2);
+					real g12 = dzdx[0] * dzdx[1];
+					mt << g11, g12, g12, g22;
+					e_particles.g(i) = mt;
+				}
+			}
+			else {
+				e_particles.g(i) = MatrixT::Identity();
+			}
+		}
+
+		VectorD Surface_Gradient(const int& i, std::function<real(const int)>& f) {
+			Array<int> nbs; e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
+			VectorT tang_grad = sph.Gradient_Diff(e_particles.x(i), e_particles.E(i), f, f(i), e_particles.aRef(), e_particles.xRef(), nbs, e_particles.Radius(i));
+			Vector2 tmp = e_particles.g(i) * tang_grad;
+			Vector3 v; Unproject_To_World(tmp, e_particles.E(i), v);
+			return v;
+		}
+
+		real Surface_Divergence(const int& i, std::function<VectorD(const int)>& f) {
+			Array<int> nbs; e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
+			std::function<VectorT(const int)> project_orient_vec = [&](const int idx)->real {
+				return Project_To_TPlane(f(idx)-f(i), e_particles.E(i));
+			};
+			MatrixT gg = e_particles.g(i).inverse();
+			real sqrt_gg = sqrt(gg.determinant());
+			real result = 0;
+			for (int dim = 0; dim < d - 1; dim++) {
+				std::function<real(const int)> tmp_func = [&](const int idx)->real {
+					return sqrt_gg * project_orient_u(idx)[dim];
+				};
+				result += 1./sqrt_gg * sph.Gradient_Diff(e_particles.x(i), e_particles.E(i), tmp_func, tmp_func(i), e_particles.aRef(), e_particles.xRef(), nbs, e_particles.Radius(i));
+			}
+			return result;
+		}
+
 		void Update_Geometry(void) {
 #pragma omp parallel for
 			for (int i = 0; i < e_particles.Size(); i++) {
 				Array<int> nbs;
 				e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
-				e_particles.nden(i) = Surface_Sum_SPH<d, real>(e_particles.x(i), e_particles.E(i),
-					Array<real>(e_particles.Size(), 1.), e_particles.xRef(), nbs,
-					kernel, e_particles.Radius(i));
+				e_particles.nden(i) = sph.Sum<real>(e_particles.x(i), e_particles.E(i),
+					Array<real>(e_particles.Size(), 1.), e_particles.xRef(), nbs, e_particles.Radius(i));
 				e_particles.a(i) = 1./e_particles.nden(i);
 			}
 #pragma omp parallel for
 			for (int i = 0; i < e_particles.Size(); i++) {
 				Array<int> nbs;
 				e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
-				std::function<real(const int)> z = [&](const int idx)->real {
+				std::function<real(const int)> z_func_i = [&](const int idx)->real {
 					return (e_particles.x(idx)-e_particles.x(i)).dot(e_particles.Normal(i));
 				};
-				e_particles.H(i) = Surface_Laplacian_SPH<d, real>(e_particles.x(i), e_particles.E(i),
-					z, 0., e_particles.aRef(), e_particles.xRef(), nbs,
-					kernel, e_particles.Radius(i));
+				e_particles.H(i) = sph.Laplacian<real>(e_particles.x(i), e_particles.E(i),
+					z_func_i, 0., e_particles.aRef(), e_particles.xRef(), nbs, e_particles.Radius(i));
 			}
 			//Info("Total area: {}", e_particles.Size() * ArrayFunc::Mean<real>(e_particles.aRef()));
 			//Info("curvature 0: {}", e_particles.H(0));
