@@ -78,7 +78,7 @@ namespace Meso {
 			auto calc_f = [geom_ptr, grid_local_ptr]__host__ __device__(const VectorDi& cell) {
 				return geom_ptr->Phi(grid_local_ptr->Position(cell));
 			};
-			phi.Calc_Cells(calc_f);
+			phi.Calc_Nodes(calc_f);
 			data = thrust::raw_pointer_cast(&((*(phi.data))[0]));
 			checkCudaErrors(cudaGetLastError());
 		}
@@ -106,7 +106,7 @@ namespace Meso {
 				real x = Phi(grid_local_ptr, data_local_ptr, pos);
 				return x;
 			};
-			t.Calc_Cells(calc_f);
+			t.Calc_Nodes(calc_f);
 		}
 
 
@@ -133,7 +133,7 @@ namespace Meso {
 				//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
 				return Normal(grid_local_ptr, data_local_ptr, pos);
 			};
-			t.Calc_Cells(calc_f);
+			t.Calc_Nodes(calc_f);
 		}
 		__host__ void All_Normal(FaceField<real, d, side>& normals) const {
 			Grid<d>* grid_local_ptr = grid_ptr;
@@ -169,7 +169,7 @@ namespace Meso {
 				//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
 				return Gradient(grid_local_ptr, data_local_ptr, pos);
 			};
-			t.Calc_Cells(calc_f);
+			t.Calc_Nodes(calc_f);
 		}
 
 		__host__ VectorD Closest_Point(const VectorD& pos, real epsilon = (real)0) const {
@@ -221,7 +221,7 @@ namespace Meso {
 				//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
 				return Curvature(grid_local_ptr, data_local_ptr, pos);
 			};
-			t.Calc_Cells(calc_f);
+			t.Calc_Nodes(calc_f);
 		}
 		
 		__host__ __device__ real Cell_Fraction(const VectorDi& cell) const {		////approximate cell volume using phi value
