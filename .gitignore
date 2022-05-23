@@ -4,3 +4,4 @@ proj/*/build/
 build/
 bin/
 .vs/
+*.vshistory/

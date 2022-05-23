@@ -322,12 +322,12 @@ namespace Meso {
 		switch (edge_index) {
 		case 0:v1 = VectorDi(cell_index[0], cell_index[1], cell_index[2]);v2 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]);break;
 		case 1:v1 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]);v2 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1);break;
-		case 2:v1 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1);v2 = VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1);break;
-		case 3:v1 = VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1);v2 = VectorDi(cell_index[0], cell_index[1], cell_index[2]);break;
+		case 2:v1 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]);v2 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1);break;
+		case 3:v1 = VectorDi(cell_index[0], cell_index[1], cell_index[2]);v2 = VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1);break;
 		case 4:v1 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]);v2 = VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2]);break;
 		case 5:v1 = VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2]);v2 = VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2] + 1);break;
-		case 6:v1 = VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2] + 1);v2 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1);break;
-		case 7:v1 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1);v2 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]);break;
+		case 6:v1 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1);v2 = VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2] + 1);break;
+		case 7:v1 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]);v2 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1);break;
 		case 8:v1 = VectorDi(cell_index[0], cell_index[1], cell_index[2]);v2 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]);break;
 		case 9:v1 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]);v2 = VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2]);break;
 		case 10:v1 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1);v2 = VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2] + 1);break;
@@ -451,7 +451,7 @@ namespace Meso {
 		const Vector<int, d> cell_index,
 		const int edge_index,
 		const Grid<d> x_grid, const Grid<d> y_grid, const Grid<d> z_grid,
-		T* alpha_x, T* alpha_y, T* alpha_z)
+		const T* alpha_x, const T* alpha_y, const T* alpha_z)
 	{
 		Typedef_VectorD(d);
 		switch (edge_index) {
@@ -511,7 +511,7 @@ namespace Meso {
 		const real _contour_val,
 		const int* window,
 		const Grid<d> x_grid, const Grid<d> y_grid, const Grid<d> z_grid,
-		T* alpha_x, T* alpha_y, T* alpha_z,
+		const T* alpha_x, const T* alpha_y, const T* alpha_z,
 		Vector<int, d>* meshes
 	) {
 		Typedef_VectorD(d);
@@ -522,9 +522,9 @@ namespace Meso {
 
 		int start = window[field_grid.Index(cell_index)];
 		for (int ti = 0;triangle_table[cell_type][ti*3] != -1;ti += 1) {
-			meshes[start + ti][0] = (int)Get_Edge_Value<T, d>(cell_index, triangle_table[cell_type][ti * 3    ], x_grid, y_grid, z_grid, alpha_x, alpha_y, alpha_z);
-			meshes[start + ti][1] = (int)Get_Edge_Value<T, d>(cell_index, triangle_table[cell_type][ti * 3 + 0], x_grid, y_grid, z_grid, alpha_x, alpha_y, alpha_z);
-			meshes[start + ti][2] = (int)Get_Edge_Value<T, d>(cell_index, triangle_table[cell_type][ti * 3 + 0], x_grid, y_grid, z_grid, alpha_x, alpha_y, alpha_z);
+			meshes[start + ti][0] = (int)Get_Edge_Value<T, d>(cell_index, triangle_table[cell_type][ti * 3 + 0], x_grid, y_grid, z_grid, alpha_x, alpha_y, alpha_z);
+			meshes[start + ti][1] = (int)Get_Edge_Value<T, d>(cell_index, triangle_table[cell_type][ti * 3 + 1], x_grid, y_grid, z_grid, alpha_x, alpha_y, alpha_z);
+			meshes[start + ti][2] = (int)Get_Edge_Value<T, d>(cell_index, triangle_table[cell_type][ti * 3 + 2], x_grid, y_grid, z_grid, alpha_x, alpha_y, alpha_z);
 		}
 	}
 
@@ -547,11 +547,11 @@ namespace Meso {
 			cell_counts,
 			grid, field.Data_Ptr(), _contour_val,
 			mesh_count_each_cell.Data_Ptr(),
-			edge_array[0].grid, edge_array[1].grid, edge_array[1].grid,
-			edge_array[0].Data_Ptr(), edge_array[0].Data_Ptr(), edge_array[0].Data_Ptr()
+			edge_array[0].grid, edge_array[1].grid, edge_array[2].grid,
+			edge_array[0].Data_Ptr(), edge_array[1].Data_Ptr(), edge_array[2].Data_Ptr()
 		);
 
-
+		Info("{}", edge_array[2]);
 		// 2. Generate vertices
 		Array<VectorD>& vertices = *_mesh->vertices; vertices.clear();
 
@@ -568,14 +568,15 @@ namespace Meso {
 				});
 		}
 		// 3. Generate Meshes
-		Info("{}", edge_array);
+		
+		//Info("{}", mesh_count_each_cell);
 		std::shared_ptr<Array<int, DEVICE>> windows = std::make_shared<Array<int, DEVICE>>(mesh_count_each_cell.grid.DoF() + 1); ArrayFunc::Fill(*windows, 0);
 		mesh_count_each_cell.grid.Exec_Nodes([&](const VectorDi cell_index) {
 			int index = mesh_count_each_cell.grid.Index(cell_index);
 			(*windows)[index + 1] = (*windows)[index] + mesh_count_each_cell.Get(cell_index);
 			}
 		);
-		Info("{}", (*windows));
+		//Info("{}", (*windows));
 
 		std::shared_ptr<Array<VectorEi, DEVICE>> faces = std::make_shared<Array<VectorEi, DEVICE>>((*windows)[windows->size() - 1]);
 
@@ -584,10 +585,11 @@ namespace Meso {
 			cell_counts,
 			grid, field.Data_Ptr(), _contour_val,
 			thrust::raw_pointer_cast(windows->data()),
-			edge_array[0].grid, edge_array[1].grid, edge_array[1].grid,
-			edge_array[0].Data_Ptr(), edge_array[0].Data_Ptr(), edge_array[0].Data_Ptr(),
+			edge_array[0].grid, edge_array[1].grid, edge_array[2].grid,
+			edge_array[0].Data_Ptr(), edge_array[1].Data_Ptr(), edge_array[2].Data_Ptr(),
 			thrust::raw_pointer_cast(faces->data())
 		);
+		//Info("{}", (*faces));
 
 		_mesh->faces = *faces;
 	}

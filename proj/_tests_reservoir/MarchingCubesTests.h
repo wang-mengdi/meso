@@ -9,9 +9,9 @@ namespace Meso {
 	void Test_Marching_Cubes() {
 		Typedef_VectorD(d);
 
-		Vector<int, d> counts = VectorDi(10, 10, 10);
+		Vector<int, d> counts = VectorDi(100, 100, 100);
 		VectorD domain_min = VectorD(0., 0., 0.);
-		Grid<d> grid(counts, 0.1, domain_min, COLLOC);
+		Grid<d> grid(counts, 0.01, domain_min, COLLOC);
 		Field<T, d> field(grid);
 
 		VectorD center = VectorD(0.6, 0.6, 0.);
@@ -36,9 +36,9 @@ namespace Meso {
 	void Test_Marching_Cubes_GPU() {
 		Typedef_VectorD(d);
 
-		Vector<int, d> counts = VectorDi(10, 10, 10);
+		Vector<int, d> counts = VectorDi(100, 100, 100);
 		VectorD domain_min = VectorD(0., 0., 0.);
-		Grid<d> grid(counts, 0.1, domain_min, COLLOC);
+		Grid<d> grid(counts, 0.01, domain_min, COLLOC);
 		Field<T, d, DEVICE> field(grid);
 
 		VectorD center = VectorD(0.6, 0.6, 0.);
