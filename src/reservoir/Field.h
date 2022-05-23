@@ -92,26 +92,16 @@ namespace Meso {
 			const int dof = grid.DoF();
 			thrust::counting_iterator<int> idxfirst(0);
 			thrust::counting_iterator<int> idxlast = idxfirst + dof;
-			Grid<d>* grid_gpu;
-			if constexpr (side == DEVICE) {
-				checkCudaErrors(cudaMalloc((void**)&grid_gpu, sizeof(Grid<d>)));
-				checkCudaErrors(cudaMemcpy(grid_gpu, &grid, sizeof(Grid<d>), cudaMemcpyHostToDevice));
-			}
-			else grid_gpu = &grid;
+			Grid<d> grid2 = grid;
 			thrust::transform(
 				idxfirst,
 				idxlast,
 				data->begin(),
-				[f, grid_gpu]__device__ __host__(const int idx) {
-				return f(grid_gpu->Coord(idx));
+				[f, grid2]__device__ __host__(const int idx) {
+				return f(grid2.Coord(idx));
 			}
 			);
-			if constexpr (side == DEVICE) {
-				cudaFree(grid_gpu);
-			}
 		}
-
-
 
 		template<class Fnode>//Fnode is a (void) function takes a node index
 		void Exec_Nodes(Fnode f) const {
