@@ -4,9 +4,9 @@
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "levelset.h"
+#include "LevelSet.h"
 #include "Timer.h"
-#include "levelset.h"
+
 namespace Meso {
 	/// Here, we test the fast marching method
 	template<int d, class PointIntp,DataHolder side=HOST>

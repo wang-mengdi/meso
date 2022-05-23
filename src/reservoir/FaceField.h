@@ -106,11 +106,7 @@ namespace Meso {
 
 		template<class IFFuncT>
 		void Calc_Faces(IFFuncT f) {
-			Grid<d>* grid_gpu;
-			if constexpr (side == DEVICE) {
-				checkCudaErrors(cudaMalloc((void**)&grid_gpu, sizeof(Grid<d>)));
-				checkCudaErrors(cudaMemcpy(grid_gpu, &grid, sizeof(Grid<d>), cudaMemcpyHostToDevice));
-			}
+			Grid<d> grid2 = grid;
 			for (int axis = 0; axis < d; axis++) {
 				Assert(face_data[axis] != nullptr, "FaceField::Calc_Faces error: nullptr data at axis {}", axis);
 				const int dof = grid.Face_DoF(axis);
@@ -118,10 +114,10 @@ namespace Meso {
 				/// Why I write the lambda out here:
 				/// A strange error: For this host platform, an extended lambda cannot be defined inside the 'if'
 				/// or 'else' block of a constexpr if statement
-				auto f_device = [f, axis, grid_gpu]__host__ __device__(const int idx) {
-					return f(axis, grid_gpu->Face_Coord(axis, idx));
-				};
 				if constexpr (side == DEVICE) {
+					auto f_device = [f, axis, grid2]__device__(const int idx) {
+						return f(axis, grid2.Face_Coord(axis, idx));
+					};
 					thrust::counting_iterator<int> idxfirst(0);
 					thrust::counting_iterator<int> idxlast = idxfirst + dof;
 					thrust::transform(
@@ -134,7 +130,7 @@ namespace Meso {
 				else {
 #pragma omp parallel for
 					for (int i = 0; i < dof; i++) {
-						VectorDi face = grid.Face_Coord(axis, i);
+						VectorDi face = grid2.Face_Coord(axis, i);
 						(*this)(axis, face) = f(axis, face);
 					}
 				}

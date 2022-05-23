@@ -4,7 +4,7 @@
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "levelset.h"
+#include "LevelSet.h"
 #include "Timer.h"
 using namespace Meso;
 template<int d, class PointIntp,DataHolder side=DEVICE>

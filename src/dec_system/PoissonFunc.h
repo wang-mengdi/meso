@@ -164,7 +164,7 @@ namespace Meso {
 	//column-major
 	template<class T, int d>
 	void DenseMatrixMapping_From_PoissonLike(DenseMatrixMapping<T>& dense_mapping, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
-		Dense_Matrix_From_Poisson_Like(dense_mapping.cols, dense_mapping.rows, dense_mapping.A, grid, poisson_like, diag_add_epsilon);
+		Dense_Matrix_From_PoissonLike(dense_mapping.cols, dense_mapping.rows, dense_mapping.A, grid, poisson_like, diag_add_epsilon);
 	}
 
 	//Will add epsilon*I to the system

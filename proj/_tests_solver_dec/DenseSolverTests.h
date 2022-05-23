@@ -13,7 +13,7 @@ void Test_LU_Dense_Solver(const Vector<int, d> counts) {
 	Grid<d> grid(counts);
 	MaskedPoissonMapping<T, d> poisson_mapping = Random_Poisson_Mapping<T, d>(grid);
 	DenseMatrixMapping<T> dense_mapping;
-	DenseMatrixMapping_From_Poisson_Like(dense_mapping, grid, poisson_mapping);
+	DenseMatrixMapping_From_PoissonLike(dense_mapping, grid, poisson_mapping);
 	//dense_mapping.Init_PoissonLike(grid, poisson_mapping);
 	LUDenseSolver<T> solver;
 	solver.Init(dense_mapping);

@@ -24,7 +24,7 @@ namespace Meso {
 		//Info("Ap_sparse: {}", Ap_sparse);
 		//Info("Ap_poisson: {}", Ap_poisson);
 
-		CholeskySparseSolver<T> solver(SparseMatrix_From_Poisson_Like(grid, poisson_mapping));
+		CholeskySparseSolver<T> solver(SparseMatrix_From_PoissonLike(grid, poisson_mapping));
 		Array<T> b_host = Random::Random_Array<T>(poisson_mapping.YDoF(), 0, 10);
 		ArrayDv<T> b_dev = b_host;
 		ArrayDv<T> x_dev(poisson_mapping.YDoF()), res;
