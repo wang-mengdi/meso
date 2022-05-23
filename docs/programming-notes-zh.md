@@ -6,3 +6,5 @@
 - 目前我们无法在Eigen的3.4.0版本中使用Quaternion或者Matrix3初始化一个AngleAxis类。
 - 目前OBJFunc使用tinyobjload的1.0.7版本（xmake repo版本原因），等xmake更新后再换成2.0.0的API
 - 如果某个类的某个构造函数的参数中没有template，那么就不能在这个构造函数的定义中添加模板。此事出现过一次：DampedJacobiSmoother类曾经有一个带模板int d的构造函数，用于用PoissonMapping初始化，后来此构造函数被移除，但模板仍然留存，这就导致编译器报了一些无法识别的编译错误，错误提示无法匹配构造函数，但不知道应该如何匹配。
+- 当调用parent class的template函数foo<T>的时候需要用parent.template foo<T>();
+- 当在src创建新的library的时候，确保有一个.cu或.cpp file。否则没有.lib文件会被创建。

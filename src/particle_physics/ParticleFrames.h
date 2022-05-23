@@ -40,7 +40,7 @@ namespace Meso {
 	}
 
 	////Kernel for PCA normal calculation
-	real W_PCA(const real d, const real r)
+	inline real W_PCA(const real d, const real r)
 	{
 		if (d < r)return (real)1 - pow(d / r, 3);
 		else return (real)0;

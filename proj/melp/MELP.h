@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// Fluid Euler
+// MELP
 // Copyright (c) (2022-), Bo Zhu, Mengdi Wang, Yitong Deng
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
@@ -8,9 +8,10 @@
 #include "Simulator.h"
 #include "EulerParticles.h"
 #include "MELPIO.h"
-#include "SPH_Utils.h"
+#include "SPH.h"
 
 namespace Meso {
+
 	template<int d>
 	class MELP : public Simulator {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
@@ -21,7 +22,7 @@ namespace Meso {
 		real enclosed_amount = 1.;
 		real p_out = 1.; 
 		
-		SPH<d> sph = SPH<d>(KernelType::QUINTIC);
+		SPH<d> sph;
 
 		EulerParticles<d> e_particles;
 
@@ -95,78 +96,95 @@ namespace Meso {
 		}
 
 		void Update_Geometry(void) {
-#pragma omp parallel for
-			for (int i = 0; i < e_particles.Size(); i++) {
-				Array<int> nbs;
-				e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
-				e_particles.nden(i) = sph.Sum<real>(e_particles.x(i), e_particles.E(i),
-					Array<real>(e_particles.Size(), 1.), e_particles.xRef(), nbs, e_particles.Radius(i));
-				e_particles.a(i) = 1./e_particles.nden(i);
-			}
-#pragma omp parallel for
-			for (int i = 0; i < e_particles.Size(); i++) {
-				Array<int> nbs;
-				e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
-				std::function<real(const int)> z_func_i = [&](const int idx)->real {
-					return (e_particles.x(idx)-e_particles.x(i)).dot(e_particles.Normal(i));
-				};
-				e_particles.H(i) = sph.Laplacian<real>(e_particles.x(i), e_particles.E(i),
-					z_func_i, 0., e_particles.aRef(), e_particles.xRef(), nbs, e_particles.Radius(i));
-			}
-			//Info("Total area: {}", e_particles.Size() * ArrayFunc::Mean<real>(e_particles.aRef()));
-			//Info("curvature 0: {}", e_particles.H(0));
-			enclosed_vol = Compute_Enclosed_Volume();
+//#pragma omp parallel for
+//			for (int i = 0; i < e_particles.Size(); i++) {
+//				Array<int> nbs;
+//				e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
+//				e_particles.nden(i) = sph.Sum<real>(e_particles.x(i), e_particles.E(i),
+//					Array<real>(e_particles.Size(), 1.), e_particles.xRef(), nbs, e_particles.Radius(i));
+//				e_particles.a(i) = 1./e_particles.nden(i);
+//			}
+//#pragma omp parallel for
+//			for (int i = 0; i < e_particles.Size(); i++) {
+//				Array<int> nbs;
+//				e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
+//				std::function<real(const int)> z_func_i = [&](const int idx)->real {
+//					return (e_particles.x(idx)-e_particles.x(i)).dot(e_particles.Normal(i));
+//				};
+//				e_particles.H(i) = sph.Laplacian<real>(e_particles.x(i), e_particles.E(i),
+//					z_func_i, 0., e_particles.aRef(), e_particles.xRef(), nbs, e_particles.Radius(i));
+//			}
+//			//Info("Total area: {}", e_particles.Size() * ArrayFunc::Mean<real>(e_particles.aRef()));
+//			//Info("curvature 0: {}", e_particles.H(0));
+//			enclosed_vol = Compute_Enclosed_Volume();
 		}
 
 		real Compute_Enclosed_Volume(void) {
-			VectorD origin = VectorD::Zero();
-			real vol = 0.;
-			for (int i = 0; i < e_particles.Size(); i++) {
-				real height = fabs(e_particles.Normal(i).dot(e_particles.x(i) - origin)); // volume of the skewed cone with the origin
-				real cone_vol = real(1. / d) * e_particles.a(i) * height;
-				if ((e_particles.x(i) - origin).dot(e_particles.Normal(i)) > 0.) {
-					vol += cone_vol;
-				}
-				else {
-					vol -= cone_vol;
-				}
-			}
-			return vol;
+			//VectorD origin = VectorD::Zero();
+			//real vol = 0.;
+			//for (int i = 0; i < e_particles.Size(); i++) {
+			//	real height = fabs(e_particles.Normal(i).dot(e_particles.x(i) - origin)); // volume of the skewed cone with the origin
+			//	real cone_vol = real(1. / d) * e_particles.a(i) * height;
+			//	if ((e_particles.x(i) - origin).dot(e_particles.Normal(i)) > 0.) {
+			//		vol += cone_vol;
+			//	}
+			//	else {
+			//		vol -= cone_vol;
+			//	}
+			//}
+			//return vol;
+			return 0.;
 		}
 
 		void Update_Dynamics(const real dt) {
-			real pressure = (enclosed_vol > 1.e-8) ? (enclosed_amount) / enclosed_vol : p_out;
-			real pressure_diff = pressure - p_out;
-			Info("Pressure_diff: {}", pressure_diff);
+//			real pressure = (enclosed_vol > 1.e-8) ? (enclosed_amount) / enclosed_vol : p_out;
+//			real pressure_diff = pressure - p_out;
+//			Info("Pressure_diff: {}", pressure_diff);
+//#pragma omp parallel for
+//			for (int i = 0; i < e_particles.Size(); i++) {
+//				e_particles.u(i) += 100 * dt * e_particles.Normal(i) * e_particles.H(i);
+//				e_particles.u(i) += 50 * dt * e_particles.Normal(i) * pressure_diff;
+//			}
+//			//tang velocity
+//			if constexpr (d == 3) {
+//#pragma omp parallel for
+//				for (int i = 0; i < e_particles.Size(); i++) {
+//					Array<int> nbs;
+//					e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
+//					VectorT acc_2 = Surface_Gradient_Diff_SPH<d>(e_particles.x(i), e_particles.E(i),
+//						e_particles.ndenRef(), e_particles.nden(i), e_particles.aRef(), e_particles.xRef(), nbs,
+//						kernel, e_particles.Radius(i));
+//					VectorD acc_3; Unproject_To_World(acc_2, e_particles.E(i), acc_3);
+//					e_particles.u(i) += -30 * dt * acc_3;
+//				}
+//			}
+		}
+
+		void Register_E_Nbs(void) {
+			if (e_particles.nbs_info.size() != e_particles.Size()) e_particles.nbs_info.resize(e_particles.Size());
 #pragma omp parallel for
 			for (int i = 0; i < e_particles.Size(); i++) {
-				e_particles.u(i) += 100 * dt * e_particles.Normal(i) * e_particles.H(i);
-				e_particles.u(i) += 50 * dt * e_particles.Normal(i) * pressure_diff;
-			}
-			//tang velocity
-			if constexpr (d == 3) {
-#pragma omp parallel for
-				for (int i = 0; i < e_particles.Size(); i++) {
-					Array<int> nbs;
-					e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
-					VectorT acc_2 = Surface_Gradient_Diff_SPH<d>(e_particles.x(i), e_particles.E(i),
-						e_particles.ndenRef(), e_particles.nden(i), e_particles.aRef(), e_particles.xRef(), nbs,
-						kernel, e_particles.Radius(i));
-					VectorD acc_3; Unproject_To_World(acc_2, e_particles.E(i), acc_3);
-					e_particles.u(i) += -30 * dt * acc_3;
-				}
+				Array<int> nbs; e_particles.nbs_searcher->Find_Nbs(e_particles.x(i), e_particles.Radius(i), nbs);
+				e_particles.nbs_info[i].set_e(nbs);
 			}
 		}
 
+		void Register_Nbs(void) {
+			Register_E_Nbs();
+		}
+
 		virtual void Advance(const int current_frame, const real current_time, const real dt) {
-			Info("Got here");
-			Update_Geometry();
-			Info("Got here 1");
-			Update_Dynamics(dt);
-#pragma omp parallel for
-			for (int i = 0; i < e_particles.Size(); i++) {
-				e_particles.x(i) += e_particles.u(i) * dt;
-			}
+			Register_Nbs();
+			Info("num e nbs 0: {}", e_particles.nbs_info[0].size_e());
+			Info("num l nbs 0: {}", e_particles.nbs_info[0].size_l());
+//			Info("Got here");
+//			Update_Geometry();
+//			Info("Got here 1");
+//			Update_Dynamics(dt);
+//#pragma omp parallel for
+//			for (int i = 0; i < e_particles.Size(); i++) {
+//				e_particles.x(i) += e_particles.u(i) * dt;
+//			}
 		}
 	};
 }

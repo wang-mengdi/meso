@@ -6,7 +6,6 @@
 #pragma once
 
 #include "Common.h"
-#include "SpatialHashing.h"
 #include "nanoflann.hpp"
 #include <iostream>
 

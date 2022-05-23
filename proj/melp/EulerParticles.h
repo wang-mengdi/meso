@@ -6,6 +6,7 @@
 #pragma once
 #include "NAParticles.h"
 #include "ParticleFrames.h"
+#include "Neighbors.h"
 
 namespace Meso {
 	template<int d>
@@ -22,6 +23,8 @@ namespace Meso {
 		Setup_Attribute(u, VectorD, VectorD::Zero());
 		Setup_Attribute(E, MatrixD, MatrixD::Identity());
 		Setup_Attribute(g, MatrixT, MatrixT::Identity());
+
+		Array<Neighbors> nbs_info;
 
 		real dx = 1;
 

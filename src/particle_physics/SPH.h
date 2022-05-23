@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////
-// Rendering functions
+// SPH
 // Copyright (c) (2022-), Yitong Deng
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
@@ -14,11 +14,9 @@ namespace Meso {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
 	private:
 		KernelSPH kernel;
-		KernelType def_type = KernelType::QUINTIC;
-	public:
-		SPH(KernelType _def_type) : def_type(_def_type) {
 
-		}	
+	public:
+		SPH() {}	
 
 		template<class T>
 		T Sum(const VectorD& my_pos, const MatrixD& frame,
@@ -48,7 +46,7 @@ namespace Meso {
 		T Laplacian(const VectorD& my_pos, const MatrixD& frame,
 			const std::function<T(const int)>& f, const T& my_f, const Array<real>& a,
 			const Array<VectorD>& pos, const Array<int>& nbs,
-			const real radius, KernelType kernel_type = def_type) {
+			const real radius, KernelType kernel_type = KernelType::QUINTIC) {
 			T lap = MathFunc::Zero<T>();
 			for (int k = 0; k < nbs.size(); k++) {
 				int j = nbs[k];
@@ -65,7 +63,7 @@ namespace Meso {
 		T Laplacian(const VectorD& my_pos, const MatrixD& frame,
 			const Array<T>& f, const T& my_f, const Array<real>& a,
 			const Array<VectorD>& pos, const Array<int>& nbs,
-			const real radius, KernelType kernel_type = def_type) {
+			const real radius, KernelType kernel_type = KernelType::QUINTIC) {
 			std::function<T(const int)>& f_func = [&](const int idx)->T {return f[idx]; };
 			return Laplacian(my_pos, frame, f_func, my_f, a, pos, nbs, radius, kernel_type);
 		}
@@ -73,7 +71,7 @@ namespace Meso {
 		real Divergence(const VectorD& my_pos, const MatrixD& frame,
 			const std::function<VectorT(const int)>& f, const VectorT& my_f, const Array<real>& a,
 			const Array<VectorD>& pos, const Array<int>& nbs,
-			const real radius, KernelType kernel_type = def_type) {
+			const real radius, KernelType kernel_type = KernelType::QUINTIC) {
 			real div = 0.;
 			for (int k = 0; k < nbs.size(); k++) {
 				int j = nbs[k];
@@ -89,7 +87,7 @@ namespace Meso {
 		real Divergence(const VectorD& my_pos, const MatrixD& frame,
 			const Array<VectorT>& f, const VectorT& my_f, const Array<real>& a,
 			const Array<VectorD>& pos, const Array<int>& nbs,
-			const real radius, KernelType kernel_type = def_type) {
+			const real radius, KernelType kernel_type = KernelType::QUINTIC) {
 			std::function<VectorT(const int)>& f_func = [&](const int idx)->VectorT {return f[idx]; };
 			return Divergence(my_pos, frame, f_func, my_f, a, pos, nbs, radius, kernel_type);
 		}
