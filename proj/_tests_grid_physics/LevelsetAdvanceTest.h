@@ -67,7 +67,7 @@ namespace Meso {
 			if (fabs(refPhi - actPhi)  > max_error) max_error = fabs(refPhi - actPhi);
 		}
 		timer.Record("compare phi one by one");
-		timer.Output_Profile();
+		//timer.Output_Profile();
 		Pass("Test_FarstMarching_levelset_host (Circle) Passed, with max error {}!",max_error);
 
 	}
