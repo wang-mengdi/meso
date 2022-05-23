@@ -87,7 +87,7 @@ namespace Meso {
 
 		/// Modify by Zhiqi Li, add surpoort for GPU
 		template<class CFuncT>//CFuncT is a function: VectorDi->T, takes the cell index
-		__host__ void Calc_Nodes(CFuncT f) {
+		void Calc_Nodes(CFuncT f) {
 			Assert(data != nullptr, "Field::Calc_Cells error: nullptr data");
 			const int dof = grid.DoF();
 			thrust::counting_iterator<int> idxfirst(0);
