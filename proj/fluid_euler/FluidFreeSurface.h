@@ -10,12 +10,16 @@
 #include "Advection.h"
 #include "Simulator.h"
 #include "IOFunc.h"
+#include "LevelSet.h"
 
 namespace Meso {
 	template<class T, int d>
 	class FluidEuler : public Simulator {
 		Typedef_VectorD(d);
 	public:
+		FaceFieldDv<real, d> velocity;
+		BoundaryConditionDirect<FaceFieldDv<real, d>> psi_N;
+
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
 			real max_vel = velocity.Max_Abs();
@@ -27,6 +31,8 @@ namespace Meso {
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 		}
 		virtual void Advance(const int current_frame, const real current_time, const real dt) {
+			//Advection
+			//SemiLagrangian::Advect
 		}
 	};
 }
