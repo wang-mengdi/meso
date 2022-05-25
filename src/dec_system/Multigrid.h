@@ -157,20 +157,13 @@ namespace Meso {
 			direct_solver = std::make_shared<CholeskySparseSolver<T>>(SparseMatrix_From_PoissonLike(coarsest_poisson->Grid(), *coarsest_poisson, coarsest_add_epsilon));
 		}
 
-		//Compute the parts defined by the specific poisson system
-		template<int d>
-		void Update_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0) {
-			//Compute Poisson system for different layers
-			mappings[0] = std::make_shared<MaskedPoissonMapping<T, d>>(poisson);
-			Update_Poisson_Coarse_Layers<d>(pre_iter, post_iter, coarsest_add_epsilon);
-		}
-
 		//Will add epsilon*I to the system of the coarsest level
 		//To make a Poisson system truly positive definite
 		template<int d>
 		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0) {
 			Allocate_Poisson(poisson.Grid());
-			Update_Poisson(poisson, pre_iter, post_iter, coarsest_add_epsilon);
+			mappings[0] = std::make_shared<MaskedPoissonMapping<T, d>>(poisson);
+			Update_Poisson_Coarse_Layers<d>(pre_iter, post_iter, coarsest_add_epsilon);
 		}
 	};
 
