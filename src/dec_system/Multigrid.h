@@ -22,8 +22,9 @@ namespace Meso {
 	class VCycleMultigrid :public LinearMapping<T> {
 		using LinearMappingPtr = std::shared_ptr<LinearMapping<T>>;
 	public:
-		int L, dof;
+		bool initialized = false;
 
+		int L, dof;
 		Array<LinearMappingPtr> mappings;
 		Array<LinearMappingPtr> restrictors;//restrictor[i] is applied between layer i and i+1
 		Array<LinearMappingPtr> prolongators;//prolongator[i] is applied between layer i and i+1
@@ -35,13 +36,10 @@ namespace Meso {
 		Array<ArrayDv<T>> bs;
 		Array<ArrayDv<T>> rs;
 	public:
-		virtual int XDoF() const {
-			return dof;
-		}
 
-		virtual int YDoF() const {
-			return dof;
-		}
+		virtual int XDoF() const { return dof; }
+
+		virtual int YDoF() const { return dof; }
 
 		//solve some Ax=b
 		virtual void Apply(ArrayDv<T>& x0, const ArrayDv<T>& b0) {
@@ -78,12 +76,16 @@ namespace Meso {
 			checkCudaErrors(cudaGetLastError());
 		}
 
+		bool Is_Initialized(void) { return initialized; }
+
 		//Will add epsilon*I to the system of the coarsest level
 		//To make a Poisson system truly positive definite
 		template<int d>
 		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0) {
 			Typedef_VectorD(d);
 			using PoissonPtr = std::shared_ptr<MaskedPoissonMapping<T, d>>;
+
+			initialized = true;
 
 			VectorDi grid_size = poisson.Grid().counts;
 			int grid_min_size = grid_size.minCoeff();
@@ -154,6 +156,19 @@ namespace Meso {
 				xs[i].resize(n);
 				bs[i].resize(n);
 				rs[i].resize(n);
+			}
+		}
+
+		//Already initialized, just calculating coarse systems without changing the size of system
+		template<int d>
+		void Update_Poisson(const Field<bool, d>& _fixed, const FaceField<T, d>& _vol) {
+			using PoissonPtr = std::shared_ptr<MaskedPoissonMapping<T, d>>;
+			//The only memory reallocation happened here
+			mappings[0]->Init(_fixed.grid, _vol, _fixed);
+			for (int i = 1; i <= L; i++) {
+				PoissonPtr poisson_fine = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i - 1]);
+				PoissonPtr poisson_coarse = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
+				Coarsener<d>::Apply(*poisson_coarse, *poisson_fine);
 			}
 		}
 	};

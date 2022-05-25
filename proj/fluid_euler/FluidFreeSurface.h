@@ -19,6 +19,7 @@ namespace Meso {
 	public:
 		Vector<T, d> gravity_acc;
 		FaceFieldDv<T, d> velocity;
+		BoundaryConditionDirect<Field<bool, d>> psi_D;
 		BoundaryConditionDirect<FaceFieldDv<T, d>> psi_N;
 		LevelSet<d, PointIntpLinearClamp, HOST> levelset;
 

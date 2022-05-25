@@ -32,7 +32,7 @@ namespace Meso {
 			pressure.Init(velocity.grid);
 			vel_div.Init(velocity.grid);
 
-			poisson.Init(velocity.grid, vol, fixed);
+			poisson.Init(fixed, vol);
 			MG_precond.Init_Poisson(poisson, 2, 2);
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
 		}

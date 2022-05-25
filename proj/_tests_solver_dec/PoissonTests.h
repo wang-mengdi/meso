@@ -17,7 +17,7 @@ namespace Meso {
 		MaskedPoissonMapping<T, d> mapping;
 		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = Random::Uniform(0, max_vol); });
 		fixed.Iterate_Nodes([&](const VectorDi cell) {	fixed(cell) = !(bool)Random::RandInt(0, 9);	});
-		mapping.Init(grid, vol, fixed);
+		mapping.Init(fixed, vol);
 		return mapping;
 	}
 
@@ -52,7 +52,7 @@ namespace Meso {
 				fixed(cell) = !(bool)Random::RandInt(0, 9);
 			}
 		);
-		mapping.Init(grid, vol, fixed);
+		mapping.Init(fixed, vol);
 		ArrayDv<T> diag_dev(grid.DoF());
 		PoissonLike_Diagonal(diag_dev, mapping);
 		Array<T> diag_host = diag_dev;
