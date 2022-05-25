@@ -5,29 +5,32 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Hashtable.h"
-#include "LinearFemFunc.h"
-#include "BoundaryCondition.h"
+#include "ElasticParam.h"
+#include "BoundaryConditionMesh.h"
 #include "Mesh.h"
-#include "Particles.h"
-#include "SoftBodyNonlinearFemThinShellAuxFunc.h"
+#include "DiscreteShellParticles.h"
+#include "DiscreteShellAuxFunc.h"
 #include "Simulator.h"
 #include "Common.h"
+#include "SparseFunc.h"
 
 using namespace Meso;
-template<int d> class SoftBodyNonlinearFemThinShell : public Meso::Simulator
+template<int d> class DiscreteShell : public Meso::Simulator
 {
 	Typedef_VectorD(d); Typedef_MatrixD(d); 
 public:
-	Particles<d> particles;
+	DiscreteShellParticles<d> particles;
 	std::shared_ptr< SurfaceMesh<d> > mesh=nullptr;
 	HashtableMultiValue<Vector<int,d-1>,int> edge_element_hashtable; //edge (vertices indices: 2 for 3d, 1 for 2d) to face index
 
 	Array<real> hs;					//thickness of the thin shell,defined on vertices
-	DiagonalMatrix<real> M;			//mass of face
+	DiagonalMatrix<real> M;			//mass on vertices
 	SparseMatrix<real> A;			//stiffness matrix
 	Array<real> dx;					//displacement, delta x
-	Array<real> b;
+	Array<real> b;					//rhs
 
+	real density;					//density of the thin shell, may need to be moved to materials
+	real thickness;					//initial thickness
 	Array<ElasticParam> materials;	//different mateirals
 	Array<int> material_id;			//refer to the index in materials
 	BoundaryConditionMesh<d> bc;	
@@ -38,7 +41,6 @@ public:
 	Array<Vector2i> edges;			//edges in 3d
 	Array<real> theta_hats;			//theta at resting position, defined on edges
 	Array<real> lambdas;			//coefficient for bending, defined on edges
-	Array<real> energies_n;			//energy for Newton's iteration
 	//Todo:: Add alpha defined on vertices/edges?
 
 	//intermediate variables for calculating bending hessian, only for the 3 dimensional case
@@ -56,7 +58,6 @@ public:
 	bool use_body_force=true;
 	VectorD g=VectorD::Unit(1)*-9.8;
 	real damping;						//damping constant
-	real thickness;						//thickness
 
 	virtual real CFL_Time(const real cfl);
 	virtual void Output(const bf::path base_path, const int frame);
@@ -64,6 +65,8 @@ public:
 	void Initialize(SurfaceMesh<d>& _mesh);
 	void Allocate_A();
 	void Initialize_Material();
+
+	//Three advancing methods
 	void Advance_Explicit(const real dt);
 	void Advance_Implicit(const real dt);
 	void Advance_Quasi_Static();
@@ -113,13 +116,13 @@ public:
 	inline void Strain_To_Stress(real ks, real poisson_ratio, const MatrixD& strain, MatrixD& stress);
 	inline void Deformation_To_Strain(const MatrixD& deformation,MatrixD& strain);
 	inline real Mass(const int i) const {return M.diagonal()[i*d];}
-	inline Array<VectorD>& X(){return particles.XRef();}
-	inline Array<VectorD>& V(){return particles.VRef();}
-	inline Array<VectorD>& F(){return particles.FRef();}
+	inline Array<VectorD>& X(){return particles.xRef();}
+	inline Array<VectorD>& V(){return particles.vRef();}
+	inline Array<VectorD>& F(){return particles.fRef();}
 	inline auto& E(){return mesh->Elements();}
-	inline const Array<VectorD>& X() const {return particles.XRef();}
-	inline const Array<VectorD>& V() const {return particles.VRef();}
-	inline const Array<VectorD>& F() const {return particles.FRef();}
+	inline const Array<VectorD>& X() const {return particles.xRef();}
+	inline const Array<VectorD>& V() const {return particles.vRef();}
+	inline const Array<VectorD>& F() const {return particles.fRef();}
 	inline const auto& E() const {return mesh->Elements();}
 	inline int Vtx_Num() const {return particles.Size();}
 	inline int Ele_Num() const {return (int)mesh->Elements().size();}
@@ -136,7 +139,6 @@ public:
 	Array2DF<MatrixD, d + 1, d + 1> Numerical_Hess_Theta(const ArrayF<int, d + 1>& vtx_idx,const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_theta);
 
 protected:
-	void Add_Block_Helper(SparseMatrix<real>& K, const int i, const int j, const MatrixD& Ks);
 	void Set_Block(Array<real>& b, const int i, const VectorD& bi);
 	void Add_Block(Array<real>& b, const int i, const VectorD& bi);
 };
