@@ -51,8 +51,8 @@ namespace Meso {
 
 		virtual void Advance(DriverMetaData& metadata) {
 			//advection
-			SemiLagrangian::Advect(metadata.dt, temp_velocity, velocity, velocity);
-			SemiLagrangian::Inverse_Flow_Map(metadata.dt,inverse_flow_map,velocity);
+			SemiLagrangian<IntpLinearPadding0>::Advect(metadata.dt, temp_velocity, velocity, velocity);
+			SemiLagrangian<IntpLinearPadding0>::Inverse_Flow_Map(metadata.dt,inverse_flow_map,velocity);
 			velocity = temp_velocity;
 			
 			//stretching
