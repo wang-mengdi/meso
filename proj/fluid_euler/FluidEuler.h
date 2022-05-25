@@ -50,7 +50,7 @@ namespace Meso {
 			real dt = metadata.dt;
 
 			//advection
-			SemiLagrangian::Advect(dt, temp_velocity, velocity, velocity);
+			SemiLagrangian<IntpLinearPadding0>::Advect(dt, temp_velocity, velocity, velocity);
 			velocity = temp_velocity;
 			psi_N.Apply(velocity);
 
