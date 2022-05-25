@@ -97,7 +97,7 @@ namespace Meso {
 				idxfirst,
 				idxlast,
 				data->begin(),
-				[f, grid2]__device__ __host__(const int idx) {
+				[f, grid2](const int idx) {
 				return f(grid2.Coord(idx));
 			}
 			);

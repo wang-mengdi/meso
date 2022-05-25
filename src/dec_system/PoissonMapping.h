@@ -42,8 +42,9 @@ namespace Meso {
 		void Init(const Grid<d>& grid) {
 			Allocate_Memory(grid);
 		}
-		void Init(const Grid<d>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
-			Allocate_Memory(grid);
+		void Init(const Field<bool, d>& _fixed, const FaceField<T, d>& _vol) {
+			Assert(_fixed.grid.counts == _vol.grid.counts, "MaskedPoissonMapping::Init error: grid size of fixed is {} however vol is {}", _fixed.grid.counts, _vol.grid.counts);
+			Allocate_Memory(_fixed.grid);
 			vol.Deep_Copy(_vol);
 			//cell_bc.Init(_fixed);
 			fixed.Deep_Copy(_fixed);

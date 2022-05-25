@@ -11,5 +11,6 @@
     "scene": {
         "scale": 32,
         "test": 1
-    }
+    },
+    "simulator": "euler"
 }

@@ -20,22 +20,17 @@ namespace Meso {
 		//will change timer
 		void Print_Frame_Info(Timer &frame_timer, const DriverMetaData& meta_data) {
 			int total_frames = meta_data.last_frame - meta_data.first_frame;
-			int done_frames = meta_data.frame - meta_data.first_frame;
+			int done_frames = meta_data.current_frame - meta_data.first_frame;
 			real frame_seconds = frame_timer.Lap_Time();
 			real completed_seconds = frame_timer.Total_Time();
 			real eta = completed_seconds * (total_frames - done_frames) / done_frames;
-			Info("Frame {} in {}-{} done in {:.3f}s, ETA {:.3f}/{:.3f}s", meta_data.frame, meta_data.first_frame, meta_data.last_frame, frame_seconds, eta, completed_seconds + eta);
+			Info("Frame {} in {}-{} done in {:.3f}s, ETA {:.3f}/{:.3f}s", meta_data.current_frame, meta_data.first_frame, meta_data.last_frame, frame_seconds, eta, completed_seconds + eta);
 		}
 		//will change timer
 		void Print_Iteration_Info(Timer& iteration_timer, const real dt, const real current_time, const real frame_time) {
 			real step_seconds = iteration_timer.Lap_Time();
 			real completed_seconds = iteration_timer.Total_Time();
 			Info("Iteration {:.5f}/{:.5f}s, cost {:.3f}s, remaining {:.3f}s", dt, frame_time, step_seconds, completed_seconds * (frame_time - current_time) / current_time);
-		}
-
-		void Output(Simulator &simulator, bf::path base_path, const int frame) {
-			Info("Output frame {} to {}", frame, base_path.string());
-			simulator.Output(base_path, frame);
 		}
 
 		//at the beginning the system is at the status of start_frame
@@ -45,34 +40,42 @@ namespace Meso {
 			bf::path base_path(meta_data.output_base_dir);
 			FileFunc::Create_Directory(base_path);
 
+			//output first frame
 			Print_Frame_Info(frame_timer, meta_data);
-			Output(simulator, base_path, meta_data.first_frame);
-			for (int& current_frame = meta_data.frame; current_frame <= meta_data.last_frame; current_frame++) {
+			Info("Output frame {} to {}", meta_data.current_frame, meta_data.output_base_dir);
+			simulator.Output(meta_data);
+
+			//run frames
+			for (int& current_frame = meta_data.current_frame; current_frame <= meta_data.last_frame; current_frame++) {
 				Timer iter_timer;
 				int next_frame = current_frame + 1;
-				real current_time = meta_data.Time_At_Frame(current_frame);
-				real frame_start_time = current_time;
+				meta_data.current_time = meta_data.Time_At_Frame(current_frame);
+				real frame_start_time = meta_data.current_time;
 				real next_time = meta_data.Time_At_Frame(next_frame);
 				while (true) {
 					//can return an inf
-					real dt = simulator.CFL_Time(meta_data.cfl);
-					dt = MathFunc::Clamp(dt, meta_data.min_step_frame_fraction * meta_data.time_per_frame, meta_data.time_per_frame);
+					meta_data.dt = simulator.CFL_Time(meta_data.cfl);
+					meta_data.dt = MathFunc::Clamp(meta_data.dt, meta_data.min_step_frame_fraction * meta_data.time_per_frame, meta_data.time_per_frame);
 					bool last_iter = false;
-					if (current_time + dt >= next_time) {
-						dt = next_time - current_time;
+					if (meta_data.current_time + meta_data.dt >= next_time) {
+						meta_data.dt = next_time - meta_data.current_time;
 						last_iter = true;
 					}
-					else if (current_time + 2 * dt >= next_time) {
-						dt = (real).5 * (next_time - current_time);
+					else if (meta_data.current_time + 2 * meta_data.dt >= next_time) {
+						meta_data.dt = (real).5 * (next_time - meta_data.current_time);
 					}
 
-					simulator.Advance(current_frame, current_time, dt);
-					current_time += dt;
-					Print_Iteration_Info(iter_timer, dt, current_time - frame_start_time, meta_data.time_per_frame);
+
+					simulator.Advance(meta_data);
+					meta_data.current_time += meta_data.dt;
+					Print_Iteration_Info(iter_timer, meta_data.dt, meta_data.current_time - frame_start_time, meta_data.time_per_frame);
 					if (last_iter) break;
 				}
+
+				//output current frame
 				Print_Frame_Info(frame_timer, meta_data);
-				Output(simulator, base_path, current_frame);
+				Info("Output frame {} to {}", meta_data.current_frame, meta_data.output_base_dir);
+				simulator.Output(meta_data);
 			}
 		}
 

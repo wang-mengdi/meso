@@ -16,6 +16,8 @@ namespace Meso {
 		//Ap must be allocated, but may be set to arbitrary values
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) = 0;
 
+		bool Empty(void)const { return XDoF() * YDoF() == 0; }
+
 		void Residual(ArrayDv<T>& res, const ArrayDv<T>& x, const ArrayDv<T> &b) {
 			res.resize(b.size());
 			//b-Ax
