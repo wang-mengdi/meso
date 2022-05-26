@@ -595,7 +595,7 @@ namespace Meso {
 		// 3. Generate Meshes
 		thrust::device_ptr<int> mesh_count_ptr = thrust::device_pointer_cast(mesh_count.data());
 		thrust::exclusive_scan(mesh_count_ptr, mesh_count_ptr + mesh_count.size(), mesh_count_ptr);
-		Array<VectorEi, DEVICE> faces(mesh_count[mesh_count.size() - 1]);
+		Array<VectorEi, DEVICE> elements(mesh_count[mesh_count.size() - 1]);
 
 		grid.Exec_Kernel(
 			&Gen_Mesh<T, d>,
@@ -604,12 +604,12 @@ namespace Meso {
 			ArrayFunc::Data<int, DEVICE>(mesh_count),
 			ArrayFunc::Data<Grid<d>, DEVICE>(edge_grid_dv),
 			v_idx_on_edge[0].Data_Ptr(), v_idx_on_edge[1].Data_Ptr(), v_idx_on_edge[2].Data_Ptr(),
-			ArrayFunc::Data<VectorEi, DEVICE>(faces)
+			ArrayFunc::Data<VectorEi, DEVICE>(elements)
 		);
 
 		// Info("Step 3");
 
 		*_mesh->vertices = vertices;
-		_mesh->elements = faces;
+		_mesh->elements = elements;
 	}
 }
