@@ -447,7 +447,7 @@ namespace Meso {
 	}
 	template<int d>
 	__host__ __device__ void Edge_Index(
-		const Vector<int, d> cell_index, 
+		const Vector<int, d> cell_index,
 		const Vector<int, d> cell_counts,
 		ArrayDv<int>& eis) {
 		if (cell_index[0] < cell_counts[0]) eis.push_back(0);
@@ -500,8 +500,8 @@ namespace Meso {
 		// Reserve space for mesh
 		for (int ti = 0;triangle_table[cell_type][ti * 3] != -1;ti += 1) mesh_count[field_grid.Index(cell_index)] += 1;
 		// Go through all edges of the cell, and label existing point
-		for (int ei = 0; ei < 12; ei++) { 
-			if (Has_Edge(edge_type, ei)) 
+		for (int ei = 0; ei < 12; ei++) {
+			if (Has_Edge(edge_type, ei))
 				Index_On_Edge<d>(cell_index, ei, edge_grid, v_idx_on_edge_x, v_idx_on_edge_y, v_idx_on_edge_z) = 1;
 		}
 
@@ -513,7 +513,7 @@ namespace Meso {
 		const Grid<d> field_grid,
 		const T* field_data,
 		const real _contour_val,
-		const Grid<d> edge_grid, 
+		const Grid<d> edge_grid,
 		int axis,
 		int* v_idx_on_edge, Vector<real, d>* vertices)
 	{
@@ -566,32 +566,37 @@ namespace Meso {
 
 		Array<Grid<d>> edge_grid(3); for (int i = 0;i < 3;i++) edge_grid[i] = Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx);
 		ArrayDv<Grid<d>> edge_grid_dv = edge_grid;
-		
-		FieldDv<int, d> v_idx_on_edge[3]; Field<int, d> v_idx_on_edge_host[3]; 
+
+		FieldDv<int, d> v_idx_on_edge[3]; Field<int, d> v_idx_on_edge_host[3];
 		for (int i = 0;i < 3;i++) v_idx_on_edge[i].Init(edge_grid[i], -1);
 
 		// 1. Reserve memory for mesh
 		grid.Exec_Kernel(
 			&Mesh_Count<T, d>,
-			cell_counts, grid, field.Data_Ptr(), _contour_val, ArrayFunc::Data<Grid<d>,DEVICE>(edge_grid_dv), // const data
+			cell_counts, grid, field.Data_Ptr(), _contour_val, ArrayFunc::Data<Grid<d>, DEVICE>(edge_grid_dv), // const data
 			ArrayFunc::Data<int, DEVICE>(mesh_count), v_idx_on_edge[0].Data_Ptr(), v_idx_on_edge[1].Data_Ptr(), v_idx_on_edge[2].Data_Ptr()
 		);
-		
+
 		// 2. Generate vertices
-		size_t count = 0; for (size_t i = 0; i < d; i++) {
-			v_idx_on_edge_host[i] = v_idx_on_edge[i];
-			edge_grid[i].Exec_Nodes([&](const VectorDi cell_index) {
-				v_idx_on_edge_host[i](cell_index) = v_idx_on_edge_host[i](cell_index) >= 0 ? count++ : -1;
-			});
-			v_idx_on_edge[i] = v_idx_on_edge_host[i];
+		size_t total = 0; 
+#pragma omp parallel for
+		for (size_t i = 0; i < d; i++) {
+			size_t count = thrust::count(v_idx_on_edge[i].data->begin(), v_idx_on_edge[i].data->end(), 1);
+			thrust::device_vector<int> seq(v_idx_on_edge[0].data->size()); thrust::sequence(thrust::device, seq.begin(), seq.end(), 0);
+			thrust::device_vector<int> p_iter(count);
+			thrust::copy_if(seq.begin(), seq.end(), v_idx_on_edge[i].data->begin(), p_iter.begin(), thrust::placeholders::_1 > 0);
+			thrust::copy_n(thrust::make_counting_iterator(total), count, thrust::make_permutation_iterator(v_idx_on_edge[i].data->begin(), p_iter.begin()));
+			total += count;
 		}
-		Array<VectorD, DEVICE> vertices(count); 
+		
+		Array<VectorD, DEVICE> vertices(total);
+#pragma omp parallel for
 		for (size_t i = 0; i < d; i++) edge_grid[i].Exec_Kernel(
 			&Gen_Vertice<T, d>,
 			cell_counts, grid, field.Data_Ptr(), _contour_val, edge_grid_dv[i], i, // const data
 			v_idx_on_edge[i].Data_Ptr(), ArrayFunc::Data<VectorD, DEVICE>(vertices)
 		);
-		
+
 		// 3. Generate Meshes
 		thrust::device_ptr<int> mesh_count_ptr = thrust::device_pointer_cast(mesh_count.data());
 		thrust::exclusive_scan(mesh_count_ptr, mesh_count_ptr + mesh_count.size(), mesh_count_ptr);
@@ -606,8 +611,6 @@ namespace Meso {
 			v_idx_on_edge[0].Data_Ptr(), v_idx_on_edge[1].Data_Ptr(), v_idx_on_edge[2].Data_Ptr(),
 			ArrayFunc::Data<VectorEi, DEVICE>(elements)
 		);
-
-		// Info("Step 3");
 
 		*_mesh->vertices = vertices;
 		_mesh->elements = elements;

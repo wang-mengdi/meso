@@ -33,3 +33,4 @@
 - 数组类型（`Array`和`ArrayDv`，即`thrust::host_vector`和`thrust::device_vector`）在模板编程中用`Array`指代。例`void ArrayFunc::Multiply(Array1& a, const Array2 &b)`，这个声明提示开发者传入的是某种thrust数组。
 - 函数用`Func`指示。可以通过拼接关键字的方法提示函数的输入输出。例`void AuxFunc::Binary_Transform(const Array1& a, const Array2& b, TTFuncT func, Array3& c)`，此处`TTFuncT`提示参数`func`是一个形如`T f(T a, T b)`这样的函数对象。
 - 在网格系统当中，`I`指示数组下标（也就是一个int），`C`指示一个节点在网格中的坐标标号（也就是一个`VectorDi`）。这里的`C`来自cell，但其实它的正式术语是Node，但用`N`容易造成混淆。例：`void FaceField::Calc_Faces(ICFuncT f)`，这里的`ICFuncT`提示参数f是形如`T f(int axis, const VectorDi face)`这样的函数对象。
+- Mesh类型在模板中用`MeshType`来指代。
