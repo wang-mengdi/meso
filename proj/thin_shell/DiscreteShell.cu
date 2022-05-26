@@ -3,7 +3,7 @@
 // Copyright (c) (2021-), Fan Feng
 // This file is part of SimpleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
-#include "SoftBodyNonlinearFemThinShell.h"
+#include "DiscreteShell.h"
 #include "MeshFunc.h"
 #include "AuxFunc.h"
 #include "NonlinearFemFunc.h"
@@ -21,25 +21,25 @@ using namespace ThinShellAuxFunc;
 using namespace Meso;
 using namespace NonlinearFemFunc;
 
-template<int d> real SoftBodyNonlinearFemThinShell<d>::CFL_Time(const real cfl) {
-	return 0.01;
+template<int d> real DiscreteShell<d>::CFL_Time(const real cfl) {
+	return 0.01; //how to set this value? line search too?
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Output(const bf::path base_path, const int frame) {
+template<int d> void DiscreteShell<d>::Output(const bf::path base_path, const int frame) {
 	std::string vtu_name = fmt::format("vtu{:04d}.vtu", frame);
 	bf::path vtu_path = base_path / bf::path(vtu_name);
-	VTKFunc::Output_VTU<d, VectorD>(mesh, V(), vtu_path.string());
+	DiscreteShellVTKFunc::Output_VTU<d, VectorD>(mesh, V(), vtu_path.string());
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance(const int current_frame, const real current_time, const real dt) {
+template<int d> void DiscreteShell<d>::Advance(const int current_frame, const real current_time, const real dt) {
 	if (use_explicit) { Advance_Explicit(dt); }
 	else { Advance_Implicit(dt); }
 	return;
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>& _mesh)
+template<int d> void DiscreteShell<d>::Initialize(SurfaceMesh<d>& _mesh)
 {
-	mesh=std::make_shared<SurfaceMesh<d>>(particles.XPtr());
+	mesh=std::make_shared<SurfaceMesh<d>>(particles.xPtr());
 	particles.Resize((int)_mesh.Vertices().size());
 	*mesh=_mesh;
 	MeshFunc::Get_Edges<d,d>(_mesh,edges); //no repetition in edges
@@ -58,7 +58,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>
 	material_id.resize(ele_n,0);
 
 	////initialize X0, Dm_inv, N and M
-	Set_Rest_Shape(particles.XRef());
+	Set_Rest_Shape(particles.xRef());
 	M.resize(dof_n);for(int i=0;i<M.diagonal().size();i++)M.diagonal()[i]=(real)0;
 	Dm_inv.resize(ele_n,MatrixD::Zero());
 	N.resize(ele_n, VectorD::Zero());
@@ -89,7 +89,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize(SurfaceMesh<d>
 	}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Allocate_A() {
+template<int d> void DiscreteShell<d>::Allocate_A() {
 	std::vector<Triplet<real>> triplets;
 
 	//vertex with itself
@@ -132,7 +132,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Allocate_A() {
 	A.setFromTriplets(triplets.begin(), triplets.end());
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize_Material() {
+template<int d> void DiscreteShell<d>::Initialize_Material() {
 	//initialize thickness
 	hs.resize(Vtx_Num(), thickness);
 	for (int i = 0; i < Ele_Num(); i++) {
@@ -143,7 +143,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize_Material() {
 		for (int j = 0; j < d; j++) {
 			int v_idx = E()[i][j];
 			for (int k = 0; k < d; k++) {
-				M.diagonal()[v_idx * d + k] += hs[v_idx] * areas_hat[i] / (real)(d);	//Mass on vertices
+				M.diagonal()[v_idx * d + k] += hs[v_idx] * areas_hat[i] * density / (real)(d);	//Mass on vertices
 			}
 		}
 	}
@@ -177,65 +177,59 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Initialize_Material() {
 	}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Material(real youngs,real poisson)
+template<int d> void DiscreteShell<d>::Add_Material(real youngs,real poisson)
 {materials.push_back(ElasticParam(youngs,poisson));}
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Fixed(const int node)
+template<int d> void DiscreteShell<d>::Set_Fixed(const int node)
 {bc.psi_D_values[node]=VectorD::Zero();}
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Displacement(const int node,const VectorD& dis)
+template<int d> void DiscreteShell<d>::Set_Displacement(const int node,const VectorD& dis)
 {bc.psi_D_values[node]=dis;}
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Force(const int node,const VectorD& force)
+template<int d> void DiscreteShell<d>::Set_Force(const int node,const VectorD& force)
 {bc.forces[node]=force;}
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Force(const int node,const VectorD& force)
+template<int d> void DiscreteShell<d>::Add_Force(const int node,const VectorD& force)
 {bc.forces[node]+=force;}
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Clear_Force()
+template<int d> void DiscreteShell<d>::Clear_Force()
 {bc.forces.clear();}
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Rest_Shape(const Array<VectorD>& _X0)
+template<int d> void DiscreteShell<d>::Set_Rest_Shape(const Array<VectorD>& _X0)
 {X0=_X0;}
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const real dt)
+template<int d> void DiscreteShell<d>::Advance_Explicit(const real dt)
 {
 	Timer timer;
 
 	ArrayFunc::Fill(F(),VectorD::Zero());
-	const int vtx_num=Vtx_Num();
 
 	////body force, damping force, boundary
-	if(use_body_force){for(int i=0;i<vtx_num;i++)F()[i]+=Mass(i)*g; }
+	if(use_body_force){for(int i=0;i< Vtx_Num();i++)F()[i]+=Mass(i)*g; }
 
 	//damping
-	for(int i=0;i<vtx_num;i++)F()[i]-=Mass(i)*damping*V()[i];
+	for(int i=0;i< Vtx_Num();i++)F()[i]-=Mass(i)*damping*V()[i];
 
 	//stretching forces
-	const int ele_num = Ele_Num();
-	for(int ele_idx=0; ele_idx < ele_num; ele_idx++){
+	for(int ele_idx=0; ele_idx < Ele_Num(); ele_idx++){
 		MatrixD grad_s;
 		Grad_Stretch(ele_idx,grad_s);
+		Numerical_Grad_Stretch(ele_idx, grad_s);
 		for(int j=0;j<d;j++){F()[E()[ele_idx][j]]-=grad_s.col(j);}
-
-		/*real stretching_energy=Stretching_Energy<d>(ele_idx);
-		MatrixD grad_s_n=Numerical_Grad_Stretch(ele_idx,stretching_energy,grad_s);*/
 	}
 
 	////bending forces, only support for three dimension for now
 	if constexpr (d == 3) {
-		for(int i=0;i<edges.size();i++){
+		for(int jct_idx =0; jct_idx <edges.size(); jct_idx++){
 			Eigen::Matrix<real,d,d+1> grad_b;
 			ArrayF<int,d+1> vtx_idx;
 			ArrayF<int, 2> ele_idx;
-			if (Junction_Info(i, vtx_idx, ele_idx)) {
-				Grad_Bend(i, grad_b, vtx_idx, ele_idx);
+			if (Junction_Info(jct_idx, vtx_idx, ele_idx)) {
+				Grad_Bend(jct_idx, grad_b, vtx_idx, ele_idx);
+				//Numerical_Grad_Bend(jct_idx, vtx_idx, ele_idx, grad_b);
 				for(int j=0;j<d+1;j++){
 					F()[vtx_idx[j]]-=grad_b.col(j);
 				}
-
-				/*Eigen::Matrix<real,d,d+1> grad_b_n=Numerical_Grad_Bend(i,theta_hats[i],lambdas[i]);
-				std::cout<<"grad_b["<<i<<"]: \n"<<grad_b<<"\n"<<"grad_b_n["<<i<<"]: \n"<<grad_b_n<<std::endl;*/
 			}
 		}
 	}
@@ -244,7 +238,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const re
 	for(auto& iter:bc.forces){F()[iter.first]+=iter.second;}
 
 	////time integration
-	for(int i=0;i<vtx_num;i++){
+	for(int i=0;i< Vtx_Num();i++){
 		V()[i]+=F()[i]/Mass(i)*dt;
 		if(bc.Is_Psi_D(i))V()[i]=VectorD::Zero();
 		X()[i]+=V()[i]*dt;}
@@ -253,7 +247,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Explicit(const re
 
 // A = dt^2 J + dt damp J
 // b = dt f + dt^2 J v + dt damp J v
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const real dt)
+template<int d> void DiscreteShell<d>::Advance_Implicit(const real dt)
 {
 	Clear_A_And_Rhs();
 
@@ -281,9 +275,8 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const re
 	Info("Implicit solve time cost {} ms",timer.Lap_Time(PhysicalUnits::ms));
 	dx = dv_x;
 
-	const int vtx_num = Vtx_Num();
 #pragma omp parallel for
-	for (int i = 0; i < vtx_num; i++) {
+	for (int i = 0; i < Vtx_Num(); i++) {
 		for (int j = 0; j < d; j++) { V()[i][j] += dx[i * d + j]; }
 		X()[i] += V()[i] * dt;
 	}
@@ -293,12 +286,10 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Implicit(const re
 // A = hess
 // b = -grad
 // Adx=b
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
+template<int d> void DiscreteShell<d>::Advance_Quasi_Static()
 {	//dx is dx in this case
 	int iter = 0;
 	real err = 1;
-	const int vtx_num = Vtx_Num();
-	const int ele_num = Ele_Num();
 	const real alpha = 0.1;
 	real energy = 0;
 	const int max_iter = 1000;
@@ -307,52 +298,29 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 			Info("max iteration {} reached!",max_iter);
 			break;
 		}
-		//energy = (real)0;
-		//Info("");
-		//Info("Start the {}th Newton iteration: ", iter);
-		//Timer timer;
-		//timer.Reset();
 
 		SparseFunc::Set_Value(A, (real)0);
 		ArrayFunc::Fill(b,0); //dense vector b can be directly set to zero
-		//std::cout << "# number of non-zeros of A:  " << A.nonZeros() << std::endl;
 
 		//add external forces
 		for (auto& force : bc.forces) {
 			Add_Block(b, force.first, force.second);
-			//energy += -force.second.dot(X()[force.first]); //potential energy by the external force
 		}
-		//timer.Elapse_And_Output_And_Reset("Add external force for b");
 
 		//Stretching
-		//Timer timer2;
-		//timer2.Begin_Loop();
-		for (int ele_idx = 0; ele_idx < ele_num; ele_idx++) {
+		for (int ele_idx = 0; ele_idx < Ele_Num(); ele_idx++) {
 			MatrixD grad_s; MatrixD hess_s[d][d];
 			Stretch_Force(ele_idx, grad_s, hess_s);
-
-			/*MatrixD grad_s_n = Numerical_Grad_Stretch(ele_idx,grad_s);
-			Array2DF<Matrix<real, d>, d, d> hess_s_n = Numerical_Hess_Stretch(ele_idx, grad_s,hess_s);*/
-
-			//timer2.Record("calculate streching force");
 
 			//iterate through verteices in the element
 			for (int j = 0; j < d; j++) {
 				Add_Block(b, E()[ele_idx][j], -grad_s.col(j));
 				for (int k = 0; k < d; k++) {
-					Add_Block_Helper(A, E()[ele_idx][j], E()[ele_idx][k], hess_s[j][k]);
+					SparseFunc::Add_Block<d, MatrixD>(A, E()[ele_idx][j], E()[ele_idx][k], hess_s[j][k]);
 				}
 			}
-			//timer2.Record("assemble strething matrix");
-
-			//energy += Stretching_Energy(areas_hat[ele_idx], ks, material.poisson_ratio,strain);
 		}
 
-		//timer2.End_Loop_And_Output(std::cout);
-		//timer.Elapse_And_Output_And_Reset("Assemble linear system for stretching");
-
-		//Bending
-		//timer2.Begin_Loop();
 		if constexpr (d == 3) {
 			Update_Bending_Hess_Variables();
 			for (int jct_idx = 0; jct_idx < edges.size(); jct_idx++) {
@@ -362,30 +330,15 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 				ArrayF<int, 2> ele_idx;
 				if (Junction_Info(jct_idx, vtx_idx, ele_idx)) {
 					Bend_Force(jct_idx, grad_b, vtx_idx, ele_idx, hess_b);
-					//timer2.Record("calculate bending force");
 					for (int j = 0; j < d + 1; j++) {
 						Add_Block(b, vtx_idx[j], -grad_b.col(j));
 						for (int k = 0; k < d + 1; k++) {
-							Add_Block_Helper(A, vtx_idx[j], vtx_idx[k], hess_b[j][k]);
+							SparseFunc::Add_Block<d, MatrixD>(A, vtx_idx[j], vtx_idx[k], hess_b[j][k]);
 						}
 					}
-
-					/*Eigen::Matrix<real,d,d+1> grad_b_n=Numerical_Grad_Bend(jct_idx,vtx_idx,ele_idx,grad_b);
-					Array2DF<Matrix<real, d>, d + 1, d + 1> hess_b_n = Numerical_Hess_Bend(jct_idx, vtx_idx, ele_idx, grad_b,hess_b);*/
-
-					//timer2.Record("assemble bending matrix");
-
-					//extra calculation for bending energy, could be simplified with the bend force calculation?
-					/*Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
-					Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
-					real theta = Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
-
-					energy += Bending_Energy(lambdas[jct_idx], theta, theta_hats[jct_idx]);*/
 				}
 			}
 		}
-		//timer2.End_Loop_And_Output(std::cout);
-		//timer.Elapse_And_Output_And_Reset("Assemble linear system for bending");
 		
 		for (auto& bc_d : bc.psi_D_values) {
 			int node = bc_d.first; VectorD dis = bc_d.second;
@@ -409,7 +362,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 		dx = dv_x;
 
 		#pragma omp parallel for
-		for (int i = 0; i < vtx_num; i++) {
+		for (int i = 0; i < Vtx_Num(); i++) {
 			for (int j = 0; j < d; j++) {
 				X()[i][j] += damping*dx[i * d + j]; //damping becomes the step size here
 			}
@@ -421,17 +374,15 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Advance_Quasi_Static()
 	Info("Quasi_static solve finished with {} Newton iterations: ", iter);
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Clear_A_And_Rhs(){
+template<int d> void DiscreteShell<d>::Clear_A_And_Rhs(){
 	SparseFunc::Set_Value(A, (real)0);
 	ArrayFunc::Fill(b, (real)0);
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Force_And_Mass(const real dt){
-	const int vtx_num=Vtx_Num();
-
+template<int d> void DiscreteShell<d>::Update_Implicit_Force_And_Mass(const real dt){
 	//add external forces
 	if(use_body_force){
-		for (int i = 0; i < vtx_num; i++) {
+		for (int i = 0; i < Vtx_Num(); i++) {
 			Add_Block(b, i, dt * Mass(i) * g);
 		}
 	}
@@ -440,40 +391,42 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Force_And
 		Add_Block(b,iter.first, dt*iter.second);
 	}
 
-	for(int i=0;i<vtx_num;i++){Add_Block_Helper(A,i,i,Mass(i)*MatrixD::Identity());}
+	for(int i=0;i< Vtx_Num();i++){ SparseFunc::Add_Block<d, MatrixD>(A,i,i,Mass(i)*MatrixD::Identity());}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Stretching(const real dt){
-	const int ele_num=Ele_Num();
-		
-	for(int ele_idx=0; ele_idx <ele_num; ele_idx++){
+template<int d> void DiscreteShell<d>::Update_Implicit_Stretching(const real dt){		
+	for(int ele_idx=0; ele_idx < Ele_Num(); ele_idx++){
 		MatrixD grad_s; MatrixD hess_s[d][d];
 		Stretch_Force(ele_idx, grad_s, hess_s);
+		//Numerical_Grad_Stretch(ele_idx, grad_s);
+		//Numerical_Hess_Stretch(ele_idx, grad_s, hess_s);
 		for(int j=0;j<d;j++){
 			Add_Block(b, E()[ele_idx][j], -dt*grad_s.col(j));
 			for(int k=0;k<d;k++){
 				Add_Block(b,E()[ele_idx][j],-dt*(dt+damping)*hess_s[j][k]*V()[E()[ele_idx][k]]);
-				Add_Block_Helper(A, E()[ele_idx][j], E()[ele_idx][k], dt * (dt + damping) * hess_s[j][k]);
+				SparseFunc::Add_Block<d, MatrixD>(A, E()[ele_idx][j], E()[ele_idx][k], dt * (dt + damping) * hess_s[j][k]);
 			}
 		}
 	}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Bending(const real dt) {
+template<int d> void DiscreteShell<d>::Update_Implicit_Bending(const real dt) {
 	if constexpr (d == 3) {
-		for (int i = 0; i < edges.size(); i++) {
+		for (int jct_idx = 0; jct_idx < edges.size(); jct_idx++) {
 			Eigen::Matrix<real, d, d + 1> grad_b;
 			Eigen::Matrix<real, d, d> hess_b[d + 1][d + 1];
 			ArrayF<int, d + 1> vtx_idx;
 			ArrayF<int, 2> ele_idx;
-			if (Junction_Info(i, vtx_idx, ele_idx)) {
-				Bend_Force_Approx(i, grad_b, vtx_idx, ele_idx, hess_b);
+			if (Junction_Info(jct_idx, vtx_idx, ele_idx)) {
+				Bend_Force_Approx(jct_idx, grad_b, vtx_idx, ele_idx, hess_b);
+				//Numerical_Grad_Bend(jct_idx, vtx_idx, ele_idx, grad_b);
+				//Numerical_Hess_Bend(jct_idx, vtx_idx, ele_idx, grad_b, hess_b);
 				for (int j = 0; j < d + 1; j++) {
 					Add_Block(b, vtx_idx[j], -dt * grad_b.col(j));
 
 					for (int k = 0; k < d + 1; k++) {
 						Add_Block(b, vtx_idx[j], -dt * (dt + damping) * hess_b[j][k] * V()[vtx_idx[k]]);
-						Add_Block_Helper(A, vtx_idx[j], vtx_idx[k], dt * (dt + damping) * hess_b[j][k]);
+						SparseFunc::Add_Block<d, MatrixD>(A, vtx_idx[j], vtx_idx[k], dt * (dt + damping) * hess_b[j][k]);
 					}
 				}
 			}
@@ -481,7 +434,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Bending(c
 	}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Boundary_Condition(const real dt){
+template<int d> void DiscreteShell<d>::Update_Implicit_Boundary_Condition(const real dt){
 	for (auto& bc_d : bc.psi_D_values) {
 		int node = bc_d.first; VectorD dis = bc_d.second;
 		for (int axis = 0; axis < d; axis++) {
@@ -491,13 +444,13 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Implicit_Boundary_
 	}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Grad_Stretch(real area, const MatrixD& stress, const MatrixD& x_hat, const MatrixD& Dm_inv, MatrixD& grad) {
+template<int d> void DiscreteShell<d>::Grad_Stretch(real area, const MatrixD& stress, const MatrixD& x_hat, const MatrixD& Dm_inv, MatrixD& grad) {
 	MatrixD P=area*stress;
 	MatrixD C_x=C_c()*Dm_inv;
 	grad=x_hat*C_x*P*C_x.transpose();
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Grad_Stretch(const int ele_idx, MatrixD& grad_s) {
+template<int d> void DiscreteShell<d>::Grad_Stretch(const int ele_idx, MatrixD& grad_s) {
 	ElasticParam& material = materials[material_id[ele_idx]];
 	real avg_h = 0; //average thickness on an element, not considering weighing yet
 
@@ -524,7 +477,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Grad_Stretch(const int el
 }
 
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Stretch_Force(const real& area,const real& ks, const real& poisson_ratio, const MatrixD& stress, const MatrixD& x_hat, const MatrixD& Dm_inv, MatrixD& grad, MatrixD hess[d][d]) {
+template<int d> void DiscreteShell<d>::Stretch_Force(const real& area,const real& ks, const real& poisson_ratio, const MatrixD& stress, const MatrixD& x_hat, const MatrixD& Dm_inv, MatrixD& grad, MatrixD hess[d][d]) {
 	MatrixD P = area * stress;
 	MatrixD C_x = C_c() * Dm_inv;
 	grad = x_hat * C_x * P * C_x.transpose();
@@ -545,7 +498,7 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Stretch_Force(const real&
 	}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Stretch_Force(const int ele_idx, MatrixD& grad_s, MatrixD hess_s[d][d]) {
+template<int d> void DiscreteShell<d>::Stretch_Force(const int ele_idx, MatrixD& grad_s, MatrixD hess_s[d][d]) {
 	ElasticParam& material = materials[material_id[ele_idx]];
 	real avg_h = 0; //average thickness on an element, not considering weighing yet
 
@@ -571,19 +524,19 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Stretch_Force(const int e
 	Stretch_Force(areas_hat[ele_idx], ks, material.poisson_ratio, stress, x_hat, Dm_inv[ele_idx], grad_s, hess_s);
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Grad_Bend(const Eigen::Matrix<real,d,d+1>& dtheta_dx, real theta, real theta_hat, real lambda, Eigen::Matrix<real,d,d+1>& dE_dx){
+template<int d> void DiscreteShell<d>::Grad_Bend(const Eigen::Matrix<real,d,d+1>& dtheta_dx, real theta, real theta_hat, real lambda, Eigen::Matrix<real,d,d+1>& dE_dx){
 	dE_dx=(real)2*lambda*(theta-theta_hat)*dtheta_dx;
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Grad_Bend(int jct_idx, Eigen::Matrix<real,d,d+1>& grad, const ArrayF<int,d+1>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
+template<int d> void DiscreteShell<d>::Grad_Bend(int jct_idx, Eigen::Matrix<real,d,d+1>& grad, const ArrayF<int,d+1>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
 	//no implementation
 }
 
-template<> void SoftBodyNonlinearFemThinShell<2>::Grad_Bend(int jct_idx, Eigen::Matrix<real,2,3>& grad, const ArrayF<int,3>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
+template<> void DiscreteShell<2>::Grad_Bend(int jct_idx, Eigen::Matrix<real,2,3>& grad, const ArrayF<int,3>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
 	return; //not implemented yet
 }
 
-template<> void SoftBodyNonlinearFemThinShell<3>::Grad_Bend(int jct_idx, Eigen::Matrix<real,3,4>& grad, const ArrayF<int,4>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
+template<> void DiscreteShell<3>::Grad_Bend(int jct_idx, Eigen::Matrix<real,3,4>& grad, const ArrayF<int,4>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
 	Vector3 n0=Triangle<3>::Normal(X()[E()[ele_idx[0]][0]],X()[E()[ele_idx[0]][1]],X()[E()[ele_idx[0]][2]]);
 	Vector3 n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
 
@@ -602,11 +555,11 @@ template<> void SoftBodyNonlinearFemThinShell<3>::Grad_Bend(int jct_idx, Eigen::
 	grad=(real)2*lambdas[jct_idx]*(theta-theta_hats[jct_idx])*dtheta;
 }
 
-template<> void SoftBodyNonlinearFemThinShell<2>::Grad_Theta(Eigen::Matrix<real, 2, 3>& grad_theta, const ArrayF<int, 3>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
+template<> void DiscreteShell<2>::Grad_Theta(Eigen::Matrix<real, 2, 3>& grad_theta, const ArrayF<int, 3>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
 	return; //no implementation
 }
 
-template<> void SoftBodyNonlinearFemThinShell<3>::Grad_Theta(Eigen::Matrix<real, 3, 4>& grad_theta, const ArrayF<int, 4>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
+template<> void DiscreteShell<3>::Grad_Theta(Eigen::Matrix<real, 3, 4>& grad_theta, const ArrayF<int, 4>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
 	Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
 	Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
 
@@ -623,11 +576,11 @@ template<> void SoftBodyNonlinearFemThinShell<3>::Grad_Theta(Eigen::Matrix<real,
 	grad_theta.col(3) = n1 / h1;
 }
 
-template<> void SoftBodyNonlinearFemThinShell<2>::Bend_Force_Approx(int edge_idx, Eigen::Matrix<real,2,3>& grad, const ArrayF<int,3>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[3][3]) {
+template<> void DiscreteShell<2>::Bend_Force_Approx(int edge_idx, Eigen::Matrix<real,2,3>& grad, const ArrayF<int,3>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[3][3]) {
 	return; //not implemented yet
 }
 
-template<> void SoftBodyNonlinearFemThinShell<3>::Bend_Force_Approx(int edge_idx, Eigen::Matrix<real,3,4>& grad, const ArrayF<int,4>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[4][4]) {
+template<> void DiscreteShell<3>::Bend_Force_Approx(int edge_idx, Eigen::Matrix<real,3,4>& grad, const ArrayF<int,4>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[4][4]) {
 	Vector3 n0=Triangle<3>::Normal(X()[E()[ele_idx[0]][0]],X()[E()[ele_idx[0]][1]],X()[E()[ele_idx[0]][2]]);
 	Vector3 n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
 
@@ -652,11 +605,11 @@ template<> void SoftBodyNonlinearFemThinShell<3>::Bend_Force_Approx(int edge_idx
 	}
 }
 
-template<> void SoftBodyNonlinearFemThinShell<2>::Bend_Force(int jct_idx, Eigen::Matrix<real, 2, 3>& grad, const ArrayF<int, 3>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[3][3]) {
+template<> void DiscreteShell<2>::Bend_Force(int jct_idx, Eigen::Matrix<real, 2, 3>& grad, const ArrayF<int, 3>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[3][3]) {
 	return; //not implemented yet
 }
 
-template<> void SoftBodyNonlinearFemThinShell<3>::Bend_Force(int jct_idx, Eigen::Matrix<real, 3, 4>& grad, const ArrayF<int, 4>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[4][4]) {
+template<> void DiscreteShell<3>::Bend_Force(int jct_idx, Eigen::Matrix<real, 3, 4>& grad, const ArrayF<int, 4>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[4][4]) {
 	Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
 	Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
 
@@ -746,7 +699,7 @@ template<> void SoftBodyNonlinearFemThinShell<3>::Bend_Force(int jct_idx, Eigen:
 	}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Bending_Hess_Variables() {
+template<int d> void DiscreteShell<d>::Update_Bending_Hess_Variables() {
 	if constexpr (d == 3) {
 #pragma omp parallel for
 		for (int ele_idx = 0; ele_idx < Ele_Num(); ele_idx++) {
@@ -782,42 +735,42 @@ template<int d> void SoftBodyNonlinearFemThinShell<d>::Update_Bending_Hess_Varia
 }
 
 
-template<int d> inline void SoftBodyNonlinearFemThinShell<d>::Reset_To_Rest_Position() {
+template<int d> inline void DiscreteShell<d>::Reset_To_Rest_Position() {
 #pragma omp parallel for
 	for (int i = 0; i < Vtx_Num(); i++) {X()[i] = X0[i];}
 }
 
 //Helper functions
-template<int d> inline void SoftBodyNonlinearFemThinShell<d>::Strain_To_Stress(real ks, real poisson_ratio, const MatrixD& strain,MatrixD& stress)
+template<int d> inline void DiscreteShell<d>::Strain_To_Stress(real ks, real poisson_ratio, const MatrixD& strain,MatrixD& stress)
 {
 	stress=ks*((1-poisson_ratio)*strain+poisson_ratio*strain.trace()*MatrixD::Identity());
 }
 
-template<int d> inline void SoftBodyNonlinearFemThinShell<d>::Deformation_To_Strain(const MatrixD& deformation, MatrixD& strain) {
+template<int d> inline void DiscreteShell<d>::Deformation_To_Strain(const MatrixD& deformation, MatrixD& strain) {
 	strain=(deformation.transpose()*deformation - MatrixD::Identity()) * (real)0.5;
 }
 
-template<int d> const Matrix<real,d> SoftBodyNonlinearFemThinShell<d>::C_c() const{/*not impl*/return MatrixD::Identity();}
+template<int d> const Matrix<real,d> DiscreteShell<d>::C_c() const{/*not impl*/return MatrixD::Identity();}
 
-template<> const Matrix2 SoftBodyNonlinearFemThinShell<2>::C_c() const{
+template<> const Matrix2 DiscreteShell<2>::C_c() const{
 	Matrix2 C_c;
 	C_c<<Vector2((real)-1,(real)1),Vector2::Zero();
 	return C_c;
 }
 
-template<> const Matrix3 SoftBodyNonlinearFemThinShell<3>::C_c() const{
+template<> const Matrix3 DiscreteShell<3>::C_c() const{
 	Matrix3 C_c;
 	C_c<<Vector3((real)-1,(real)1,(real)0),Vector3((real)-1,(real)0,(real)1),Vector3::Zero();
 	return C_c;
 }
 
-template<int d> inline real SoftBodyNonlinearFemThinShell<d>::Stretching_Energy(real a, real ks, real nu, const Matrix<real,d>& strain) {
+template<int d> inline real DiscreteShell<d>::Stretching_Energy(real a, real ks, real nu, const Matrix<real,d>& strain) {
 	real c= (strain.transpose() * strain).trace();
 	real b = pow(strain.trace(), 2);
 	return (real)0.5*a*ks*(((real)1-nu)*(strain.transpose()*strain).trace() + nu*pow(strain.trace(),2));
 }
 
-template<int d> inline real SoftBodyNonlinearFemThinShell<d>::Stretching_Energy(int ele_idx) {
+template<int d> inline real DiscreteShell<d>::Stretching_Energy(int ele_idx) {
 	ElasticParam& material = materials[material_id[ele_idx]];
 	real avg_h = 0; //average thickness on an element, not considering weighing yet
 
@@ -838,26 +791,23 @@ template<int d> inline real SoftBodyNonlinearFemThinShell<d>::Stretching_Energy(
 	MatrixD strain;
 	Deformation_To_Strain(deformation, strain);
 
-	return Stretching_Energy(areas[ele_idx],ks, material.poisson_ratio,strain);
+	return Stretching_Energy(areas_hat[ele_idx],ks, material.poisson_ratio,strain);
 }
 
-template<int d> inline real SoftBodyNonlinearFemThinShell<d>::Bending_Energy(real lambda, real theta, real theta_hat) {
+template<int d> inline real DiscreteShell<d>::Bending_Energy(real lambda, real theta, real theta_hat) {
 	return lambda*(theta-theta_hat)*(theta-theta_hat);
 }
 
-template<int d> inline real SoftBodyNonlinearFemThinShell<d>::Bending_Energy(int jct_idx, const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
+template<int d> inline real DiscreteShell<d>::Bending_Energy(int jct_idx, const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
 	if constexpr (d == 3) {
 		Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
 		Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
 		real theta = ThinShellAuxFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
 		return Bending_Energy(lambdas[jct_idx], theta, theta_hats[jct_idx]);
 	}
-	else {
-		return 0; //to be implemented
-	}
 }
 
-template<int d> real SoftBodyNonlinearFemThinShell<d>::Total_Stretching_Energy() {
+template<int d> real DiscreteShell<d>::Total_Stretching_Energy() {
 	real stretching_energy = 0;
 #pragma omp parallel for reduction(+:stretching_energy)
 	for (int i = 0; i < Ele_Num(); i++) {
@@ -885,11 +835,11 @@ template<int d> real SoftBodyNonlinearFemThinShell<d>::Total_Stretching_Energy()
 	return stretching_energy;
 }
 
-template<int d> real SoftBodyNonlinearFemThinShell<d>::Total_Bending_Energy() {/*No implementation*/ }
+template<int d> real DiscreteShell<d>::Total_Bending_Energy() {/*No implementation*/ }
 
-template<> real SoftBodyNonlinearFemThinShell<2>::Total_Bending_Energy() { return 0; /*To be implemented*/ }
+template<> real DiscreteShell<2>::Total_Bending_Energy() { return 0; /*To be implemented*/ }
 
-template<> real SoftBodyNonlinearFemThinShell<3>::Total_Bending_Energy() {
+template<> real DiscreteShell<3>::Total_Bending_Energy() {
 	real bending_energy = 0;
 #pragma omp parallel for reduction(+:bending_energy)
 	for (int edge_idx = 0; edge_idx < edges.size(); edge_idx++) {
@@ -907,7 +857,7 @@ template<> real SoftBodyNonlinearFemThinShell<3>::Total_Bending_Energy() {
 	return bending_energy;
 }
 
-template<int d> real SoftBodyNonlinearFemThinShell<d>::Lambda(const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
+template<int d> real DiscreteShell<d>::Lambda(const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
 	real l_hat;
 	if constexpr (d == 2) { l_hat = (real)1; }
 	else { l_hat = (X0[vtx_idx[0]] - X0[vtx_idx[1]]).norm(); } //May be stored
@@ -925,31 +875,26 @@ template<int d> real SoftBodyNonlinearFemThinShell<d>::Lambda(const ArrayF<int, 
 	return Lambda(Kb(avg_h, (real)0.5 * (ks0 + ks1)), a_hat, l_hat);
 }
 
-template<> inline real SoftBodyNonlinearFemThinShell<2>::Lambda(real kb, real a_hat, real l_hat) {
+template<> inline real DiscreteShell<2>::Lambda(real kb, real a_hat, real l_hat) {
 	return kb / ((real)4 * a_hat); //the other two is divided in the areas_hat adding together
 }
 
-template<> inline real SoftBodyNonlinearFemThinShell<3>::Lambda(real kb, real a_hat, real l_hat) {
+template<> inline real DiscreteShell<3>::Lambda(real kb, real a_hat, real l_hat) {
 	return kb * l_hat * l_hat / ((real)4 * a_hat); //the other two is divided in the areas_hat adding together
 }
 
-template<int d> Matrix<real,d> SoftBodyNonlinearFemThinShell<d>::Numerical_Grad_Stretch(int ele_idx, const MatrixD& grad_s) {
+template<int d> Matrix<real,d> DiscreteShell<d>::Numerical_Grad_Stretch(int ele_idx, const MatrixD& grad_s) {
 	MatrixD grad_s_n;
 	const real epsilon=1e-10;
 	real stretching_energy= Stretching_Energy(ele_idx);
 
-	ArrayF<VectorD, d> vtx;
-	for (int j = 0; j < d; j++) {
-		vtx[j] = X()[E()[ele_idx][j]];
-	}
-
 	for (int col=0; col<d; col++) {
 		for (int row = 0; row < d; row++) {
-			real p_tmp=vtx[col][row];
-			vtx[col][row]+=epsilon;
+			real p_tmp= X()[E()[ele_idx][col]][row];
+			X()[E()[ele_idx][col]][row] +=epsilon;
 			real energy_p=Stretching_Energy(ele_idx);
 			grad_s_n(row,col)=(energy_p-stretching_energy)/epsilon;
-			vtx[col][row]=p_tmp;
+			X()[E()[ele_idx][col]][row] =p_tmp;
 		}
 	}
 
@@ -959,19 +904,14 @@ template<int d> Matrix<real,d> SoftBodyNonlinearFemThinShell<d>::Numerical_Grad_
 	return grad_s_n;
 }
 
-template<int d> Array2DF<Matrix<real, d>, d, d> SoftBodyNonlinearFemThinShell<d>::Numerical_Hess_Stretch(int ele_idx, const MatrixD& grad_s, const MatrixD hess_s[d][d]) {
+template<int d> Array2DF<Matrix<real, d>, d, d> DiscreteShell<d>::Numerical_Hess_Stretch(int ele_idx, const MatrixD& grad_s, const MatrixD hess_s[d][d]) {
 	Array2DF<MatrixD, d, d> hess_s_n;
 	const real epsilon = 1e-5;
 
-	ArrayF<VectorD, d> vtx;
-	for (int j = 0; j < d; j++) {
-		vtx[j] = X()[E()[ele_idx][j]];
-	}
-
 	for (int col = 0; col < d; col++) {
 		for (int row = 0; row < d; row++) {
-			real p_tmp = vtx[col][row];
-			vtx[col][row] += epsilon;
+			real p_tmp = X()[E()[ele_idx][col]][row];
+			X()[E()[ele_idx][col]][row] += epsilon;
 			MatrixD grad_cr;
 			Grad_Stretch(ele_idx, grad_cr);
 			MatrixD hess_n_cr = (grad_cr - grad_s) / epsilon;
@@ -984,7 +924,7 @@ template<int d> Array2DF<Matrix<real, d>, d, d> SoftBodyNonlinearFemThinShell<d>
 				}
 			}
 
-			vtx[col][row] = p_tmp;
+			X()[E()[ele_idx][col]][row] = p_tmp;
 		}
 	}
 
@@ -994,11 +934,11 @@ template<int d> Array2DF<Matrix<real, d>, d, d> SoftBodyNonlinearFemThinShell<d>
 				std::cout << "hess_s[" << ele_idx << "]" << std::endl;
 				std::cout << "hess_s[" << r << "][" << c << "] \n" << hess_s[r][c] << "\n" << "hess_s_n[" << r << "][" << c << "] \n" << hess_s_n[r][c] << std::endl;
 
-				for (int j = 0; j < d; j++) {
+				/*for (int j = 0; j < d; j++) {
 					std::cout << "vtx" << j << std::endl;
 					std::cout << X0[E()[ele_idx][j]].transpose() << std::endl;
 					std::cout << X()[E()[ele_idx][j]].transpose() << std::endl;
-				}
+				}*/
 			}
 		}
 	}
@@ -1006,11 +946,11 @@ template<int d> Array2DF<Matrix<real, d>, d, d> SoftBodyNonlinearFemThinShell<d>
 	return hess_s_n;
 }
 
-template<int d> Eigen::Matrix<real, d, d + 1> SoftBodyNonlinearFemThinShell<d>::Numerical_Grad_Bend(int jct_idx, ArrayF<int, d + 1>& vtx_idx, ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_b) {}
+template<int d> Eigen::Matrix<real, d, d + 1> DiscreteShell<d>::Numerical_Grad_Bend(int jct_idx, ArrayF<int, d + 1>& vtx_idx, ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_b) {}
 
-template<> Eigen::Matrix<real, 2, 3> SoftBodyNonlinearFemThinShell<2>::Numerical_Grad_Bend(int jct_idx, ArrayF<int, 3>& vtx_idx, ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, 2, 3>& grad_b) { /*Not implemented yet*/ Eigen::Matrix<real, 2, 3> grad_n; return grad_n; }
+template<> Eigen::Matrix<real, 2, 3> DiscreteShell<2>::Numerical_Grad_Bend(int jct_idx, ArrayF<int, 3>& vtx_idx, ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, 2, 3>& grad_b) { /*Not implemented yet*/ Eigen::Matrix<real, 2, 3> grad_n; return grad_n; }
 
-template<> Eigen::Matrix<real,3,4> SoftBodyNonlinearFemThinShell<3>::Numerical_Grad_Bend(int jct_idx, ArrayF<int, 4>& vtx_idx, ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, 3, 4>& grad_b)
+template<> Eigen::Matrix<real,3,4> DiscreteShell<3>::Numerical_Grad_Bend(int jct_idx, ArrayF<int, 4>& vtx_idx, ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, 3, 4>& grad_b)
 {
 	Eigen::Matrix<real,3,4> grad_b_n;
 	real epsilon=1e-10;
@@ -1039,7 +979,7 @@ template<> Eigen::Matrix<real,3,4> SoftBodyNonlinearFemThinShell<3>::Numerical_G
 }
 
 
-template<int d> Array2DF<Matrix<real,d>, d + 1, d + 1> SoftBodyNonlinearFemThinShell<d>::Numerical_Hess_Bend(int jct_idx, const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_b, const MatrixD hess_b[d + 1][d + 1]) {
+template<int d> Array2DF<Matrix<real,d>, d + 1, d + 1> DiscreteShell<d>::Numerical_Hess_Bend(int jct_idx, const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_b, const MatrixD hess_b[d + 1][d + 1]) {
 	Array2DF<MatrixD, d + 1, d + 1> hess_b_n;
 	const real epsilon = 1e-10;
 
@@ -1076,7 +1016,7 @@ template<int d> Array2DF<Matrix<real,d>, d + 1, d + 1> SoftBodyNonlinearFemThinS
 	return hess_b_n;
 }
 
-template<int d> Array2DF<Matrix<real, d>, d + 1, d + 1>  SoftBodyNonlinearFemThinShell<d>::Numerical_Hess_Theta(const ArrayF<int, d + 1>& vtx_idx,const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_theta) {
+template<int d> Array2DF<Matrix<real, d>, d + 1, d + 1>  DiscreteShell<d>::Numerical_Hess_Theta(const ArrayF<int, d + 1>& vtx_idx,const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_theta) {
 	Array2DF<MatrixD, d + 1, d + 1> hess_n;
 	const real epsilon = 1e-10;
 
@@ -1105,7 +1045,7 @@ template<int d> Array2DF<Matrix<real, d>, d + 1, d + 1>  SoftBodyNonlinearFemThi
 	return hess_n;
 }
 
-template<int d> bool SoftBodyNonlinearFemThinShell<d>::Junction_Info(int edge_idx, ArrayF<int, d + 1>& vtx_idx, ArrayF<int, 2>& ele_idx)
+template<int d> bool DiscreteShell<d>::Junction_Info(int edge_idx, ArrayF<int, d + 1>& vtx_idx, ArrayF<int, 2>& ele_idx)
 {
 	if constexpr (d == 3) {
 		vtx_idx[0] = edges[edge_idx][0];
@@ -1149,20 +1089,15 @@ template<int d> bool SoftBodyNonlinearFemThinShell<d>::Junction_Info(int edge_id
 	}
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block_Helper(SparseMatrix<real>& K, const int i, const int j, const MatrixD& Ks)
-{
-	SparseFunc::Add_Block<d, MatrixD>(K, i, j, Ks);
-}
-
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Set_Block(Array<real>& b, const int i, const VectorD& bi)
+template<int d> void DiscreteShell<d>::Set_Block(Array<real>& b, const int i, const VectorD& bi)
 {
 	for (int ii = 0; ii < d; ii++)b[i * d + ii] = bi[ii];
 }
 
-template<int d> void SoftBodyNonlinearFemThinShell<d>::Add_Block(Array<real>& b, const int i, const VectorD& bi)
+template<int d> void DiscreteShell<d>::Add_Block(Array<real>& b, const int i, const VectorD& bi)
 {
 	for (int ii = 0; ii < d; ii++)b[i * d + ii] += bi[ii];
 }
 
-//template class SoftBodyNonlinearFemThinShell<2>; not supprted yet
-template class SoftBodyNonlinearFemThinShell<3>;
+//template class DiscreteShell<2>; not supprted yet
+template class DiscreteShell<3>;

@@ -1,8 +1,8 @@
 #pragma once
 #include "Common.h"
 #include "AuxFunc.h"
-#include "SparseFunc.h"
 #include <iostream>
+#include "SparseFunc.h"
 
 using namespace Meso;
 namespace NonlinearFemFunc

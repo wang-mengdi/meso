@@ -4,7 +4,7 @@
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "levelset.h"
+#include "LevelSet.h"
 #include "Timer.h"
 using namespace Meso;
 template<int d, class PointIntp,DataHolder side=DEVICE>
@@ -143,7 +143,7 @@ void Test_Circle(real dx, Vector<real, d> center = Vector<real, d>::Zero(), real
 	}
 	Pass("Test_Prime_levelset_Curvature (Circle) Passed, with error:{}", maxError);
 	timer.Record("compare Curvature one by one");
-	timer.Output_Profile();
+	//timer.Output_Profile();
 	if constexpr (side==DEVICE)
 		Pass("Test_Prime_levelset_GPU (Circle) Passed!");
 	else

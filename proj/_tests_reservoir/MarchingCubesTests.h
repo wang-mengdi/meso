@@ -12,12 +12,13 @@ namespace Meso {
 	void Test_Marching_Cubes_CPU(int times) {
 		Typedef_VectorD(d);Timer timer;
 
-		Vector<int, d> counts = VectorDi(100, 100, 100);
-		VectorD domain_min = VectorD(0., 0., 0.);
+		Vector<int, d> counts = Vector3i(100, 100, 100);
+		VectorD domain_min = MathFunc::V<d>(0., 0., 0.);
 		Grid<d> grid(counts, 0.01, domain_min, COLLOC);
 		Field<T, d> field(grid, 0);
 
-		VectorD center = VectorD(0.6, 0.6, 0.);
+		Array<T> my_data(grid.DoF());
+		VectorD center = MathFunc::V<d>(0.6, 0.6, 0.);
 		grid.Exec_Nodes(
 			[&](const VectorDi node) {
 				VectorD pos = grid.Position(node);
@@ -47,12 +48,12 @@ namespace Meso {
 	void Test_Marching_Cubes_GPU(int times) {
 		Typedef_VectorD(d);Timer timer;
 
-		Vector<int, d> counts = VectorDi(100, 100, 100);
-		VectorD domain_min = VectorD(0., 0., 0.);
+		Vector<int, d> counts = Vector3i(100, 100, 100);
+		VectorD domain_min = MathFunc::V<d>(0., 0., 0.);
 		Grid<d> grid(counts, 0.01, domain_min, COLLOC);
 		Field<T, d> field_host(grid, 0);
 		Field<T, d, DEVICE> field(grid, 0);
-		VectorD center = VectorD(0.6, 0.6, 0.0);
+		VectorD center = MathFunc::V<d>(0.6, 0.6, 0.);
 		grid.Exec_Nodes(
 			[&](const VectorDi node) {
 				VectorD pos = grid.Position(node);

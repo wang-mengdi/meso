@@ -32,7 +32,7 @@ namespace Meso {
 			pressure.Init(velocity.grid);
 			vel_div.Init(velocity.grid);
 
-			poisson.Init(velocity.grid, vol, fixed);
+			poisson.Init(fixed, vol);
 			MG_precond.Init_Poisson(poisson, 2, 2);
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
 		}
@@ -43,16 +43,16 @@ namespace Meso {
 			return dx * cfl / max_vel;
 		}
 
-		virtual void Output(const bf::path base_path, const int frame) {
-			std::string vts_name = fmt::format("vts{:04d}.vts", frame);
-			bf::path vtk_path = base_path / bf::path(vts_name);
+		virtual void Output(DriverMetaData& metadata) {
+			std::string vts_name = fmt::format("vts{:04d}.vts", metadata.current_frame);
+			bf::path vtk_path = metadata.base_path / bf::path(vts_name);
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 		}
 
-		virtual void Advance(const int current_frame, const real current_time, const real dt) {
+		virtual void Advance(DriverMetaData& metadata) {
 			//advection
-			SemiLagrangian::Advect(dt, temp_velocity, velocity, velocity);
-			SemiLagrangian::Inverse_Flow_Map(dt,inverse_flow_map,velocity);
+			SemiLagrangian<IntpLinearPadding0>::Advect(metadata.dt, temp_velocity, velocity, velocity);
+			SemiLagrangian<IntpLinearPadding0>::Inverse_Flow_Map(metadata.dt,inverse_flow_map,velocity);
 			velocity = temp_velocity;
 			
 			//stretching

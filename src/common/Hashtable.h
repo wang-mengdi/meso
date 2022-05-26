@@ -4,50 +4,51 @@
 // This file is part of SimpleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-
 #include "Common.h"
-
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
 
 ////Hash key instantiations
-namespace Meso {
-	//template<> struct hash<Vector1i>
-	//{
-	//	typedef Vector1i argument_type; typedef std::size_t result_type;
-	//	result_type operator()(argument_type const& arg) const
-	//	{
-	//		result_type const h1(std::hash<int>()(arg[0])); return h1;
-	//	}
-	//};
-	//template<> struct hash<Vector2i>
-	//{
-	//	typedef Vector2i argument_type; typedef std::size_t result_type;
-	//	result_type operator()(argument_type const& arg) const
-	//	{
-	//		result_type const h1(std::hash<int>()(arg[0])); result_type const h2(std::hash<int>()(arg[1])); return h1 ^ (h2 << 1);
-	//	}
-	//};
-	//template<> struct hash<Vector3i>
-	//{
-	//	typedef Vector3i argument_type; typedef std::size_t result_type;
-	//	result_type operator()(argument_type const& arg) const
-	//	{
-	//		result_type const h1(std::hash<int>()(arg[0])); result_type const h2(std::hash<int>()(arg[1]));
-	//		result_type const h3(std::hash<int>()(arg[2])); return h1 ^ (h2 << 1) ^ h3;
-	//	}
-	//};
-	//template<> struct hash<Vector4i>
-	//{
-	//	typedef Vector4i argument_type; typedef std::size_t result_type;
-	//	result_type operator()(argument_type const& arg) const
-	//	{
-	//		result_type const h1(std::hash<int>()(arg[0])); result_type const h2(std::hash<int>()(arg[1]));
-	//		result_type const h3(std::hash<int>()(arg[2])); result_type const h4(std::hash<int>()(arg[3])); return h1 ^ (h2 << 1) ^ h3 ^ (h4 << 2);
-	//	}
-	//};
+namespace std {
+	using namespace Meso;
+	template<> struct hash<Vector1i>
+	{
+		typedef Vector1i argument_type; typedef std::size_t result_type;
+		result_type operator()(argument_type const& arg) const
+		{
+			result_type const h1(std::hash<int>()(arg[0])); return h1;
+		}
+	};
+	template<> struct hash<Vector2i>
+	{
+		typedef Vector2i argument_type; typedef std::size_t result_type;
+		result_type operator()(argument_type const& arg) const
+		{
+			result_type const h1(std::hash<int>()(arg[0])); result_type const h2(std::hash<int>()(arg[1])); return h1 ^ (h2 << 1);
+		}
+	};
+	template<> struct hash<Vector3i>
+	{
+		typedef Vector3i argument_type; typedef std::size_t result_type;
+		result_type operator()(argument_type const& arg) const
+		{
+			result_type const h1(std::hash<int>()(arg[0])); result_type const h2(std::hash<int>()(arg[1]));
+			result_type const h3(std::hash<int>()(arg[2])); return h1 ^ (h2 << 1) ^ h3;
+		}
+	};
+	template<> struct hash<Vector4i>
+	{
+		typedef Vector4i argument_type; typedef std::size_t result_type;
+		result_type operator()(argument_type const& arg) const
+		{
+			result_type const h1(std::hash<int>()(arg[0])); result_type const h2(std::hash<int>()(arg[1]));
+			result_type const h3(std::hash<int>()(arg[2])); result_type const h4(std::hash<int>()(arg[3])); return h1 ^ (h2 << 1) ^ h3 ^ (h4 << 2);
+		}
+	};
+}
 
+namespace Meso {
 	////Hashtable
 	template<class T_KEY, class T> using Hashtable = std::unordered_map<T_KEY, T>;
 	template<class T_KEY, class T> using HashtableMultiValue = std::unordered_multimap<T_KEY, T>;

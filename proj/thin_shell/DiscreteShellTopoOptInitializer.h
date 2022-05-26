@@ -9,10 +9,10 @@
 #include "Driver.h"
 #include "AuxFunc.h"
 #include "MeshFunc.h"
-#include "ThinShellTopologyOptimizer.h"
+#include "DiscreteShellTopologyOptimizer.h"
 #include <sstream>
 
-template<int d> class TopoOptThinShellInitializer
+template<int d> class DiscreteShellTopoOptInitializer
 {Typedef_VectorD(d); Typedef_MatrixD(d);
 
 public:
@@ -21,7 +21,7 @@ public:
 	int h;
 	int test;
 
-	virtual void Apply(json& j, ThinShellTopologyOptimizer<d>& optimizer)
+	virtual void Apply(json& j, DiscreteShellTopologyOptimizer<d>& optimizer)
 	{
 		test = Json::Value(j, "test", 0);
 		w = Json::Value(j, "width", 32);
@@ -32,9 +32,9 @@ public:
 		Initialize_Topo_Opt(j,optimizer);
 	}
 
-	void Initialize_Mesh(ThinShellTopologyOptimizer<d>& optimizer)
+	void Initialize_Mesh(DiscreteShellTopologyOptimizer<d>& optimizer)
 	{
-		SoftBodyNonlinearFemThinShellTopoOpt<d>& thin_shell = optimizer.thin_shell;
+		DiscreteShellTopoOpt<d>& thin_shell = optimizer.thin_shell;
 
 		if constexpr (d == 3) {
 			switch (test) {
@@ -44,11 +44,11 @@ public:
 				case 8:
 				case 9:
 				{
-					real length = (real)1; real step = length / (real)w;
+					real length = (real)0.1; real step = length / (real)w;
 					MeshFunc::Initialize_Herring_Bone_Mesh(w, h, step, &mesh, 0, 2);
 				}break;
 				case 2: {
-					real length = (real)1; real step = length / (real)w;
+					real length = (real)0.1; real step = length / (real)w;
 					MeshFunc::Initialize_Herring_Bone_Mesh(w, h, step, &mesh, 0, 2);
 					mesh.Vertices()[0] -= 0.01 * VectorD::Unit(1);
 					mesh.Vertices()[w * h] -= 0.01 * VectorD::Unit(1);
@@ -56,17 +56,17 @@ public:
 					mesh.Vertices()[w*h-w] += 0.01 * VectorD::Unit(1);
 				}break;
 				case 3: {
-					real length = (real)1; real step = length / (real)w;
+					real length = (real)0.1; real step = length / (real)w;
 					MeshFunc::Initialize_Herring_Bone_Mesh(w, h, step, &mesh, 0, 2);
 					//for (int i = w; i < w * h - w; i++) { mesh.Vertices()[i] += 0.1 * VectorD::Unit(1); }
 				}break;
 				case 4: {
-					real length = (real)1; real step = length / (real)w;
+					real length = (real)0.1; real step = length / (real)w;
 					MeshFunc::Initialize_Herring_Bone_Mesh(w, h, step, &mesh, 0, 2);
 					for (int i = w; i < w * h - w; i++) { mesh.Vertices()[i] += 0.01 * VectorD::Unit(1); }
 				}break;
 				case 6: {
-					real length = (real)1; real step = length / (real)w;
+					real length = (real)0.1; real step = length / (real)w;
 					MeshFunc::Initialize_Herring_Bone_Mesh(w, h, step, &mesh, 0, 2);
 					//for (int i = w * h - w; i < w * h; i++) { mesh.Vertices()[i] += 0.1 * VectorD::Unit(1); }
 				}break;
@@ -76,9 +76,9 @@ public:
 		thin_shell.Initialize(mesh);
 	}
 
-	void Initialize_Boundary_Conditions(ThinShellTopologyOptimizer<d>& optimizer)
+	void Initialize_Boundary_Conditions(DiscreteShellTopologyOptimizer<d>& optimizer)
 	{
-		SoftBodyNonlinearFemThinShellTopoOpt<d>& thin_shell = optimizer.thin_shell;
+		DiscreteShellTopoOpt<d>& thin_shell = optimizer.thin_shell;
 		if constexpr (d == 3) {
 			switch (test) {
 				case 1: {	////beam with one end fixed (two rows) and push on the other side
@@ -117,7 +117,7 @@ public:
 					for (int i = w * h - w; i < w * h; i++) { thin_shell.Set_Force(i, strength *  VectorD::Unit(1) / (real)w); }
 				}break;
 				case 7: {//in-plane cantilever beam
-					real strength = 0.0001;
+					real strength = 0.001;
 					for (int i = 0; i < w; i++) { thin_shell.Set_Fixed(i); }
 					thin_shell.Set_Force(w * h - w, strength * -VectorD::Unit(0));
 				}break;
@@ -139,9 +139,9 @@ public:
 		}
 	}
 
-	void Initialize_Materials(ThinShellTopologyOptimizer<d>& optimizer,json& j)
+	void Initialize_Materials(DiscreteShellTopologyOptimizer<d>& optimizer,json& j)
 	{
-		SoftBodyNonlinearFemThinShellTopoOpt<d>& thin_shell = optimizer.thin_shell;
+		DiscreteShellTopoOpt<d>& thin_shell = optimizer.thin_shell;
 
 		switch (test) {
 		case 1:
@@ -162,7 +162,7 @@ public:
 		}
 	}
 
-	void Initialize_Topo_Opt(json& j, ThinShellTopologyOptimizer<d>& optimizer)
+	void Initialize_Topo_Opt(json& j, DiscreteShellTopologyOptimizer<d>& optimizer)
 	{
 		optimizer.target_rho = Json::Value(j, "target_rho", 0.3);
 		switch (test) {

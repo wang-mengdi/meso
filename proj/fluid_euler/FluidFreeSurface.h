@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
-// Fluid Euler
-// Copyright (c) (2022-), Bo Zhu, Mengdi Wang
+// Fluid Euler with Free Surface
+// Copyright (c) (2022-), Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
@@ -10,32 +10,27 @@
 #include "Advection.h"
 #include "Simulator.h"
 #include "IOFunc.h"
+#include "LevelSet.h"
 
 namespace Meso {
-	template<int d>
+	template<class T, int d>
 	class FluidEuler : public Simulator {
 		Typedef_VectorD(d);
 	public:
-		FaceFieldDv<real, d> velocity;
-		BoundaryConditionDirect<FaceFieldDv<real, d>> psi_N;
+		Vector<T, d> gravity_acc;
+		FaceFieldDv<T, d> velocity;
+		BoundaryConditionDirect<Field<bool, d>> psi_D;
+		BoundaryConditionDirect<FaceFieldDv<T, d>> psi_N;
+		LevelSet<d, PointIntpLinearClamp, HOST> levelset;
 
-		FaceFieldDv<real, d> temp_velocity;
-		FieldDv<real, d> pressure;
+		FaceFieldDv<T, d> temp_velocity;
+		Field<T, d> temp_phi;
 		FieldDv<real, d> vel_div;
+		FieldDv<real, d> pressure;
 		MaskedPoissonMapping<real, d> poisson;
 		VCycleMultigridIntp<real, d> MG_precond;
 		ConjugateGradient<real> MGPCG;
-		void Init(Field<bool, d>& fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
-			velocity.Deep_Copy(initial_velocity);
-			psi_N.Init(face_fixed, initial_velocity);
-			temp_velocity.Init(velocity.grid);
-			pressure.Init(velocity.grid);
-			vel_div.Init(velocity.grid);
 
-			poisson.Init(fixed, vol);
-			MG_precond.Init_Poisson(poisson, 2, 2);
-			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
-		}
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
 			real max_vel = velocity.Max_Abs();
@@ -49,9 +44,17 @@ namespace Meso {
 		virtual void Advance(DriverMetaData& metadata) {
 			real dt = metadata.dt;
 
-			//advection
+			//Advection of levelset
+			SemiLagrangian<IntpLinearClamp>::Advect(dt, temp_phi, levelset.phi, velocity);
+			levelset.phi = temp_phi;
+			levelset.Fast_Marching(-1);//will calculate whole field
+
+			//Advection of velocity
 			SemiLagrangian<IntpLinearPadding0>::Advect(dt, temp_velocity, velocity, velocity);
 			velocity = temp_velocity;
+			
+			//Add body forces
+			velocity += (gravity_acc * dt);
 			psi_N.Apply(velocity);
 
 			//projection

@@ -25,7 +25,7 @@ void Test_Restrictor_Intp(const Vector<int, d> counts) {
 	Random::Fill_Random_Array<T>(finer_host.Data());
 	//ArrayFunc::Fill(finer_host.data, 0);
 	//finer_host(VectorFunc::Vi<d>(5, 5, 5)) = 1;
-	coarser_host.Calc_Cells(
+	coarser_host.Calc_Nodes(
 		[&](const VectorDi coarser_coord)->T {
 			if (!finer_grid.Valid(coarser_coord * 2)) return 0;
 			T result = 0;

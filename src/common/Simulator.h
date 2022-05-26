@@ -6,12 +6,13 @@
 #pragma once
 
 #include "Common.h"
+#include "MetaData.h"
 
 namespace Meso {
 	class Simulator {
 	public:
-		virtual void Output(const bf::path base_path, const int frame) = 0;
-		virtual void Advance(const int current_frame, const real current_time, const real dt) = 0;
+		virtual void Output(DriverMetaData& metadata) = 0;
+		virtual void Advance(DriverMetaData& metadata) = 0;
 		//can return inf
 		virtual real CFL_Time(const real cfl) = 0;
 	};

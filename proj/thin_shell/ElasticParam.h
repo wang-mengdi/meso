@@ -1,7 +1,6 @@
 #pragma once
 #include "Common.h"
 #include "Constants.h"
-#include "SparseFunc.h"
 
 using namespace Meso;
 namespace ElasticParamImpl 
