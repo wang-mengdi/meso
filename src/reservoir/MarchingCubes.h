@@ -370,7 +370,7 @@ namespace Meso {
 		for (int i = 0;i < 3;i++) edge_grid_array[i].Init(Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx), -1);
 
 		Array<VectorD>& vertices = *_mesh->vertices; vertices.clear();
-		Array<VectorEi>& faces = _mesh->faces; faces.clear();
+		Array<VectorEi>& elements = _mesh->elements; elements.clear();
 
 		const VectorDi cell_counts = field.grid.counts - VectorDi::Ones();
 		field.grid.Exec_Nodes([&](const VectorDi cell_index) {
@@ -393,7 +393,7 @@ namespace Meso {
 				t[0] = Particle_Index_On_Edge<d, int>(cell_index, triangle_table[cell_type][ti], edge_grid_array);
 				t[1] = Particle_Index_On_Edge<d, int>(cell_index, triangle_table[cell_type][ti + 1], edge_grid_array);
 				t[2] = Particle_Index_On_Edge<d, int>(cell_index, triangle_table[cell_type][ti + 2], edge_grid_array);
-				faces.push_back(t);
+				elements.push_back(t);
 			}
 			});
 
@@ -610,6 +610,6 @@ namespace Meso {
 		// Info("Step 3");
 
 		*_mesh->vertices = vertices;
-		_mesh->faces = faces;
+		_mesh->elements = faces;
 	}
 }

@@ -231,11 +231,11 @@ namespace Meso {
 				}
 
 				shapes[m] = tinyobj::shape_t();
-				for (size_t f = 0; f < mesh->Faces().size(); f++) {
+				for (size_t f = 0; f < mesh->Elements().size(); f++) {
 					shapes[m].mesh.num_face_vertices.push_back(3);
-					shapes[m].mesh.indices.push_back({ mesh->Faces()[f][0] + offset / 3, -1, -1 });
-					shapes[m].mesh.indices.push_back({ mesh->Faces()[f][1] + offset / 3, -1, -1 });
-					shapes[m].mesh.indices.push_back({ mesh->Faces()[f][2] + offset / 3, -1, -1 });
+					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][0] + offset / 3, -1, -1 });
+					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][1] + offset / 3, -1, -1 });
+					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][2] + offset / 3, -1, -1 });
 				}
 			}
 
