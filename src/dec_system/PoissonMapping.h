@@ -7,7 +7,6 @@
 #include "LinearMapping.h"
 #include "Field.h"
 #include "FaceField.h"
-#include "LambdaHelper.h"
 #include "DifferentialExteriorCalculus.h"
 #include "AuxFunc.h"
 #include "BoundaryCondition.h"
@@ -15,7 +14,8 @@ using namespace thrust::placeholders;
 
 namespace Meso {
 	//Negative Poisson mapping -lap(p), except some masked points
-	//Masked points will be viewed as 0 in poisson mapping
+	//Masked cells will be viewed as 0 in poisson mapping
+	//Which means adjacent faces of masked cells will have volume 0
 	template<class T, int d>
 	class MaskedPoissonMapping : public LinearMapping<T> {
 		//Ap=-lap(p)

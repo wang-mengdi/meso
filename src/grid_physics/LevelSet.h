@@ -9,7 +9,7 @@
 #include "Common.h"
 #include "AuxFunc.h"
 #include "Interpolation.h"
-#include "GeometryPrimitives.h"
+#include "ImplicitGeometry.h"
 #include<iostream>
 //#include "cuda_runtime.h"
 #include <typeinfo>

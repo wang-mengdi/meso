@@ -8,11 +8,6 @@
 #include "Common.h"
 
 namespace Meso {
-	template<class T> using SparseMatrix = Eigen::SparseMatrix<T, Eigen::RowMajor, int>;
-	template<class T> using DiagonalMatrix = Eigen::DiagonalMatrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-	template<class T> using Triplet = Eigen::Triplet<T, int>;
-	template<class T> using InnerIterator = typename SparseMatrix<T>::InnerIterator;
-
 	namespace SparseFunc {
 		////block matrix operations
 		template<int dim, class T_MAT> void Add_Block(SparseMatrix<real>& K, const int K_i, const int K_j, const T_MAT& K_b, const int Kb_i = 0, const int Kb_j = 0)

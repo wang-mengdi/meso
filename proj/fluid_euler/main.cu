@@ -5,6 +5,7 @@
 #include "FluidEulerInitializer.h"
 #include "FluidImpulse.h"
 #include "FluidImpulseInitializer.h"
+#include "FluidFreeSurface.h"
 #include "Driver.h"
 using namespace Meso;
 

@@ -103,8 +103,8 @@ namespace Meso {
 			);
 		}
 
-		template<class Fnode>//Fnode is a (void) function takes a node index
-		void Exec_Nodes(Fnode f) const {
+		template<class CFunc>//Fnode is a (void) function takes a node index
+		void Exec_Nodes(CFunc f) const {
 			return grid.Exec_Nodes(f);
 		}
 
