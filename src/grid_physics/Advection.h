@@ -14,7 +14,7 @@
 namespace Meso {
 
 	template<class T, int d, class Intp>
-	__global__ static void Semi_Lagrangian_Cell(const real dt, const Grid<d> grid, T* result_data, const T* origin_data,
+	__global__ void Semi_Lagrangian_Cell(const real dt, const Grid<d> grid, T* result_data, const T* origin_data,
 		const Grid<d> gv0, const T* v0, const Grid<d> gv1, const T* v1, const Grid<d> gv2, const T* v2) {
 		Typedef_VectorD(d);
 		Vector<int, d> cell = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
@@ -27,7 +27,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	__global__ static void Inverse_Flow_Map_Cell(const real dt, const Grid<d> grid, Vector<T,d>* inverse_flow_map,
+	__global__ void Inverse_Flow_Map_Cell(const real dt, const Grid<d> grid, Vector<T,d>* inverse_flow_map,
 		const Grid<d> gv0, const T* v0, const Grid<d> gv1, const T* v1, const Grid<d> gv2, const T* v2) {
 		Typedef_VectorD(d);
 		Vector<int, d> cell = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
