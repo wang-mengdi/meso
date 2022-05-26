@@ -24,17 +24,23 @@ namespace Meso {
 		BoundaryConditionDirect<FaceFieldDv<T, d>> psi_N;
 		LevelSet<d, PointIntpLinearClamp, HOST> levelset;
 
-		FaceFieldDv<T, d> temp_velocity;
-		Field<T, d> temp_phi;
-		FieldDv<T, d> vel_div;
-		FieldDv<T, d> pressure;
-		Field<bool, d> fixed;
-		FaceField<T, d> vol;
+		FaceFieldDv<T, d> temp_velocity_dev;
+		FieldDv<T, d> temp_phi_dev;
+		FieldDv<T, d> temp_field_dev;
+		FieldDv<T, d> pressure_dev;
+		Field<bool, d> fixed_host;
+		FaceField<T, d> vol_host;
+		Field<T, d> div_host;
 		MaskedPoissonMapping<T, d> poisson;
 		VCycleMultigridIntp<T, d> MG_precond;
 		ConjugateGradient<T> MGPCG;
 
-		void Update_Poisson_System(Field<bool, d>& fixed, FaceField<T, d>& vol, Field<T, d> div) {
+		void Update_Poisson_System(Field<bool, d>& fixed, FaceField<T, d>& vol, Field<T, d>& div) {
+			Grid<d> grid = velocity.grid;
+			fixed.Init(grid);
+			vol.Init(grid);
+			div.Init(grid);
+
 			//first mark all psi_D to fixed
 			psi_D.Apply(fixed);
 			//then mark all air cells to fixed
@@ -89,13 +95,14 @@ namespace Meso {
 			real dt = metadata.dt;
 
 			//Advection of levelset
-			//SemiLagrangian<IntpLinearClamp>::Advect(dt, temp_phi, levelset.phi, velocity);
-			levelset.phi = temp_phi;
+			temp_phi_dev = levelset.phi;
+			SemiLagrangian<IntpLinearClamp>::Advect(dt, temp_field_dev, temp_phi_dev, velocity);
+			levelset.phi = temp_field_dev;
 			levelset.Fast_Marching(-1);//will calculate whole field
 
 			//Advection of velocity
-			SemiLagrangian<IntpLinearPadding0>::Advect(dt, temp_velocity, velocity, velocity);
-			velocity = temp_velocity;
+			SemiLagrangian<IntpLinearPadding0>::Advect(dt, temp_velocity_dev, velocity, velocity);
+			velocity = temp_velocity_dev;
 			
 			//Add body forces
 			velocity += (gravity_acc * dt);
@@ -103,21 +110,28 @@ namespace Meso {
 
 			//projection
 			//vel_div=div(velocity)
-			Exterior_Derivative(vel_div, velocity);
+			Exterior_Derivative(temp_field_dev, velocity);
+
+			div_host = temp_field_dev;
+			Update_Poisson_System(fixed_host, vol_host, div_host);
+
+			poisson.Init(fixed_host, vol_host);
+			MG_precond.Update_Poisson(poisson, 2, 2);
+			temp_field_dev = div_host;
 
 			int iter; real res;
-			MGPCG.Solve(pressure.Data(), vel_div.Data(), iter, res);
+			MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data(), iter, res);
 			Info("Solve poisson with {} iters and residual {}", iter, res);
 
 			//velocity+=grad(p)
-			Exterior_Derivative(temp_velocity, pressure);
-			temp_velocity *= poisson.vol;
+			Exterior_Derivative(temp_velocity_dev, pressure_dev);
+			temp_velocity_dev *= poisson.vol;
 
-			velocity += temp_velocity;
+			velocity += temp_velocity_dev;
 			psi_N.Apply(velocity);
 
-			Exterior_Derivative(vel_div, velocity);
-			Info("After projection max div {}", vel_div.Max_Abs());
+			Exterior_Derivative(temp_field_dev, velocity);
+			Info("After projection max div {}", temp_field_dev.Max_Abs());
 		}
 	};
 }
