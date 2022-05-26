@@ -161,12 +161,12 @@ namespace Meso {
 				const tinyobj::mesh_t& mesh = shapes[s].mesh;
 				// three vertices form a triagnle face 
 				for (size_t i = 0; i < mesh.indices.size() / 3; i++) {
-					meshes[s]->faces.push_back(Vector3i(
+					meshes[s]->elements.push_back(Vector3i(
 						mesh.indices[i * 3 + 0].vertex_index - v_begin,
 						mesh.indices[i * 3 + 1].vertex_index - v_begin,
 						mesh.indices[i * 3 + 2].vertex_index - v_begin));
 
-					v_end = std::max({ v_end, v_begin + (size_t)meshes[s]->faces.back().maxCoeff() });
+					v_end = std::max({ v_end, v_begin + (size_t)meshes[s]->elements.back().maxCoeff() });
 				}
 				for (size_t i = v_begin; i <= v_end; i++) {
 					(*meshes[s]->vertices).push_back(Vector3(attrib.vertices[i * 3 + 0], attrib.vertices[i * 3 + 1], attrib.vertices[i * 3 + 2]));
