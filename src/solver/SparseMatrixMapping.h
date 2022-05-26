@@ -12,6 +12,11 @@
 
 namespace Meso {
 
+	template<class T> using SparseMatrix = Eigen::SparseMatrix<T, Eigen::RowMajor, int>;
+	template<class T> using DiagonalMatrix = Eigen::DiagonalMatrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+	template<class T> using Triplet = Eigen::Triplet<T, int>;
+	template<class T> using InnerIterator = typename SparseMatrix<T>::InnerIterator;
+
 	template<class T>
 	cusparseDnVecDescr_t Create_DnVecDescr_t(T* x, int size) {//x must be on device
 		cusparseDnVecDescr_t vec_t = nullptr;
