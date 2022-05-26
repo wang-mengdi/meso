@@ -33,6 +33,7 @@ namespace Meso {
 		}
 
 		__host__ __device__ VectorDi Counts(void) { return counts; }
+		__host__ __device__ real Dx(void) { return dx; }
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
 		__host__ __device__ bool Valid(const int i, const int j = 0, const int k = 0)const {
 			if constexpr (d == 2) return 0 <= i && i < counts[0] && 0 <= j && j < counts[1];
