@@ -98,8 +98,8 @@ namespace Meso {
 			return max_val;
 		}
 
-		template<class IFFunc>
-		void Iterate_Faces(IFFunc f) {
+		template<class ICFunc>
+		void Iterate_Faces(ICFunc f) {
 			for (int axis = 0; axis < d; axis++) {
 				int n = grid.Face_DoF(axis);
 				for (int i = 0; i < n; i++) {
@@ -109,8 +109,8 @@ namespace Meso {
 			}
 		}
 
-		template<class IFFuncT>
-		void Calc_Faces(IFFuncT f) {
+		template<class ICFuncT>
+		void Calc_Faces(ICFuncT f) {
 			Grid<d> grid2 = grid;
 			for (int axis = 0; axis < d; axis++) {
 				Assert(face_data[axis] != nullptr, "FaceField::Calc_Faces error: nullptr data at axis {}", axis);
