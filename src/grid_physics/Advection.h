@@ -9,7 +9,7 @@
 #include "FaceField.h"
 #include "Interpolation.h"
 #include "AuxFunc.h"
-#include "BoundaryConditionMesh.h"
+#include "BoundaryCondition.h"
 
 namespace Meso {
 
