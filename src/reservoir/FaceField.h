@@ -68,7 +68,7 @@ namespace Meso {
 
 		void operator += (const Vector<T, d> vec) {
 			for (int axis = 0; axis < d; axis++) {
-				ArrayFunc::Add(Data(axis), vec[axis]);
+				ArrayFunc::Add_Scalar(Data(axis), vec[axis]);
 			}
 		}
 		void operator += (const FaceField<T, d, side>& f1) {
@@ -107,6 +107,11 @@ namespace Meso {
 					f(axis, face);
 				}
 			}
+		}
+
+		template<class ICFunc>
+		void Exec_Faces(ICFunc f) {
+			grid.Exec_Faces(f);
 		}
 
 		template<class ICFuncT>

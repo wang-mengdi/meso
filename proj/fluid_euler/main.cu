@@ -5,6 +5,7 @@
 #include "FluidEulerInitializer.h"
 #include "FluidImpulse.h"
 #include "FluidImpulseInitializer.h"
+#include "FluidFreeSurface.h"
 #include "Driver.h"
 using namespace Meso;
 
@@ -25,6 +26,9 @@ void Run_Fluid_Impulse(json& j) {
 }
 
 int main(int argc, char **argv) {
+	FluidFreeSurface<real, 2> fsf;
+	return 0;
+
 	try {
 		json j = {
 			{

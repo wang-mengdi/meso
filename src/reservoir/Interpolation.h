@@ -83,7 +83,7 @@ namespace Meso {
 	class PointIntpLinearClamp {
 	public:
 		template<class T, int d>
-		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> _coord, const Vector<real, d> _frac) {
 			static constexpr T padding_val = 0;
 			//considering invalid datas as 0
 			Typedef_VectorD(d);
@@ -91,6 +91,8 @@ namespace Meso {
 			static constexpr int dy[8] = { 0,0,1,1,0,0,1,1 };
 			static constexpr int dz[8] = { 0,0,0,0,1,1,1,1 };
 			//clamping
+			VectorDi coord = _coord;
+			VectorD frac = _frac;
 			for (int axis = 0; axis < d; axis++) {
 				if (coord[axis] < 0) coord[axis] = 0, frac[axis] = 0;
 				if (coord[axis] > grid.counts[axis] - 2) coord[axis] = grid.counts[axis] - 2, frac[axis] = 1;
