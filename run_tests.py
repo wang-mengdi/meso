@@ -15,11 +15,14 @@ def Run_Project(proj_name):
     #print(clean_cmd)
     #os.system(clean_cmd)
     print(config_cmd)
-    os.system(config_cmd)
+    ret=os.system(config_cmd)
+    assert (ret==0), "Config failed"
     print(compile_cmd)
-    os.system(compile_cmd)
+    ret=os.system(compile_cmd)
+    assert (ret==0), "Compilation failed"
     print(run_cmd)
-    os.system(run_cmd)
+    ret=os.system(run_cmd)
+    assert (ret==0), "Tests failed"
 
 if __name__=='__main__':
     #assert (len(sys.argv)==2), 'Error: must pass 1 parameter(s). Example: python make_project.py _tests_reservoir'

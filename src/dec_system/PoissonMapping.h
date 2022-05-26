@@ -7,7 +7,6 @@
 #include "LinearMapping.h"
 #include "Field.h"
 #include "FaceField.h"
-#include "LambdaHelper.h"
 #include "DifferentialExteriorCalculus.h"
 #include "AuxFunc.h"
 #include "BoundaryCondition.h"

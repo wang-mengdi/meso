@@ -161,7 +161,7 @@ static const char* _cudaGetErrorEnum(cudaError_t error) {
         fmt::print(fg(fmt::color::red), "#     ");
         fmt::print(fg(fmt::color::red), fmt_str, args...);
         fmt::print("\n");
-        exit(1);
+        exit(-1);
     }
     void Error(const std::string& str);
 
