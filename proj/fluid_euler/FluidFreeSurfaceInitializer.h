@@ -42,6 +42,10 @@ namespace Meso {
 			bc_val << 0, 0, 0, 0, 0, 0;
 
 			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+
+			Plane<d> plane(Vector<T, d>::Unit(1), grid.Center());
+
+			fluid.Init(j, geom, fixed, vol, face_fixed, initial_vel);
 		}
 	};
 }
