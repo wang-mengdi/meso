@@ -1,0 +1,15 @@
+{
+    "dimension": 2,
+    "driver": {
+        "cfl": 1.0,
+        "first_frame": 0,
+        "fps": 25,
+        "last_frame": 250,
+        "min_step_frame_fraction": 0.0,
+        "output_base_dir": "taylor"
+    },
+    "scene": {
+        "scale": 32,
+        "test": 3
+    }
+}
