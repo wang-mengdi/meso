@@ -1,3 +1,8 @@
+//////////////////////////////////////////////////////////////////////////
+// Marching Cubes Algorithm
+// Copyright (c) (2022-), Bo Zhu, Yunquan Gu
+// This file is part of MESO, whose distribution is governed by the LICENSE file.
+//////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Grid.h"
 #include "Field.h"
@@ -299,7 +304,7 @@ namespace Meso {
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1} };
 
 	template<class T, int d>
-	__host__ __device__ unsigned int Get_Cell_Type(const Field<T, d>& field, const Vector<int, d> cell_index, const real iso_value) {
+	__host__ unsigned int Get_Cell_Type(const Field<T, d>& field, const Vector<int, d> cell_index, const real iso_value) {
 		Typedef_VectorD(d);
 		unsigned int cell_type = 0;
 		if (field.Get(cell_index + VectorDi(0, 0, 0)) < iso_value) cell_type |= 1;
@@ -336,74 +341,71 @@ namespace Meso {
 		}
 	}
 
-	template<int d, class T>
-	T& Particle_Index_On_Edge(const Vector<int, d>& cell_index, const int edge_index, Array<Field<T, d>>& edge_grid_array)
+	template<int d>
+	__host__ int& Index_On_Edge(const Vector<int, d>& cell_index, const int edge_index, Field<int, d>* v_idx_on_edge)
 	{
 		Typedef_VectorD(d);
 		switch (edge_index) {
 			////axis-x edges
-		case 0:return edge_grid_array[0](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
-		case 2:return edge_grid_array[0](VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1));
-		case 4:return edge_grid_array[0](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]));
-		case 6:return edge_grid_array[0](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1));
+		case 0:return v_idx_on_edge[0](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
+		case 2:return v_idx_on_edge[0](VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1));
+		case 4:return v_idx_on_edge[0](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]));
+		case 6:return v_idx_on_edge[0](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1));
 			////axis-y edges
-		case 8:return edge_grid_array[1](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
-		case 9:return edge_grid_array[1](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]));
-		case 11:return edge_grid_array[1](VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1));
-		case 10:return edge_grid_array[1](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1));
+		case 8:return v_idx_on_edge[1](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
+		case 9:return v_idx_on_edge[1](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]));
+		case 11:return v_idx_on_edge[1](VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1));
+		case 10:return v_idx_on_edge[1](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1));
 			////axis-z edges
-		case 3:return edge_grid_array[2](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
-		case 1:return edge_grid_array[2](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]));
-		case 7:return edge_grid_array[2](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]));
-		case 5:return edge_grid_array[2](VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2]));
+		case 3:return v_idx_on_edge[2](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
+		case 1:return v_idx_on_edge[2](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]));
+		case 7:return v_idx_on_edge[2](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]));
+		case 5:return v_idx_on_edge[2](VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2]));
 		default: break;
 
 		}
 	}
 
 	template<class T, int d>
-	void Marching_Cubes(Field<T, d>& field, std::shared_ptr<TriangleMesh<d>> _mesh = nullptr, const real _contour_val = 0.) {
+	void Marching_Cubes_CPU(const Field<T, d>& field, std::shared_ptr<TriangleMesh<d>> _mesh = nullptr, const real _contour_val = 0.) {
 		Typedef_VectorD(d); Typedef_VectorEi(d);
+		
+		const Grid<d>& grid = field.grid; _mesh = (_mesh == nullptr) ? std::make_shared<TriangleMesh<3> >() : _mesh;
+		const VectorDi cell_counts = field.grid.counts - VectorDi::Ones();
 
-		Grid<d>& grid = field.grid; _mesh = (_mesh == nullptr) ? std::make_shared<TriangleMesh<3> >() : _mesh;
-		Array<Field<int, d>> edge_grid_array(3);
-		for (int i = 0;i < 3;i++) edge_grid_array[i].Init(Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx), -1);
+		Field<int, d> v_idx_on_edge[3]; for (int i = 0;i < 3;i++) v_idx_on_edge[i].Init(Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx), -1);
 
 		Array<VectorD>& vertices = *_mesh->vertices; vertices.clear();
 		Array<VectorEi>& elements = _mesh->elements; elements.clear();
 
-		const VectorDi cell_counts = field.grid.counts - VectorDi::Ones();
-		field.grid.Exec_Nodes([&](const VectorDi cell_index) {
+		grid.Exec_Nodes([&](const VectorDi cell_index) {
 			if ((cell_index - cell_counts).maxCoeff() == 0) return;
 			unsigned int cell_type = Get_Cell_Type<T, d>(field, cell_index, _contour_val);
 			int edge_type = edge_table[cell_type];
 
 			// go through all edges of one cell, then add vertex
 			for (size_t ei = 0; ei < 12; ei++) {
-				if (Has_Edge(edge_type, ei) && (Particle_Index_On_Edge<d, int>(cell_index, ei, edge_grid_array) == -1)) {
+				if (Has_Edge(edge_type, ei) && (Index_On_Edge<d>(cell_index, ei, v_idx_on_edge) == -1)) {
 					VectorDi v1, v2; Get_Edge_Vertex_Index<d>(cell_index, ei, v1, v2);
-					real alpha = (_contour_val - field.Get(v1)) / (field.Get(v2) - field.Get(v1));
+					T alpha = (_contour_val - field.Get(v1)) / (field.Get(v2) - field.Get(v1));
 					VectorD pos = (1 - alpha) * grid.Position(v1) + alpha * grid.Position(v2);
-					vertices.push_back(pos); Particle_Index_On_Edge<d, int>(cell_index, ei, edge_grid_array) = (int)vertices.size() - 1;
+					vertices.push_back(pos); Index_On_Edge<d>(cell_index, ei, v_idx_on_edge) = (int)vertices.size() - 1;
 				}
 
 			}
 			for (int ti = 0;triangle_table[cell_type][ti] != -1;ti += 3) {
 				VectorDi t;
-				t[0] = Particle_Index_On_Edge<d, int>(cell_index, triangle_table[cell_type][ti], edge_grid_array);
-				t[1] = Particle_Index_On_Edge<d, int>(cell_index, triangle_table[cell_type][ti + 1], edge_grid_array);
-				t[2] = Particle_Index_On_Edge<d, int>(cell_index, triangle_table[cell_type][ti + 2], edge_grid_array);
+				t[0] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 0], v_idx_on_edge);
+				t[1] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 1], v_idx_on_edge);
+				t[2] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 2], v_idx_on_edge);
 				elements.push_back(t);
 			}
 			});
 
 	}
 
-
-	// In progress
-
 	template<class T, int d>
-	__host__ __device__ unsigned int Get_Cell_Type_GPU(const Grid<d> field_grid, const T* field_data, const Vector<int, d> cell_index, const real iso_value) {
+	__device__ unsigned int Get_Cell_Type(const Grid<d> field_grid, const T* field_data, const Vector<int, d> cell_index, const real iso_value) {
 		Typedef_VectorD(d);
 		unsigned int cell_type = 0;
 		if (field_data[field_grid.Index(cell_index + VectorDi(0, 0, 0))] < iso_value) cell_type |= 1;
@@ -418,7 +420,7 @@ namespace Meso {
 	}
 
 	template<int d>
-	__host__ __device__ int& Index_On_Edge(
+	__device__ int& Index_On_Edge(
 		const Vector<int, d> cell_index,
 		const int edge_index,
 		const Grid<d>* edge_grid,
@@ -445,43 +447,6 @@ namespace Meso {
 
 		}
 	}
-	template<int d>
-	__host__ __device__ void Edge_Index(
-		const Vector<int, d> cell_index,
-		const Vector<int, d> cell_counts,
-		ArrayDv<int>& eis) {
-		if (cell_index[0] < cell_counts[0]) eis.push_back(0);
-		if (cell_index[1] < cell_counts[0]) eis.push_back(8);
-		if (cell_index[2] < cell_counts[0]) eis.push_back(3);
-	}
-	template<class T, int d>
-	__host__ __device__ T Get_Edge_Value(
-		const Vector<int, d> cell_index,
-		const int edge_index,
-		const Grid<d> x_grid, const Grid<d> y_grid, const Grid<d> z_grid,
-		const T* alpha_x, const T* alpha_y, const T* alpha_z)
-	{
-		Typedef_VectorD(d);
-		switch (edge_index) {
-			////axis-x edges
-		case 0: return alpha_x[x_grid.Index(VectorDi(cell_index[0], cell_index[1], cell_index[2]))]; break;
-		case 2: return alpha_x[x_grid.Index(VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1))]; break;
-		case 4: return alpha_x[x_grid.Index(VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]))]; break;
-		case 6: return alpha_x[x_grid.Index(VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1))]; break;
-			////axis-y edges
-		case 8:  return alpha_y[y_grid.Index(VectorDi(cell_index[0], cell_index[1], cell_index[2]))]; break;
-		case 9:  return alpha_y[y_grid.Index(VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]))]; break;
-		case 11: return alpha_y[y_grid.Index(VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1))]; break;
-		case 10: return alpha_y[y_grid.Index(VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1))]; break;
-			////axis-z edges
-		case 3: return alpha_z[z_grid.Index(VectorDi(cell_index[0], cell_index[1], cell_index[2]))]; break;
-		case 1: return alpha_z[z_grid.Index(VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]))]; break;
-		case 7: return alpha_z[z_grid.Index(VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]))]; break;
-		case 5: return alpha_z[z_grid.Index(VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2]))]; break;
-		default: break;
-
-		}
-	}
 
 	template<class T, int d>
 	__global__ static void Mesh_Count(
@@ -494,7 +459,7 @@ namespace Meso {
 	) {
 		Typedef_VectorD(d); Vector<int, d> cell_index = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		if ((cell_index - cell_counts).maxCoeff() == 0) return;
-		unsigned int cell_type = Get_Cell_Type_GPU<T, d>(field_grid, field_data, cell_index, _contour_val);
+		unsigned int cell_type = Get_Cell_Type<T, d>(field_grid, field_data, cell_index, _contour_val);
 		int edge_type = edge_table[cell_type];
 
 		// Reserve space for mesh
@@ -526,6 +491,7 @@ namespace Meso {
 			vertices[index] = pos;
 		}
 	}
+	
 	template<class T, int d>
 	__global__ static void Gen_Mesh(
 		const Vector<int, d> cell_counts,
@@ -539,7 +505,7 @@ namespace Meso {
 	) {
 		Typedef_VectorD(d); Vector<int, d> cell_index = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		if ((cell_index - cell_counts).maxCoeff() == 0) return;
-		unsigned int cell_type = Get_Cell_Type_GPU<T, d>(field_grid, field_data, cell_index, _contour_val);
+		unsigned int cell_type = Get_Cell_Type<T, d>(field_grid, field_data, cell_index, _contour_val);
 		int edge_type = edge_table[cell_type];
 
 		int start = window[field_grid.Index(cell_index)];
@@ -614,5 +580,19 @@ namespace Meso {
 
 		*_mesh->vertices = vertices;
 		_mesh->elements = elements;
+	}
+
+	template<class T, int d, DataHolder side = HOST>
+	void Marching_Cubes(
+		const Field<T, d, side>& field,
+		std::shared_ptr<TriangleMesh<d>> _mesh = nullptr,
+		const real _contour_val = 0.
+	) {
+		if constexpr (side == HOST) {
+			Marching_Cubes_CPU(field, _mesh, _contour_val);
+		}
+		else {
+			Marching_Cubes_GPU(field, _mesh, _contour_val);
+		}
 	}
 }

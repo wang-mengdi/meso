@@ -1,9 +1,14 @@
+//////////////////////////////////////////////////////////////////////////
+// Test marching cubes algorithm
+// Copyright (c) (2022-), Yunquan Gu
+// This file is part of MESO, whose distribution is governed by the LICENSE file.
+//////////////////////////////////////////////////////////////////////////
 #pragma once
 
 #include "Grid.h"
 #include "Field.h"
 #include "Mesh.h"
-#include "MarchingCubes.cu"
+#include "MarchingCubes.h"
 #include "Timer.h"
 namespace Meso {
 
@@ -31,7 +36,7 @@ namespace Meso {
 		timer.Reset();
 		for (size_t i = 0; i < times; i++)
 		{
-			Marching_Cubes<T, d>(field, m);
+			Marching_Cubes<T, d, HOST>(field, m);
 			double time = timer.Lap_Time(PhysicalUnits::s);
 			double total_time = timer.Total_Time(PhysicalUnits::s);
 			if (verbose) Info("Used time: {:.2f}s/{:.2f}s, ETA {:.2f}s", time, total_time, total_time / (i + 1));
@@ -68,7 +73,7 @@ namespace Meso {
 		timer.Reset();
 		for (size_t i = 0; i < times; i++)
 		{
-			Marching_Cubes_GPU<T, d>(field, m);
+			Marching_Cubes<T, d, DEVICE>(field, m);
 			double time = timer.Lap_Time(PhysicalUnits::s);
 			double total_time = timer.Total_Time(PhysicalUnits::s);
 			if(verbose) Info("Used time: {:.2f}s/{:.2f}s, ETA {:.2f}s", time, total_time, total_time / (i+1));
@@ -82,11 +87,8 @@ namespace Meso {
 
 	template<class T, int d>
 	void Test_Marching_Cubes() {
-		bool verbose = false;
-		int times = 1;
+		bool verbose = true; int times = 1;
 		Test_Marching_Cubes_CPU<T, d>(times, verbose);
 		Test_Marching_Cubes_GPU<T, d>(times, verbose);
-
-
 	}
 }
