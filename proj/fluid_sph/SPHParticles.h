@@ -14,11 +14,15 @@ namespace Meso {
 	public:
 		SPHParticles() : NAParticles<d>()  {}
 
-		Setup_Attribute(rho, real, 1.0);
-		Setup_Attribute(nden, real, 1.0);
-		Setup_Attribute(V, real, 1.0); //control volume (or control area in 2D)
+		Setup_Attribute(rho, real, 1.);
+		Setup_Attribute(nden, real, 1.);
+		Setup_Attribute(V, real, 1.); //control volume (or control area in 2D)
 		Setup_Attribute(u, VectorD, VectorD::Zero()); //velocity
+		Setup_Attribute(acc, VectorD, VectorD::Zero()); //acceleration
 		Setup_Attribute(B, int, 0); //whether is boundary
+
+		Setup_Attribute(bnd_phi, real, 0.); //signed distance to boundary
+		Setup_Attribute(bnd_n, VectorD, VectorD::Unit(0)); //normal vector to boundary
 
 		Array<Neighbors> nbs_info;
 

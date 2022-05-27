@@ -9,6 +9,7 @@
 #include "SPHParticles.h"
 #include "SPHIO.h"
 #include "SPH.h"
+#include "AnalyticalBoundary.h"
 
 namespace Meso {
 
@@ -19,6 +20,7 @@ namespace Meso {
 		FluidSPH() : Simulator() {}
 
 		SPHParticles<d> particles;
+		AnalyticalBoundary<d> boundary;
 
 		void Init() {
 			particles.Update_Searcher();
@@ -40,6 +42,14 @@ namespace Meso {
 			return 4. * particles.dx;
 		}
 
+		int Boundary(const int i) const {
+			return particles.B(i);
+		}
+
+		int Has_Boundary(void) const {
+			return boundary.Available();
+		}
+			
 		void Register_Nbs(void) {
 			if (particles.nbs_info.size() != particles.Size()) particles.nbs_info.resize(particles.Size());
 #pragma omp parallel for
@@ -49,8 +59,69 @@ namespace Meso {
 			}
 		}
 
+		void Body_Force(const real dt) {
+#pragma omp parallel for
+			for (int i = 0; i < particles.Size(); i++) {
+				particles.acc(i) += -VectorD::Unit(0);
+			}
+		}
+
+		void Update_Position(const real dt) {
+#pragma omp parallel for
+			for (int i = 0; i < particles.Size(); i++) {
+				particles.u(i) += dt * particles.acc(i);
+			}
+#pragma omp parallel for
+			for (int i = 0; i < particles.Size(); i++) {
+				if (Boundary(i)) particles.u(i) *= 0.;
+			}
+#pragma omp parallel for
+			for (int i = 0; i < particles.Size(); i++) {
+				particles.x(i) += dt * particles.u(i);
+			}
+		}
+
+		void Prepare_Advance(void) {
+#pragma omp parallel for
+			for (int i = 0; i < particles.Size(); i++) {
+				particles.acc(i) *= 0.;
+			}
+		}
+
+		void Update_Phis(void)
+		{
+#pragma omp parallel for
+			for (int i = 0; i < particles.Size(); i++) {
+				real phi; VectorD normal;
+				bool flg = boundary.Get_Nearest_Boundary(particles.x(i), phi, normal);
+				particles.bnd_phi(i) = phi;
+				particles.bnd_n(i) = normal;
+			}
+		}
+
+		void Enforce_Boundary(const real dt) {
+			Update_Phis();
+#pragma omp parallel for
+			for (int i = 0; i < particles.Size(); i++) {
+				if (!Boundary(i)) {
+					real phi = particles.bnd_phi(i);
+					if (phi > 0) {
+						//particles.B(i) = 1;
+						VectorD normal = particles.bnd_n(i);
+						VectorD normal_velocity = particles.u(i).dot(normal) * normal;
+						VectorD tangential_velocity = particles.u(i) - normal_velocity;
+						VectorD displacement = normal * phi;
+						particles.u(i) = tangential_velocity + displacement / dt;
+					}
+				}
+			}
+		}
+
 		virtual void Advance(const int current_frame, const real current_time, const real dt) {
 			Info("Advancing");
+			Body_Force(dt);
+			Update_Position(dt);
+			if (Has_Boundary()) Enforce_Boundary(dt);
 		}
 	};
 }
