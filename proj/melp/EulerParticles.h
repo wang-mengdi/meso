@@ -26,11 +26,16 @@ namespace Meso {
 
 		Array<Neighbors> nbs_info;
 
-		real dx = 1;
+		real dx = 1.;
 
 		// normal vector i
 		VectorD Normal(int i) {
 			return E(i).col(d-1);
+		}
+
+		// metric tensor of i
+		MatrixT Metric(int i) {
+			return g(i).inverse();
 		}
 
 		// search radius for i

@@ -41,4 +41,14 @@ namespace Meso {
 	{
 		return l_nbs[k];
 	}
+
+	const Array<int>& Neighbors::e(void)const
+	{
+		return e_nbs;
+	}
+
+	const Array<int>& Neighbors::l(void)const
+	{
+		return l_nbs;
+	}
 }

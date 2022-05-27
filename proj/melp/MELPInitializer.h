@@ -31,12 +31,23 @@ namespace Meso {
 		// Case 0
 		void Case_0(json& j, MELP<d>& fluid) {
 			std::cout << "Initializing case 0." << std::endl;
+			//if constexpr (d == 3) {
+			//	fluid.e_particles.dx = Initialize_Sphere_Points_Regular(Vector3::Zero(), 1., 1000, fluid.e_particles, fluid.e_particles.xRef());
+			//	//fluid.e_particles.dx = fineness;
+			//	//Initialize_Lattice_Points(Vector3::Zero(), 30, 30, Vector3::Unit(0), Vector3::Unit(1), fluid.e_particles, fluid.e_particles.xRef());
+			//	//fluid.e_particles.dx = 1;
+			//}
+			//fluid.Init();
 			if constexpr (d == 3) {
-				//fluid.e_particles.dx = Initialize_Sphere_Points_Regular(Vector3::Zero(), scale, 1000, fluid.e_particles, fluid.e_particles.xRef());
-				fluid.e_particles.dx = fineness;
-				Initialize_Lattice_Points(Vector3::Zero(), scale, scale, fineness * Vector3::Unit(0), fineness * Vector3::Unit(1), fluid.e_particles, fluid.e_particles.xRef());
+				fluid.e_particles.dx = Initialize_Sphere_Points_Regular(Vector3::Zero(), scale, 1000, fluid.e_particles, fluid.e_particles.xRef());
+#pragma omp parallel for
+				for (int i = 0; i < fluid.e_particles.Size(); i++) {
+					fluid.e_particles.x(i)[0] *= 1.25;
+				}
 			}
 			fluid.Init();
+			fluid.enclosed_vol = fluid.Compute_Enclosed_Volume();
+			fluid.enclosed_amount = fluid.enclosed_vol * (fluid.p_out);
 		}
 	};
 }

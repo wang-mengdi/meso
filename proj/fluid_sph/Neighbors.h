@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 // Neighbors
-// Copyright (c) (2022-), Bo Zhu, Mengdi Wang, Yitong Deng
+// Copyright (c) (2022-), Yitong Deng
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
@@ -10,17 +10,12 @@
 namespace Meso {
 	class Neighbors {
 	private:
-		Array<int> e_nbs;
-		Array<int> l_nbs;
+		Array<int> nbs;
 	public:
 		Neighbors();
-		void set_e(const Array<int>& nbs);
-		void set_l(const Array<int>& nbs);
-		int size_e(void)const;
-		int size_l(void)const;
-		int e(int k)const;
-		int l(int k)const;
-		const Array<int>& e(void)const;
-		const Array<int>& l(void)const;
+		void set(const Array<int>& nbs);
+		int size(void)const;
+		int operator[](int k)const;
+		const Array<int>& operator()(void)const;
 	};
 }

@@ -38,7 +38,7 @@ namespace Meso {
 		T Sum(const VectorD& my_pos, const MatrixD& frame,
 			const Array<T>& f, const Array<VectorD>& pos, const Array<int>& nbs,
 			const real radius, KernelType kernel_type = KernelType::QUINTIC) {
-			std::function<T(const int)>& f_func = [&](const int idx)->T {return f[idx];};
+			std::function<T(const int)> f_func = [&](const int idx)->T {return f[idx];};
 			return Sum(my_pos, frame, f_func, pos, nbs, radius, kernel_type);
 		}
 
