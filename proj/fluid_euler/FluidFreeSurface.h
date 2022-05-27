@@ -20,8 +20,9 @@ namespace Meso {
 		T air_density;//we assume the density of fluid is 1
 		Vector<T, d> gravity_acc;
 		FaceFieldDv<T, d> velocity;
-		BoundaryConditionDirect<Field<bool, d>> psi_D;
-		BoundaryConditionDirect<FaceFieldDv<T, d>> psi_N;
+		BoundaryConditionDirect<Field<bool, d>> fixed_bc;
+		BoundaryConditionDirect<FaceField<T, d>> vol_bc;
+		BoundaryConditionDirect<FaceFieldDv<T, d>> velocity_bc;
 		LevelSet<d, PointIntpLinearClamp, HOST> levelset;
 
 		FaceFieldDv<T, d> temp_velocity_dev;
@@ -35,14 +36,15 @@ namespace Meso {
 		VCycleMultigridIntp<T, d> MG_precond;
 		ConjugateGradient<T> MGPCG;
 
+
 		void Update_Poisson_System(Field<bool, d>& fixed, FaceField<T, d>& vol, Field<T, d>& div) {
 			Grid<d> grid = velocity.grid;
 			fixed.Init(grid);
 			vol.Init(grid);
 			div.Init(grid);
 
-			//first mark all psi_D to fixed
-			psi_D.Apply(fixed);
+			//first mark all boundary condition of fixed cells
+			fixed_bc.Apply(fixed);
 			//then mark all air cells to fixed
 			fixed.Exec_Nodes(
 				[&](const VectorDi cell) {
@@ -106,7 +108,7 @@ namespace Meso {
 			
 			//Add body forces
 			velocity += (gravity_acc * dt);
-			psi_N.Apply(velocity);
+			velocity_bc.Apply(velocity);
 
 			//projection
 			//vel_div=div(velocity)
@@ -128,7 +130,7 @@ namespace Meso {
 			temp_velocity_dev *= poisson.vol;
 
 			velocity += temp_velocity_dev;
-			psi_N.Apply(velocity);
+			velocity_bc.Apply(velocity);
 
 			Exterior_Derivative(temp_field_dev, velocity);
 			Info("After projection max div {}", temp_field_dev.Max_Abs());
