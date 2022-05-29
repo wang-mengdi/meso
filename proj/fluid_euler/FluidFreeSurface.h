@@ -17,13 +17,19 @@ namespace Meso {
 	class FluidFreeSurface : public Simulator {
 		Typedef_VectorD(d);
 	public:
+		//Needs to be initialized
 		T air_density;//we assume the density of fluid is 1
 		Vector<T, d> gravity_acc;
 		FaceFieldDv<T, d> velocity;
-		BoundaryConditionDirect<Field<bool, d>> psi_D;
-		BoundaryConditionDirect<FaceFieldDv<T, d>> psi_N;
+		BoundaryConditionDirect<Field<bool, d>> fixed_bc;
+		BoundaryConditionDirect<FaceField<T, d>> vol_bc;
+		BoundaryConditionDirect<FaceFieldDv<T, d>> velocity_bc;
 		LevelSet<d, PointIntpLinearClamp, HOST> levelset;
+		MaskedPoissonMapping<T, d> poisson;
+		VCycleMultigridIntp<T, d> MG_precond;
+		ConjugateGradient<T> MGPCG;
 
+		//Temporary variables, don't need to be initialized
 		FaceFieldDv<T, d> temp_velocity_dev;
 		FieldDv<T, d> temp_phi_dev;
 		FieldDv<T, d> temp_field_dev;
@@ -31,9 +37,20 @@ namespace Meso {
 		Field<bool, d> fixed_host;
 		FaceField<T, d> vol_host;
 		Field<T, d> div_host;
-		MaskedPoissonMapping<T, d> poisson;
-		VCycleMultigridIntp<T, d> MG_precond;
-		ConjugateGradient<T> MGPCG;
+
+		void Init(json& j, ImplicitGeometry<d>& geom, Field<bool, d>& fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
+			air_density = Json::Value<T>(j, "air_density", 1e-3);
+			gravity_acc = Json::Value<Vector<T, d>>("gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
+			velocity = initial_velocity;
+			velocity_bc.Init(face_fixed, initial_velocity);
+			vol_bc.Init(face_fixed, vol);
+			levelset.Init(velocity.grid);
+			levelset.Set_Geometry(geom);
+
+			poisson.Init(velocity.grid);
+			MG_precond.Allocate_Poisson(velocity.grid);
+			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
+		}
 
 		void Update_Poisson_System(Field<bool, d>& fixed, FaceField<T, d>& vol, Field<T, d>& div) {
 			Grid<d> grid = velocity.grid;
@@ -41,8 +58,8 @@ namespace Meso {
 			vol.Init(grid);
 			div.Init(grid);
 
-			//first mark all psi_D to fixed
-			psi_D.Apply(fixed);
+			//first mark all boundary condition of fixed cells
+			fixed_bc.Apply(fixed);
 			//then mark all air cells to fixed
 			fixed.Exec_Nodes(
 				[&](const VectorDi cell) {
@@ -106,7 +123,7 @@ namespace Meso {
 			
 			//Add body forces
 			velocity += (gravity_acc * dt);
-			psi_N.Apply(velocity);
+			velocity_bc.Apply(velocity);
 
 			//projection
 			//vel_div=div(velocity)
@@ -128,7 +145,7 @@ namespace Meso {
 			temp_velocity_dev *= poisson.vol;
 
 			velocity += temp_velocity_dev;
-			psi_N.Apply(velocity);
+			velocity_bc.Apply(velocity);
 
 			Exterior_Derivative(temp_field_dev, velocity);
 			Info("After projection max div {}", temp_field_dev.Max_Abs());

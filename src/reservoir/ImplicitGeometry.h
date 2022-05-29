@@ -35,4 +35,22 @@ namespace Meso {
 		virtual real Phi(const VectorD& pos) const { return (pos - center).norm() - radius; }
 		virtual VectorD Normal(const VectorD& pos) const { return (pos - center).normalized(); }
 	};
+
+	template<int d> 
+	class Plane : public ImplicitGeometry<d>
+	{
+		Typedef_VectorD(d);
+	public:
+		VectorD n;
+		VectorD p;
+		real b;
+
+		Plane(const VectorD _n, const VectorD _p) :n(_n), p(_p) { n.normalize(); b = n.dot(p); }
+		Plane<d>& operator=(const Plane<d>& copy) { n = copy.n; p = copy.p; b = copy.b; return *this; }
+		Plane(const Plane<d>& copy) { *this = copy; }
+
+		virtual bool Inside(const VectorD& pos) const { return n.dot(pos) - b < (real)0; }
+		virtual real Phi(const VectorD& pos) const { return (n.dot(pos) - b); }
+		virtual VectorD Normal(const VectorD& pos) const { return n; }
+	};
 }
