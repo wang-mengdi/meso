@@ -15,10 +15,13 @@
 #include "SparseFunc.h"
 
 using namespace Meso;
+enum class AdvanceMode { Explicit, Implicit, Quasistatic };
+
 template<int d> class DiscreteShell : public Meso::Simulator
 {
 	Typedef_VectorD(d); Typedef_MatrixD(d); 
 public:
+	AdvanceMode advance_mode=AdvanceMode::Implicit;
 	DiscreteShellParticles<d> particles;
 	std::shared_ptr< SurfaceMesh<d> > mesh=nullptr;
 	HashtableMultiValue<Vector<int,d-1>,int> edge_element_hashtable; //edge (vertices indices: 2 for 3d, 1 for 2d) to face index
@@ -41,7 +44,6 @@ public:
 	Array<Vector2i> edges;			//edges in 3d
 	Array<real> theta_hats;			//theta at resting position, defined on edges
 	Array<real> lambdas;			//coefficient for bending, defined on edges
-	//Todo:: Add alpha defined on vertices/edges?
 
 	//intermediate variables for calculating bending hessian, only for the 3 dimensional case
 	Array<ArrayF<Vector3, 3>> ls;
@@ -53,15 +55,14 @@ public:
 	Array<ArrayF<Matrix3, 3>> grad_ns;
 	Array<Array2DF<ArrayF<Vector3, 2>,3,3>> grad_rs; //2 grads (+-) of Vector3 for each q and each vertex in a triangle
 	
-	bool use_exact_hessian = false;		//turn on when the solver is used for optimization, otherwise the we use Gauss-Newton approximation for the forward solve 
-	bool use_explicit= false;		
+	bool use_exact_hessian = true;		//turn on when the solver is used for optimization, otherwise the we use Gauss-Newton approximation for the forward solve 
 	bool use_body_force=true;
 	VectorD g=VectorD::Unit(1)*-9.8;
 	real damping;						//damping constant
 
 	virtual real CFL_Time(const real cfl);
-	virtual void Output(const bf::path base_path, const int frame);
-	virtual void Advance(const int current_frame, const real current_time, const real dt);
+	virtual void Output(DriverMetaData& metadata);
+	virtual void Advance(DriverMetaData& metadata);
 	void Initialize(SurfaceMesh<d>& _mesh);
 	void Allocate_A();
 	void Initialize_Material();
@@ -69,7 +70,7 @@ public:
 	//Three advancing methods
 	void Advance_Explicit(const real dt);
 	void Advance_Implicit(const real dt);
-	void Advance_Quasi_Static();
+	void Advance_Quasistatic();
 
 	void Add_Material(real youngs,real poisson);
 	void Set_Fixed(const int node);
@@ -81,10 +82,11 @@ public:
 
 	//System assembling for the implicit solver, used in Advance_Implicit
 	void Clear_A_And_Rhs();
-	void Update_Implicit_Force_And_Mass(const real dt);
-	void Update_Implicit_Stretching(const real dt);
-	void Update_Implicit_Bending(const real dt);
-	void Update_Implicit_Boundary_Condition(const real dt);
+	void Update_Implicit_Force_And_Mass(const real dt=1.0);
+	void Update_Implicit_Stretching(const real dt=1.0);
+	void Update_Implicit_Bending(const real dt=1.0);
+	void Update_Implicit_Boundary_Condition();
+	void Solve();
 
 	//Computation of physical quantities
 	void Grad_Stretch(const int ele_idx, MatrixD& grad);
@@ -105,8 +107,10 @@ public:
 	inline real Bending_Energy(int jct_idx, const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx);
 	real Total_Stretching_Energy();
 	real Total_Bending_Energy();
+	real Total_Potential_Energy();
+	real Total_Energy();
 	inline real Ks(real youngs, real density, real poisson) const { return youngs * density / ((real)1 - poisson * poisson); }
-	inline real Kb(real density, real ks, real alpha = (real)1) const { return alpha * ks * density * density / (real)12; } //alpha is used for anisotropic bending stiffness
+	inline real Kb(real density, real ks) const { return ks * density * density / (real)12; }
 	inline real Lambda(real kb, real a_hat, real l_hat = (real)1);
 	real Lambda(const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx);
 	void Reset_To_Rest_Position();
@@ -139,6 +143,5 @@ public:
 	Array2DF<MatrixD, d + 1, d + 1> Numerical_Hess_Theta(const ArrayF<int, d + 1>& vtx_idx,const ArrayF<int, 2>& ele_idx, const Eigen::Matrix<real, d, d + 1>& grad_theta);
 
 protected:
-	void Set_Block(Array<real>& b, const int i, const VectorD& bi);
 	void Add_Block(Array<real>& b, const int i, const VectorD& bi);
 };

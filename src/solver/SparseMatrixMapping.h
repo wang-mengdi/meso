@@ -24,15 +24,14 @@ namespace Meso {
 		return vec_t;
 	}
 
-
 	////The sparse matrix is stored in CRS format
 	template<class T, DataHolder side> class SparseMatrixMapping : public LinearMapping<T>
 	{
 	public:
 		bool realloc_on_shrink = true;
 		////crs matrix
-		int m = 0;					////rows
-		int n = 0;					////cols
+		int m = 0;						////rows
+		int n = 0;						////cols
 		int nnz = 0;					////nonzeros
 		Array<int, side> ptr, col;
 		Array<T, side> val;

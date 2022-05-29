@@ -44,6 +44,7 @@ namespace Meso {
 			Print_Frame_Info(frame_timer, meta_data);
 			Info("Output frame {} to {}", meta_data.current_frame, meta_data.output_base_dir);
 			simulator.Output(meta_data);
+			meta_data.current_frame += 1;
 
 			//run frames
 			for (int& current_frame = meta_data.current_frame; current_frame <= meta_data.last_frame; current_frame++) {

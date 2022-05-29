@@ -125,7 +125,7 @@ public:
 			ArrayF<int, d + 1> vtx_idx;
 			ArrayF<int, 2> ele_idx;
 			if (Junction_Info(jct_idx, vtx_idx, ele_idx)) { //shared edge
-				lambdas[jct_idx] = Lambda(vtx_idx, ele_idx);
+				lambdas[jct_idx] = Base::Lambda(vtx_idx, ele_idx);
 			}
 		}
 	}
@@ -357,10 +357,9 @@ public:
 		real ks1 = Ks(mat1.youngs_modulus, avg_h1, mat1.poisson_ratio);	//although it really simplifies the calculation
 		real ks_bar = (real)0.5 * (ks0 + ks1);
 
-		real alpha = 1;
 		real dks_b_drho0 = (real)1 / (real)6 * mat0.youngs_modulus / ((real)1 - mat0.poisson_ratio * mat0.poisson_ratio) * avg_h * avg_h;
 		real dks_b_drho1 = (real)1 / (real)6 * mat1.youngs_modulus / ((real)1 - mat1.poisson_ratio * mat1.poisson_ratio) * avg_h * avg_h;
-		real coef1 = alpha * l_hat * l_hat / (real)48 / a_hat; // another two is in a_hat adding together two area_hat;
+		real coef1 = l_hat * l_hat / (real)48 / a_hat; // another two is in a_hat adding together two area_hat;
 		real coef2 = (real)0.5 * ks_bar * avg_h;
 
 		if constexpr (d == 3) {
