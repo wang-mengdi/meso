@@ -27,10 +27,6 @@ void Run_Fluid_Impulse(json& j) {
 }
 
 int main(int argc, char **argv) {
-	FluidFreeSurface<real, 2> fsf;
-	FluidFreeSurfaceInitializer<real, 2> fit;
-	return 0;
-
 	try {
 		json j = {
 			{
