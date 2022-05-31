@@ -3,13 +3,24 @@
 #include "Json.h"
 #include "FluidEuler.h"
 #include "FluidEulerInitializer.h"
+#include "FluidImpulse.h"
+#include "FluidImpulseInitializer.h"
+#include "FluidFreeSurface.h"
 #include "Driver.h"
 using namespace Meso;
 
 template<int d>
-void Run(json &j) {
+void Run_Fluid_Euler(json &j) {
 	FluidEuler<d> fluid;
 	FluidEulerInitializer<d> scene;
+	Driver driver;
+	driver.Run(j, scene, fluid);
+}
+
+template<int d>
+void Run_Fluid_Impulse(json& j) {
+	FluidImpulse<d> fluid;
+	FluidImpulseInitializer<d> scene;
 	Driver driver;
 	driver.Run(j, scene, fluid);
 }
@@ -30,10 +41,19 @@ int main(int argc, char **argv) {
 			json_input >> j;
 			json_input.close();
 		}
-		//int dim = 2;
+
 		int dim = Json::Value(j, "dimension", 2);
-		if (dim == 2) Run<2>(j);
-		else if (dim == 3) Run<3>(j);
+		std::string simulator=Json::Value(j, "simulator", std::string("euler"));
+		
+		if (simulator == "euler") {
+			if (dim == 2) { Run_Fluid_Euler<2>(j); }
+			else if (dim == 3) { Run_Fluid_Euler<3>(j); }
+		}
+		else if (simulator == "impulse") {
+			if (dim == 2) { Run_Fluid_Impulse<2>(j); }
+			else if (dim == 3) { Run_Fluid_Impulse<3>(j); }
+		}
+
 	}
 	catch (nlohmann::json::exception& e)
 	{

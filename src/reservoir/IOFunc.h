@@ -6,6 +6,7 @@
 #pragma once
 #include "Interpolation.h"
 #include "Mesh.h"
+#include <vtkNew.h>
 #include <vtkXMLStructuredGridWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkStructuredGrid.h>
@@ -39,15 +40,15 @@ namespace Meso {
 			}
 
 			// setup VTK
-			vtkXMLStructuredGridWriter* writer = vtkXMLStructuredGridWriter::New();
-			vtkStructuredGrid* structured_grid = vtkStructuredGrid::New();
+			vtkNew<vtkXMLStructuredGridWriter> writer;
+			vtkNew<vtkStructuredGrid> structured_grid;
 			structured_grid->SetDimensions(nx, ny, nz);
-			vtkPoints* nodes = vtkPoints::New();
+			vtkNew<vtkPoints> nodes;
 			nodes->Allocate(nx * ny * nz);
 			//vtkDoubleArray* prsArray = vtkDoubleArray::New();
 			//prsArray->SetNumberOfComponents(1);
 			//prsArray->SetName("Pressure");
-			vtkDoubleArray* velArray = vtkDoubleArray::New();
+			vtkNew<vtkDoubleArray> velArray;
 			velArray->SetName("Velocity");
 			velArray->SetNumberOfComponents(3);
 
@@ -91,11 +92,6 @@ namespace Meso {
 			writer->SetFileName(file_name.c_str());
 			writer->SetDataModeToBinary();
 			writer->Write();
-
-			structured_grid->Delete();
-			writer->Delete();
-			nodes->Delete();
-			velArray->Delete();
 		}
 
 		template<int d>
@@ -164,12 +160,12 @@ namespace Meso {
 				const tinyobj::mesh_t& mesh = shapes[s].mesh;
 				// three vertices form a triagnle face 
 				for (size_t i = 0; i < mesh.indices.size() / 3; i++) {
-					meshes[s]->faces.push_back(Vector3i(
+					meshes[s]->elements.push_back(Vector3i(
 						mesh.indices[i * 3 + 0].vertex_index - v_begin,
 						mesh.indices[i * 3 + 1].vertex_index - v_begin,
 						mesh.indices[i * 3 + 2].vertex_index - v_begin));
 
-					v_end = std::max({ v_end, v_begin + (size_t)meshes[s]->faces.back().maxCoeff() });
+					v_end = std::max({ v_end, v_begin + (size_t)meshes[s]->elements.back().maxCoeff() });
 				}
 				for (size_t i = v_begin; i <= v_end; i++) {
 					(*meshes[s]->vertices).push_back(Vector3(attrib.vertices[i * 3 + 0], attrib.vertices[i * 3 + 1], attrib.vertices[i * 3 + 2]));
@@ -204,11 +200,11 @@ namespace Meso {
 				}
 
 				shapes[m] = tinyobj::shape_t();
-				for (size_t f = 0; f < mesh->Faces().size(); f++) {
+				for (size_t f = 0; f < mesh->Elements().size(); f++) {
 					shapes[m].mesh.num_face_vertices.push_back(3);
-					shapes[m].mesh.indices.push_back({ mesh->Faces()[f][0] + offset / 3, -1, -1 });
-					shapes[m].mesh.indices.push_back({ mesh->Faces()[f][1] + offset / 3, -1, -1 });
-					shapes[m].mesh.indices.push_back({ mesh->Faces()[f][2] + offset / 3, -1, -1 });
+					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][0] + offset / 3, -1, -1 });
+					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][1] + offset / 3, -1, -1 });
+					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][2] + offset / 3, -1, -1 });
 				}
 			}
 

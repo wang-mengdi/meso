@@ -6,8 +6,9 @@
 #pragma once
 
 #include "FluidEuler.h"
-#include "GeometryPrimitives.h"
+#include "ImplicitGeometry.h"
 #include "Json.h"
+#include "GridEulerFunc.h"
 
 namespace Meso {
 	template<int d>
@@ -31,83 +32,11 @@ namespace Meso {
 			}
 		}
 
-		bool Cell_In_Boundary(const Grid<d> grid, const VectorDi cell, int axis, int side, int width) {
-			if (side == 0) return cell[axis] < width;
-			else if (side == 1) return cell[axis] >= grid.counts[axis] - width;
-			return false;
-		}
-
-		bool Face_In_Boundary(const Grid<d> grid, int axis, const VectorDi face, int chk_axis, int side, int width) {
-			int lbound = width;
-			int rbound = (width == -1) ? grid.Face_Grid(axis).counts[chk_axis] + 1 : grid.counts[chk_axis] - width;
-			if (side == 0) {
-				if (axis == chk_axis) return face[chk_axis] <= lbound;
-				else return face[chk_axis] < lbound;
-			}
-			else if (side == 1) {
-				return face[chk_axis] >= rbound;
-			}
-			else return false;
-		}
-
-		//all these passed fields are not initialized before
-		void Set_Boundary(const Grid<d> grid, const Eigen::Matrix<int, 3, 2> bc_width, const Eigen::Matrix<real, 3, 2> bc_val,
-			Field<bool, d>& cell_fixed, FaceField<real, d>& vol, FaceField<bool, d> &face_fixed, FaceField<real, d>& boundary_vel) {
-			cell_fixed.Init(grid);
-			vol.Init(grid);
-			face_fixed.Init(grid);
-			boundary_vel.Init(grid);
-
-			grid.Exec_Nodes(
-				[&](const VectorDi cell) {
-					cell_fixed(cell) = false;
-					for (int axis = 0; axis < d; axis++) {
-						for (int side = 0; side < 2; side++) {
-							if (Cell_In_Boundary(grid, cell, axis, side, bc_width(axis,side))) {
-								cell_fixed(cell) = true;
-								return;
-							}
-						}
-					}
-				}
-			);
-
-			grid.Exec_Faces(
-				[&](const int axis, const VectorDi face) {
-					vol(axis, face) = 1;
-					face_fixed(axis, face) = false;
-					boundary_vel(axis, face) = 0;
-					int in_cnt = 0, _chk_axis, _side;
-					for (int chk_axis = 0; chk_axis < d; chk_axis++) {
-						for (int side = 0; side < 2; side++) {
-							if (Face_In_Boundary(grid, axis, face, chk_axis, side, bc_width(chk_axis, side))) {
-								in_cnt++;
-								_chk_axis = chk_axis;
-								_side = side;
-							}
-						}
-					}
-					if (in_cnt > 0) {
-						if (in_cnt == 1 && axis == _chk_axis) {
-							vol(axis, face) = 0;
-							face_fixed(axis, face) = true;
-							boundary_vel(axis, face) = bc_val(_chk_axis, _side);
-						}
-						else {
-							vol(axis, face) = 0;
-							face_fixed(axis, face) = true;
-							boundary_vel(axis, face) = 0;
-						}
-					}
-				}
-			);
-		}
-
 		//an empty field with inflow boundary condition v=1
 		void Case_0(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * VectorFunc::Vi<d>(2, 1, 1);
+			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
@@ -115,7 +44,7 @@ namespace Meso {
 			bc_width << 0, -1, 0, 0, 0, 0;
 			bc_val << 1, 1, 0, 0, 0, 0;
 
-			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
 			ArrayFunc::Fill(fluid.velocity.Data(0), 1.0);
 		}
@@ -123,7 +52,7 @@ namespace Meso {
 		void Case_1(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * VectorFunc::Vi<d>(1, 1, 1);
+			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
@@ -131,7 +60,7 @@ namespace Meso {
 			bc_width << 1, 1, 1, 1, 1, 1;
 			bc_val << 0, 0, 0, 0, 0, 0;
 
-			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
@@ -151,7 +80,7 @@ namespace Meso {
 		void Case_2(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * VectorFunc::Vi<d>(2, 1, 1);
+			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
@@ -165,7 +94,7 @@ namespace Meso {
 			real r = (real)0.1;
 			Sphere<d> sphere(center, r);
 
-			Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 
 			grid.Exec_Nodes(
 				[&](const VectorDi cell) {
@@ -191,14 +120,14 @@ namespace Meso {
 			);
 
 			//one cell
-			/*VectorDi face = VectorFunc::Vi<d>(center[0]*scale, center[1]*scale);
+			/*VectorDi face = MathFunc::Vi<d>(center[0]*scale, center[1]*scale);
 			face_fixed(0,face) = true;
 			face_fixed(1, face) = true;
 			initial_vel(0, face) = 0.0;
 			initial_vel(1, face) = 0.0;
 			vol(0, face) = 0;
 			vol(1, face) = 0;
-			VectorDi cell = VectorFunc::Vi<d>(center[0]*scale, center[1]*scale);
+			VectorDi cell = MathFunc::Vi<d>(center[0]*scale, center[1]*scale);
 			fixed(cell) = true;*/
 
 

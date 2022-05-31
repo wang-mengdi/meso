@@ -35,6 +35,7 @@ namespace Meso {
 		__syncthreads();
 
 		const T cell_data = shared_cell_data[idy * 8 + idx];
+		const T neg_cell_data = -cell_data;
 		int face_ind;
 
 		// x-axis faces
@@ -47,17 +48,17 @@ namespace Meso {
 
 		// x-axis shared faces
 		face_ind = grid.Face_Index(0, Vector2i(bx * 8 + 0, by * 8 + idy));
-		if (idx == 0) atomicAdd(face_x + face_ind, cell_data);
+		if (idx == 0) MathFunc::Atomic_Add(face_x + face_ind, cell_data);
 
 		face_ind = grid.Face_Index(0, Vector2i((bx + 1) * 8 + 0, by * 8 + idy));
-		if (idx == 7) atomicAdd(face_x + face_ind, -cell_data);
+		if (idx == 7) MathFunc::Atomic_Add(face_x + face_ind, neg_cell_data);
 
 		// y-axis shared faces
 		face_ind = grid.Face_Index(1, Vector2i(bx * 8 + idx, by * 8 + 0));
-		if (idy == 0) atomicAdd(face_y + face_ind, cell_data);
+		if (idy == 0) MathFunc::Atomic_Add(face_y + face_ind, cell_data);
 
 		face_ind = grid.Face_Index(1, Vector2i(bx * 8 + idx, (by + 1) * 8 + 0));
-		if (idy == 7) atomicAdd(face_y + face_ind, -cell_data);
+		if (idy == 7) MathFunc::Atomic_Add(face_y + face_ind, neg_cell_data);
 	}
 
 	// for blockDim = (4, 4, 4)
@@ -84,6 +85,7 @@ namespace Meso {
 		__syncthreads();
 
 		const T cell_data = shared_cell_data[(idz * 4 + idy) * 4 + idx];
+		const T neg_cell_data = -cell_data;
 		int face_ind;
 
 		// x-axis faces
@@ -100,24 +102,24 @@ namespace Meso {
 
 		// x-axis shared faces
 		face_ind = grid.Face_Index(0, Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + idz));
-		if (idx == 0) atomicAdd(face_x + face_ind, cell_data);
+		if (idx == 0) MathFunc::Atomic_Add(face_x + face_ind, cell_data);
 
 		face_ind = grid.Face_Index(0, Vector3i(bx * 4 + (idx + 1), by * 4 + idy, bz * 4 + idz));
-		if (idx == 3) atomicAdd(face_x + face_ind, -cell_data);
+		if (idx == 3) MathFunc::Atomic_Add(face_x + face_ind, neg_cell_data);
 
 		// y-axis shared faces
 		face_ind = grid.Face_Index(1, Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + idz));
-		if (idy == 0) atomicAdd(face_y + face_ind, cell_data);
+		if (idy == 0) MathFunc::Atomic_Add(face_y + face_ind, cell_data);
 
 		face_ind = grid.Face_Index(1, Vector3i(bx * 4 + idx, by * 4 + (idy + 1), bz * 4 + idz));
-		if (idy == 3) atomicAdd(face_y + face_ind, -cell_data);
+		if (idy == 3) MathFunc::Atomic_Add(face_y + face_ind, neg_cell_data);
 
 		// z-axis shared faces
 		face_ind = grid.Face_Index(2, Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + idz));
-		if (idz == 0) atomicAdd(face_z + face_ind, cell_data);
+		if (idz == 0) MathFunc::Atomic_Add(face_z + face_ind, cell_data);
 
 		face_ind = grid.Face_Index(2, Vector3i(bx * 4 + idx, by * 4 + idy, bz * 4 + (idz + 1)));
-		if (idz == 3) atomicAdd(face_z + face_ind, -cell_data);
+		if (idz == 3) MathFunc::Atomic_Add(face_z + face_ind, neg_cell_data);
 	}
 
 	// for blockDim = (8, 8)
@@ -239,8 +241,8 @@ namespace Meso {
 	template<class T, int d>
 	void Exterior_Derivative(FaceFieldDv<T, d>& F, const FieldDv<T, d>& C)
 	{
-		Assert(!C.Empty(), "Exterior_Derivative C->F error: F is empty");
-		F.Init(C.grid, 0);
+		Assert(!C.Empty(), "Exterior_Derivative C->F error: C is empty");
+		F.Init(C.grid, MathFunc::Zero<T>());
 		dim3 blocknum, blocksize;
 		C.grid.Get_Kernel_Dims(blocknum, blocksize);
 		const T* cell = C.Data_Ptr();

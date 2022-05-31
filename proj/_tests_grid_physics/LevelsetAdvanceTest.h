@@ -4,9 +4,9 @@
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "levelset.h"
+#include "LevelSet.h"
 #include "Timer.h"
-#include "levelset.h"
+
 namespace Meso {
 	/// Here, we test the fast marching method
 	template<int d, class PointIntp,DataHolder side=HOST>
@@ -67,7 +67,7 @@ namespace Meso {
 			if (fabs(refPhi - actPhi)  > max_error) max_error = fabs(refPhi - actPhi);
 		}
 		timer.Record("compare phi one by one");
-		timer.Output_Profile();
+		//timer.Output_Profile();
 		Pass("Test_FarstMarching_levelset_host (Circle) Passed, with max error {}!",max_error);
 
 	}

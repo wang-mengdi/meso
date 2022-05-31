@@ -58,6 +58,19 @@ namespace Meso {
 		inline T& operator()(const int axis, const VectorDi face) { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
 		inline const T& operator()(int axis, const VectorDi face) const { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
 		inline const T Get(int axis, const VectorDi face) const { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
+
+		constexpr Array<T, side>& Data(const int axis)noexcept { return *face_data[axis]; }
+		constexpr const Array<T, side>& Data(const int axis)const noexcept { return *face_data[axis]; }
+		constexpr T* Data_Ptr(const int axis) noexcept { return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data()); }
+		constexpr const T* Data_Ptr(const int axis) const noexcept {
+			return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data());
+		}
+
+		void operator += (const Vector<T, d> vec) {
+			for (int axis = 0; axis < d; axis++) {
+				ArrayFunc::Add_Scalar(Data(axis), vec[axis]);
+			}
+		}
 		void operator += (const FaceField<T, d, side>& f1) {
 			for (int axis = 0; axis < d; axis++) {
 				ArrayFunc::Add(Data(axis), f1.Data(axis));
@@ -68,14 +81,6 @@ namespace Meso {
 				ArrayFunc::Minus(Data(axis), f1.Data(axis));
 			}
 		}
-
-		constexpr Array<T, side>& Data(const int axis)noexcept { return *face_data[axis]; }
-		constexpr const Array<T, side>& Data(const int axis)const noexcept { return *face_data[axis]; }
-		constexpr T* Data_Ptr(const int axis) noexcept { return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data()); }
-		constexpr const T* Data_Ptr(const int axis) const noexcept {
-			return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data());
-		}
-
 		void operator *= (const FaceField<T, d, side>& f1) {
 			for (int axis = 0; axis < d; axis++) {
 				ArrayFunc::Multiply(Data(axis), f1.Data(axis));
@@ -93,8 +98,8 @@ namespace Meso {
 			return max_val;
 		}
 
-		template<class IFFunc>
-		void Iterate_Faces(IFFunc f) {
+		template<class ICFunc>
+		void Iterate_Faces(ICFunc f) {
 			for (int axis = 0; axis < d; axis++) {
 				int n = grid.Face_DoF(axis);
 				for (int i = 0; i < n; i++) {
@@ -104,13 +109,14 @@ namespace Meso {
 			}
 		}
 
-		template<class IFFuncT>
-		void Calc_Faces(IFFuncT f) {
-			Grid<d>* grid_gpu;
-			if constexpr (side == DEVICE) {
-				checkCudaErrors(cudaMalloc((void**)&grid_gpu, sizeof(Grid<d>)));
-				checkCudaErrors(cudaMemcpy(grid_gpu, &grid, sizeof(Grid<d>), cudaMemcpyHostToDevice));
-			}
+		template<class ICFunc>
+		void Exec_Faces(ICFunc f) {
+			grid.Exec_Faces(f);
+		}
+
+		template<class ICFuncT>
+		void Calc_Faces(ICFuncT f) {
+			Grid<d> grid2 = grid;
 			for (int axis = 0; axis < d; axis++) {
 				Assert(face_data[axis] != nullptr, "FaceField::Calc_Faces error: nullptr data at axis {}", axis);
 				const int dof = grid.Face_DoF(axis);
@@ -118,10 +124,10 @@ namespace Meso {
 				/// Why I write the lambda out here:
 				/// A strange error: For this host platform, an extended lambda cannot be defined inside the 'if'
 				/// or 'else' block of a constexpr if statement
-				auto f_device = [f, axis, grid_gpu]__host__ __device__(const int idx) {
-					return f(axis, grid_gpu->Face_Coord(axis, idx));
-				};
 				if constexpr (side == DEVICE) {
+					auto f_device = [f, axis, grid2]__device__(const int idx) {
+						return f(axis, grid2.Face_Coord(axis, idx));
+					};
 					thrust::counting_iterator<int> idxfirst(0);
 					thrust::counting_iterator<int> idxlast = idxfirst + dof;
 					thrust::transform(
@@ -134,7 +140,7 @@ namespace Meso {
 				else {
 #pragma omp parallel for
 					for (int i = 0; i < dof; i++) {
-						VectorDi face = grid.Face_Coord(axis, i);
+						VectorDi face = grid2.Face_Coord(axis, i);
 						(*this)(axis, face) = f(axis, face);
 					}
 				}
@@ -149,3 +155,83 @@ namespace Meso {
 	template<class T, int d> using FaceFieldDv = FaceField<T, d, DEVICE>;
 
 }
+
+//fmt adaptor for FaceField
+template <class T, Meso::DataHolder side>
+struct fmt::formatter<Meso::FaceField<T, 2, side>> {
+	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+		//https://fmt.dev/latest/api.html#udt
+		auto it = ctx.begin(), end = ctx.end();
+		if (it != end && *it != '}') throw format_error("invalid format");
+		// Return an iterator past the end of the parsed range:
+		return it;
+	}
+
+	void Update_String(const Meso::FaceField<T, 2>& F, std::string& out) {
+		out = "";
+		for (int axis = 0; axis < 2; axis++) {
+			out += "axis: "; out += std::to_string(axis); out += "\n";
+			for (int i = 0; i < F.grid.counts[0]; i++) {
+				for (int j = 0; j < F.grid.counts[1]; j++) {
+					out += Meso::StringFunc::To_String_Simple(F(axis,Eigen::Vector2i(i, j))) + " ";
+				}
+				out += "\n";
+			}
+			out += "===========\n";
+		}
+	}
+
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext>
+	auto format(const Meso::FaceField<T, 2, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
+		std::string out;
+		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
+		else if constexpr (side == Meso::DataHolder::DEVICE) {
+			Meso::FaceField<T, 2> F_host = F;
+			Update_String(F_host, out);
+		}
+		return format_to(ctx.out(), "{}", out);
+	}
+};
+
+template<class T, Meso::DataHolder side>
+struct fmt::formatter<Meso::FaceField<T, 3, side>> {
+	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+		//https://fmt.dev/latest/api.html#udt
+		auto it = ctx.begin(), end = ctx.end();
+		if (it != end && *it != '}') throw format_error("invalid format");
+		// Return an iterator past the end of the parsed range:
+		return it;
+	}
+
+	void Update_String(const Meso::FaceField<T, 3>& F, std::string& out) {
+		out = "";
+		for (int axis = 0; axis < 3; axis++) {
+			out += "axis: "; out += std::to_string(axis); out += "\n";
+			for (int i = 0; i < F.grid.counts[0]; i++) {
+				for (int j = 0; j < F.grid.counts[1]; j++) {
+					for (int k = 0; k < F.grid.counts[2]; k++) {
+						out += Meso::StringFunc::To_String_Simple(F(axis,Eigen::Vector3i(i, j, k))) + " ";
+					}
+					out += "\n";
+				}
+				out += "===========\n";
+			}
+			out += "======================\n";
+		}
+	}
+
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext>
+	auto format(const Meso::FaceField<T, 3, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
+		std::string out;
+		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
+		else {
+			Meso::FaceField<T, 3> F_host = F;
+			Update_String(F_host, out);
+		}
+		return format_to(ctx.out(), "{}", out);
+	}
+};

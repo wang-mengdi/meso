@@ -21,54 +21,14 @@
 #include <vtkVertexGlyphFilter.h>
 
 namespace Meso {
-	//template<int d>
-	//void Write_SPH(const SPHParticles<d>& particles, std::string file_name) {
-	//	Typedef_VectorD(d); Typedef_MatrixD(d);
-	//	const Array<VectorD>& pos = particles.xRef();
-	//	const Array<VectorD>& vel = particles.uRef();
-	//	const Array<real>& nden = particles.ndenRef();
-	//	// setup VTK
-	//	vtkNew<vtkXMLUnstructuredGridWriter> writer;
-	//	vtkNew<vtkUnstructuredGrid> unstructured_grid;
 
-	//	vtkNew<vtkPoints> nodes;
-	//	nodes->Allocate(pos.size());
-	//	vtkNew<vtkDoubleArray> posArray;
-	//	posArray->SetName("Position");
-	//	posArray->SetNumberOfComponents(d);
-	//	vtkNew<vtkDoubleArray> velArray;
-	//	velArray->SetName("Velocity");
-	//	velArray->SetNumberOfComponents(d);
-	//	vtkNew<vtkDoubleArray> ndenArray;
-	//	ndenArray->SetName("NDen");
-	//	ndenArray->SetNumberOfComponents(1);
-
-	//	for (int i = 0; i < pos.size(); i++) {
-	//		Vector3 pos3 = MathFunc::V<3>(pos[i]);
-	//		nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
-
-	//		Vector3 vel3 = MathFunc::V<3>(vel[i]);
-	//		velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
-
-	//		ndenArray->InsertNextTuple1(nden[i]);
-	//	}
-
-	//	unstructured_grid->SetPoints(nodes);
-
-	//	unstructured_grid->GetPointData()->AddArray(velArray);
-	//	unstructured_grid->GetPointData()->AddArray(ndenArray);
-	//	unstructured_grid->GetPointData()->SetActiveVectors("Velocity");
-
-	//	writer->SetFileName(file_name.c_str());
-	//	writer->SetInputData(unstructured_grid);
-	//	writer->Write();
-	//}
 	template<int d>
 	void Write_SPH(const SPHParticles<d>& particles, std::string file_name) {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
 		const Array<VectorD>& pos = particles.xRef();
 		const Array<VectorD>& vel = particles.uRef();
 		const Array<real>& nden = particles.ndenRef();
+		const Array<real>& rho = particles.rhoRef();
 		const Array<int>& boundary = particles.BRef();
 		//// setup VTK
 		vtkNew<vtkXMLPolyDataWriter> writer;
@@ -85,6 +45,9 @@ namespace Meso {
 		vtkNew<vtkDoubleArray> ndenArray;
 		ndenArray->SetName("NDen");
 		ndenArray->SetNumberOfComponents(1);
+		vtkNew<vtkDoubleArray> rhoArray;
+		rhoArray->SetName("Rho");
+		rhoArray->SetNumberOfComponents(1);
 		vtkNew<vtkIntArray> boundaryArray;
 		boundaryArray->SetName("Boundary");
 		boundaryArray->SetNumberOfComponents(1);
@@ -98,6 +61,7 @@ namespace Meso {
 
 			ndenArray->InsertNextTuple1(nden[i]);
 			boundaryArray->InsertNextTuple1(boundary[i]);
+			rhoArray->InsertNextTuple1(rho[i]);
 		}
 
 		polyData->SetPoints(nodes);
@@ -110,6 +74,7 @@ namespace Meso {
 		polyData->GetPointData()->AddArray(ndenArray);
 		polyData->GetPointData()->SetActiveScalars("nden");
 		polyData->GetPointData()->AddArray(boundaryArray);
+		polyData->GetPointData()->AddArray(rhoArray);
 
 		writer->SetFileName(file_name.c_str());
 		writer->SetInputData(polyData);

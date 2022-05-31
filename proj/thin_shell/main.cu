@@ -1,26 +1,26 @@
 #include "AuxFunc.h"
 #include "Json.h"
-#include "Driver.h"
-#include "SoftBodyNonlinearFemThinShell.h"
-#include "SoftBodyNonlinearThinShellInitializer.h"
-#include "OptimizerDriver.h"
-#include "ThinShellTopologyOptimizer.h"
-#include "ThinShellTopologyOptimizerInitializer.h"
 #include "omp.h"
+#include "Driver.h"
+#include "DiscreteShell.h"
+#include "DiscreteShellInitializer.h"
+#include "OptimizerDriver.h"
+#include "DiscreteShellTopologyOptimizer.h"
+#include "DiscreteShellTopoOptInitializer.h"
 using namespace Meso;
 
 template<int d>
 void Run(json& j) {
-	SoftBodyNonlinearFemThinShell<d> thin_shell;
-	SoftBodyNonlinearThinShellInitializer<d> scene;
+	DiscreteShell<d> thin_shell;
+	DiscreteShellInitializer<d> scene;
 	Driver driver;
 	driver.Run(j, scene, thin_shell);
 }
 
 template<int d>
 void RunOptimizer(json &j) {
-	ThinShellTopologyOptimizer<d> optimizer;
-	TopoOptThinShellInitializer<d> scene;
+	DiscreteShellTopologyOptimizer<d> optimizer;
+	DiscreteShellTopoOptInitializer<d> scene;
 	OptimizerDriver driver;
 	driver.Run(j, scene, optimizer);
 }

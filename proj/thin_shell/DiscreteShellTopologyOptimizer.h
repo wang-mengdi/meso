@@ -4,20 +4,20 @@
 // This file is part of CompleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "SoftBodyNonlinearFemThinShellTopoOpt.h"
+#include "DiscreteShellTopoOpt.h"
 #include "Timer.h"
 #include "Common.h"
 #include "Optimizer.h"
 #include "AuxFunc.h"
-#include "GeometryPrimitives.h"
+#include "ImplicitGeometry.h"
 #include <mma/MMASolver.h>
 
 using namespace Meso;
 template<int d> 
-class ThinShellTopologyOptimizer : public Optimizer
+class DiscreteShellTopologyOptimizer : public Optimizer
 {Typedef_VectorD(d); Typedef_MatrixD(d);
 public:
-	SoftBodyNonlinearFemThinShellTopoOpt<d> thin_shell;
+	DiscreteShellTopoOpt<d> thin_shell;
 	MMASolver* mma_solver;
 
 	//general optimizer variables
@@ -101,7 +101,7 @@ public:
 	}
 
 	//release memory of the mma solver
-	~ThinShellTopologyOptimizer() { delete mma_solver; }
+	~DiscreteShellTopologyOptimizer() { delete mma_solver; }
 
 	//================== Essential MMA Functions================================
 

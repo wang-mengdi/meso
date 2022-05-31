@@ -1,7 +1,6 @@
 #pragma once
 #include "Common.h"
 #include "AuxFunc.h"
-#include "GeometryPrimitives.h"
 
 using namespace Meso;
 //////////////////////////////////////////////////////////////////////////
@@ -108,9 +107,9 @@ public:
 
 	static bool Inside(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& pos)
 	{
-		VectorD v0=p1-p0;VectorD q0=pos-p0;real c0=VectorFunc::Cross(v0,q0)[0];
-		VectorD v1=p2-p1;VectorD q1=pos-p1;real c1=VectorFunc::Cross(v1, q1)[0];
-		VectorD v2=p0-p2;VectorD q2=pos-p2;real c2=VectorFunc::Cross(v2, q2)[0];
+		VectorD v0=p1-p0;VectorD q0=pos-p0;real c0=MathFunc::Cross(v0,q0)[0];
+		VectorD v1=p2-p1;VectorD q1=pos-p1;real c1=MathFunc::Cross(v1, q1)[0];
+		VectorD v2=p0-p2;VectorD q2=pos-p2;real c2=MathFunc::Cross(v2, q2)[0];
 		return (c0>(real)0&&c1>(real)0&&c2>(real)0)||(c0<(real)0&&c1<(real)0&&c2<(real)0);
 	}
 
@@ -121,7 +120,7 @@ public:
 		phi[1]=Segment<2>::Phi(p1,p2,pos);
 		phi[2]=Segment<2>::Phi(p2,p0,pos);
 		real sign=Inside(p0,p1,p2,pos)?(real)-1:(real)1;
-		return sign*phi[VectorFunc::Abs_Min_Index(phi)];
+		return sign*phi[MathFunc::Abs_Min_Index(phi)];
 	}
 
 	static VectorD Normal(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& pos)
@@ -143,32 +142,8 @@ public:
 		abs_phi[1]=v[1].norm();
 		abs_phi[2]=v[2].norm();
 
-		int idx= VectorFunc::Min_Index(abs_phi);
+		int idx= MathFunc::Min_Index(abs_phi);
 		return v[idx];
-	}
-
-	static VectorD Closest_Point_Vector_With_Barycentric(const VectorD& p0,const VectorD& p1,const VectorD& p2,const VectorD& pos,bool& inside,VectorD& barycentric)
-	{
-		inside=Inside(p0,p1,p2,pos);
-		if(inside){barycentric=MeshFunc::Barycentric_Coord(p0,p1,p2,pos);}
-
-		Vector<VectorD,3> v;Vector<real,3> a;
-		v[0]=Segment<2>::Closest_Point_Vector_With_Alpha(p0,p1,pos,a[0]);
-		v[1]=Segment<2>::Closest_Point_Vector_With_Alpha(p1,p2,pos,a[1]);
-		v[2]=Segment<2>::Closest_Point_Vector_With_Alpha(p2,p0,pos,a[2]);
-		
-		Vector<real,3> abs_phi;
-		abs_phi[0]=v[0].norm();
-		abs_phi[1]=v[1].norm();
-		abs_phi[2]=v[2].norm();
-
-		int idx= VectorFunc::Min_Index(abs_phi);
-		
-		if(!inside){	////extrapolate barycentric coordinate
-			barycentric[idx]=(real)1-a[idx];
-			barycentric[(idx+1)%3]=a[idx];}
-
-		return v[idx];			
 	}
 };
 
@@ -250,7 +225,7 @@ public:
 		abs_phi[1]=v[1].norm();
 		abs_phi[2]=v[2].norm();
 
-		int idx= VectorFunc::Min_Index(abs_phi);
+		int idx= MathFunc::Min_Index(abs_phi);
 		return v[idx];
 	}
 
@@ -277,7 +252,7 @@ public:
 		abs_phi[1]=v[1].norm();
 		abs_phi[2]=v[2].norm();
 
-		int idx= VectorFunc::Min_Index(abs_phi);
+		int idx= MathFunc::Min_Index(abs_phi);
 		if(alphas[idx]>0&&alphas[idx]<1){feature=ClosestPointFeature::Edge(idx);}
 		else if(alphas[idx]==0){feature=ClosestPointFeature::Vertex(ClosestPointFeature::c_EdgeStartPoint[idx]);}
 		else{feature=ClosestPointFeature::Vertex(ClosestPointFeature::c_EdgeEndPoint[idx]);}

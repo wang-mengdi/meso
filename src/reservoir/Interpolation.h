@@ -80,6 +80,47 @@ namespace Meso {
 		}
 	};
 
+	class PointIntpLinearClamp {
+	public:
+		template<class T, int d>
+		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> _coord, const Vector<real, d> _frac) {
+			static constexpr T padding_val = 0;
+			//considering invalid datas as 0
+			Typedef_VectorD(d);
+			static constexpr int dx[8] = { 0,1,0,1,0,1,0,1 };
+			static constexpr int dy[8] = { 0,0,1,1,0,0,1,1 };
+			static constexpr int dz[8] = { 0,0,0,0,1,1,1,1 };
+			//clamping
+			VectorDi coord = _coord;
+			VectorD frac = _frac;
+			for (int axis = 0; axis < d; axis++) {
+				if (coord[axis] < 0) coord[axis] = 0, frac[axis] = 0;
+				if (coord[axis] > grid.counts[axis] - 2) coord[axis] = grid.counts[axis] - 2, frac[axis] = 1;
+			}
+			if constexpr (d == 2) {
+				real w[2][2] = { {1.0 - frac[0],frac[0]},{1.0 - frac[1],frac[1]} };
+				T intp_value = 0;
+				for (int s = 0; s < 4; s++) {
+					int d0 = dx[s], d1 = dy[s];
+					int idx = grid.Index(coord[0] + d0, coord[1] + d1);
+					intp_value += w[0][d0] * w[1][d1] * data[idx];
+				}
+				return intp_value;
+			}
+			else if constexpr (d == 3) {
+				real w[3][2] = { {1.0 - frac[0],frac[0]},{1.0 - frac[1],frac[1]} ,{1.0 - frac[2],frac[2]} };
+				T intp_value = 0;
+				for (int s = 0; s < 8; s++) {
+					int d0 = dx[s], d1 = dy[s], d2 = dz[s];
+					int idx = grid.Index(coord[0] + d0, coord[1] + d1, coord[2] + d2);
+					intp_value += w[0][d0] * w[1][d1] * w[2][d2] * data[idx];
+				}
+				return intp_value;
+			}
+			else Assert("PointIntpLinearClamp::Value error: dimension must be 2 or 3");
+		}
+	};
+
 	template<class PointIntp>
 	class Interpolation {
 	public:
@@ -135,4 +176,5 @@ namespace Meso {
 
 	using IntpLinear = Interpolation<PointIntpLinear>;
 	using IntpLinearPadding0 = Interpolation<PointIntpLinearPadding0>;
+	using IntpLinearClamp = Interpolation<PointIntpLinearClamp>;
 }

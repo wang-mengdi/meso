@@ -7,7 +7,6 @@
 #include "LinearMapping.h"
 #include "Field.h"
 #include "FaceField.h"
-#include "LambdaHelper.h"
 #include "DifferentialExteriorCalculus.h"
 #include "AuxFunc.h"
 #include "BoundaryCondition.h"
@@ -15,7 +14,8 @@ using namespace thrust::placeholders;
 
 namespace Meso {
 	//Negative Poisson mapping -lap(p), except some masked points
-	//Masked points will be viewed as 0 in poisson mapping
+	//Masked cells will be viewed as 0 in poisson mapping
+	//Which means adjacent faces of masked cells will have volume 0
 	template<class T, int d>
 	class MaskedPoissonMapping : public LinearMapping<T> {
 		//Ap=-lap(p)
@@ -42,8 +42,9 @@ namespace Meso {
 		void Init(const Grid<d>& grid) {
 			Allocate_Memory(grid);
 		}
-		void Init(const Grid<d>& grid, const FaceField<T, d>& _vol, const Field<bool, d>& _fixed) {
-			Allocate_Memory(grid);
+		void Init(const Field<bool, d>& _fixed, const FaceField<T, d>& _vol) {
+			Assert(_fixed.grid.counts == _vol.grid.counts, "MaskedPoissonMapping::Init error: grid size of fixed is {} however vol is {}", _fixed.grid.counts, _vol.grid.counts);
+			Allocate_Memory(_fixed.grid);
 			vol.Deep_Copy(_vol);
 			//cell_bc.Init(_fixed);
 			fixed.Deep_Copy(_fixed);

@@ -7,14 +7,14 @@
 #include <fstream>
 #include "AuxFunc.h"
 #include "MeshFunc.h"
-#include "SoftBodyNonlinearFemThinShell.h"
+#include "DiscreteShell.h"
 
-template<int d> class SoftBodyNonlinearThinShellInitializer
+template<int d> class DiscreteShellInitializer
 {Typedef_VectorD(d);Typedef_MatrixD(d);
 public:
 	SurfaceMesh<d> mesh;
 
-	virtual void Apply(json& j, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
+	virtual void Apply(json& j, DiscreteShell<d>& thin_shell_simulator)
 	{
 		int test = Json::Value(j, "test", 0);
 		int scale = Json::Value(j, "scale", 32);
@@ -23,20 +23,12 @@ public:
 		Initialize_Materials(j, thin_shell_simulator);
 	}
 
-	void Initialize_Mesh(int test,int scale, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
+	void Initialize_Mesh(int test,int scale, DiscreteShell<d>& thin_shell_simulator)
 	{
-		if constexpr (d == 2) {
-			switch (test) {
-			case 1: {
-				MeshFunc::Initialize_Segment_Mesh<d>(VectorD::Zero(), VectorD::Unit(0), scale, &mesh,false,true);
-			}break;
-			}
-		}
-
 		if constexpr (d == 3) {
 			switch (test) {
 			case 1: {
-				real length = (real)1; int w = scale; real step = length / (real)w;
+				real length = (real)0.1; int w = scale; real step = length / (real)w;
 				MeshFunc::Initialize_Herring_Bone_Mesh(w, w, step, &mesh, 0, 2);
 			}break;
 			}
@@ -45,7 +37,7 @@ public:
 		thin_shell_simulator.Initialize(mesh);
 	}
 
-	void Initialize_Boundary_Conditions(int test,int scale, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
+	void Initialize_Boundary_Conditions(int test,int scale, DiscreteShell<d>& thin_shell_simulator)
 	{
 		switch(test){
 		case 1:{	////beam with one end fixed under gravity
@@ -64,18 +56,20 @@ public:
 		}
 	}
 
-	void Initialize_Materials(json& j, SoftBodyNonlinearFemThinShell<d>& thin_shell_simulator)
+	void Initialize_Materials(json& j, DiscreteShell<d>& thin_shell_simulator)
 	{
 		thin_shell_simulator.damping = Json::Value(j, "damping", (real)0.01);
 		thin_shell_simulator.thickness = Json::Value(j, "thickness", (real)0.01);
 		real youngs = Json::Value(j, "youngs", (real)100);
 		real poisson = Json::Value(j, "poisson", (real)0.35);
+		real density = Json::Value(j, "density", (real)1e3);
 		int test = Json::Value(j, "test", 0);
 
 		switch (test) {
 			case 1:{
 				thin_shell_simulator.materials.clear();
 				thin_shell_simulator.Add_Material((real)youngs, (real)poisson);
+				thin_shell_simulator.density = density;
 				ArrayFunc::Fill(thin_shell_simulator.material_id, 0);
 				thin_shell_simulator.Initialize_Material();
 			}break;

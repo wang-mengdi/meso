@@ -6,7 +6,7 @@
 #pragma once
 
 #include "Common.h"
-#include "GeometryPrimitives.h"
+#include "ImplicitGeometry.h"
 
 namespace Meso {
 	template<int d>

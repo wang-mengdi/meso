@@ -14,7 +14,7 @@ namespace Meso {
 		}
 	}
 
-	int Points::Size(void)
+	int Points::Size(void) const
 	{
 		return size;
 	}

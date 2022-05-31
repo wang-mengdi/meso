@@ -14,7 +14,7 @@
 	Array<T>& a##Ref(){return _##a->Get_Data();}\
 	const T& a(const int i) const {return _##a->Get_Entry(i);}\
 	const Array<T>& a##Ref() const {return _##a->Get_Data();}\
-	protected: std::shared_ptr<Attribute<T>> _##a = std::make_shared<Attribute<T>>(def_val, #a);\
+	protected:std::shared_ptr<Attribute<T>> _##a = std::make_shared<Attribute<T>>(def_val, #a); \
 	AttributeRegistrar<T> _##a##_reg = AttributeRegistrar<T>(#a, _##a, att_map);\
 	public:\
 
@@ -32,7 +32,7 @@ namespace Meso {
 	private:
 		std::string name;
 		T default_value;
-		std::shared_ptr<Array<T>> data_ptr = nullptr;
+		ArrayPtr<T> data_ptr = nullptr;
 	public:
 
 		virtual ~Attribute() {}
@@ -51,6 +51,10 @@ namespace Meso {
 
 		virtual Array<T>& Get_Data() const {
 			return *data_ptr;
+		}
+
+		virtual ArrayPtr<T> Get_Ptr() { //careful about retriving the pointer
+			return data_ptr;
 		}
 
 		virtual T& Get_Entry(const int i) const {
@@ -78,7 +82,7 @@ namespace Meso {
 		int size = 0; // num elements
 		std::map<std::string, std::shared_ptr<AttributeBase>> att_map;
 
-		int Size(void);
+		int Size(void) const;
 		void Resize(const int _size);
 	};
 }

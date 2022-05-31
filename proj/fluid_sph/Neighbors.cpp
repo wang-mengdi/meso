@@ -6,14 +6,11 @@
 #include "Neighbors.h"
 
 namespace Meso {
-	Neighbors::Neighbors()
-	{
-		nbs.clear();
-	}
 
-	void Neighbors::set(const Array<int>& _nbs)
+	void Neighbors::set(const Array<int>& _nbs, real _r)
 	{
 		nbs = _nbs;
+		r = _r;
 	}
 
 	int Neighbors::size(void)const

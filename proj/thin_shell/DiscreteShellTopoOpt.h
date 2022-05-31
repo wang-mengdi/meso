@@ -3,17 +3,18 @@
 #include "SparseMatrixMapping.h"
 #include "ConjugateGradient.h"
 #include "IOHelper.h"
+#include "SparseFunc.h"
 
 //thin shell simulator with extra gradient information for optimization
 using namespace Meso;
-template<int d> class SoftBodyNonlinearFemThinShellTopoOpt:public SoftBodyNonlinearFemThinShell<d>
+template<int d> class DiscreteShellTopoOpt:public DiscreteShell<d>
 {
-	Typedef_VectorD(d); Typedef_MatrixD(d); using Base = SoftBodyNonlinearFemThinShell<d>;
+	Typedef_VectorD(d); Typedef_MatrixD(d); using Base = DiscreteShell<d>;
 public:
 	void Output(const bf::path base_path, const int frame) {
 		std::string vtu_name = fmt::format("vtu{:04d}.vtu", frame);
 		bf::path vtu_path = base_path / bf::path(vtu_name);
-		VTKFunc::Output_VTU_T<d, VectorD>(mesh, hs, vtu_path.string());
+		DiscreteShellVTKFunc::Output_VTU_T<d, VectorD>(mesh, hs, vtu_path.string());
 	}
 
 	// A = hess
@@ -44,21 +45,20 @@ public:
 			//Stretching
 			for (int ele_idx = 0; ele_idx < ele_num; ele_idx++) {
 				MatrixD grad_s; MatrixD hess_s[d][d];
-				Stretch_Force(ele_idx, grad_s, hess_s);
+				Base::Stretch_Force(ele_idx, grad_s, hess_s);
 
-				/*MatrixD grad_s_n = Numerical_Grad_Stretch(ele_idx,grad_s);
-				Array2DF<Matrix<real, d>, d, d> hess_s_n = Numerical_Hess_Stretch(ele_idx, grad_s,hess_s);*/
+				//Base::Numerical_Grad_Stretch(ele_idx, grad_s);
+				//Base::Numerical_Hess_Stretch(ele_idx, grad_s, hess_s);
 				//iterate through verteices in the element
 				for (int j = 0; j < d; j++) {
-					Add_Block(b, E()[ele_idx][j], pow(H_To_Rho(Ele_H(ele_idx)), power)*-grad_s.col(j));
+					Add_Block(b, E()[ele_idx][j], pow(H_To_Rho(Base::Ele_H(ele_idx)), power)*-grad_s.col(j));
 					for (int k = 0; k < d; k++) {
-						Add_Block_Helper(A, E()[ele_idx][j], E()[ele_idx][k], pow(H_To_Rho(Ele_H(ele_idx)), power) * hess_s[j][k]);
+						SparseFunc::Add_Block<d, MatrixD>(A, E()[ele_idx][j], E()[ele_idx][k], pow(H_To_Rho(Base::Ele_H(ele_idx)), power) * hess_s[j][k]);
 					}
 				}
 			}
 
 			//Bending
-			//timer2.Begin_Loop();
 			if constexpr (d == 3) {
 				Update_Bending_Hess_Variables();
 				for (int jct_idx = 0; jct_idx < edges.size(); jct_idx++) {
@@ -67,11 +67,14 @@ public:
 					ArrayF<int, d + 1> vtx_idx;
 					ArrayF<int, 2> ele_idx;
 					if (Junction_Info(jct_idx, vtx_idx, ele_idx)) {
-						Bend_Force(jct_idx, grad_b, vtx_idx, ele_idx, hess_b);
+						Base::Bend_Force(jct_idx, grad_b, vtx_idx, ele_idx, hess_b);
+
+						//Eigen::Matrix<real, d, d + 1> grad_b_n = Base::Numerical_Grad_Bend(i, theta_hats[i], lambdas[i]);
+
 						for (int j = 0; j < d + 1; j++) {
 							Add_Block(b, vtx_idx[j], pow(H_To_Rho(Jct_H(jct_idx)), power)*-grad_b.col(j));
 							for (int k = 0; k < d + 1; k++) {
-								Add_Block_Helper(A, vtx_idx[j], vtx_idx[k], pow(H_To_Rho(Jct_H(jct_idx)), power) * hess_b[j][k]);
+								SparseFunc::Add_Block<d, MatrixD>(A, vtx_idx[j], vtx_idx[k], pow(H_To_Rho(Jct_H(jct_idx)), power) * hess_b[j][k]);
 							}
 						}
 					}
@@ -96,7 +99,7 @@ public:
 
 			int iters; real relative_error;
 			meso_sparse_cg.Solve(dv_x, dv_b, iters, relative_error);
-			Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
+			//Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
 			dx = dv_x;
 
 #pragma omp parallel for
@@ -189,14 +192,14 @@ public:
 			//iterate through vertices in the element
 			for (int j = 0; j < d; j++) {
 				int vtx_j_idx = E()[ele_idx][j];
-				if (update_b_w) { Add_Block(b_w, vtx_j_idx, pow(H_To_Rho(Ele_H(ele_idx)), power) * grad_s.col(j)); }//Only for E_t
+				if (update_b_w) { Add_Block(b_w, vtx_j_idx, pow(H_To_Rho(Base::Ele_H(ele_idx)), power) * grad_s.col(j)); }//Only for E_t
 				for (int k = 0; k < d; k++) {
 					int vtx_k_idx = E()[ele_idx][k];
-					Add_Block_Helper(A, vtx_j_idx, vtx_k_idx, pow(H_To_Rho(Ele_H(ele_idx)), power)*hess_s[j][k]);
+					SparseFunc::Add_Block<d, MatrixD>(A, vtx_j_idx, vtx_k_idx, pow(H_To_Rho(Base::Ele_H(ele_idx)), power)*hess_s[j][k]);
 					
 					if (!bc.Is_Psi_D(vtx_j_idx)) {
 						MatrixD ds_drho = MatrixD::Zero();
-						VectorD ds_dh = grad_s.col(j) / ((real)d * Ele_H(ele_idx));
+						VectorD ds_dh = grad_s.col(j) / ((real)d * Base::Ele_H(ele_idx));
 						
 						/*MatrixD ds_dh_n = Numerical_Ds_Dh(ele_idx, vtx_k_idx, grad_s);
 						if (!ds_dh_n.col(j).isApprox(ds_dh, (real)1e-3)) {
@@ -205,8 +208,8 @@ public:
 							Info("ds_h_n: {}", ds_dh_n.col(j).eval());
 						}*/
 						
-						ds_drho.row(0) = pow(H_To_Rho(Ele_H(ele_idx)), power) * ds_dh * Dh_Drho() + power * pow(H_To_Rho(Ele_H(ele_idx)), power - 1) * grad_s.col(j) / (real)d; //Add zero padding
-						Add_Block_Helper(dgrad_drho, vtx_k_idx, vtx_j_idx, ds_drho);
+						ds_drho.row(0) = pow(H_To_Rho(Base::Ele_H(ele_idx)), power) * ds_dh * Dh_Drho() + power * pow(H_To_Rho(Base::Ele_H(ele_idx)), power - 1) * grad_s.col(j) / (real)d; //Add zero padding
+						SparseFunc::Add_Block<d, MatrixD>(dgrad_drho, vtx_k_idx, vtx_j_idx, ds_drho);
 					}
 				}
 			}
@@ -230,7 +233,7 @@ public:
 					DLambda_Dh(vtx_idx, ele_idx, dlambda_dh);
 
 					for (int k = 0; k < d + 1; k++) {
-						Add_Block_Helper(A, vtx_idx[j], vtx_idx[k], pow(H_To_Rho(Jct_H(jct_idx)), power) * hess_b[j][k]);
+						SparseFunc::Add_Block<d, MatrixD>(A, vtx_idx[j], vtx_idx[k], pow(H_To_Rho(Jct_H(jct_idx)), power) * hess_b[j][k]);
 						if (!bc.Is_Psi_D(vtx_idx[j])) {
 							MatrixD db_drho = MatrixD::Zero();
 							VectorD db_dh = dlambda_dh[k] * grad_b.col(j) / lambdas[jct_idx];
@@ -243,7 +246,7 @@ public:
 							}*/
 
 							db_drho.row(0) = pow(H_To_Rho(Jct_H(jct_idx)), power) * db_dh * Dh_Drho() + power * pow(H_To_Rho(Jct_H(jct_idx)), power - 1) * grad_b.col(j) / (real)(d - 1); //Add zero padding
-							Add_Block_Helper(dgrad_drho, vtx_idx[k], vtx_idx[j], db_drho);
+							SparseFunc::Add_Block<d, MatrixD>(dgrad_drho, vtx_idx[k], vtx_idx[j], db_drho);
 						}
 					}
 				}
@@ -468,7 +471,7 @@ public:
 		real stretching_energy = 0;
 	#pragma omp parallel for reduction(+:stretching_energy)
 		for (int ele_idx = 0; ele_idx < Ele_Num(); ele_idx++) {
-			stretching_energy += pow(H_To_Rho(Ele_H(ele_idx)), power) * Stretching_Energy(ele_idx);
+			stretching_energy += pow(H_To_Rho(Base::Ele_H(ele_idx)), power) * Stretching_Energy(ele_idx);
 		}
 		return stretching_energy;
 	}

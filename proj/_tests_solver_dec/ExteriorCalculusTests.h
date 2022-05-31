@@ -56,7 +56,7 @@ void Test_Exterior_Derivative_Face(const Vector<int, d> counts) {
 	Exterior_Derivative(C_ext_dev, F_dev);
 	Field<T, d> C_ext_host = C_ext_dev;
 	Field<T, d> C_naive(grid);
-	C_naive.Calc_Cells(
+	C_naive.Calc_Nodes(
 		[&](const VectorDi cell) {
 			T div = 0;
 			for (int axis = 0; axis < d; axis++) {

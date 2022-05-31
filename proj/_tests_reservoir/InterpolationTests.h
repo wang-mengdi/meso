@@ -13,13 +13,13 @@ using namespace Meso;
 template<class T, int d>
 void Test_Interpolation(const Vector<int, d> counts) {
 	Typedef_VectorD(d);
-	VectorD domain_min = VectorFunc::V<d>(-0.9, -1.2, 3);
+	VectorD domain_min = MathFunc::V<d>(-0.9, -1.2, 3);
 	Grid<d> grid(counts, 0.01, domain_min, COLLOC);
 	//Grid<d, CORNER> grid(counts, 0.01);
 	
 	Array<T> my_data(grid.DoF());
 
-	VectorD a = VectorFunc::V<d>(0.2, 0.8, 0.3);
+	VectorD a = MathFunc::V<d>(0.2, 0.8, 0.3);
 	T b = 7;
 	auto f = [&](const VectorD pos) {return pos.dot(a) + b; };
 	grid.Exec_Nodes(

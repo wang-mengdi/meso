@@ -12,7 +12,7 @@
 #include <vtkDoubleArray.h>
 
 using namespace Meso;
-namespace VTKFunc {
+namespace DiscreteShellVTKFunc {
 	//output vtu file for this project specifically
 	template<int d,class T>
 	void Output_VTU(const std::shared_ptr< SurfaceMesh<d> >& mesh,const Array<T>& velocity, std::string file_name) {
@@ -31,10 +31,10 @@ namespace VTKFunc {
 		vtkNew<vtkCellArray> cellArray;
 
 		for (int i = 0; i < mesh->Vertices().size(); i++) {
-			Vector3 pos3 = VectorFunc::V<3>(mesh->Vertices()[i]);
+			Vector3 pos3 = MathFunc::V<3>(mesh->Vertices()[i]);
 			nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
 
-			Vector3 vel3 = VectorFunc::V<3>(velocity[i]);
+			Vector3 vel3 = MathFunc::V<3>(velocity[i]);
 			velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
 		}
 
@@ -73,7 +73,7 @@ namespace VTKFunc {
 		vtkNew<vtkCellArray> cellArray;
 
 		for (int i = 0; i < mesh->Vertices().size(); i++) {
-			Vector3 pos3 = VectorFunc::V<3>(mesh->Vertices()[i]);
+			Vector3 pos3 = MathFunc::V<3>(mesh->Vertices()[i]);
 			nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
 
 			thicknessArray->InsertNextTuple1(hs[i]);

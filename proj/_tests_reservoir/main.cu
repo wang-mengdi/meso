@@ -24,7 +24,7 @@ void Test_Grid(void) {
     Info("indicies: \n{}", F);
 }
 
-int main(){
+int main() {
     //Test_Grid<2>(); //a visual test, not included in general tests
 
     Test_Grid_Index<float>(Vector2i(114, 514));
@@ -43,7 +43,7 @@ int main(){
     Test_Mesh_Loader_Multiple<TriangleMesh<3>>(); // Can also verify by opening copy-mesh.obj
     Test_Mesh_Loader_Single<TriangleMesh<3>>();
 
-    Test_Marching_Cubes<float, 3>();
+    Test_Marching_Cubes<float, 3>(); // verify by opening marching_cubes.obj
     /*Test_Center<float, 2>(Vector2i(328, 92));
     Test_Center<float, 3>(Vector3i(36, 28, 478));
     Test_Center<double, 2>(Vector2i(74, 22));
