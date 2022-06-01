@@ -48,12 +48,11 @@ public:
 			fluid.mac_grid.grid.Write_To_File_3d(file_name);
 			std::cout<<"Write to file "<<file_name<<std::endl;}
 		bool output_vel = true; ///v
-		bool output_solid_phi = true;  ///S
+		bool output_solid_phi = false;  ///S
 		bool output_fluid_phi = true;  ///F
-		bool output_psi_L = true;  ///L
-		bool output_psi_A = true;  ///A
+		bool output_psi = true;  ///L
 		bool output_pressure = false;  ///P
-		bool output_psi_N = false;  ///N
+		bool output_psi_N = true;  ///N
 		bool output_psi_D = false;  ///D
 		bool output_energy = true;
 		
@@ -62,8 +61,7 @@ public:
 			fluid.velocity.Write_To_File_3d(file_name);}
 
 		////Write psi
-		if(output_psi_L){fluid.psi_L.Write_To_File_3d(frame_dir+"/psi_L");}
-		if(output_psi_A){fluid.psi_A.Write_To_File_3d(frame_dir+"/psi_A");}
+		if(output_psi){fluid.psi.Write_To_File_3d(frame_dir+"/psi_L");}
 
 		////Write BC
 		if(output_psi_D){RenderFunc::Write_Dirichlet_Boundary_Conditions(frame_dir+"/psi_D",fluid.mac_grid,fluid.bc);}
@@ -155,7 +153,7 @@ public:
 			perimeter.Fill_Boundary_Condition(fluid.bc);
 
 			////Water bulk
-			Plane<d> plane(VectorD::Unit(1), fluid.mac_grid.grid.Center()/* - VectorD::Unit(1) * (real)1*/);
+			Plane<d> plane(VectorD::Unit(1), fluid.mac_grid.grid.Center()*4/3/* - VectorD::Unit(1) * (real)1*/);
 			////Initialize phi
 			fluid.levelset.Set_By_Geom(plane);
 
@@ -185,7 +183,7 @@ public:
 			std::cout << "after projection" << std::endl; fluid.Divergence_Power();
 		}
 		fluid.beta = beta;
-		fluid.Extrapolation();
+		//fluid.Extrapolation();
 	}
 
 	Vector4 Initial_Zero(const VectorD& pos)
@@ -203,8 +201,8 @@ public:
 	{
 		////Initial_Vortex_Ring
 		Vector<C, 2> psi = Vel_To_Psi_C<d>(bdry_v, pos);
-		VectorD c = V<d>((real)length / (real)4, (real)length / 4, (real)length / 2);
-		real r = (real)0.15 * length;
+		VectorD c = V<d>((real)length / (real)3, (real)length / 3, (real)length / 2);
+		real r = (real)0.2 * length;
 		real rx = (pos[0] - c[0]) / r;
 		real r2 = (pos - c).squaredNorm() / pow(r, 2);
 		real fR = exp(-pow(r2 / (real)9, (real)4));

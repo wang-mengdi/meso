@@ -32,8 +32,7 @@ public:
 
 	//wave functions
 	real h_bar = (real)0.1;
-	Field<Vector4, d> psi_L;
-	Field<Vector4, d> psi_A;
+	Field<Vector4, d> psi;
 	std::function<Vector4(const VectorD&)> initial_psi;
 
 	//two phase density
@@ -45,7 +44,7 @@ public:
 
     //blending coefficient
     real beta = 0.5;
-    int blending_band_cell_num = 3;
+    int blending_band_cell_num = 1;
 	real blending_band_width;
 	//projection
 	ProjectionTwoPhase<d> projection;
@@ -82,8 +81,7 @@ public:
 		#pragma omp parallel for
 		for(int i=0;i<cell_num;i++){
 			VectorDi cell=mac_grid.grid.Cell_Coord(i);
-			psi_L(cell) = initial_psi(mac_grid.grid.Center(cell));
-			psi_A(cell) = initial_psi(mac_grid.grid.Center(cell));}
+			psi(cell) = initial_psi(mac_grid.grid.Center(cell));}
 		Normalize();
 	}
 
@@ -91,8 +89,7 @@ public:
 	{
 		rho_face.Resize(mac_grid.grid.cell_counts,(real)0);
 		velocity.Resize(mac_grid.grid.cell_counts,(real)0);
-		psi_L.Resize(mac_grid.grid.cell_counts);
-		psi_A.Resize(mac_grid.grid.cell_counts);
+		psi.Resize(mac_grid.grid.cell_counts);
 		type.Resize(mac_grid.grid.cell_counts,(ushort)CellType::Fluid);
 		vorticity.Resize(mac_grid.grid.cell_counts);
 		divegence_field.Resize(mac_grid.grid.cell_counts);
@@ -114,10 +111,9 @@ public:
 		if(verbose)timer.Elapse_And_Output_And_Reset("Blend_Velocity");	
 		//if(verbose){std::cout << "before projection" << std::endl;Divergence_Power();}
 		Enforce_Incompressibility(dt);
+		//if(!use_velocity_field)Blend_Velocity();
 		//if(verbose){std::cout << "after projection" << std::endl;Divergence_Power();}
-		if(verbose)timer.Elapse_And_Output_And_Reset("Projection");		
-		Extrapolation();
-		if(verbose)timer.Elapse_And_Output_And_Reset("Extrapolation");
+		//if(verbose)timer.Elapse_And_Output_And_Reset("Projection");
 		current_time += dt;
 	}
 
@@ -144,8 +140,7 @@ public:
 		
 		////advect psi
 		if(!use_velocity_field){
-			Field<Vector4,d> ghost_psi_L=psi_L;
-			Field<Vector4,d> ghost_psi_A=psi_A;
+			Field<Vector4,d> ghost_psi=psi;
 			Interpolation<d> intp(mac_grid.grid);
 			int cell_num=mac_grid.grid.Number_Of_Cells();
 			#pragma omp parallel for
@@ -160,47 +155,41 @@ public:
 				VectorDi backtraced_cell=mac_grid.grid.Cell_Coord(backtraced_pos);
 				real phi = levelset.phi(cell);
 				C c = std::exp(1i*0.5*(vel.dot(vel))*dt/h_bar);
-				if(phi<0){
-					Vector4 advected_psi_L=intp.Interpolate_Centers(ghost_psi_L,backtraced_pos);
-					Vector<C,2> psi_c_L = V2C(advected_psi_L);
-					psi_L(cell)=C2V(psi_c_L*c).normalized()*sqrt_rho_L;}
-				else{
-					Vector4 advected_psi_A=intp.Interpolate_Centers(ghost_psi_A,backtraced_pos);
-					Vector<C,2> psi_c_A = V2C(advected_psi_A);
-					psi_A(cell)=C2V(psi_c_A*c).normalized()*sqrt_rho_A;}}}
-		//timer.Elapse_And_Output_And_Reset("Adv: psi");
+				Vector4 advected_psi=intp.Interpolate_Centers(ghost_psi,backtraced_pos);
+				Vector<C,2> psi_c = V2C(advected_psi);
+				psi(cell)=C2V(psi_c*c).normalized();}}
 	}
 
-	virtual void Extrapolation()
-	{
-		if (use_velocity_field) return;
-		Interpolation<d> intp_vel(mac_grid);
-		Interpolation<d> intp_psi(mac_grid.grid);
-		int cell_num = mac_grid.grid.Number_Of_Cells();
-		#pragma omp parallel for
-		for (int i = 0; i < cell_num; i++) {
-			VectorDi cell = mac_grid.grid.Cell_Coord(i);
-			VectorD pos = mac_grid.grid.Center(cell);
-			real phi=levelset.Phi(pos);
-			real epsilon = mac_grid.grid.dx;
-			VectorD normal=levelset.Gradient(pos);
-			normal.normalize();
-			if (phi >= (real)0) {
-				if(phi < narrow_band_width){
-					VectorD interface_pos = pos-normal*(phi+epsilon);
-					VectorD interface_vel = intp_vel.Interpolate_Face_Vectors(velocity,interface_pos);
-					Vector4 interface_psi = intp_psi.Interpolate_Centers(psi_L, interface_pos);
-					psi_L(cell) = C2V(Vel_To_Psi_C<d>(interface_vel/h_bar,pos-interface_pos,interface_psi)).normalized()*sqrt_rho_L;}
-				else{psi_L(cell) = C2V(Vel_To_Psi_C<d>(VectorD::Zero(), pos)).normalized()*sqrt_rho_L;}}
-			else if (phi < (real)0) {
-				if(phi > -narrow_band_width){
-					VectorD interface_pos = pos-normal*(phi-epsilon);
-					VectorD interface_vel = intp_vel.Interpolate_Face_Vectors(velocity,interface_pos);
-					Vector4 interface_psi = intp_psi.Interpolate_Centers(psi_A, interface_pos);
-					psi_A(cell) = C2V(Vel_To_Psi_C<d>(interface_vel/h_bar,pos-interface_pos,interface_psi)).normalized()*sqrt_rho_A;}
-				else{psi_A(cell) = C2V(Vel_To_Psi_C<d>(VectorD::Zero(), pos)).normalized()*sqrt_rho_A;}}}	
-		Enforce_Boundary_Conditions();
-	}
+	// virtual void Extrapolation()
+	// {
+	// 	if (use_velocity_field) return;
+	// 	Interpolation<d> intp_vel(mac_grid);
+	// 	Interpolation<d> intp_psi(mac_grid.grid);
+	// 	int cell_num = mac_grid.grid.Number_Of_Cells();
+	// 	#pragma omp parallel for
+	// 	for (int i = 0; i < cell_num; i++) {
+	// 		VectorDi cell = mac_grid.grid.Cell_Coord(i);
+	// 		VectorD pos = mac_grid.grid.Center(cell);
+	// 		real phi=levelset.Phi(pos);
+	// 		real epsilon = mac_grid.grid.dx;
+	// 		VectorD normal=levelset.Gradient(pos);
+	// 		normal.normalize();
+	// 		if (phi >= (real)0) {
+	// 			if(phi < narrow_band_width){
+	// 				VectorD interface_pos = pos-normal*(phi+epsilon);
+	// 				VectorD interface_vel = intp_vel.Interpolate_Face_Vectors(velocity,interface_pos);
+	// 				Vector4 interface_psi = intp_psi.Interpolate_Centers(psi_L, interface_pos);
+	// 				psi_L(cell) = C2V(Vel_To_Psi_C<d>(interface_vel/h_bar,pos-interface_pos,interface_psi)).normalized()*sqrt_rho_L;}
+	// 			else{psi_L(cell) = C2V(Vel_To_Psi_C<d>(VectorD::Zero(), pos)).normalized()*sqrt_rho_L;}}
+	// 		else if (phi < (real)0) {
+	// 			if(phi > -narrow_band_width){
+	// 				VectorD interface_pos = pos-normal*(phi-epsilon);
+	// 				VectorD interface_vel = intp_vel.Interpolate_Face_Vectors(velocity,interface_pos);
+	// 				Vector4 interface_psi = intp_psi.Interpolate_Centers(psi_A, interface_pos);
+	// 				psi_A(cell) = C2V(Vel_To_Psi_C<d>(interface_vel/h_bar,pos-interface_pos,interface_psi)).normalized()*sqrt_rho_A;}
+	// 			else{psi_A(cell) = C2V(Vel_To_Psi_C<d>(VectorD::Zero(), pos)).normalized()*sqrt_rho_A;}}}	
+	// 	Enforce_Boundary_Conditions();
+	// }
 
  //    virtual void Extrapolation()
 	// {
@@ -320,30 +309,48 @@ public:
 		if (!use_velocity_field) {
 			int cell_num = mac_grid.grid.Number_Of_Cells();
 			real one_over_dx = (real)1 / mac_grid.grid.dx;
-            #pragma omp parallel for
+        	#pragma omp parallel for
 			for (int i = 0; i < cell_num; i++) {
 				VectorDi cell = mac_grid.grid.Cell_Coord(i);
-				if (Is_Fluid_Cell(cell)) {
-					real phi0 = levelset.phi(cell);
-					//real cell_p = projection.p[projection.grid_to_matrix(cell)];
-					real cell_p = projection.meso_pressure_host(cell);
-					if (phi0 < 0) {
-						Vector<C, 2> psi_c = V2C(psi_L(cell));
-						cell_p /= rho_L;
-						C c = std::exp(-1i * cell_p * mac_grid.grid.dx / h_bar);
-						for (int i = 0; i < 2; i++) { psi_c[i] *= c; }
-						psi_L(cell) = C2V(psi_c);
-					}
-					else {
-						Vector<C, 2> psi_c = V2C(psi_A(cell));
-						cell_p /= rho_A;
-						C c = std::exp(-1i * cell_p * mac_grid.grid.dx / h_bar);
-						for (int i = 0; i < 2; i++) { psi_c[i] *= c; }
-						psi_A(cell) = C2V(psi_c);
-					}
-				}
-			}
-		}
+				if (!Is_Fluid_Cell(cell)) continue;
+				real phic = levelset.phi(cell);
+				real cell_p = projection.meso_pressure_host(cell);
+				real phi_p = pow(phic, 5);
+				real rho_c = (exp(phi_p)*rho_A+exp(-phi_p)*rho_L)/(exp(phi_p)+exp(-phi_p));
+				Vector<C, 2> psi_c = V2C(psi(cell));
+				cell_p /= rho_c;
+				C c = std::exp(-1i * cell_p * mac_grid.grid.dx / h_bar);
+				for (int i = 0; i < 2; i++) { psi_c[i] *= c; }
+				psi(cell) = C2V(psi_c);}
+
+	        real correction_band_scale=(real)2.;		
+	        int correction_times=8;
+	        for(int iter =0; iter<correction_times; iter++){
+				for(int index=0; index<pow(2,d); index++){
+					#pragma omp parallel for
+					for (int i=0; i < cell_num; i++) {
+						VectorDi cell=mac_grid.grid.Cell_Coord(i);
+						if (!Is_Fluid_Cell(cell)) continue;
+						real phic = levelset.phi(cell);
+						if(abs(phic)>correction_band_scale*mac_grid.grid.dx) continue;
+						int cell_index=0;
+						for(int axis_c=0; axis_c<d; axis_c++) cell_index+=(cell[axis_c]%2)*pow(2,axis_c); 
+						if(cell_index==index){
+							Vector4 cell_psi=Vector4::Zero();
+							int valid_nb_num=0;
+							for(int j=0;j<mac_grid.grid.Number_Of_Nb_C();j++){
+								const VectorDi nb_cell=mac_grid.grid.Nb_C(cell,j);
+								if (!Is_Fluid_Cell(nb_cell)) continue;
+								int axis;int side;mac_grid.grid.Nb_C_Axis_And_Side(j,axis,side);
+								VectorDi face=cell+side*VectorDi::Unit(axis);
+								real face_vel=velocity(axis,face);
+								real vec=mac_grid.grid.dx*(side==0?(real)1:(real)-1);
+								Vector<C,2> psiv=V2C(psi(nb_cell));
+	                            real phase=face_vel*vec/h_bar;
+								for(int i=0;i<2;i++){psiv[i]*=exp(1i*phase);}
+								cell_psi+=C2V(psiv);
+								valid_nb_num++;}
+							if(valid_nb_num>0){cell_psi=cell_psi.normalized();psi(cell)=cell_psi;}}}}}}
 		Enforce_Boundary_Conditions();
 	}
 
@@ -358,18 +365,10 @@ public:
 				const VectorDi cell_0 = mac_grid.Face_Incident_Cell(axis,face,0);
 				const VectorDi cell_1 = mac_grid.Face_Incident_Cell(axis,face,1);
                 if (!mac_grid.grid.Valid_Cell(cell_0) || !mac_grid.grid.Valid_Cell(cell_1)) {continue;}
-				real phi0 = levelset.phi(cell_0);
-				real phi1 = levelset.phi(cell_1);
-				if (phi0<-blending_band_width && phi1<-blending_band_width) {
-					Vector<C, 2> psi_0 = V2C(psi_L(cell_0));
-					Vector<C, 2> psi_1 = V2C(psi_L(cell_1));
-					C q = psi_0.dot(psi_1);
-					velocity(axis, face) = beta*velocity(axis, face) + (1-beta)*std::arg(q)*h_bar/(mac_grid.grid.dx);}
-				else if(phi0>blending_band_width && phi1>blending_band_width) {
-					Vector<C, 2> psi_0 = V2C(psi_A(cell_0));
-					Vector<C, 2> psi_1 = V2C(psi_A(cell_1));
-					C q = psi_0.dot(psi_1);
-					velocity(axis, face) = beta*velocity(axis, face) + (1-beta)*std::arg(q)*h_bar/(mac_grid.grid.dx);}}}
+				Vector<C, 2> psi_0 = V2C(psi(cell_0));
+				Vector<C, 2> psi_1 = V2C(psi(cell_1));
+				C q = psi_0.dot(psi_1);
+				velocity(axis, face) = (1-beta)*velocity(axis, face) + beta*std::arg(q)*h_bar/(mac_grid.grid.dx);}}
 		Enforce_Boundary_Conditions();
 	}
 	
@@ -383,7 +382,7 @@ public:
 	{
 		real jump = projection.use_implicit_surface_tension? (real) 0 : projection.sigma * levelset.Curvature(pos);
 		//real jump = projection.sigma * levelset.Curvature(pos);
-		if (use_body_force) jump -= (rho_L-rho_A) * (g.dot(pos));
+		if (use_body_force) jump -= 10*(rho_L-rho_A) * (g.dot(pos));
 		return jump * projection.current_dt;
 	}
  
@@ -474,8 +473,7 @@ public:
 		#pragma omp parallel for
 		for (int i = 0; i < cell_num; i++) {
 			VectorDi cell = mac_grid.grid.Cell_Coord(i);
-			psi_L(cell) = psi_L(cell).normalized()*sqrt_rho_L;
-			psi_A(cell) = psi_A(cell).normalized()*sqrt_rho_A;}
+			psi(cell) = psi(cell).normalized();}
 	}
 	
     //// cell helpers
