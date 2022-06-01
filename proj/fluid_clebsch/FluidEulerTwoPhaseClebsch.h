@@ -14,6 +14,7 @@
 #include "FluidFunc.h"
 #include "LevelSet.h"
 #include "omp.h"
+#include "ImplicitSurfaceTension.h"
 
 template<int d> class FluidEulerTwoPhaseClebsch
 {Typedef_VectorDii(d);
@@ -61,6 +62,8 @@ public:
 	std::conditional_t<d == 2, Field<real, 2>, Field<VectorD, 3> > vorticity;
 	Field<real, d> divegence_field;
 
+	std::shared_ptr<ImplicitSurfaceTension<real, d>> implicit_surface_tension_solver;
+
     FluidEulerTwoPhaseClebsch():projection(&mac_grid,&velocity,&rho_face,&levelset,&type,&bc){}
 
 	virtual void Initialize(const VectorDi& cell_counts,const real dx,const VectorD& domain_min=VectorD::Zero())
@@ -73,6 +76,8 @@ public:
 		sqrt_rho_A = std::sqrt(rho_A);
 		Initialize_Fields();
 		Initialize_Interface();
+		implicit_surface_tension_solver =
+			std::make_shared<ImplicitSurfaceTension<real, d>>(Meso::json::value_t::object, mac_grid, &bc, &levelset);
 	}
 
 	virtual void Initialize_Wave_Func()
@@ -352,6 +357,7 @@ public:
 								valid_nb_num++;}
 							if(valid_nb_num>0){cell_psi=cell_psi.normalized();psi(cell)=cell_psi;}}}}}}
 		Enforce_Boundary_Conditions();
+		implicit_surface_tension_solver->Solve(dt, velocity, sigma, narrow_band_width, dirac_band_width);
 	}
 
 	void Blend_Velocity()
