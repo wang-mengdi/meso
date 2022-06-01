@@ -382,7 +382,7 @@ public:
 	{
 		real jump = projection.use_implicit_surface_tension? (real) 0 : projection.sigma * levelset.Curvature(pos);
 		//real jump = projection.sigma * levelset.Curvature(pos);
-		if (use_body_force) jump -= 10*(rho_L-rho_A) * (g.dot(pos));
+		if (use_body_force) jump -= (rho_L-rho_A) * (g.dot(pos));
 		return jump * projection.current_dt;
 	}
  
