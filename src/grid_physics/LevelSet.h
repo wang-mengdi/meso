@@ -33,9 +33,9 @@ namespace Meso {
 				checkCudaErrors(cudaMalloc(&grid_ptr, sizeof(Grid<d>)));
 		}
 		LevelSet(const Grid<d>& _grid):LevelSet() {
-			Initialize(_grid);
+			Init(_grid);
 		}
-		__host__ void Initialize(const Grid<d>& _grid) {
+		__host__ void Init(const Grid<d>& _grid) {
 			grid = _grid;
 			phi = Field<real,d,side>(_grid, std::numeric_limits<real>::max());
 			data = thrust::raw_pointer_cast(&((*(phi.data))[0]));
@@ -69,7 +69,7 @@ namespace Meso {
 		/// This is because ImplicitGeometry have virtual function,
 		/// If a object of a class with virtual member function will not crush, 
 		/// That object must be malloc in the device!
-		__host__ void Set_By_Geom(ImplicitGeometry<d>& geom) {
+		__host__ void Set_Geometry(ImplicitGeometry<d>& geom) {
 			/// A strange error: For this host platform, an extended lambda cannot be defined inside the 'if'
 			/// or 'else' block of a constexpr if statement
 			Assert(side == HOST, "This function could not be called on device!");

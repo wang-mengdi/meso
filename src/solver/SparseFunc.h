@@ -6,6 +6,7 @@
 #pragma once
 #include <Eigen/Sparse>
 #include "Common.h"
+#include "SparseMatrixMapping.h"
 
 namespace Meso {
 	namespace SparseFunc {

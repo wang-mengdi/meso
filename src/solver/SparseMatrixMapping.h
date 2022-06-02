@@ -24,15 +24,14 @@ namespace Meso {
 		return vec_t;
 	}
 
-
 	////The sparse matrix is stored in CRS format
 	template<class T, DataHolder side> class SparseMatrixMapping : public LinearMapping<T>
 	{
 	public:
 		bool realloc_on_shrink = true;
 		////crs matrix
-		int m = 0;					////rows
-		int n = 0;					////cols
+		int m = 0;						////rows
+		int n = 0;						////cols
 		int nnz = 0;					////nonzeros
 		Array<int, side> ptr, col;
 		Array<T, side> val;
@@ -95,7 +94,7 @@ namespace Meso {
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
 			if constexpr (side == DataHolder::DEVICE) {
 				Ap.resize(YDoF());
-				thrust::fill(Ap.begin(), Ap.end(), (T)0);
+				ArrayFunc::Fill(Ap, (T)0);
 
 				T one = 1;
 				T zero = 0;

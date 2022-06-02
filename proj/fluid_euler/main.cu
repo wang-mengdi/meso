@@ -6,6 +6,7 @@
 #include "FluidImpulse.h"
 #include "FluidImpulseInitializer.h"
 #include "FluidFreeSurface.h"
+#include "FluidFreeSurfaceInitializer.h"
 #include "Driver.h"
 using namespace Meso;
 

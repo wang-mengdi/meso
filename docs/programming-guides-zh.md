@@ -26,6 +26,7 @@
 - 类用首字母大写，无下划线，如`FaceField`.
 - 函数用首字母大写+下划线，如`Face_Center()`.
 - enum关键字全大写，但enum类型名应当遵循类的命名规则，如`DataHolder DEVICE`.
+- 初始化函数一般叫做`Init()`.
 
 ## 模板命名规则
 

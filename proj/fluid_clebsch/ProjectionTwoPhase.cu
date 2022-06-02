@@ -92,7 +92,7 @@ template<int d> void ProjectionTwoPhase<d>::Update_A()
 
 	timer.Record("fill host rho");
 
-	meso_poisson.Init(meso_grid, meso_rho_host, meso_fixed_host);
+	meso_poisson.Init(meso_fixed_host, meso_rho_host);
 	timer.Record("poisson dev");
 	meso_mg.Init_Poisson(meso_poisson, 2, 2, 1e-5);
 	timer.Record("mg dev");

@@ -22,19 +22,30 @@ using namespace Meso;
 using namespace NonlinearFemFunc;
 
 template<int d> real DiscreteShell<d>::CFL_Time(const real cfl) {
-	return 0.01; //how to set this value? line search too?
+	return cfl; //how to set this value? line search too? Now only return the cfl number
 }
 
-template<int d> void DiscreteShell<d>::Output(const bf::path base_path, const int frame) {
-	std::string vtu_name = fmt::format("vtu{:04d}.vtu", frame);
-	bf::path vtu_path = base_path / bf::path(vtu_name);
+template<int d> void DiscreteShell<d>::Output(DriverMetaData& metadata) {
+	std::string vtu_name = fmt::format("vtu{:04d}.vtu", metadata.current_frame);
+	bf::path vtu_path = metadata.base_path / bf::path(vtu_name);
 	DiscreteShellVTKFunc::Output_VTU<d, VectorD>(mesh, V(), vtu_path.string());
 }
 
-template<int d> void DiscreteShell<d>::Advance(const int current_frame, const real current_time, const real dt) {
-	if (use_explicit) { Advance_Explicit(dt); }
-	else { Advance_Implicit(dt); }
-	return;
+template<int d> void DiscreteShell<d>::Advance(DriverMetaData& metadata) {
+	switch (advance_mode) {
+	case AdvanceMode::Explicit:
+		Advance_Explicit(metadata.dt);
+		break;
+	case AdvanceMode::Implicit:
+		Advance_Implicit(metadata.dt);
+		break;
+	case AdvanceMode::Quasistatic:
+		Advance_Quasistatic();
+		break;
+	default:
+		Error("Only Explicit, Implicit and Quasistatic modes are available.");
+		break;
+	}
 }
 
 template<int d> void DiscreteShell<d>::Initialize(SurfaceMesh<d>& _mesh)
@@ -68,7 +79,7 @@ template<int d> void DiscreteShell<d>::Initialize(SurfaceMesh<d>& _mesh)
 	ArrayFunc::Fill(V(),VectorD::Zero());
 
 	////initialize implicit variables
-	if (!use_explicit) {
+	if (advance_mode!=AdvanceMode::Explicit) {
 		A.resize(dof_n,dof_n);
 		Allocate_A();
 		dx.resize(dof_n); ArrayFunc::Fill(dx, 0);
@@ -201,20 +212,19 @@ template<int d> void DiscreteShell<d>::Set_Rest_Shape(const Array<VectorD>& _X0)
 template<int d> void DiscreteShell<d>::Advance_Explicit(const real dt)
 {
 	Timer timer;
-
 	ArrayFunc::Fill(F(),VectorD::Zero());
 
 	////body force, damping force, boundary
-	if(use_body_force){for(int i=0;i< Vtx_Num();i++)F()[i]+=Mass(i)*g; }
-
-	//damping
-	for(int i=0;i< Vtx_Num();i++)F()[i]-=Mass(i)*damping*V()[i];
+	if(use_body_force){
+#pragma omp parallel for
+		for (int i = 0; i < Vtx_Num(); i++) { F()[i] += Mass(i) * g; }
+	}
 
 	//stretching forces
 	for(int ele_idx=0; ele_idx < Ele_Num(); ele_idx++){
 		MatrixD grad_s;
 		Grad_Stretch(ele_idx,grad_s);
-		Numerical_Grad_Stretch(ele_idx, grad_s);
+		//Numerical_Grad_Stretch(ele_idx, grad_s);
 		for(int j=0;j<d;j++){F()[E()[ele_idx][j]]-=grad_s.col(j);}
 	}
 
@@ -238,10 +248,12 @@ template<int d> void DiscreteShell<d>::Advance_Explicit(const real dt)
 	for(auto& iter:bc.forces){F()[iter.first]+=iter.second;}
 
 	////time integration
+#pragma omp parallel for
 	for(int i=0;i< Vtx_Num();i++){
-		V()[i]+=F()[i]/Mass(i)*dt;
+		V()[i]+=((real)1-damping)*F()[i]/Mass(i)*dt;
 		if(bc.Is_Psi_D(i))V()[i]=VectorD::Zero();
-		X()[i]+=V()[i]*dt;}
+		X()[i]+=V()[i]*dt;
+	}
 	Info("Explicit time integration: {} ms" , timer.Total_Time(PhysicalUnits::ms));
 }
 
@@ -258,22 +270,10 @@ template<int d> void DiscreteShell<d>::Advance_Implicit(const real dt)
 	Info("Update stretching time cost {} ms", timer.Lap_Time(PhysicalUnits::ms));
 	Update_Implicit_Bending(dt);
 	Info("Update bending time cost {} ms", timer.Lap_Time(PhysicalUnits::ms));
-	Update_Implicit_Boundary_Condition(dt);
+	Update_Implicit_Boundary_Condition();
 	Info("Update boundary condition time cost {} ms", timer.Lap_Time(PhysicalUnits::ms));
-
-	
-	SparseMatrixMapping<real, DataHolder::DEVICE> meso_mat(A);
-	SparseDiagonalPreconditioner<real> meso_sparse_diag_pred(meso_mat);
-	ConjugateGradient<real> meso_sparse_cg;
-	meso_sparse_cg.Init(&meso_mat, &meso_sparse_diag_pred, false, -1, 1e-5);
-	ArrayDv<real> dv_x(dx);
-	ArrayDv<real> dv_b (b);
-
-	int iters; real relative_error;
-	meso_sparse_cg.Solve(dv_x, dv_b, iters, relative_error);
-	Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
+	Solve();
 	Info("Implicit solve time cost {} ms",timer.Lap_Time(PhysicalUnits::ms));
-	dx = dv_x;
 
 #pragma omp parallel for
 	for (int i = 0; i < Vtx_Num(); i++) {
@@ -286,88 +286,41 @@ template<int d> void DiscreteShell<d>::Advance_Implicit(const real dt)
 // A = hess
 // b = -grad
 // Adx=b
-template<int d> void DiscreteShell<d>::Advance_Quasi_Static()
+template<int d> void DiscreteShell<d>::Advance_Quasistatic()
 {	//dx is dx in this case
 	int iter = 0;
 	real err = 1;
 	const real alpha = 0.1;
 	real energy = 0;
 	const int max_iter = 1000;
-	while (err > 1e-4) {
+	damping = 0;
+	
+	while (err > 1e-5) {
 		if (iter == max_iter) {
 			Info("max iteration {} reached!",max_iter);
 			break;
 		}
 
-		SparseFunc::Set_Value(A, (real)0);
-		ArrayFunc::Fill(b,0); //dense vector b can be directly set to zero
+		Clear_A_And_Rhs();
 
 		//add external forces
 		for (auto& force : bc.forces) {
 			Add_Block(b, force.first, force.second);
 		}
 
-		//Stretching
-		for (int ele_idx = 0; ele_idx < Ele_Num(); ele_idx++) {
-			MatrixD grad_s; MatrixD hess_s[d][d];
-			Stretch_Force(ele_idx, grad_s, hess_s);
-
-			//iterate through verteices in the element
-			for (int j = 0; j < d; j++) {
-				Add_Block(b, E()[ele_idx][j], -grad_s.col(j));
-				for (int k = 0; k < d; k++) {
-					SparseFunc::Add_Block<d, MatrixD>(A, E()[ele_idx][j], E()[ele_idx][k], hess_s[j][k]);
-				}
-			}
-		}
-
-		if constexpr (d == 3) {
-			Update_Bending_Hess_Variables();
-			for (int jct_idx = 0; jct_idx < edges.size(); jct_idx++) {
-				Eigen::Matrix<real, d, d + 1> grad_b;
-				MatrixD hess_b[d + 1][d + 1];
-				ArrayF<int, d + 1> vtx_idx;
-				ArrayF<int, 2> ele_idx;
-				if (Junction_Info(jct_idx, vtx_idx, ele_idx)) {
-					Bend_Force(jct_idx, grad_b, vtx_idx, ele_idx, hess_b);
-					for (int j = 0; j < d + 1; j++) {
-						Add_Block(b, vtx_idx[j], -grad_b.col(j));
-						for (int k = 0; k < d + 1; k++) {
-							SparseFunc::Add_Block<d, MatrixD>(A, vtx_idx[j], vtx_idx[k], hess_b[j][k]);
-						}
-					}
-				}
-			}
-		}
-		
-		for (auto& bc_d : bc.psi_D_values) {
-			int node = bc_d.first; VectorD dis = bc_d.second;
-			for (int axis = 0; axis < d; axis++) {
-				int idx = node * d + axis;
-				if(iter==0){ NonlinearFemFunc::Set_Dirichlet_Boundary_Helper(A, b, idx, dis[axis]); }
-				else{ NonlinearFemFunc::Set_Dirichlet_Boundary_Helper(A, b, idx, (real)0); }
-			}
-		}
-		
-		SparseMatrixMapping<real, DataHolder::DEVICE> meso_mat(A);
-		SparseDiagonalPreconditioner<real> meso_sparse_diag_pred(meso_mat);
-		ConjugateGradient<real> meso_sparse_cg;
-		meso_sparse_cg.Init(&meso_mat, &meso_sparse_diag_pred, false, -1, 1e-5);
-		ArrayDv<real> dv_x(dx);
-		ArrayDv<real> dv_b(b);
-
-		int iters; real relative_error;
-		meso_sparse_cg.Solve(dv_x, dv_b, iters, relative_error);
-		Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
-		dx = dv_x;
+		Update_Implicit_Stretching(1.0); //equivalent to dt=1.0
+		Update_Implicit_Bending(1.0);
+		Update_Implicit_Boundary_Condition();
+		Solve();
 
 		#pragma omp parallel for
 		for (int i = 0; i < Vtx_Num(); i++) {
 			for (int j = 0; j < d; j++) {
-				X()[i][j] += damping*dx[i * d + j]; //damping becomes the step size here
+				X()[i][j] += alpha*dx[i * d + j]; //may multiply stepsize
 			}
 		}
 
+		Info("Total energy: {}", Total_Energy());
 		err = ArrayFunc::Norm<real, DataHolder::HOST>(dx) / dx.size();
 		iter++;
 	}
@@ -412,15 +365,16 @@ template<int d> void DiscreteShell<d>::Update_Implicit_Stretching(const real dt)
 
 template<int d> void DiscreteShell<d>::Update_Implicit_Bending(const real dt) {
 	if constexpr (d == 3) {
+		Update_Bending_Hess_Variables();
 		for (int jct_idx = 0; jct_idx < edges.size(); jct_idx++) {
 			Eigen::Matrix<real, d, d + 1> grad_b;
 			Eigen::Matrix<real, d, d> hess_b[d + 1][d + 1];
 			ArrayF<int, d + 1> vtx_idx;
 			ArrayF<int, 2> ele_idx;
 			if (Junction_Info(jct_idx, vtx_idx, ele_idx)) {
-				Bend_Force_Approx(jct_idx, grad_b, vtx_idx, ele_idx, hess_b);
+				Bend_Force(jct_idx, grad_b, vtx_idx, ele_idx, hess_b);
 				//Numerical_Grad_Bend(jct_idx, vtx_idx, ele_idx, grad_b);
-				//Numerical_Hess_Bend(jct_idx, vtx_idx, ele_idx, grad_b, hess_b);
+				//Numerical_Hess_Bend(jct_idx, vtx_idx, ele_idx, grad_b,hess_b);
 				for (int j = 0; j < d + 1; j++) {
 					Add_Block(b, vtx_idx[j], -dt * grad_b.col(j));
 
@@ -434,7 +388,7 @@ template<int d> void DiscreteShell<d>::Update_Implicit_Bending(const real dt) {
 	}
 }
 
-template<int d> void DiscreteShell<d>::Update_Implicit_Boundary_Condition(const real dt){
+template<int d> void DiscreteShell<d>::Update_Implicit_Boundary_Condition(){
 	for (auto& bc_d : bc.psi_D_values) {
 		int node = bc_d.first; VectorD dis = bc_d.second;
 		for (int axis = 0; axis < d; axis++) {
@@ -444,6 +398,21 @@ template<int d> void DiscreteShell<d>::Update_Implicit_Boundary_Condition(const 
 	}
 }
 
+template<int d> void DiscreteShell<d>::Solve() {
+	SparseMatrixMapping<real, DataHolder::DEVICE> meso_mat(A);
+	SparseDiagonalPreconditioner<real> meso_sparse_diag_pred(meso_mat);
+	ConjugateGradient<real> meso_sparse_cg;
+	meso_sparse_cg.Init(&meso_mat, &meso_sparse_diag_pred, false, -1, 1e-4);
+	ArrayDv<real> dv_x(dx);
+	ArrayDv<real> dv_b(b);
+
+	int iters; real relative_error;
+	meso_sparse_cg.Solve(dv_x, dv_b, iters, relative_error);
+	Info("Implicit solve {} iters with relative_error {}", iters, relative_error);
+	dx = dv_x;
+}
+
+//==========================================================Computation of physical quantities============================================
 template<int d> void DiscreteShell<d>::Grad_Stretch(real area, const MatrixD& stress, const MatrixD& x_hat, const MatrixD& Dm_inv, MatrixD& grad) {
 	MatrixD P=area*stress;
 	MatrixD C_x=C_c()*Dm_inv;
@@ -857,7 +826,19 @@ template<> real DiscreteShell<3>::Total_Bending_Energy() {
 	return bending_energy;
 }
 
-template<int d> real DiscreteShell<d>::Lambda(const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
+template<> real DiscreteShell<3>::Total_Potential_Energy() {
+	real potential_energy=0;
+	for (auto& force : bc.forces) {
+		potential_energy -= force.second.dot(X()[force.first]); //potential energy by the external force
+	}
+	return potential_energy;
+}
+
+template<> real DiscreteShell<3>::Total_Energy() {
+	return Total_Stretching_Energy() + Total_Bending_Energy() + Total_Potential_Energy();
+}
+
+template<int d> real DiscreteShell<d>::Lambda(const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx) { //
 	real l_hat;
 	if constexpr (d == 2) { l_hat = (real)1; }
 	else { l_hat = (X0[vtx_idx[0]] - X0[vtx_idx[1]]).norm(); } //May be stored
@@ -890,11 +871,12 @@ template<int d> Matrix<real,d> DiscreteShell<d>::Numerical_Grad_Stretch(int ele_
 
 	for (int col=0; col<d; col++) {
 		for (int row = 0; row < d; row++) {
-			real p_tmp= X()[E()[ele_idx][col]][row];
-			X()[E()[ele_idx][col]][row] +=epsilon;
+			int p_idx = E()[ele_idx][col];
+			real p_tmp= X()[p_idx][row];
+			X()[p_idx][row] +=epsilon;
 			real energy_p=Stretching_Energy(ele_idx);
 			grad_s_n(row,col)=(energy_p-stretching_energy)/epsilon;
-			X()[E()[ele_idx][col]][row] =p_tmp;
+			X()[p_idx][row] =p_tmp;
 		}
 	}
 
@@ -906,12 +888,13 @@ template<int d> Matrix<real,d> DiscreteShell<d>::Numerical_Grad_Stretch(int ele_
 
 template<int d> Array2DF<Matrix<real, d>, d, d> DiscreteShell<d>::Numerical_Hess_Stretch(int ele_idx, const MatrixD& grad_s, const MatrixD hess_s[d][d]) {
 	Array2DF<MatrixD, d, d> hess_s_n;
-	const real epsilon = 1e-5;
+	const real epsilon = 1e-10;
 
 	for (int col = 0; col < d; col++) {
 		for (int row = 0; row < d; row++) {
-			real p_tmp = X()[E()[ele_idx][col]][row];
-			X()[E()[ele_idx][col]][row] += epsilon;
+			int p_idx = E()[ele_idx][col];
+			real p_tmp = X()[p_idx][row];
+			X()[p_idx][row] += epsilon;
 			MatrixD grad_cr;
 			Grad_Stretch(ele_idx, grad_cr);
 			MatrixD hess_n_cr = (grad_cr - grad_s) / epsilon;
@@ -924,13 +907,13 @@ template<int d> Array2DF<Matrix<real, d>, d, d> DiscreteShell<d>::Numerical_Hess
 				}
 			}
 
-			X()[E()[ele_idx][col]][row] = p_tmp;
+			X()[p_idx][row] = p_tmp;
 		}
 	}
 
 	for (int r = 0; r < d; r++) {
 		for (int c = 0; c < d; c++) {
-			if (!hess_s_n[r][c].isApprox(hess_s[r][c], (real)0.05)) {
+			if (!hess_s_n[r][c].isApprox(hess_s[r][c], (real)1e-2)) {
 				std::cout << "hess_s[" << ele_idx << "]" << std::endl;
 				std::cout << "hess_s[" << r << "][" << c << "] \n" << hess_s[r][c] << "\n" << "hess_s_n[" << r << "][" << c << "] \n" << hess_s_n[r][c] << std::endl;
 
@@ -962,17 +945,19 @@ template<> Eigen::Matrix<real,3,4> DiscreteShell<3>::Numerical_Grad_Bend(int jct
 
 	for (int col=0; col<4; col++) {
 		for (int row = 0; row < 3; row++) {
-			real p_tmp=X()[vtx_idx[col]][row];
-			X()[vtx_idx[col]][row]+=epsilon;
+			int p_idx = vtx_idx[col];
+			real p_tmp=X()[p_idx][row];
+			X()[p_idx][row]+=epsilon;
 			n0=Triangle<3>::Normal(X()[E()[ele_idx[0]][0]],X()[E()[ele_idx[0]][1]],X()[E()[ele_idx[0]][2]]);
 			n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
 			theta=Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
 			real energy_p=Bending_Energy(lambdas[jct_idx], theta, theta_hats[jct_idx]);
 			grad_b_n(row,col)=(energy_p-bending_energy)/epsilon;
-			X()[vtx_idx[col]][row]=p_tmp;
+			X()[p_idx][row]=p_tmp;
 		}
 	}
 	if (!grad_b_n.isApprox(grad_b, (real)1e-2)) {
+		std::cout << vtx_idx[0] << "," << vtx_idx[1] << "," << vtx_idx[2] << ","<<vtx_idx[3] << std::endl;
 		std::cout << "grad_b[" << jct_idx << "]: \n" << grad_b << "\n" << "grad_b_n[" << jct_idx << "]: \n" << grad_b_n << std::endl;
 	}
 	return grad_b_n;
@@ -985,8 +970,9 @@ template<int d> Array2DF<Matrix<real,d>, d + 1, d + 1> DiscreteShell<d>::Numeric
 
 	for (int col = 0; col < d+1; col++) {
 		for (int row = 0; row < d; row++) {
-			real p_tmp = X()[vtx_idx[col]][row];
-			X()[vtx_idx[col]][row] += epsilon;
+			int p_idx = vtx_idx[col];
+			real p_tmp = X()[p_idx][row];
+			X()[p_idx][row] += epsilon;
 
 			Eigen::Matrix<real, d, d + 1> grad_cr;
 			Grad_Bend(jct_idx, grad_cr, vtx_idx, ele_idx);
@@ -1001,7 +987,7 @@ template<int d> Array2DF<Matrix<real,d>, d + 1, d + 1> DiscreteShell<d>::Numeric
 				}
 			}
 
-			X()[vtx_idx[col]][row] = p_tmp;
+			X()[p_idx][row] = p_tmp;
 		}
 	}
 
@@ -1066,38 +1052,13 @@ template<int d> bool DiscreteShell<d>::Junction_Info(int edge_idx, ArrayF<int, d
 			return false;
 		}
 	}
-	else if constexpr (d == 2) {
-		//need to be implemented
-		//vtx_idx[0] = edges[edge_idx][0];
-		//vtx_idx[1] = edges[edge_idx][1];
-		//Array<int> incident_elements;
-		//Value_Array(edge_element_hashtable, edges[edge_idx], incident_elements);
-		//if (incident_elements.size() == 2) { //shared edge
-		//	ele_idx[0] = incident_elements[0], ele_idx[1] = incident_elements[1];
-		//	vtx_idx[2] = Opposite_Vertex(vtx_idx[0], vtx_idx[1], E()[ele_idx[0]]);
-		//	vtx_idx[3] = Opposite_Vertex(vtx_idx[0], vtx_idx[1], E()[ele_idx[1]]);
-
-		//	for (int i = 0; i < 3; i++) {
-		//		if (E()[ele_idx[0]][i] == vtx_idx[2]) { vtx_idx[0] = E()[ele_idx[0]][(i + 1) % 3]; vtx_idx[1] = E()[ele_idx[0]][(i + 2) % 3]; }
-		//	}
-		//	return true;
-		//}
-		//else {
-		//	return false;
-		//}
-		return false;
-	}
-}
-
-template<int d> void DiscreteShell<d>::Set_Block(Array<real>& b, const int i, const VectorD& bi)
-{
-	for (int ii = 0; ii < d; ii++)b[i * d + ii] = bi[ii];
 }
 
 template<int d> void DiscreteShell<d>::Add_Block(Array<real>& b, const int i, const VectorD& bi)
 {
-	for (int ii = 0; ii < d; ii++)b[i * d + ii] += bi[ii];
+	for (int ii = 0; ii < d; ii++) { 
+		b[i * d + ii] += bi[ii]; 
+	}
 }
 
-//template class DiscreteShell<2>; not supprted yet
 template class DiscreteShell<3>;
