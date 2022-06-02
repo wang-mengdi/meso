@@ -73,6 +73,10 @@ namespace Meso {
 
 		////Eigen zero compiler fix
 		template<class T> T Zero() { return (T)0; }
+#define Define_Zero(VecT) template<> inline VecT Zero<VecT>(){return VecT::Zero();}
+		Define_Zero(Matrix2); Define_Zero(Matrix3); Define_Zero(Matrix4);
+		Define_Zero(Vector1); Define_Zero(Vector2); Define_Zero(Vector3);
+		Define_Zero(Vector4);
 
 		//atomic add two vectors
 		template<class T, int d> __device__ __host__ void Atomic_Add(Vector<T,d>* a, Vector<T,d> b) {

@@ -10,10 +10,8 @@
 namespace Meso {
 	struct Neighbors {
 		Array<int> nbs;
+		Array<int> b_nbs;
 		real r;
-		void set(const Array<int>& _nbs, real _r);
-		int size(void)const;
-		int operator[](int k)const;
-		const Array<int>& operator()(void)const;
+		void set(const Array<int>& _nbs, const Array<int>& _b_nbs, real _r);
 	};
 }

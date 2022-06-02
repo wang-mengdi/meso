@@ -7,25 +7,11 @@
 
 namespace Meso {
 
-	void Neighbors::set(const Array<int>& _nbs, real _r)
+	void Neighbors::set(const Array<int>& _nbs, const Array<int>& _b_nbs, real _r)
 	{
 		nbs = _nbs;
+		b_nbs = _b_nbs;
 		r = _r;
-	}
-
-	int Neighbors::size(void)const
-	{
-		return nbs.size();
-	}
-
-	int Neighbors::operator[](int k)const
-	{
-		return nbs[k];
-	}
-
-	const Array<int>& Neighbors::operator()(void)const
-	{
-		return nbs;
 	}
 
 }

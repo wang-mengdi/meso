@@ -23,13 +23,14 @@
 namespace Meso {
 
 	template<int d>
-	void Write_SPH(const SPHParticles<d>& particles, std::string file_name) {
+	void Write_SPH(const SPHParticles<d>& particles, const SPHParticles<d>& b_particles, std::string file_name) {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
 		const Array<VectorD>& pos = particles.xRef();
 		const Array<VectorD>& vel = particles.uRef();
 		const Array<real>& nden = particles.ndenRef();
 		const Array<real>& rho = particles.rhoRef();
-		const Array<int>& boundary = particles.BRef();
+		const Array<VectorD>& pos_b = b_particles.xRef();
+
 		//// setup VTK
 		vtkNew<vtkXMLPolyDataWriter> writer;
 		vtkNew<vtkPolyData> polyData;
@@ -60,8 +61,17 @@ namespace Meso {
 			velArray->InsertNextTuple3(vel3[0], vel3[1], vel3[2]);
 
 			ndenArray->InsertNextTuple1(nden[i]);
-			boundaryArray->InsertNextTuple1(boundary[i]);
+			boundaryArray->InsertNextTuple1(0);
 			rhoArray->InsertNextTuple1(rho[i]);
+		}
+
+		for (int i = 0; i < pos_b.size(); i++) {
+			Vector3 pos3 = MathFunc::V<3>(pos_b[i]);
+			nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
+			velArray->InsertNextTuple3(0.,0.,0.);
+			ndenArray->InsertNextTuple1(0.);
+			boundaryArray->InsertNextTuple1(1);
+			rhoArray->InsertNextTuple1(0.);
 		}
 
 		polyData->SetPoints(nodes);

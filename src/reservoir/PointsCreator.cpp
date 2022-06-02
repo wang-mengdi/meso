@@ -29,7 +29,7 @@ namespace Meso {
 		return (dx + dy) / 2.;
 	}
 
-	real Initialize_Box_Rim_Points_2D(const Vector2& origin, const Vector2i& pad_size, const Vector2i& int_size, const Vector2& _dx, Points& pts, Array<Vector2>& pos, bool keep_existing, std::function<void(const int idx)> instruction) {
+	real Initialize_Box_Rim_Points_2D(const Vector2& origin, const Vector2i& pad_size, const Vector2i& int_size, const Vector2& _dx, Points& pts, Array<Vector2>& pos, bool keep_existing) {
 		int nx_in = int_size[0]; int ny_in = int_size[1];
 		int nx_out = 2 * pad_size[0] + nx_in; int ny_out = 2 * pad_size[1] + ny_in; 
 		real dx = _dx[0]; real dy = _dx[1];
@@ -42,12 +42,51 @@ namespace Meso {
 				if ((i < 0) || (i >= nx_in) || (j < 0) || (j >= ny_in)) {
 					Vector2 curr_pos = origin + (real)i * dx * Vector2::Unit(0) + (real)j * dy * Vector2::Unit(1);
 					pos[idx] = curr_pos;
-					instruction(idx);
 					idx++;
 				}
 			}
 		}
 		return (dx + dy) / 2.;
+	}
+
+	real Initialize_Box_Points_3D(const Vector3& origin, const Vector3i& size, const Vector3& _dx, Points& pts, Array<Vector3>& pos, bool keep_existing) {
+		int nx = size[0]; int ny = size[1]; int nz = size[2];
+		real dx = _dx[0]; real dy = _dx[1]; real dz = _dx[2];
+		pts.Resize(nx * ny * nz);
+		int idx = 0;
+		for (int i = 0; i < nx; i++) {
+			for (int j = 0; j < ny; j++) {
+				for (int k = 0; k < nz; k++) {
+					Vector3 curr_pos = origin + (real)i * dx * Vector3::Unit(0) + (real)j * dy * Vector3::Unit(1) + (real)k * dz * Vector3::Unit(2);
+					pos[idx] = curr_pos;
+					idx++;
+				}
+			}
+		}
+		return (dx + dy + dz) / 3.;
+	}
+
+	real Initialize_Box_Rim_Points_3D(const Vector3& origin, const Vector3i& pad_size, const Vector3i& int_size, const Vector3& _dx, Points& pts, Array<Vector3>& pos, bool keep_existing) {
+		int nx_in = int_size[0]; int ny_in = int_size[1]; int nz_in = int_size[2];
+		int nx_out = 2 * pad_size[0] + nx_in; int ny_out = 2 * pad_size[1] + ny_in; int nz_out = 2 * pad_size[2] + nz_in;
+		real dx = _dx[0]; real dy = _dx[1]; real dz = _dx[2];
+		int begin = 0;
+		if (keep_existing) begin = pts.Size();
+		int new_size = begin + nx_out * ny_out * nz_out - nx_in * ny_in * nz_in;
+		pts.Resize(begin + nx_out * ny_out * nz_out - nx_in * ny_in * nz_in);
+		int idx = begin;
+		for (int i = -pad_size[0]; i < nx_in + pad_size[0]; i++) {
+			for (int j = -pad_size[1]; j < ny_in + pad_size[1]; j++) {
+				for (int k = -pad_size[2]; k < nz_in + pad_size[2]; k++) {
+					if ((i < 0) || (i >= nx_in) || (j < 0) || (j >= ny_in) || (k < 0) || (k >= nz_in)) {
+						Vector3 curr_pos = origin + (real)i * dx * Vector3::Unit(0) + (real)j * dy * Vector3::Unit(1) + (real)k * dz * Vector3::Unit(2);
+						pos[idx] = curr_pos;
+						idx++;
+					}
+				}
+			}
+		}
+		return (dx + dy + dz) / 3.;
 	}
 
 

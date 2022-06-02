@@ -15,6 +15,7 @@ namespace Meso {
 		SPHParticles() : NAParticles<d>()  {}
 
 		Setup_Attribute(m, real, 1.); //mass
+		Setup_Attribute(p, real, 0.); //pressure
 		Setup_Attribute(rho, real, 1.);
 		Setup_Attribute(nden, real, 1.);
 		Setup_Attribute(V, real, 1.); //control volume (or control area in 2D)

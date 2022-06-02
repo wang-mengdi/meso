@@ -34,13 +34,22 @@ namespace Meso {
 			std::cout << "Initializing case 0." << std::endl;
 			if constexpr (d == 2) {
 				// init particles
-				fluid.particles.dx = Initialize_Box_Points_2D(Vector2(0,0), Vector2i(20, 20), Vector2(1., 1.), fluid.particles, fluid.particles.xRef());
-				std::function<void(const int idx)> instruction = [&](const int idx) {
-					fluid.particles.B(idx) = 1;
-				};
-				fluid.particles.dx = Initialize_Box_Rim_Points_2D(Vector2(0, 0), Vector2i(3, 3), Vector2i(20, 20), Vector2(1., 1.), fluid.particles, fluid.particles.xRef(), true, instruction);
+				int s = (int)scale;
+				int r = (int)(scale * 0.5);
+				int l = s - r;
+				fluid.particles.dx = Initialize_Box_Points_2D(Vector2(l,0), Vector2i(r, s), Vector2(1., 1.), fluid.particles, fluid.particles.xRef());
+				fluid.b_particles.dx = Initialize_Box_Rim_Points_2D(Vector2(0, 0), Vector2i(3, 3), Vector2i(s, s), Vector2(1., 1.), fluid.b_particles, fluid.b_particles.xRef());
 				// init boundary
-				fluid.boundary.Add_Obstacle(std::make_shared<Box<d>>(VectorD::Zero(), 20. * VectorD::Ones()));
+				fluid.boundary.Add_Obstacle(std::make_shared<Box<d>>(VectorD::Zero(), scale * VectorD::Ones()));
+			}
+			else if constexpr (d == 3) {
+				int s = (int)scale;
+				int r = (int)(scale * 0.5);
+				int l = s - r;
+				fluid.particles.dx = Initialize_Box_Points_3D(Vector3(l, 0, 0), Vector3i(r, s, s), Vector3(1., 1., 1.), fluid.particles, fluid.particles.xRef());
+				fluid.b_particles.dx = Initialize_Box_Rim_Points_3D(Vector3(0, 0, 0), Vector3i(3, 3, 3), Vector3i(s, s, s), Vector3(1., 1., 1.), fluid.b_particles, fluid.b_particles.xRef());
+				// init boundary
+				fluid.boundary.Add_Obstacle(std::make_shared<Box<d>>(VectorD::Zero(), scale * VectorD::Ones()));
 			}
 			fluid.Init();
 		}
