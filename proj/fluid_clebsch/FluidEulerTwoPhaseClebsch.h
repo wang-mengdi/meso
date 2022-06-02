@@ -63,6 +63,9 @@ public:
 	Field<real, d> divegence_field;
 
 	std::shared_ptr<ImplicitSurfaceTension<real, d>> implicit_surface_tension_solver;
+	real sigma = 0.01;
+	real dirac_cell_num=3;
+	real dirac_band_width;
 
     FluidEulerTwoPhaseClebsch():projection(&mac_grid,&velocity,&rho_face,&levelset,&type,&bc){}
 
@@ -78,6 +81,7 @@ public:
 		Initialize_Interface();
 		implicit_surface_tension_solver =
 			std::make_shared<ImplicitSurfaceTension<real, d>>(Meso::json::value_t::object, mac_grid, &bc, &levelset);
+		dirac_band_width = dirac_cell_num * dx;
 	}
 
 	virtual void Initialize_Wave_Func()

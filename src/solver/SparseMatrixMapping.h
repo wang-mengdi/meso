@@ -94,7 +94,7 @@ namespace Meso {
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
 			if constexpr (side == DataHolder::DEVICE) {
 				Ap.resize(YDoF());
-				thrust::fill(Ap.begin(), Ap.end(), (T)0);
+				ArrayFunc::Fill(Ap, (T)0);
 
 				T one = 1;
 				T zero = 0;
