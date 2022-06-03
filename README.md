@@ -54,3 +54,9 @@ An output folder named `cavity` with `.vst` files will be generated.
 
 ## Notes for Developers
 <img src="./docs/assets/meso_design.png" width =70% alt="mgpcg-smooth" align=center/>
+
+Maintainers:
+
+- Kernel, grid_algorithm, dec_system: Mengdi Wang
+- particle_algorithm: Fan Feng
+- mesh_algorithm: Yitong Deng

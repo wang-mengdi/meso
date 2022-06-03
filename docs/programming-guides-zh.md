@@ -7,19 +7,30 @@
 
 <img src="./assets/meso_design.png" width =75% alt="mgpcg-smooth" align=center/>
 
-如上图所示，项目分为三层：`Ring 0`，`Ring 1`和`Simulators`.
+如上图所示，项目分为三层：`Kernel`，`Algorithm`和`Simulators`.
 
-#### Ring 0
+#### Kernel
 
-此层拥有四个子目录：`common`、`geometry`、`reservoir`、`solver`，是MESO的核心代码。任何MESO的用户都会同时使用这四个子目录中的代码内容，也就是说此层可以视作一个整体，在图中用染色的实心方框表示。
+此层是MESO的核心代码，拥有四个子目录：`common`、`geometry`、`reservoir`、`solver`。任何MESO的用户都会同时使用这四个子目录中的代码内容，也就是说此层可以视作一个整体，在图中用染色的实心方框表示。
 
-#### Ring 1
+其中，`common`负责最基本的程序功能，例如对`Eigen`、`Json`、`thrust`的适配、对数学常数的定义等等。`geometry`含有以各种解析方法表示的几何形体，`reservoir`含有粒子/网格/Mesh三种处理大批量数据的数据结构，`solver`是数学上的线性方程组求解器。
 
-此层拥有四个子目录：`particle_algorithm`、`mesh_algorithm`、`grid_algorithm`、`dec_system`，是不同类型的模拟系统需要使用的特有算法。这一层并不是一个整体，因为用户可以只使用其中的若干个，在图中用虚线方框表示。
+某一功能进入此层的标准是：几乎所有的粒子/网格/Mesh模拟程序都<font color=red>必须使用该功能</font>。
+
+正例：
+- 几乎所有的网格或Mesh模拟程序都必须以某种方式使用CG求解器，因此CG求解器位于`solver`目录下。
+- 几乎所有的粒子模拟程序都必须使用我们在`Points.h`中定义的粒子系统数据结构，因此它位于`reservoir`目录下。
+
+反例：
+- 
+
+#### Algorithm
+
+此层是不同类型的模拟系统需要使用的特有算法，拥有四个子目录：`particle_algorithm`、`mesh_algorithm`、`grid_algorithm`、`dec_system`。这一层并不是一个整体，因为用户可以只使用其中的若干个，在图中用虚线方框表示。
 
 #### Simulators
 
-此层是不同的模拟程序，例如Fluid Euler、SPH、FEM等等。每个程序将按需使用Ring 1中的一个或多个子目录，同时也自动使用整个Ring 0.
+此层是不同的模拟程序，例如Fluid Euler、SPH、FEM等等。每个程序将按需使用Algorithms层中的一个或多个子目录，同时也自动使用整个Kernel.
 
 ## 结构设计规范
 
