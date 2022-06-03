@@ -158,14 +158,12 @@ namespace Meso {
 				}
 			);
 
-			Field<bool, d> sol(grid.counts, 0);
+			Field<real, d> sol(grid.counts, 0);
 			FaceField<real, d> alpha(grid.counts, (real)1);
 
 			poisson.Init(fixed, alpha);
 			MG_precond.Init_Poisson(poisson, 2, 2);
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
-			//poisson.Build_And_Solve(); // a different method now?
-
 
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
@@ -187,7 +185,7 @@ namespace Meso {
 
 				}
 			);
-
+			// initialize taylor parameter?
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
 		}
 	};
