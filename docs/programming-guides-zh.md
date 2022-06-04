@@ -1,6 +1,6 @@
 # 编程规范
 
-## 工作流程
+## 代码风格基础约定
 - 原则上任何可以测试的代码都应该写一个测试，例如`_tests_reservoir`和`_tests_solver_dec`中的那样。测试应该有一个确定的“通过/不通过”标准（设想ACM竞赛当中的Accepted/Wrong Answer），通过用`Pass()`函数输出，失败用`Error()`函数输出，**不应依赖用户的主观判断** （例如，不应让用户肉眼检查两个数组是否相等，而应该用`ArrayFunc::Is_Approx`接口）。
 
 ## 项目逻辑拆分
@@ -15,22 +15,35 @@
 
 其中，`common`负责最基本的程序功能，例如对`Eigen`、`Json`、`thrust`的适配、对数学常数的定义等等。`geometry`含有以各种解析方法表示的几何形体，`reservoir`含有粒子/网格/Mesh三种处理大批量数据的数据结构，`solver`是数学上的线性方程组求解器。
 
-某一功能进入此层的标准是：几乎所有的粒子/网格/Mesh模拟程序都<font color=red>必须使用该功能</font>。
-
-正例：
-- 几乎所有的网格或Mesh模拟程序都必须以某种方式使用CG求解器，因此CG求解器位于`solver`目录下。
-- 几乎所有的粒子模拟程序都必须使用我们在`Points.h`中定义的粒子系统数据结构，因此它位于`reservoir`目录下。
-
-反例：
-- 
-
 #### Algorithm
 
 此层是不同类型的模拟系统需要使用的特有算法，拥有四个子目录：`particle_algorithm`、`mesh_algorithm`、`grid_algorithm`、`dec_system`。这一层并不是一个整体，因为用户可以只使用其中的若干个，在图中用虚线方框表示。
 
+其中，前三个目录分别存放粒子系统、Mesh系统、网格系统的相关算法，最后一个目录是我们特有的外微分系统。
+
 #### Simulators
 
 此层是不同的模拟程序，例如Fluid Euler、SPH、FEM等等。每个程序将按需使用Algorithms层中的一个或多个子目录，同时也自动使用整个Kernel.
+
+#### 功能分层标准
+
+当实现一个功能的时候，我们需要考虑将这个功能放在哪一层。
+
+Simulator层和Algorithm层的分界标准为：
+- **一个完整的模拟算法应当位于Simulator层。**
+- **模拟算法的成熟模块应当位于Algorithm层。**
+
+例如，使用投影法求解理想不可压流体是一个完整的算法，因此它属于Simulator层（`fluid_euler`项目）。但其中的半拉格朗日对流格式是一个成熟的算法模块，因此它位于`grid_physics`下。投影法需要用到的泊松映射`MaskedPoissonMapping`也是一个成熟的算法模块，位于`dec_system`下。
+
+Algorithm和Kernel层的分界标准为：
+- **最小公共约定原则。** 即，Kernel层应当完整拥有Algorithm和Simulator层所需的全部公共约定，而在满足这一条件的基础上，Kernel层的内容应当尽可能少。
+- **无法分类原则。** 即，如果一个功能明确不属于粒子、网格、Mesh当中的任意一种，那么它很可能应当位于Kernel层。
+
+例如，`Grid`和`Field`类约定了MESO中全部网格数据的储存顺序，`Points`类约定了MESO中全部粒子系统的储存格式和数据结构，因此它们属于Kernel层的`reservoir`。但`LevelSet`并不向外提供公共约定，它只是一个以`Field`为基础的算法模块，因此应当位于Algorithm层，同理`PointsCreator.h`也属于Algorithm层。
+
+再例如，`SparseMatrixMapping`和`ConjugateGradient`类并不明显属于粒子/网格/Mesh算法之一，事实上任何模拟算法都可能用它们解线性方程组，因此它们位于Kernel层的`solver`。但`Multigrid`类（目前）仅对网格系统生效，因此它位于Algorithm层的`dec_system`.
+
+这里特别注意，如果我们将`reservoir`的内容下放至Algorithm层，则`IOFunc.h`提供的接口就无法被放在一起，或只能依赖Algorithm层的所有模块，从而违背了模块分离的原则，故`reservoir`是Kernel的一部分。但此时，`IOFunc.h`中的`VTKFunc::Write_VTS()`需要依赖插值函数，因此我们只能将`Interpolation.h`置于`reservoir`中，这是一个设计上的妥协，今后或可改正。
 
 ## 结构设计规范
 
