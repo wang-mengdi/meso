@@ -37,8 +37,11 @@ namespace Meso {
 		Array<T, side> val;
 		cusparseHandle_t cusparseHandle = nullptr;
 
+		SparseMatrixMapping() {
+			if (!cusparseHandle) cusparseCreate(&cusparseHandle);
+		}
 		SparseMatrixMapping(const Eigen::SparseMatrix<T, Eigen::RowMajor, int>& A) {
-			cusparseCreate(&cusparseHandle);
+			if (!cusparseHandle) cusparseCreate(&cusparseHandle);
 			m = A.rows(); n = A.cols(); nnz = A.nonZeros();
 
 			ptr.resize(m + 1);

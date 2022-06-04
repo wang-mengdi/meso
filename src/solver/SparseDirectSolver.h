@@ -16,7 +16,7 @@ namespace Meso {
 		cusparseMatDescr_t mat_descr;
 		cusolverSpHandle_t solve_handle;
 		//currently we don't have a default constructor of SparseMatrixMapping
-		//CholeskySparseSolver(){}
+		CholeskySparseSolver() {}
 		CholeskySparseSolver(SparseMatrix<T>& _mapping, T _tol = 0) : mapping(_mapping), tolerance(_tol) {
 			cusolverSpCreate(&solve_handle);
 			cusparseCreateMatDescr(&mat_descr);
