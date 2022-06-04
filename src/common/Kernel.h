@@ -96,7 +96,7 @@ namespace Meso {
 		virtual real Grad(const int d, const real r)const { return beta[d - 1] * r * exp(-MathFunc::Power2(trunc_num * r)); }
 	};
 
-	class KernelSPH {
+	class Kernel {
 	public:
 		static UnitPOLY6 poly6;
 		static UnitSPIKY spiky;
@@ -110,7 +110,7 @@ namespace Meso {
 		real h;
 		std::array<real, 5> h_pows_inv;//3d in maximum, so we must have h_pows[4]
 		KernelType ref_type;
-		KernelSPH(const real _h = 1.0, const KernelType _type = KernelType::SPIKY) :h(_h), ref_type(_type) {
+		Kernel(const real _h = 1.0, const KernelType _type = KernelType::SPIKY) :h(_h), ref_type(_type) {
 			h_pows_inv[0] = 1;
 			for (int i = 1; i < 5; i++) { h_pows_inv[i] = h_pows_inv[i - 1] / h; }
 			kernels[(int)KernelType::POLY6] = &KernelSPH::poly6;
@@ -119,7 +119,7 @@ namespace Meso {
 			kernels[(int)KernelType::QUINTIC] = &KernelSPH::quintic;
 			kernels[(int)KernelType::GAUSSIAN] = &KernelSPH::gaussian;
 		}
-		KernelSPH(const json& j) :KernelSPH(j.at("h").get<const real>(), j.at("type").get<const KernelType>()) {}
+		Kernel(const json& j) :Kernel(j.at("h").get<const real>(), j.at("type").get<const KernelType>()) {}
 
 		real Weight(int d, real r, real h1, KernelType kernel_type = KernelType::NONE)const;
 		real Weight(int d, real r, KernelType kernel_type = KernelType::NONE)const;// const { return Weight(d, r, h, kernel_type); }

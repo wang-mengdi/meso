@@ -1,0 +1,13 @@
+includes("./../../src/common/xmake.lua")
+--add_rules("plugin.vsxmake.autoupdate")
+target("geometry")
+    set_kind("static")
+    add_headerfiles("*.h")
+    add_files("*.cpp","*.cu","*.cxx")
+    add_cugencodes("native")
+    add_cugencodes("compute_61")
+    add_cuflags("-extended-lambda")
+    add_cuflags("-Xcompiler /openmp")
+    add_includedirs(".",{public=true})
+    add_deps("common")
+    
