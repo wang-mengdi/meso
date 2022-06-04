@@ -30,4 +30,4 @@ if __name__=='__main__':
     #Run_Project("_tests_common")
     Run_Project("_tests_reservoir")
     Run_Project("_tests_solver_dec")
-    Run_Project("_tests_grid_physics")
+    #Run_Project("_tests_grid_physics")
