@@ -35,6 +35,7 @@ namespace Meso {
 		LevelSet(const Grid<d>& _grid):LevelSet() {
 			Init(_grid);
 		}
+
 		__host__ void Init(const Grid<d>& _grid) {
 			grid = _grid;
 			phi = Field<real,d,side>(_grid, std::numeric_limits<real>::max());
@@ -50,8 +51,9 @@ namespace Meso {
 			};
 			
 		}
+
 		template<class PointIntp1, DataHolder side1>
-		__host__ void Initialize(LevelSet<d, PointIntp1,side1>& leveset) {
+		__host__ void Init(LevelSet<d, PointIntp1, side1>& leveset) {
 			//Initialize(leveset.grid);
 			grid = leveset.grid;
 			phi = Field<real, d, side>(grid, std::numeric_limits<real>::max());
@@ -63,25 +65,28 @@ namespace Meso {
 				grid_ptr = &grid;
 			checkCudaErrors(cudaGetLastError());
 		}
-		
+
 		/// Note!!!!!
 		/// This function could only be called for HOST levelset!
 		/// This is because ImplicitGeometry have virtual function,
 		/// If a object of a class with virtual member function will not crush, 
 		/// That object must be malloc in the device!
-		__host__ void Set_Geometry(ImplicitGeometry<d>& geom) {
+		__host__ void Init(const Grid<d>& _grid, ImplicitGeometry<d>& geom) {
+			Init(_grid);
 			/// A strange error: For this host platform, an extended lambda cannot be defined inside the 'if'
 			/// or 'else' block of a constexpr if statement
 			Assert(side == HOST, "This function could not be called on device!");
 			Grid<d>* grid_local_ptr = grid_ptr;
 			ImplicitGeometry<d>* geom_ptr = &geom;
-			auto calc_f = [geom_ptr, grid_local_ptr]__host__ __device__(const VectorDi& cell) {
+			auto calc_f = [geom_ptr, grid_local_ptr]__host__ __device__(const VectorDi & cell) {
 				return geom_ptr->Phi(grid_local_ptr->Position(cell));
 			};
 			phi.Calc_Nodes(calc_f);
 			data = thrust::raw_pointer_cast(&((*(phi.data))[0]));
 			checkCudaErrors(cudaGetLastError());
 		}
+		
+
 		///Note!!!!!!!!!
 		/// Following functions, cannot be called from HOST, if side==DEVICE.
 		/// This is because, See the Intp:Value function,
@@ -94,156 +99,156 @@ namespace Meso {
 		__host__ __device__ real Phi(Grid<d>* grid_ptr,real* data,const VectorD& pos) const {
 			return Intp::Value(*grid_ptr, data, pos);
 		}
-		__host__ void All_Phi(Field<real, d, side>& t) const {
-			///Note here:!!!!
-			/// We cannot capture a data member, which is a pointer to object on device, by this pointer
-			/// Assigning it to local pointer and then captured by lambda is required!
-			Grid<d>* grid_local_ptr = grid_ptr;
-			real* data_local_ptr = data;
-			auto calc_f = [grid_local_ptr, data_local_ptr, this]__device__ __host__(VectorDi cell)->real {
-				const VectorD& pos = grid_local_ptr->Position(cell);
-				//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
-				real x = Phi(grid_local_ptr, data_local_ptr, pos);
-				return x;
-			};
-			t.Calc_Nodes(calc_f);
-		}
+		//__host__ void All_Phi(Field<real, d, side>& t) const {
+		//	///Note here:!!!!
+		//	/// We cannot capture a data member, which is a pointer to object on device, by this pointer
+		//	/// Assigning it to local pointer and then captured by lambda is required!
+		//	Grid<d>* grid_local_ptr = grid_ptr;
+		//	real* data_local_ptr = data;
+		//	auto calc_f = [grid_local_ptr, data_local_ptr, this]__device__ __host__(VectorDi cell)->real {
+		//		const VectorD& pos = grid_local_ptr->Position(cell);
+		//		//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
+		//		real x = Phi(grid_local_ptr, data_local_ptr, pos);
+		//		return x;
+		//	};
+		//	t.Calc_Nodes(calc_f);
+		//}
 
 
-		__host__ VectorD Normal(const VectorD& pos) const {
-			////TOFIX: fix finite difference on the boundary
-			return Normal(grid_ptr, data, pos);
-			/*VectorD normal;
-			for (int i = 0; i < d; i++)
-				normal[i] = (Phi(pos + VectorD::Unit(i) * grid_ptr->dx) - Phi(pos - VectorD::Unit(i) * grid_ptr->dx)) / ((real)2 * grid_ptr->dx);
-			return normal.normalized();*/
-		}
-		__host__ __device__ VectorD Normal(Grid<d>* grid_ptr, real* data,const VectorD& pos) const {
-			////TOFIX: fix finite difference on the boundary
-			VectorD normal;
-			for (int i = 0; i < d; i++)
-				normal[i] = (Phi(grid_ptr,data,pos + VectorD::Unit(i) * grid_ptr->dx) - Phi(grid_ptr, data, pos - VectorD::Unit(i) * grid_ptr->dx)) / ((real)2 * grid_ptr->dx);
-			return normal.normalized();
-		}
-		__host__ void All_Normal(Field<VectorD, d, side>& t) const {
-			Grid<d>* grid_local_ptr = grid_ptr;
-			real* data_local_ptr = data;
-			auto calc_f = [grid_local_ptr, data_local_ptr, this]__device__ __host__(VectorDi cell)->VectorD {
-				const VectorD& pos = grid_local_ptr->Position(cell);
-				//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
-				return Normal(grid_local_ptr, data_local_ptr, pos);
-			};
-			t.Calc_Nodes(calc_f);
-		}
-		__host__ void All_Normal(FaceField<real, d, side>& normals) const {
-			Grid<d>* grid_local_ptr = grid_ptr;
-			real* data_local_ptr = data;
-			normals.Calc_Faces(
-				[grid_local_ptr, data_local_ptr, this] __device__ __host__(int axis, VectorDi face)->real {
-					const VectorD& pos = (grid_local_ptr->Face_Grid(axis)).Position(face);
-					return Normal(grid_local_ptr, data_local_ptr, pos)[axis];
-				}
-			);
-		}
+		//__host__ VectorD Normal(const VectorD& pos) const {
+		//	////TOFIX: fix finite difference on the boundary
+		//	return Normal(grid_ptr, data, pos);
+		//	/*VectorD normal;
+		//	for (int i = 0; i < d; i++)
+		//		normal[i] = (Phi(pos + VectorD::Unit(i) * grid_ptr->dx) - Phi(pos - VectorD::Unit(i) * grid_ptr->dx)) / ((real)2 * grid_ptr->dx);
+		//	return normal.normalized();*/
+		//}
+		//__host__ __device__ VectorD Normal(Grid<d>* grid_ptr, real* data,const VectorD& pos) const {
+		//	////TOFIX: fix finite difference on the boundary
+		//	VectorD normal;
+		//	for (int i = 0; i < d; i++)
+		//		normal[i] = (Phi(grid_ptr,data,pos + VectorD::Unit(i) * grid_ptr->dx) - Phi(grid_ptr, data, pos - VectorD::Unit(i) * grid_ptr->dx)) / ((real)2 * grid_ptr->dx);
+		//	return normal.normalized();
+		//}
+		//__host__ void All_Normal(Field<VectorD, d, side>& t) const {
+		//	Grid<d>* grid_local_ptr = grid_ptr;
+		//	real* data_local_ptr = data;
+		//	auto calc_f = [grid_local_ptr, data_local_ptr, this]__device__ __host__(VectorDi cell)->VectorD {
+		//		const VectorD& pos = grid_local_ptr->Position(cell);
+		//		//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
+		//		return Normal(grid_local_ptr, data_local_ptr, pos);
+		//	};
+		//	t.Calc_Nodes(calc_f);
+		//}
+		//__host__ void All_Normal(FaceField<real, d, side>& normals) const {
+		//	Grid<d>* grid_local_ptr = grid_ptr;
+		//	real* data_local_ptr = data;
+		//	normals.Calc_Faces(
+		//		[grid_local_ptr, data_local_ptr, this] __device__ __host__(int axis, VectorDi face)->real {
+		//			const VectorD& pos = (grid_local_ptr->Face_Grid(axis)).Position(face);
+		//			return Normal(grid_local_ptr, data_local_ptr, pos)[axis];
+		//		}
+		//	);
+		//}
 
-		__host__ VectorD Gradient(const VectorD& pos) const {
-			////TOFIX: fix finite difference on the boundary
-			//VectorD normal;
-			//for (int i = 0; i < d; i++)
-			//	normal[i] = (Phi(pos + VectorD::Unit(i) * grid_ptr->dx) - Phi(pos - VectorD::Unit(i) * grid_ptr->dx)) / ((real)2 * grid_ptr->dx);
-			//return normal;
-			return Gradient(grid_ptr, data, pos);
-		}
-		__host__ __device__ VectorD Gradient(Grid<d>* grid_ptr, real* data,const VectorD& pos) const {
-			////TOFIX: fix finite difference on the boundary
-			VectorD normal;
-			for (int i = 0; i < d; i++)
-				normal[i] = (Phi(grid_ptr, data, pos + VectorD::Unit(i) * grid_ptr->dx) - Phi(grid_ptr, data, pos - VectorD::Unit(i) * grid_ptr->dx)) / ((real)2 * grid_ptr->dx);
-			return normal;
-		}
-		__host__ void All_Gradient(Field<VectorD, d, side>& t) const {
-			Grid<d>* grid_local_ptr = grid_ptr;
-			real* data_local_ptr = data;
-			auto calc_f = [grid_local_ptr, data_local_ptr, this]__device__ __host__(VectorDi cell)->VectorD {
-				const VectorD& pos = grid_local_ptr->Position(cell);
-				//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
-				return Gradient(grid_local_ptr, data_local_ptr, pos);
-			};
-			t.Calc_Nodes(calc_f);
-		}
+		//__host__ VectorD Gradient(const VectorD& pos) const {
+		//	////TOFIX: fix finite difference on the boundary
+		//	//VectorD normal;
+		//	//for (int i = 0; i < d; i++)
+		//	//	normal[i] = (Phi(pos + VectorD::Unit(i) * grid_ptr->dx) - Phi(pos - VectorD::Unit(i) * grid_ptr->dx)) / ((real)2 * grid_ptr->dx);
+		//	//return normal;
+		//	return Gradient(grid_ptr, data, pos);
+		//}
+		//__host__ __device__ VectorD Gradient(Grid<d>* grid_ptr, real* data,const VectorD& pos) const {
+		//	////TOFIX: fix finite difference on the boundary
+		//	VectorD normal;
+		//	for (int i = 0; i < d; i++)
+		//		normal[i] = (Phi(grid_ptr, data, pos + VectorD::Unit(i) * grid_ptr->dx) - Phi(grid_ptr, data, pos - VectorD::Unit(i) * grid_ptr->dx)) / ((real)2 * grid_ptr->dx);
+		//	return normal;
+		//}
+		//__host__ void All_Gradient(Field<VectorD, d, side>& t) const {
+		//	Grid<d>* grid_local_ptr = grid_ptr;
+		//	real* data_local_ptr = data;
+		//	auto calc_f = [grid_local_ptr, data_local_ptr, this]__device__ __host__(VectorDi cell)->VectorD {
+		//		const VectorD& pos = grid_local_ptr->Position(cell);
+		//		//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
+		//		return Gradient(grid_local_ptr, data_local_ptr, pos);
+		//	};
+		//	t.Calc_Nodes(calc_f);
+		//}
 
-		__host__ VectorD Closest_Point(const VectorD& pos, real epsilon = (real)0) const {
-			VectorD normal = Gradient(pos);
-			normal.normalize();
-			return pos - normal * (Phi(pos) + epsilon);
-		}
-		__host__ VectorD Closest_Point_With_Iterations(const VectorD& pos, const int max_iter = 5) const {
-			VectorD intf_pos = pos;
-			for (int i = 0; i < max_iter; i++) {
-				intf_pos = Closest_Point(intf_pos);
-				if (Phi(intf_pos) < (real)0)return intf_pos;
-			}
-			return intf_pos;
-		}
-		__host__ __device__ VectorD Closest_Point(Grid<d>* grid_ptr, real* data,const VectorD& pos, real epsilon = (real)0) const {
-			VectorD normal = Gradient(grid_ptr, data, pos);
-			normal.normalize();
-			return pos - normal * (Phi(grid_ptr,data,pos) + epsilon);
-		}
-		__host__ __device__ VectorD Closest_Point_With_Iterations(Grid<d>* grid_ptr, real* data,const VectorD& pos, const int max_iter = 5) const {
-			VectorD intf_pos = pos;
-			for (int i = 0; i < max_iter; i++) {
-				intf_pos = Closest_Point(grid_ptr, data, intf_pos);
-				if (Phi(grid_ptr, data,intf_pos) < (real)0)return intf_pos;
-			}
-			return intf_pos;
-		}
-		
-		__host__ __device__ real Curvature(Grid<d>* grid_ptr, real* data, const VectorD& pos) const {
-			real one_over_dx = (real)1 / grid_ptr->dx; real one_over_two_dx = (real).5 * one_over_dx; 
-			real curvature = (real)0;
-			for (int i = 0; i < d; i++) {
-				VectorD normal_left = Normal(grid_ptr,data,pos - VectorD::Unit(i) * grid_ptr->dx);
-				VectorD normal_right = Normal(grid_ptr, data, pos + VectorD::Unit(i) * grid_ptr->dx);
-				curvature += (normal_right[i] - normal_left[i]) * one_over_two_dx;
-			}
-			return curvature;
-//			return abs(curvature) < one_over_dx ? curvature : (curvature <= (real)0 ? (real)-1 : (real)1) * one_over_dx;
-		}
-		__host__ real Curvature(const VectorD& pos) {
-			return Curvature(grid_ptr, data, pos);
-		}
-		__host__ void All_Curvature(Field<real, d, side>& t) const {
-			Grid<d>* grid_local_ptr = grid_ptr;
-			real* data_local_ptr = data;
-			auto calc_f = [grid_local_ptr, data_local_ptr, this]__device__ __host__(VectorDi cell)->real {
-				const VectorD& pos = grid_local_ptr->Position(cell);
-				//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
-				return Curvature(grid_local_ptr, data_local_ptr, pos);
-			};
-			t.Calc_Nodes(calc_f);
-		}
-		
-		__host__ __device__ real Cell_Fraction(const VectorDi& cell) const {		////approximate cell volume using phi value
-			return (real).5 - MathFunc::Clamp(Phi(grid_ptr->Position(cell)), -(real).5 * grid_ptr->dx, (real).5 * grid_ptr->dx) / grid_ptr->dx;
-		}
-		__host__ real Total_Volume() const {
-			real total_vol = (real)0;
-			real cell_vol = std::pow(grid.dx, d);
-			if constexpr(side==HOST){
-				for (int c = 0; c < grid.DoF(); c++) {
-					const VectorDi& cell = grid.Coord(c);
-					total_vol += Cell_Fraction(cell);
-				}
-			}
-			else {
-				///TODO
-			}
-			return total_vol * cell_vol;
-		}
-		
-		////Helper functions
-		
+//		__host__ VectorD Closest_Point(const VectorD& pos, real epsilon = (real)0) const {
+//			VectorD normal = Gradient(pos);
+//			normal.normalize();
+//			return pos - normal * (Phi(pos) + epsilon);
+//		}
+//		__host__ VectorD Closest_Point_With_Iterations(const VectorD& pos, const int max_iter = 5) const {
+//			VectorD intf_pos = pos;
+//			for (int i = 0; i < max_iter; i++) {
+//				intf_pos = Closest_Point(intf_pos);
+//				if (Phi(intf_pos) < (real)0)return intf_pos;
+//			}
+//			return intf_pos;
+//		}
+//		__host__ __device__ VectorD Closest_Point(Grid<d>* grid_ptr, real* data,const VectorD& pos, real epsilon = (real)0) const {
+//			VectorD normal = Gradient(grid_ptr, data, pos);
+//			normal.normalize();
+//			return pos - normal * (Phi(grid_ptr,data,pos) + epsilon);
+//		}
+//		__host__ __device__ VectorD Closest_Point_With_Iterations(Grid<d>* grid_ptr, real* data,const VectorD& pos, const int max_iter = 5) const {
+//			VectorD intf_pos = pos;
+//			for (int i = 0; i < max_iter; i++) {
+//				intf_pos = Closest_Point(grid_ptr, data, intf_pos);
+//				if (Phi(grid_ptr, data,intf_pos) < (real)0)return intf_pos;
+//			}
+//			return intf_pos;
+//		}
+//		
+//		__host__ __device__ real Curvature(Grid<d>* grid_ptr, real* data, const VectorD& pos) const {
+//			real one_over_dx = (real)1 / grid_ptr->dx; real one_over_two_dx = (real).5 * one_over_dx; 
+//			real curvature = (real)0;
+//			for (int i = 0; i < d; i++) {
+//				VectorD normal_left = Normal(grid_ptr,data,pos - VectorD::Unit(i) * grid_ptr->dx);
+//				VectorD normal_right = Normal(grid_ptr, data, pos + VectorD::Unit(i) * grid_ptr->dx);
+//				curvature += (normal_right[i] - normal_left[i]) * one_over_two_dx;
+//			}
+//			return curvature;
+////			return abs(curvature) < one_over_dx ? curvature : (curvature <= (real)0 ? (real)-1 : (real)1) * one_over_dx;
+//		}
+//		__host__ real Curvature(const VectorD& pos) {
+//			return Curvature(grid_ptr, data, pos);
+//		}
+//		__host__ void All_Curvature(Field<real, d, side>& t) const {
+//			Grid<d>* grid_local_ptr = grid_ptr;
+//			real* data_local_ptr = data;
+//			auto calc_f = [grid_local_ptr, data_local_ptr, this]__device__ __host__(VectorDi cell)->real {
+//				const VectorD& pos = grid_local_ptr->Position(cell);
+//				//real x = Intp::Value(*grid_local_ptr, data_local_ptr, pos);
+//				return Curvature(grid_local_ptr, data_local_ptr, pos);
+//			};
+//			t.Calc_Nodes(calc_f);
+//		}
+//		
+//		__host__ __device__ real Cell_Fraction(const VectorDi& cell) const {		////approximate cell volume using phi value
+//			return (real).5 - MathFunc::Clamp(Phi(grid_ptr->Position(cell)), -(real).5 * grid_ptr->dx, (real).5 * grid_ptr->dx) / grid_ptr->dx;
+//		}
+//		__host__ real Total_Volume() const {
+//			real total_vol = (real)0;
+//			real cell_vol = std::pow(grid.dx, d);
+//			if constexpr(side==HOST){
+//				for (int c = 0; c < grid.DoF(); c++) {
+//					const VectorDi& cell = grid.Coord(c);
+//					total_vol += Cell_Fraction(cell);
+//				}
+//			}
+//			else {
+//				///TODO
+//			}
+//			return total_vol * cell_vol;
+//		}
+//		
+//		////Helper functions
+//		
 		__host__ __device__ real Sign(const real phi) { return phi <= (real)0 ? (real)-1 : (real)1; }
 		__host__ __device__  bool Interface(const real phi_1, const real phi_2) { return Sign(phi_1) != Sign(phi_2); }
 		__host__ __device__  real Theta(const real phi_1, const real phi_2) { return phi_1 / (phi_1 - phi_2); }

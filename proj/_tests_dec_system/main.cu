@@ -4,7 +4,6 @@
 #include "Common.h"
 #include "Grid.h"
 #include "Field.h"
-#include "SparseTests.h"
 #include "PoissonMapping.h"
 #include "PoissonTests.h"
 #include "RestrictorTests.h"

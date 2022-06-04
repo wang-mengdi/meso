@@ -18,12 +18,12 @@ namespace Meso {
 		Grid<d> grid(counts, dx, center - Vector<real, d>::Ones() * radius * 1.1, MAC);
 		Timer timer;
 		timer.Reset();
-		LevelSet<d, PointIntp, HOST> levelset_host(grid);
-		levelset_host.Set_By_Geom(geom);
+		LevelSet<d, PointIntp, HOST> levelset_host;
+		levelset_host.Init(grid, geom);
 		timer.Record("init with geom");
 		//Then I will set the none surface point to max
 		LevelSet<d, PointIntp, HOST> levelset_tem(grid);
-		levelset_tem.Initialize(levelset_host);
+		levelset_tem.Init(levelset_host);
 		Array<bool, HOST> is_surface(grid.DoF());
 		for (int i = 0; i < levelset_tem.grid.DoF(); i++) {
 			is_surface[i] = false;
@@ -42,12 +42,12 @@ namespace Meso {
 			}
 		}
 		LevelSet<d, PointIntp, side> levelset;
-		levelset.Initialize(levelset_tem);
+		levelset.Init(levelset_tem);
 		timer.Record("break the distance function");
 		//Here the bandwith=-1, with the meaning that there is no limit for distance
 		levelset.Fast_Marching(-1);
 		timer.Record("fast marching");
-		levelset_tem.Initialize(levelset);
+		levelset_tem.Init(levelset);
 		real max_error = 0;
 		for (int i = 0; i < levelset_tem.grid.DoF(); i++) {
 			VectorDi cell = grid.Coord(i);

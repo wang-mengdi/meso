@@ -37,6 +37,8 @@ namespace Meso {
 	}
 
 	namespace MathFunc {
+		template <typename T>  int Sign(T val) { return (T(0) < val) - (val < T(0)); }
+
 		template<class T> __host__ __device__ T Eps(void) { return Eigen::NumTraits<T>::dummy_precision(); }
 		template<class T> __host__ __device__ T Clamp(const T x, const T a, const T b) {
 			if (x < a) return a;

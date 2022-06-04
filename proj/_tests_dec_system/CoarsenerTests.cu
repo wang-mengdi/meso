@@ -1,4 +1,4 @@
-#include "OperatorTests.h"
+#include "CoarsenerTests.h"
 #include "AuxFunc.h"
 #include "Random.h"
 

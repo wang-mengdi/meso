@@ -5,11 +5,10 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Grid.h"
-#include "Field.h"
-#include "Mesh.h"
 #include "MarchingCubes.h"
 #include "Timer.h"
+#include "IOFunc.h"
+
 namespace Meso {
 
 
@@ -87,7 +86,7 @@ namespace Meso {
 
 	template<class T, int d>
 	void Test_Marching_Cubes() {
-		bool verbose = true; int times = 1;
+		bool verbose = false; int times = 1;
 		Test_Marching_Cubes_CPU<T, d>(times, verbose);
 		Test_Marching_Cubes_GPU<T, d>(times, verbose);
 	}

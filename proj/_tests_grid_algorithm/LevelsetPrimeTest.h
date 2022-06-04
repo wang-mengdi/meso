@@ -17,11 +17,11 @@ void Test_Circle(real dx, Vector<real, d> center = Vector<real, d>::Zero(), real
 	Grid<d> grid(counts, dx, center - Vector<real, d>::Ones() * radius * 1.1);
 	Timer timer;
 	timer.Reset();
-	LevelSet<d, PointIntp, HOST> levelset_host(grid);
-	levelset_host.Set_By_Geom(geom);
+	LevelSet<d, PointIntp, HOST> levelset_host;
+	levelset_host.Init(grid, geom);
 	timer.Record("init with geom");
 	LevelSet<d, PointIntp, side> levelset;
-	levelset.Initialize(levelset_host);
+	levelset.Init(levelset_host);
 	timer.Record("init with host");
 	
 	// begin to test the phi 
