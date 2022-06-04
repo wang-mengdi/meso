@@ -113,11 +113,11 @@ namespace Meso {
 		Kernel(const real _h = 1.0, const KernelType _type = KernelType::SPIKY) :h(_h), ref_type(_type) {
 			h_pows_inv[0] = 1;
 			for (int i = 1; i < 5; i++) { h_pows_inv[i] = h_pows_inv[i - 1] / h; }
-			kernels[(int)KernelType::POLY6] = &KernelSPH::poly6;
-			kernels[(int)KernelType::SPIKY] = &KernelSPH::spiky;
-			kernels[(int)KernelType::CUBIC] = &KernelSPH::cubic;
-			kernels[(int)KernelType::QUINTIC] = &KernelSPH::quintic;
-			kernels[(int)KernelType::GAUSSIAN] = &KernelSPH::gaussian;
+			kernels[(int)KernelType::POLY6] = &Kernel::poly6;
+			kernels[(int)KernelType::SPIKY] = &Kernel::spiky;
+			kernels[(int)KernelType::CUBIC] = &Kernel::cubic;
+			kernels[(int)KernelType::QUINTIC] = &Kernel::quintic;
+			kernels[(int)KernelType::GAUSSIAN] = &Kernel::gaussian;
 		}
 		Kernel(const json& j) :Kernel(j.at("h").get<const real>(), j.at("type").get<const KernelType>()) {}
 

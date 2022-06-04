@@ -23,9 +23,6 @@ int main(){
     //Test_MGPCG<double>(Vector3i(128, 129, 128));
     //return 0;
 
-    Test_Sparse_Matrix();
-    Test_CG_Memory_Safe();
-
     Test_LU_Dense_Solver<float>(Vector2i(14, 13));
     Test_LU_Dense_Solver<double>(Vector2i(14, 13));
     Test_LU_Dense_Solver<float>(Vector3i(8, 7, 11));
