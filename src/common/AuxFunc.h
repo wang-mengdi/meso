@@ -36,6 +36,16 @@ namespace Meso {
 		void Create_Directory(const bf::path path);
 	}
 
+	namespace OMPFunc {
+		template<class IFunc>
+		void Exec_Indices(const int n, IFunc f) {
+#pragma omp parallel for
+			for (int i = 0; i < n; i++) {
+				f(i);
+			}
+		}
+	}
+
 	namespace MathFunc {
 		template <typename T>  int Sign(T val) { return (T(0) < val) - (val < T(0)); }
 
@@ -388,37 +398,37 @@ namespace Meso {
 			return Is_Approx<T>(a_host, b_host);
 		}
 
-		////Dim conversion for vectors and vector arrays
-		template<class T, int d1, int d2> void Dim_Conversion(const Vector<T, d1>& input, Vector<T, d2>& output, const T filled_value = (T)0)
-		{
-			constexpr int n = d1 < d2 ? d1 : d2;
-			for (int i = 0; i < n; i++)output[i] = input[i];
-			if /*constexpr*/ (n < d2) {
-				for (int i = n; i < d2; i++)output[i] = filled_value;
-			}
-		}
-
-		template<class T, int d1, int d2> void Dim_Conversion_Array(const Array<Vector<T, d1> >& input, Array<Vector<T, d2> >& output, const T filled_value = (T)0)
-		{
-			const int n = (int)input.size();
-#pragma omp parallel for
-			for (auto i = 0; i < n; i++) { Dim_Conversion<T, d1, d2>(input[i], output[i], filled_value); }
-		}
-
-		////Dim conversion for matrices and matrix arrays
-		template<class T, int d1, int d2> void Dim_Conversion(const Matrix<T, d1>& input, Matrix<T, d2>& output, const T filled_value = (T)0)
-		{
-			constexpr int n = d1 < d2 ? d1 : d2;
-			output = Matrix<T, d2>::Constant(filled_value);
-			for (int i = 0; i < n; i++)for (int j = 0; j < n; j++)output(i, j) = input(i, j);
-		}
-
-		template<class T, int d1, int d2> void Dim_Conversion_Array(const Array<Matrix<T, d1> >& input, Array<Matrix<T, d2> >& output)
-		{
-			const int n = (int)input.size();
-#pragma omp parallel for
-			for (auto i = 0; i < n; i++)Dim_Conversion<T, d1, d2>(input[i], output[i]);
-		}
+//		////Dim conversion for vectors and vector arrays
+//		template<class T, int d1, int d2> void Dim_Conversion(const Vector<T, d1>& input, Vector<T, d2>& output, const T filled_value = (T)0)
+//		{
+//			constexpr int n = d1 < d2 ? d1 : d2;
+//			for (int i = 0; i < n; i++)output[i] = input[i];
+//			if /*constexpr*/ (n < d2) {
+//				for (int i = n; i < d2; i++)output[i] = filled_value;
+//			}
+//		}
+//
+//		template<class T, int d1, int d2> void Dim_Conversion_Array(const Array<Vector<T, d1> >& input, Array<Vector<T, d2> >& output, const T filled_value = (T)0)
+//		{
+//			const int n = (int)input.size();
+//#pragma omp parallel for
+//			for (auto i = 0; i < n; i++) { Dim_Conversion<T, d1, d2>(input[i], output[i], filled_value); }
+//		}
+//
+//		////Dim conversion for matrices and matrix arrays
+//		template<class T, int d1, int d2> void Dim_Conversion(const Matrix<T, d1>& input, Matrix<T, d2>& output, const T filled_value = (T)0)
+//		{
+//			constexpr int n = d1 < d2 ? d1 : d2;
+//			output = Matrix<T, d2>::Constant(filled_value);
+//			for (int i = 0; i < n; i++)for (int j = 0; j < n; j++)output(i, j) = input(i, j);
+//		}
+//
+//		template<class T, int d1, int d2> void Dim_Conversion_Array(const Array<Matrix<T, d1> >& input, Array<Matrix<T, d2> >& output)
+//		{
+//			const int n = (int)input.size();
+//#pragma omp parallel for
+//			for (auto i = 0; i < n; i++)Dim_Conversion<T, d1, d2>(input[i], output[i]);
+//		}
 	}
 
 	namespace GPUFunc {

@@ -7,6 +7,9 @@
 #include <Common.h>
 
 namespace Meso {
+	template<class T, int d> using VertexMatrix = Eigen::Matrix<T, Eigen::Dynamic, d>;
+	template<int d> using ElementMatrix = Eigen::Matrix<int, Eigen::Dynamic, d>;
+
 	template<int d, int e_d, DataHolder side = DataHolder::HOST>
 	class SimplicialMesh {
 		Typedef_VectorD(d);

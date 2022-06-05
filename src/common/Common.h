@@ -54,8 +54,6 @@ using C=std::complex<real>;             \
 using Quaternion=Eigen::Quaternion##t;  \
 using AngleAxis=Eigen::AngleAxis##t;	
 
-    template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
-
 #ifdef USE_FLOAT
     Declare_Eigen_Types(float, f)
 #else
@@ -83,10 +81,13 @@ Declare_Eigen_Matrix_Types(int, i)
 Declare_Eigen_Matrix_Types(float, f)
 Declare_Eigen_Matrix_Types(double, d)
 
+//Eigen::Dynamic
+const int Dynamic = -1;
 using uchar = unsigned char;
 using ushort = unsigned short;
 template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
-template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
+template<class T, int n, int m> using Matrix = Eigen::Matrix<T, n, m>;
+//template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
 
 #define Typedef_VectorD(d) \
 using VectorD=Vector<real,d>; \
