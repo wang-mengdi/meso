@@ -213,7 +213,7 @@ namespace Meso {
 
 		template<class MeshType>
 		bool Write_Mesh(const std::string& filename, const MeshType& mesh) {
-			Array<std::shared_ptr<MeshType> meshes; 
+			Array<std::shared_ptr<MeshType>> meshes;
 			meshes.push_back(std::make_shared<MeshType>(mesh));
 			return Write_Meshes<MeshType>(filename, meshes);
 		}

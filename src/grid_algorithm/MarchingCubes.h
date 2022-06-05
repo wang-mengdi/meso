@@ -578,8 +578,8 @@ namespace Meso {
 			ArrayFunc::Data<VectorEi, DEVICE>(elements)
 		);
 
-		*_mesh->vertices = vertices;
-		_mesh->elements = elements;
+		_mesh.vertices = vertices;
+		_mesh.elements = elements;
 	}
 
 	template<class T, int d, DataHolder side = HOST>
