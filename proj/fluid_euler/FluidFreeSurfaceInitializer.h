@@ -17,11 +17,11 @@ namespace Meso {
 
 		//define the boundary conditions of the eulerian system
 		Field<bool, d> fixed;
-		FaceField<real, d> vol;
+		FaceField<T, d> vol;
 		FaceField<bool, d> face_fixed;
-		FaceField<real, d> initial_vel;
+		FaceField<T, d> initial_vel;
 
-		void Apply(json& j, FluidEuler<d>& fluid) {
+		void Apply(json& j, FluidFreeSurface<T, d>& fluid) {
 			int test = Json::Value(j, "test", 0);
 			switch (test) {
 			case 0:Case_0(j, fluid); break;
@@ -29,8 +29,8 @@ namespace Meso {
 			}
 		}
 
-		void Case_0(json& json, FluidFreeSurface<T, d>& fluid) {
-			int scale = Json::Value(j, "scale", 32);
+		void Case_0(json& j, FluidFreeSurface<T, d>& fluid) {
+			int scale = Json::Value<int>(j, "scale", 32);
 			T side_len = 1.0;
 			T dx = side_len / scale;
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 2, 1);
@@ -45,7 +45,7 @@ namespace Meso {
 
 			Plane<d> plane(Vector<T, d>::Unit(1), grid.Center());
 
-			fluid.Init(j, geom, fixed, vol, face_fixed, initial_vel);
+			fluid.Init(j, plane, fixed, vol, face_fixed, initial_vel);
 		}
 	};
 }

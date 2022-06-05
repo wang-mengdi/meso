@@ -1,0 +1,16 @@
+{
+    "dimension": 2,
+    "simulator": "freesurface",
+    "driver": {
+        "cfl": 1.0,
+        "first_frame": 0,
+        "fps": 25,
+        "last_frame": 10,
+        "min_step_frame_fraction": 0.0,
+        "output_base_dir": "hydrostatic"
+    },
+    "scene": {
+        "scale": 32,
+        "test": 0
+    }
+}

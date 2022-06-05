@@ -368,7 +368,8 @@ namespace Meso {
 
 	template<class T, int d>
 	void Marching_Cubes_CPU(TriangleMesh<d> &_mesh, const Field<T, d>& field, const real _contour_val = 0.) {
-		Typedef_VectorD(d); Typedef_VectorEi(d);
+		Typedef_VectorD(d); 
+		Typedef_VectorEi(d);
 		
 		const Grid<d>& grid = field.grid;
 		const VectorDi cell_counts = field.grid.counts - VectorDi::Ones();

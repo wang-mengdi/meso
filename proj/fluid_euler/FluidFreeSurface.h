@@ -11,6 +11,7 @@
 #include "Simulator.h"
 #include "IOFunc.h"
 #include "LevelSet.h"
+#include "MarchingCubes.h"
 
 namespace Meso {
 	template<class T, int d>
@@ -40,12 +41,11 @@ namespace Meso {
 
 		void Init(json& j, ImplicitGeometry<d>& geom, Field<bool, d>& fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
 			air_density = Json::Value<T>(j, "air_density", 1e-3);
-			gravity_acc = Json::Value<Vector<T, d>>("gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
+			gravity_acc = Json::Value<Vector<T, d>>(j, "gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
 			velocity = initial_velocity;
 			velocity_bc.Init(face_fixed, initial_velocity);
 			vol_bc.Init(face_fixed, vol);
-			levelset.Init(velocity.grid);
-			levelset.Set_Geometry(geom);
+			levelset.Init(velocity.grid, geom);
 
 			poisson.Init(velocity.grid);
 			MG_precond.Allocate_Poisson(velocity.grid);
@@ -106,6 +106,11 @@ namespace Meso {
 			std::string vts_name = fmt::format("vts{:04d}.vts", metadata.current_frame);
 			bf::path vtk_path = metadata.base_path / bf::path(vts_name);
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
+			//TriangleMesh<d> mesh;
+			//Marching_Cubes<T, d, HOST>(mesh, levelset.phi);
+			//std::string obj_name = fmt::format("mesh{:04d}.obj", metadata.current_frame);
+			//bf::path obj_path = metadata.base_path / bf::path(obj_name);
+			//OBJFunc::Write_Mesh(obj_path.string(), m);
 		}
 
 		virtual void Advance(DriverMetaData& metadata) {

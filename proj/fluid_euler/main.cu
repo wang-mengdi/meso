@@ -11,7 +11,7 @@
 using namespace Meso;
 
 template<int d>
-void Run_Fluid_Euler(json &j) {
+void Run_FluidEuler(json &j) {
 	FluidEuler<d> fluid;
 	FluidEulerInitializer<d> scene;
 	Driver driver;
@@ -19,9 +19,17 @@ void Run_Fluid_Euler(json &j) {
 }
 
 template<int d>
-void Run_Fluid_Impulse(json& j) {
+void Run_FluidImpulse(json& j) {
 	FluidImpulse<d> fluid;
 	FluidImpulseInitializer<d> scene;
+	Driver driver;
+	driver.Run(j, scene, fluid);
+}
+
+template<int d>
+void Run_FluidFreeSurface(json& j) {
+	FluidFreeSurface<real, d> fluid;
+	FluidFreeSurfaceInitializer<real, d> scene;
 	Driver driver;
 	driver.Run(j, scene, fluid);
 }
@@ -47,12 +55,16 @@ int main(int argc, char **argv) {
 		std::string simulator=Json::Value(j, "simulator", std::string("euler"));
 		
 		if (simulator == "euler") {
-			if (dim == 2) { Run_Fluid_Euler<2>(j); }
-			else if (dim == 3) { Run_Fluid_Euler<3>(j); }
+			if (dim == 2) { Run_FluidEuler<2>(j); }
+			else if (dim == 3) { Run_FluidEuler<3>(j); }
 		}
 		else if (simulator == "impulse") {
-			if (dim == 2) { Run_Fluid_Impulse<2>(j); }
-			else if (dim == 3) { Run_Fluid_Impulse<3>(j); }
+			if (dim == 2) { Run_FluidImpulse<2>(j); }
+			else if (dim == 3) { Run_FluidImpulse<3>(j); }
+		}
+		else if (simulator == "freesurface") {
+			if (dim == 2) { Run_FluidFreeSurface<2>(j); }
+			else if (dim == 3) { Run_FluidFreeSurface<3>(j); }
 		}
 
 	}

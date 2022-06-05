@@ -12,47 +12,47 @@
 #include <fmt/color.h>
 #include <fmt/format.h>
 
-namespace Meso {
+using json = nlohmann::json;
 
-	using json = nlohmann::json;
+//nlohmann::json adapter for eigen vector
+namespace Eigen {
+	//NOTE: we may need to write some specific functions -- Mengdi
+	template<class T, int d>
+	void to_json(json& j, const Vector<T, d>& v) {
+		j = std::vector<T>(v.data(), v.data() + d);
+	}
+	template<class T, int d>
+	void from_json(const json& j, Vector<T, d>& v) {
+		Assert(!j.is_object() && j.size() == d, "Illigal json when trying to parse a {}-dimension Vector: \n{}\n", d, j.dump(4));
+		for (int i = 0; i < j.size(); i++) j.at(i).get_to(v[i]);
+	}
 
-	//nlohmann::json adapter for eigen vector
-	//namespace Eigen {
-		////NOTE: we may need to write some specific functions -- Mengdi
-		//template<class T, int d>
-		//void to_json(json& j, const Vector<T, d>& v) {
-		//	j = std::vector<T>(v.data(), v.data() + d);
-		//}
-		//template<class T, int d>
-		//void from_json(const json& j, Vector<T, d>& v) {
-		//	Assert(!j.is_object() && j.size() == d, "Illigal json when trying to parse a {}-dimension Vector: \n{}\n", d, j.dump(4));
-		//	for (int i = 0; i < j.size(); i++) j.at(i).get_to(v[i]);
-		//}
-
-		//template<class T>
-		//void to_json(json& j, const Quaternion<T>& q) {
-		//	Vector<T, 4> v = q.coeffs();
-		//	to_json(j, v);
-		//}
-		//template<class T>
-		//void from_json(const json& j, Quaternion<T>& q) {
-		//	Vector<T, 4> v;
-		//	from_json(j, v);
-		//	q = Quaternion<T>(v.data());
-		//}
-
-		//template<class T>
-		//void to_json(json& j, const Matrix<T, 3, 3>& mat) {
-		//	Vector<T, 3 * 3> vec(mat.data());
-		//	to_json(j, vec);
-		//}
-		//template<class T>
-		//void from_json(const json& j, Matrix<T, 3, 3>& mat) {
-		//	Vector<T, 3 * 3> vec;
-		//	from_json(j, vec);
-		//	mat = Matrix<T, 3, 3>(vec.data());
-		//}
+	//template<class T>
+	//void to_json(json& j, const Quaternion<T>& q) {
+	//	Vector<T, 4> v = q.coeffs();
+	//	to_json(j, v);
 	//}
+	//template<class T>
+	//void from_json(const json& j, Quaternion<T>& q) {
+	//	Vector<T, 4> v;
+	//	from_json(j, v);
+	//	q = Quaternion<T>(v.data());
+	//}
+
+	//template<class T>
+	//void to_json(json& j, const Matrix<T, 3, 3>& mat) {
+	//	Vector<T, 3 * 3> vec(mat.data());
+	//	to_json(j, vec);
+	//}
+	//template<class T>
+	//void from_json(const json& j, Matrix<T, 3, 3>& mat) {
+	//	Vector<T, 3 * 3> vec;
+	//	from_json(j, vec);
+	//	mat = Matrix<T, 3, 3>(vec.data());
+	//}
+}
+
+namespace Meso {
 
 	namespace Json {
 		template<class T>
