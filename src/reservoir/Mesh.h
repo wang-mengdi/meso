@@ -32,13 +32,13 @@ namespace Meso {
 		static constexpr int Dim() { return d; }
 		static constexpr int Face_Dim() { return e_d; }
 
-		constexpr Array<VectorD>& Vertices() { return vertices; }
-		constexpr const Array<VectorD>& Vertices() const{ return vertices; }
+		constexpr Array<VectorD, side>& Vertices() { return vertices; }
+		constexpr const Array<VectorD, side>& Vertices() const { return vertices; }
 
-		constexpr Array<VectorEi>& Elements() { return elements; }
-		constexpr const Array<VectorEi>& Elements() const{ return elements; }
+		constexpr Array<VectorEi, side>& Elements() { return elements; }
+		constexpr const Array<VectorEi, side>& Elements() const { return elements; }
 
-		constexpr const Array<VectorD>& Normals() const{ return normals; }
+		constexpr const Array<VectorD, side>& Normals() const { return normals; }
 
 		void Clear() {
 			vertices.clear(); 
@@ -48,7 +48,7 @@ namespace Meso {
 	};
 
 	template<int d, DataHolder side = DataHolder::HOST> using SegmentMesh = SimplicialMesh<d, 2, side>;
-	template<int d, DataHolder side = DataHolder::HOST> using TriangleMesh = SimplicialMesh<d, 2, side>;
+	template<int d, DataHolder side = DataHolder::HOST> using TriangleMesh = SimplicialMesh<d, 3, side>;
 
 	template<int d> using SurfaceMesh = typename If<d == 2, SegmentMesh<2>, TriangleMesh<3> >::Type;
 }

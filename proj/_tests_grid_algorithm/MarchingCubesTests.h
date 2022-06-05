@@ -30,12 +30,12 @@ namespace Meso {
 				field.Data()[index] = (pos - center).norm() - 0.6;
 			}
 		);
-		auto m = std::make_shared<TriangleMesh<d>>();
+		TriangleMesh<d> m;
 		
 		timer.Reset();
 		for (size_t i = 0; i < times; i++)
 		{
-			Marching_Cubes<T, d, HOST>(field, m);
+			Marching_Cubes<T, d, HOST>(m, field);
 			double time = timer.Lap_Time(PhysicalUnits::s);
 			double total_time = timer.Total_Time(PhysicalUnits::s);
 			if (verbose) Info("Used time: {:.2f}s/{:.2f}s, ETA {:.2f}s", time, total_time, total_time / (i + 1));

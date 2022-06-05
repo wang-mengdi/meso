@@ -375,8 +375,8 @@ namespace Meso {
 
 		Field<int, d> v_idx_on_edge[3]; for (int i = 0;i < 3;i++) v_idx_on_edge[i].Init(Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx), -1);
 
-		Array<VectorD>& vertices = *_mesh->vertices; vertices.clear();
-		Array<VectorEi>& elements = _mesh->elements; elements.clear();
+		Array<VectorD>& vertices = _mesh.Vertices(); vertices.clear();
+		Array<VectorEi>& elements = _mesh.Elements(); elements.clear();
 
 		grid.Exec_Nodes([&](const VectorDi cell_index) {
 			if ((cell_index - cell_counts).maxCoeff() == 0) return;
@@ -525,7 +525,7 @@ namespace Meso {
 		Typedef_VectorD(d); Typedef_VectorEi(d);
 
 		// 0. Init
-		const Grid<d>& grid = field.grid; _mesh = (_mesh == nullptr) ? std::make_shared<TriangleMesh<3> >() : _mesh;
+		const Grid<d>& grid = field.grid;
 		const VectorDi cell_counts = grid.counts - VectorDi::Ones();
 
 		ArrayDv<int> mesh_count(grid.DoF() + 1, 0);
