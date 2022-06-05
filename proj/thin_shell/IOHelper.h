@@ -15,7 +15,7 @@ using namespace Meso;
 namespace DiscreteShellVTKFunc {
 	//output vtu file for this project specifically
 	template<int d,class T>
-	void Output_VTU(const std::shared_ptr< SurfaceMesh<d> >& mesh,const Array<T>& velocity, std::string file_name) {
+	void Output_VTU(const std::shared_ptr< SurfaceMesh<d> >& mesh,const Array<T>& velocity,std::string file_name) {
 		Typedef_VectorD(d);
 
 		// setup VTK

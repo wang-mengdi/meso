@@ -159,8 +159,8 @@ public:
 					int face_idx_0 = (incident_elements[0]), face_idx_1 = (incident_elements[1]);
 
 					//Find the two vertices at opposite sides
-					r = ThinShellAuxFunc::Third_Vertex(e[0], e[1], E()[face_idx_0]);
-					c = ThinShellAuxFunc::Third_Vertex(e[0], e[1], E()[face_idx_1]);
+					r = Triangle<d>::Third_Vertex(e[0], e[1], E()[face_idx_0]);
+					c = Triangle<d>::Third_Vertex(e[0], e[1], E()[face_idx_1]);
 					Assert(r != -1 && c != -1, "index out of range for finding opposite vertex");
 					for (int rr = r * d; rr < (r + 1) * d; rr++)for (int cc = c * d; cc < (c + 1) * d; cc++) {
 						triplets.push_back(Triplet<real>(rr, cc, (real)0));
@@ -326,7 +326,7 @@ public:
 			if constexpr (d == 3) {
 				Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
 				Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
-				real theta = ThinShellAuxFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
+				real theta = MathFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
 				real theta_d2 = (theta - theta_hats[jct_idx]); theta_d2 *= theta_d2;
 				real edge_h = Jct_H(jct_idx);
 				

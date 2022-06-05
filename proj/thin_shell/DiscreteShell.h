@@ -1,7 +1,7 @@
 ﻿//////////////////////////////////////////////////////////////////////////
 // Nonlinear Thin Shell FEM
 // Copyright (c) (2021-), Fan Feng
-// This file is part of SimpleX, whose distribution is governed by the LICENSE file.
+// This file is part of Meso, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Hashtable.h"
@@ -70,7 +70,6 @@ public:
 	//Three advancing methods
 	void Advance_Explicit(const real dt);
 	void Advance_Implicit(const real dt);
-	void Advance_Quasistatic();
 
 	void Add_Material(real youngs,real poisson);
 	void Set_Fixed(const int node);
@@ -107,8 +106,6 @@ public:
 	inline real Bending_Energy(int jct_idx, const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx);
 	real Total_Stretching_Energy();
 	real Total_Bending_Energy();
-	real Total_Potential_Energy();
-	real Total_Energy();
 	inline real Ks(real youngs, real density, real poisson) const { return youngs * density / ((real)1 - poisson * poisson); }
 	inline real Kb(real density, real ks) const { return ks * density * density / (real)12; }
 	inline real Lambda(real kb, real a_hat, real l_hat = (real)1);

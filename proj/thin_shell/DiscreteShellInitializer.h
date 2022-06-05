@@ -8,7 +8,7 @@
 #include "AuxFunc.h"
 #include "MeshFunc.h"
 #include "DiscreteShell.h"
-
+#include "DiscreteShellQuasistatic.h"
 template<int d> class DiscreteShellInitializer
 {Typedef_VectorD(d);Typedef_MatrixD(d);
 public:
@@ -21,7 +21,6 @@ public:
 		std::string mode = Json::Value(j, "mode", std::string("implicit"));
 		if (mode == std::string("explicit")) {thin_shell_simulator.advance_mode = AdvanceMode::Explicit;}
 		else if (mode == std::string("implicit")) {thin_shell_simulator.advance_mode = AdvanceMode::Implicit;}
-		else if(mode== std::string("quasistatic")){thin_shell_simulator.advance_mode = AdvanceMode::Quasistatic;}
 		else{Error("No such advance mode available");}
 
 		switch (test) {
@@ -33,7 +32,8 @@ public:
 	
 	void Case_0(json& j, DiscreteShell<d>& thin_shell_simulator) {
 		int scale = Json::Value(j, "scale", 32);
-		real length = (real)0.1; int w = scale; real step = length / (real)w;
+		real length = Json::Value(j, "length", (real)1);
+		int w = scale; real step = length / (real)w;
 		MeshFunc::Initialize_Herring_Bone_Mesh(w, w, step, &mesh, 0, 2);
 		thin_shell_simulator.Initialize(mesh);
 
@@ -57,7 +57,8 @@ public:
 
 	void Case_1(json& j, DiscreteShell<d>& thin_shell_simulator) {
 		int scale = Json::Value(j, "scale", 32);
-		real length = (real)0.1; int w = scale; real step = length / (real)w;
+		real length = Json::Value(j, "length", (real)1);
+		int w = scale; real step = length / (real)w;
 		MeshFunc::Initialize_Herring_Bone_Mesh(w, w, step, &mesh, 0, 2);
 		thin_shell_simulator.Initialize(mesh);
 
@@ -65,7 +66,7 @@ public:
 		for (int i = 0; i < w; i++) {
 			thin_shell_simulator.Set_Fixed(i);
 		}
-		for (int i = thin_shell_simulator.particles.Size() - w; i < thin_shell_simulator.particles.Size(); i++) { thin_shell_simulator.Set_Force(i, -strength*VectorD::Unit(1)); }
+		for (int i = thin_shell_simulator.particles.Size() - w; i < thin_shell_simulator.particles.Size(); i++) { thin_shell_simulator.Set_Force(i, -strength*VectorD::Unit(1)/(real)scale); }
 
 		thin_shell_simulator.damping = Json::Value(j, "damping", (real)0.01);
 		thin_shell_simulator.thickness = Json::Value(j, "thickness", (real)0.01);
