@@ -14,7 +14,7 @@ namespace Meso {
 	public:
 		Array<VectorD, side> vertices;
 		Array<VectorEi, side> elements;
-		Array<VectorD, side> normals; // normals in each faces
+		//Array<VectorD, side> normals; // normals in each faces
 
 		// constructors(defalut: deep copy)
 		SimplicialMesh() {}
@@ -24,7 +24,7 @@ namespace Meso {
 		SimplicialMesh<d, e_d, side>& operator=(const SimplicialMesh<d, e_d, side>& copy) {
 			vertices = (copy.vertices);
 			elements = copy.elements;
-			normals = copy.normals;
+			//normals = copy.normals;
 			return *this;
 		}
 
@@ -38,12 +38,12 @@ namespace Meso {
 		constexpr Array<VectorEi, side>& Elements() { return elements; }
 		constexpr const Array<VectorEi, side>& Elements() const { return elements; }
 
-		constexpr const Array<VectorD, side>& Normals() const { return normals; }
+		//constexpr const Array<VectorD, side>& Normals() const { return normals; }
 
 		void Clear() {
 			vertices.clear(); 
 			elements.clear();
-			normals.clear();
+			//normals.clear();
 		}
 	};
 
