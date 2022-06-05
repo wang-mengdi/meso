@@ -1,4 +1,4 @@
-add_rules("mode.debug","mode.release")
+add_rules("mode.release","mode.debug")
 set_languages("cxx20")
 includes("./../../src/dec_system/xmake.lua")
 target("_tests_dec_system")
