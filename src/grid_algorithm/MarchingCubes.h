@@ -367,16 +367,16 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	void Marching_Cubes_CPU(const Field<T, d>& field, std::shared_ptr<TriangleMesh<d>> _mesh = nullptr, const real _contour_val = 0.) {
+	void Marching_Cubes_CPU(TriangleMesh<d> &_mesh, const Field<T, d>& field, const real _contour_val = 0.) {
 		Typedef_VectorD(d); Typedef_VectorEi(d);
 		
-		const Grid<d>& grid = field.grid; _mesh = (_mesh == nullptr) ? std::make_shared<TriangleMesh<3> >() : _mesh;
+		const Grid<d>& grid = field.grid;
 		const VectorDi cell_counts = field.grid.counts - VectorDi::Ones();
 
 		Field<int, d> v_idx_on_edge[3]; for (int i = 0;i < 3;i++) v_idx_on_edge[i].Init(Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx), -1);
 
-		Array<VectorD>& vertices = *_mesh->vertices; vertices.clear();
-		Array<VectorEi>& elements = _mesh->elements; elements.clear();
+		Array<VectorD>& vertices = _mesh.Vertices(); vertices.clear();
+		Array<VectorEi>& elements = _mesh.Elements(); elements.clear();
 
 		grid.Exec_Nodes([&](const VectorDi cell_index) {
 			if ((cell_index - cell_counts).maxCoeff() == 0) return;
@@ -493,7 +493,7 @@ namespace Meso {
 	}
 	
 	template<class T, int d>
-	__global__ static void Gen_Mesh(
+	__global__ void Generate_Mesh_Kernel(
 		const Vector<int, d> cell_counts,
 		const Grid<d> field_grid,
 		const T* field_data,
@@ -518,14 +518,14 @@ namespace Meso {
 
 	template<class T, int d>
 	void Marching_Cubes_GPU(
+		TriangleMesh<d>& _mesh,
 		const Field<T, d, DEVICE>& field,
-		std::shared_ptr<TriangleMesh<d>> _mesh = nullptr,
 		const real _contour_val = 0.
 	) {
 		Typedef_VectorD(d); Typedef_VectorEi(d);
 
 		// 0. Init
-		const Grid<d>& grid = field.grid; _mesh = (_mesh == nullptr) ? std::make_shared<TriangleMesh<3> >() : _mesh;
+		const Grid<d>& grid = field.grid;
 		const VectorDi cell_counts = grid.counts - VectorDi::Ones();
 
 		ArrayDv<int> mesh_count(grid.DoF() + 1, 0);
@@ -569,7 +569,7 @@ namespace Meso {
 		Array<VectorEi, DEVICE> elements(mesh_count[mesh_count.size() - 1]);
 
 		grid.Exec_Kernel(
-			&Gen_Mesh<T, d>,
+			&Generate_Mesh_Kernel<T, d>,
 			cell_counts,
 			grid, field.Data_Ptr(), _contour_val,
 			ArrayFunc::Data<int, DEVICE>(mesh_count),
@@ -578,21 +578,21 @@ namespace Meso {
 			ArrayFunc::Data<VectorEi, DEVICE>(elements)
 		);
 
-		*_mesh->vertices = vertices;
-		_mesh->elements = elements;
+		_mesh.vertices = vertices;
+		_mesh.elements = elements;
 	}
 
 	template<class T, int d, DataHolder side = HOST>
 	void Marching_Cubes(
+		TriangleMesh<d>& _mesh,
 		const Field<T, d, side>& field,
-		std::shared_ptr<TriangleMesh<d>> _mesh = nullptr,
 		const real _contour_val = 0.
 	) {
 		if constexpr (side == HOST) {
-			Marching_Cubes_CPU(field, _mesh, _contour_val);
+			Marching_Cubes_CPU(_mesh, field, _contour_val);
 		}
 		else {
-			Marching_Cubes_GPU(field, _mesh, _contour_val);
+			Marching_Cubes_GPU(_mesh, field, _contour_val);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-add_rules("mode.debug")
+add_rules("mode.release", "mode.debug")
 set_languages("cxx20")
 includes("./../../src/geometry/xmake.lua")
 includes("./../../src/reservoir/xmake.lua")
