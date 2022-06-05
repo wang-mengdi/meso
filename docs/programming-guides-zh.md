@@ -41,15 +41,24 @@
 
 其中，`common`负责最基本的程序功能，例如对`Eigen`、`Json`、`thrust`的适配、对数学常数的定义等等。`geometry`含有以各种解析方法表示的几何形体，`reservoir`含有粒子/网格/Mesh三种处理大批量数据的数据结构，`solver`是数学上的线性方程组求解器。
 
+- 除在Simulator层工作的类（如`Driver`）外，Kernel层所有的类都**无需使用**`json`初始化。
+- 出于后期的内存优化考虑，除`common`中的`Timer`这类功能简单的类之外，Kernel层所有的类和函数原则上都应拥有`T`（单/双精度）和`d`（维数，可以是{2,3}）两个模板。
+
 #### Algorithm
 
 此层是不同类型的模拟系统需要使用的特有算法，拥有四个子目录：`particle_algorithm`、`mesh_algorithm`、`grid_algorithm`、`dec_system`。这一层并不是一个整体，因为用户可以只使用其中的若干个，在图中用虚线方框表示。
 
 其中，前三个目录分别存放粒子系统、Mesh系统、网格系统的相关算法，最后一个目录是我们特有的外微分系统。
 
+- Algorithm层所有的类都**无需使用**`json`初始化。
+- 和Kernel层类似，Algorithm层所有的类和函数原则上都有`T`和`d`两个模板。
+
 #### Simulators
 
 此层是不同的模拟程序，例如Fluid Euler、SPH、FEM等等。每个程序将按需使用Algorithms层中的一个或多个子目录，同时也自动使用整个Kernel.
+
+- Simulator层的类**应当使用**`json`初始化。
+- Simulator层的类应当拥有`d`模板，推荐拥有`T`模板。
 
 #### 功能分层标准
 
