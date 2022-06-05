@@ -211,10 +211,11 @@ namespace Meso {
 			return Write_Obj(filename, attribute, shapes, std::vector<tinyobj::material_t>());
 		}
 
-		template<class T>
-		bool Write_Mesh(const std::string& filename, const std::shared_ptr<T> mesh) {
-			Array<std::shared_ptr<T>> meshes; meshes.push_back(mesh);
-			return Write_Meshes<T>(filename, meshes);
+		template<class MeshType>
+		bool Write_Mesh(const std::string& filename, const MeshType& mesh) {
+			Array<std::shared_ptr<MeshType> meshes; 
+			meshes.push_back(std::make_shared<MeshType>(mesh));
+			return Write_Meshes<MeshType>(filename, meshes);
 		}
 
 	}
