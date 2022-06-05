@@ -5,6 +5,7 @@
 #include "DiscreteShell.h"
 #include "DiscreteShellInitializer.h"
 #include "OptimizerDriver.h"
+#include "DiscreteShellQuasistatic.h"
 #include "DiscreteShellTopologyOptimizer.h"
 #include "DiscreteShellTopoOptInitializer.h"
 using namespace Meso;
@@ -18,12 +19,20 @@ void Run(json& j) {
 }
 
 template<int d>
-void RunOptimizer(json &j) {
-	DiscreteShellTopologyOptimizer<d> optimizer;
-	DiscreteShellTopoOptInitializer<d> scene;
+void RunQuasistaticSolver(json& j) {
+	DiscreteShellQuasistatic<d> optimizer;
+	DiscreteShellInitializer<d> scene;
 	OptimizerDriver driver;
 	driver.Run(j, scene, optimizer);
 }
+
+//template<int d>
+//void RunOptimizer(json &j) {
+//	DiscreteShellTopologyOptimizer<d> optimizer;
+//	DiscreteShellTopoOptInitializer<d> scene;
+//	OptimizerDriver driver;
+//	driver.Run(j, scene, optimizer);
+//}
 
 int main(int argc, char** argv) {
 	try {
@@ -52,7 +61,7 @@ int main(int argc, char** argv) {
 			Run<3>(j);
 		}
 		else if (j.contains("optimizer")) {
-			RunOptimizer<3>(j);
+			RunQuasistaticSolver<3>(j);
 		}
 	}
 	catch (nlohmann::json::exception& e)

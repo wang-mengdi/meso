@@ -31,6 +31,8 @@ public:
 		FileFunc::Create_Directory(base_path);
 
 		Output(optimizer, base_path, meta_data.iter_count);
+		meta_data.iter_count++;
+
 		while (!optimizer.Is_Converged(meta_data) && meta_data.iter_count<meta_data.max_iter_num) {
 			optimizer.Optimize(meta_data);
 			Print_Iteration_Info(iter_timer,meta_data);
@@ -38,7 +40,7 @@ public:
 			meta_data.iter_count++;
 		}
 
-		Info("Optimizer converges after {} iters", meta_data.iter_count);
+		Info("Optimizer converges after {} iters", meta_data.iter_count-1);
 	}
 
 	template<class Initializer, class TOptimizer>

@@ -1,7 +1,7 @@
 ﻿//////////////////////////////////////////////////////////////////////////
 // Nonlinear Discrete Shell
 // Copyright (c) (2021-), Fan Feng
-// This file is part of SimpleX, whose distribution is governed by the LICENSE file.
+// This file is part of Meso, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #include "DiscreteShell.h"
 #include "MeshFunc.h"
@@ -39,9 +39,6 @@ template<int d> void DiscreteShell<d>::Advance(DriverMetaData& metadata) {
 	case AdvanceMode::Implicit:
 		Advance_Implicit(metadata.dt);
 		break;
-	case AdvanceMode::Quasistatic:
-		Advance_Quasistatic();
-		break;
 	default:
 		Error("Only Explicit, Implicit and Quasistatic modes are available.");
 		break;
@@ -58,14 +55,14 @@ template<int d> void DiscreteShell<d>::Initialize(SurfaceMesh<d>& _mesh)
 	//initialize edge hashtable
 	for(int i=0;i<Ele_Num();i++){
 		VectorDi& vtx_indices=E()[i];
-		ArrayF<Vector<int,d-1>,d> edge_set; 
+		ArrayF<Vector<int, d - 1>, d> edge_set;
 		Element_Edges(vtx_indices,edge_set);
 		for(int k=0;k<d;k++){
-			Add(edge_element_hashtable,Unique_Ordered(edge_set[k]),i);
+			Add<Vector<int, d - 1>,int>(edge_element_hashtable,Unique_Ordered<d-1>(edge_set[k]),i);
 		}
 	}
-
-	int vtx_n=Vtx_Num();int dof_n=vtx_n*d;int ele_n=Ele_Num();
+	
+	int dof_n= Vtx_Num(); int ele_n=Ele_Num();
 	material_id.resize(ele_n,0);
 
 	////initialize X0, Dm_inv, N and M
@@ -129,8 +126,8 @@ template<int d> void DiscreteShell<d>::Allocate_A() {
 				int face_idx_0 = (incident_elements[0]), face_idx_1 = (incident_elements[1]);
 				
 				//Find the two vertices at opposite sides
-				r = Third_Vertex(e[0], e[1], E()[face_idx_0]);
-				c = Third_Vertex(e[0], e[1], E()[face_idx_1]);
+				r = Triangle<d>::Third_Vertex(e[0], e[1], E()[face_idx_0]);
+				c = Triangle<d>::Third_Vertex(e[0], e[1], E()[face_idx_1]);
 				Assert(r != -1 && c != -1, "index {} {} out of range for finding opposite vertex");
 				for (int rr = r * d; rr < (r + 1) * d; rr++)for (int cc = c * d; cc < (c + 1) * d; cc++) {
 					triplets.push_back(Triplet<real>(rr, cc, (real)0));
@@ -182,7 +179,7 @@ template<int d> void DiscreteShell<d>::Initialize_Material() {
 				lambdas[edge_idx]=Lambda(Kb(avg_h,(real)0.5*(ks0+ks1)),a_hat,l_hat);
 				VectorD n0=Triangle<3>::Normal(X()[E()[ele_idx[0]][0]],X()[E()[ele_idx[0]][1]],X()[E()[ele_idx[0]][2]]);
 				VectorD n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
-				theta_hats[edge_idx]=Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
+				theta_hats[edge_idx]=MathFunc::Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
 			}
 		}
 	}
@@ -281,50 +278,6 @@ template<int d> void DiscreteShell<d>::Advance_Implicit(const real dt)
 		X()[i] += V()[i] * dt;
 	}
 	Info("Time spent on position uptate {} ms", timer.Lap_Time(PhysicalUnits::ms));
-}
-
-// A = hess
-// b = -grad
-// Adx=b
-template<int d> void DiscreteShell<d>::Advance_Quasistatic()
-{	//dx is dx in this case
-	int iter = 0;
-	real err = 1;
-	const real alpha = 0.1;
-	real energy = 0;
-	const int max_iter = 1000;
-	damping = 0;
-	
-	while (err > 1e-5) {
-		if (iter == max_iter) {
-			Info("max iteration {} reached!",max_iter);
-			break;
-		}
-
-		Clear_A_And_Rhs();
-
-		//add external forces
-		for (auto& force : bc.forces) {
-			Add_Block(b, force.first, force.second);
-		}
-
-		Update_Implicit_Stretching(1.0); //equivalent to dt=1.0
-		Update_Implicit_Bending(1.0);
-		Update_Implicit_Boundary_Condition();
-		Solve();
-
-		#pragma omp parallel for
-		for (int i = 0; i < Vtx_Num(); i++) {
-			for (int j = 0; j < d; j++) {
-				X()[i][j] += alpha*dx[i * d + j]; //may multiply stepsize
-			}
-		}
-
-		Info("Total energy: {}", Total_Energy());
-		err = ArrayFunc::Norm<real, DataHolder::HOST>(dx) / dx.size();
-		iter++;
-	}
-	Info("Quasi_static solve finished with {} Newton iterations: ", iter);
 }
 
 template<int d> void DiscreteShell<d>::Clear_A_And_Rhs(){
@@ -498,78 +451,68 @@ template<int d> void DiscreteShell<d>::Grad_Bend(const Eigen::Matrix<real,d,d+1>
 }
 
 template<int d> void DiscreteShell<d>::Grad_Bend(int jct_idx, Eigen::Matrix<real,d,d+1>& grad, const ArrayF<int,d+1>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
-	//no implementation
+	if constexpr(d==3){
+		Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
+		Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
+
+		real theta = MathFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
+
+		Vector2 w0 = MathFunc::Barycentric_Weights(X()[vtx_idx[2]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
+		Vector2 w1 = MathFunc::Barycentric_Weights(X()[vtx_idx[3]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
+		real h0 = MathFunc::Distance(X()[vtx_idx[2]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
+		real h1 = MathFunc::Distance(X()[vtx_idx[3]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
+
+		Eigen::Matrix<real, 3, 4> dtheta;
+		dtheta.col(0) = -(w0[0] * n0 / h0 + w1[0] * n1 / h1);
+		dtheta.col(1) = -(w0[1] * n0 / h0 + w1[1] * n1 / h1);
+		dtheta.col(2) = n0 / h0;
+		dtheta.col(3) = n1 / h1;
+		grad = (real)2 * lambdas[jct_idx] * (theta - theta_hats[jct_idx]) * dtheta;
+	}
 }
 
-template<> void DiscreteShell<2>::Grad_Bend(int jct_idx, Eigen::Matrix<real,2,3>& grad, const ArrayF<int,3>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
-	return; //not implemented yet
+template<int d> void DiscreteShell<d>::Grad_Theta(Eigen::Matrix<real, d, d + 1>& grad_theta, const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx){
+	if constexpr(d==3){
+		Vector3 n0 = Triangle<d>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
+		Vector3 n1 = Triangle<d>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
+
+		real theta = MathFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
+
+		Vector2 w0 = MathFunc::Barycentric_Weights(X()[vtx_idx[2]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
+		Vector2 w1 = MathFunc::Barycentric_Weights(X()[vtx_idx[3]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
+		real h0 = MathFunc::Distance(X()[vtx_idx[2]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
+		real h1 = MathFunc::Distance(X()[vtx_idx[3]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
+
+		grad_theta.col(0) = -(w0[0] * n0 / h0 + w1[0] * n1 / h1);
+		grad_theta.col(1) = -(w0[1] * n0 / h0 + w1[1] * n1 / h1);
+		grad_theta.col(2) = n0 / h0;
+		grad_theta.col(3) = n1 / h1;
+	}
 }
 
-template<> void DiscreteShell<3>::Grad_Bend(int jct_idx, Eigen::Matrix<real,3,4>& grad, const ArrayF<int,4>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
-	Vector3 n0=Triangle<3>::Normal(X()[E()[ele_idx[0]][0]],X()[E()[ele_idx[0]][1]],X()[E()[ele_idx[0]][2]]);
-	Vector3 n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
+template<int d> void DiscreteShell<d>::Bend_Force_Approx(int edge_idx, Eigen::Matrix<real, d, d + 1>& grad, const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx, Matrix<real,d> hess[d + 1][d + 1]){
+	if constexpr(d==3){
+		Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
+		Vector3 n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
 
-	real theta= Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
+		real theta= MathFunc::Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
 
-	Vector2 w0=Barycentric_Weights(X()[vtx_idx[2]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
-	Vector2 w1=Barycentric_Weights(X()[vtx_idx[3]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
-	real h0=Distance(X()[vtx_idx[2]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
-	real h1=Distance(X()[vtx_idx[3]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
+		Vector2 w0= MathFunc::Barycentric_Weights(X()[vtx_idx[2]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
+		Vector2 w1= MathFunc::Barycentric_Weights(X()[vtx_idx[3]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
+		real h0= MathFunc::Distance(X()[vtx_idx[2]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
+		real h1= MathFunc::Distance(X()[vtx_idx[3]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
 
-	Eigen::Matrix<real,3,4> dtheta;
-	dtheta.col(0)=-(w0[0]*n0/h0+w1[0]*n1/h1);
-	dtheta.col(1)=-(w0[1]*n0/h0+w1[1]*n1/h1);
-	dtheta.col(2)=n0/h0;
-	dtheta.col(3)=n1/h1;
-	grad=(real)2*lambdas[jct_idx]*(theta-theta_hats[jct_idx])*dtheta;
-}
+		Eigen::Matrix<real,3,4> dtheta;
+		dtheta.col(0)=-(w0[0]*n0/h0+w1[0]*n1/h1);
+		dtheta.col(1)=-(w0[1]*n0/h0+w1[1]*n1/h1);
+		dtheta.col(2)=n0/h0;
+		dtheta.col(3)=n1/h1;
 
-template<> void DiscreteShell<2>::Grad_Theta(Eigen::Matrix<real, 2, 3>& grad_theta, const ArrayF<int, 3>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
-	return; //no implementation
-}
-
-template<> void DiscreteShell<3>::Grad_Theta(Eigen::Matrix<real, 3, 4>& grad_theta, const ArrayF<int, 4>& vtx_idx, const ArrayF<int, 2>& ele_idx) {
-	Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
-	Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
-
-	real theta = Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
-
-	Vector2 w0 = Barycentric_Weights(X()[vtx_idx[2]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
-	Vector2 w1 = Barycentric_Weights(X()[vtx_idx[3]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
-	real h0 = Distance(X()[vtx_idx[2]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
-	real h1 = Distance(X()[vtx_idx[3]], X()[vtx_idx[0]], X()[vtx_idx[1]]);
-
-	grad_theta.col(0) = -(w0[0] * n0 / h0 + w1[0] * n1 / h1);
-	grad_theta.col(1) = -(w0[1] * n0 / h0 + w1[1] * n1 / h1);
-	grad_theta.col(2) = n0 / h0;
-	grad_theta.col(3) = n1 / h1;
-}
-
-template<> void DiscreteShell<2>::Bend_Force_Approx(int edge_idx, Eigen::Matrix<real,2,3>& grad, const ArrayF<int,3>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[3][3]) {
-	return; //not implemented yet
-}
-
-template<> void DiscreteShell<3>::Bend_Force_Approx(int edge_idx, Eigen::Matrix<real,3,4>& grad, const ArrayF<int,4>& vtx_idx, const ArrayF<int, 2>& ele_idx, MatrixD hess[4][4]) {
-	Vector3 n0=Triangle<3>::Normal(X()[E()[ele_idx[0]][0]],X()[E()[ele_idx[0]][1]],X()[E()[ele_idx[0]][2]]);
-	Vector3 n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
-
-	real theta=Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
-
-	Vector2 w0=Barycentric_Weights(X()[vtx_idx[2]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
-	Vector2 w1=Barycentric_Weights(X()[vtx_idx[3]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
-	real h0=Distance(X()[vtx_idx[2]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
-	real h1=Distance(X()[vtx_idx[3]],X()[vtx_idx[0]],X()[vtx_idx[1]]);
-
-	Eigen::Matrix<real,3,4> dtheta;
-	dtheta.col(0)=-(w0[0]*n0/h0+w1[0]*n1/h1);
-	dtheta.col(1)=-(w0[1]*n0/h0+w1[1]*n1/h1);
-	dtheta.col(2)=n0/h0;
-	dtheta.col(3)=n1/h1;
-
-	grad=(real)2*lambdas[edge_idx]*(theta-theta_hats[edge_idx])*dtheta;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			hess[i][j]=(real)2*lambdas[edge_idx]*(dtheta.col(i))*(dtheta.col(j).transpose());
+		grad=(real)2*lambdas[edge_idx]*(theta-theta_hats[edge_idx])*dtheta;
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				hess[i][j]=(real)2*lambdas[edge_idx]*(dtheta.col(i))*(dtheta.col(j).transpose());
+			}
 		}
 	}
 }
@@ -582,7 +525,7 @@ template<> void DiscreteShell<3>::Bend_Force(int jct_idx, Eigen::Matrix<real, 3,
 	Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
 	Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
 
-	real theta = Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
+	real theta = MathFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
 
 	ArrayF<int, 4> map0, map1; //vtx_idx to triangle index
 	map0.fill((int)-1); map1.fill((int)-1);
@@ -771,7 +714,7 @@ template<int d> inline real DiscreteShell<d>::Bending_Energy(int jct_idx, const 
 	if constexpr (d == 3) {
 		Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
 		Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
-		real theta = ThinShellAuxFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
+		real theta = MathFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
 		return Bending_Energy(lambdas[jct_idx], theta, theta_hats[jct_idx]);
 	}
 }
@@ -818,24 +761,12 @@ template<> real DiscreteShell<3>::Total_Bending_Energy() {
 
 		Vector3 n0 = Triangle<3>::Normal(X()[E()[ele_idx[0]][0]], X()[E()[ele_idx[0]][1]], X()[E()[ele_idx[0]][2]]);
 		Vector3 n1 = Triangle<3>::Normal(X()[E()[ele_idx[1]][0]], X()[E()[ele_idx[1]][1]], X()[E()[ele_idx[1]][2]]);
-		real theta = Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
+		real theta = MathFunc::Dihedral_Angle(n0, n1, X()[vtx_idx[0]], X()[vtx_idx[1]]);
 
 		bending_energy+= Bending_Energy(lambdas[edge_idx], theta, theta_hats[edge_idx]);
 	}
 
 	return bending_energy;
-}
-
-template<> real DiscreteShell<3>::Total_Potential_Energy() {
-	real potential_energy=0;
-	for (auto& force : bc.forces) {
-		potential_energy -= force.second.dot(X()[force.first]); //potential energy by the external force
-	}
-	return potential_energy;
-}
-
-template<> real DiscreteShell<3>::Total_Energy() {
-	return Total_Stretching_Energy() + Total_Bending_Energy() + Total_Potential_Energy();
 }
 
 template<int d> real DiscreteShell<d>::Lambda(const ArrayF<int, d + 1>& vtx_idx, const ArrayF<int, 2>& ele_idx) { //
@@ -940,7 +871,7 @@ template<> Eigen::Matrix<real,3,4> DiscreteShell<3>::Numerical_Grad_Bend(int jct
 
 	Vector3 n0=Triangle<3>::Normal(X()[E()[ele_idx[0]][0]],X()[E()[ele_idx[0]][1]],X()[E()[ele_idx[0]][2]]);
 	Vector3 n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
-	real theta=Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
+	real theta=MathFunc::Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
 	real bending_energy=Bending_Energy(lambdas[jct_idx], theta, theta_hats[jct_idx]);
 
 	for (int col=0; col<4; col++) {
@@ -950,7 +881,7 @@ template<> Eigen::Matrix<real,3,4> DiscreteShell<3>::Numerical_Grad_Bend(int jct
 			X()[p_idx][row]+=epsilon;
 			n0=Triangle<3>::Normal(X()[E()[ele_idx[0]][0]],X()[E()[ele_idx[0]][1]],X()[E()[ele_idx[0]][2]]);
 			n1=Triangle<3>::Normal(X()[E()[ele_idx[1]][0]],X()[E()[ele_idx[1]][1]],X()[E()[ele_idx[1]][2]]);
-			theta=Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
+			theta= MathFunc::Dihedral_Angle(n0,n1,X()[vtx_idx[0]],X()[vtx_idx[1]]);
 			real energy_p=Bending_Energy(lambdas[jct_idx], theta, theta_hats[jct_idx]);
 			grad_b_n(row,col)=(energy_p-bending_energy)/epsilon;
 			X()[p_idx][row]=p_tmp;
@@ -1040,8 +971,8 @@ template<int d> bool DiscreteShell<d>::Junction_Info(int edge_idx, ArrayF<int, d
 		Value_Array(edge_element_hashtable, edges[edge_idx], incident_elements);
 		if (incident_elements.size() == 2) { //shared edge
 			ele_idx[0] = incident_elements[0], ele_idx[1] = incident_elements[1];
-			vtx_idx[2] = Third_Vertex(vtx_idx[0], vtx_idx[1], E()[ele_idx[0]]);
-			vtx_idx[3] = Third_Vertex(vtx_idx[0], vtx_idx[1], E()[ele_idx[1]]);
+			vtx_idx[2] = Triangle<d>::Third_Vertex(vtx_idx[0], vtx_idx[1], E()[ele_idx[0]]);
+			vtx_idx[3] = Triangle<d>::Third_Vertex(vtx_idx[0], vtx_idx[1], E()[ele_idx[1]]);
 
 			for (int i = 0; i < 3; i++) {
 				if (E()[ele_idx[0]][i] == vtx_idx[2]) { vtx_idx[0] = E()[ele_idx[0]][(i + 1) % 3]; vtx_idx[1] = E()[ele_idx[0]][(i + 2) % 3]; }
