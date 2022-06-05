@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////
 // Hashtable
 // Copyright (c) (2022-), Bo Zhu and Fan Feng
-// This file is part of SimpleX, whose distribution is governed by the LICENSE file.
+// This file is part of Meso, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Common.h"

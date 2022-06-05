@@ -110,6 +110,25 @@ namespace Meso {
 		real Angle_From_To(const Vector2& v1, const Vector2& v2);	////[-pi,pi], default is +z
 		real Angle_From_To(const Vector3& v1, const Vector3& v2);	////[-pi,pi], no axis specified, [0,pi]
 
+		//p0-p1 is the shared edge, range: [-pi,+pi]
+		inline real Dihedral_Angle(const Vector3& n0, const Vector3& n1, const Vector3& p0, const Vector3& p1) {
+			real cosine = n0.dot(n1);
+			Vector3 e = (p0 - p1).normalized();
+			real sine = e.dot(n0.cross(n1));
+			return atan2(sine, cosine);
+		}
+
+		inline Vector2 Barycentric_Weights(const Vector3& p, const Vector3& p0, const Vector3& p1) {
+			Vector3 e = p1 - p0;
+			double t = e.dot(p - p0) / e.dot(e);
+			return Vector2(1 - t, t);
+		}
+
+		//distance from one vertex to base, p0-p1 is the base, always positive
+		inline real Distance(const Vector3& p, const  Vector3& p0, const  Vector3& p1) {
+			return ((p - p0).cross(p - p1)).norm() / (p0 - p1).norm();
+		}
+
 		template<class T, int dim> inline T Abs_Min(const Vector<T, dim>& v) { T v_min = abs(v[0]); for (int i = 1; i < dim; i++)if (abs(v[i]) < v_min)v_min = v[i]; return v_min; }
 		template<class T, int dim> inline T Abs_Max(const Vector<T, dim>& v) { T v_max = abs(v[0]); for (int i = 1; i < dim; i++)if (abs(v[i]) > v_max)v_max = v[i]; return v_max; }
 		template<class T, int dim> int Abs_Min_Index(const Vector<T, dim>& v) { int i_min = 0; for (int i = 1; i < dim; i++)if (abs(v[i]) < abs(v[i_min]))i_min = i; return i_min; }

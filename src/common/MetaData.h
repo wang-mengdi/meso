@@ -36,7 +36,7 @@ namespace Meso {
 			base_path = bf::path(output_base_dir);
 
 			fps = Json::Value(j, "fps", 25);
-			cfl = Json::Value(j, "cfl", 1.0);
+			cfl = Json::Value(j, "cfl", (real)1.0);
 			time_per_frame = 1.0 / fps;
 			min_step_frame_fraction = Json::Value(j, "min_step_frame_fraction", (real)0);
 

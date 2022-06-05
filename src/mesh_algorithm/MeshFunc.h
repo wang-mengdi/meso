@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////
 // Mesh functions
-// Copyright (c) (2018-), Bo Zhu
-// This file is part of SimpleX, whose distribution is governed by the LICENSE file.
+// Copyright (c) (2022-), Bo Zhu and Fan Feng
+// This file is part of Meso, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Common.h"
@@ -9,7 +9,6 @@
 
 namespace Meso {
     namespace MeshFunc {
-
         ////Element edges
         template<int d> int Element_Edges(const Vector<int, d>& vtx, Array<Vector2i>& edges) {
             if constexpr (d == 2) {
