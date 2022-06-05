@@ -58,5 +58,5 @@ An output folder named `cavity` with `.vst` files will be generated.
 Maintainers:
 
 - Kernel, grid_algorithm, dec_system: Mengdi Wang
-- particle_algorithm: Fan Feng
-- mesh_algorithm: Yitong Deng
+- particle_algorithm: Yitong Deng
+- mesh_algorithm: Fan Feng

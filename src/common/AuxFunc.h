@@ -90,6 +90,13 @@ namespace Meso {
 			atomicAdd(a, b);
 		}
 
+		////Vector index sorting in ascending order
+		template<int d> Vector<int, d> Sorted(const Vector<int, d>& _v) {
+			Vector<int, d> v = _v;
+			std::sort(v.data(), v.data() + v.size());
+			return v;
+		}
+
 		Vector1 Orthogonal_Vector(const Vector1& v);
 		Vector2 Orthogonal_Vector(const Vector2& v);	////this is the orthogonal vector on the *left* hand
 		Vector3 Orthogonal_Vector(const Vector3& v);
@@ -97,13 +104,11 @@ namespace Meso {
 
 		Vector1 Cross(const Vector2& v1, const Vector2& v2);
 		Vector2 Cross(const Vector1& v1, const Vector2& v2);
-		Vector2 Cross(const real& v1, const Vector2& v2);
 
 		real Angle_Between(const Vector2& v1, const Vector2& v2);	////[0,pi]
 		real Angle_Between(const Vector3& v1, const Vector3& v2);	////[0,pi]
 		real Angle_From_To(const Vector2& v1, const Vector2& v2);	////[-pi,pi], default is +z
 		real Angle_From_To(const Vector3& v1, const Vector3& v2);	////[-pi,pi], no axis specified, [0,pi]
-
 
 		template<class T, int dim> inline T Abs_Min(const Vector<T, dim>& v) { T v_min = abs(v[0]); for (int i = 1; i < dim; i++)if (abs(v[i]) < v_min)v_min = v[i]; return v_min; }
 		template<class T, int dim> inline T Abs_Max(const Vector<T, dim>& v) { T v_max = abs(v[0]); for (int i = 1; i < dim; i++)if (abs(v[i]) > v_max)v_max = v[i]; return v_max; }

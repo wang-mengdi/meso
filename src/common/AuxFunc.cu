@@ -66,7 +66,6 @@ namespace Meso {
 
 		Vector1 Cross(const Vector2& v1, const Vector2& v2) { Vector1 v; v[0] = (v1[0] * v2[1] - v1[1] * v2[0]); return v; }
 		Vector2 Cross(const Vector1& v1, const Vector2& v2) { return Orthogonal_Vector(v2) * v1[0]; }
-		Vector2 Cross(const real& v1, const Vector2& v2) { return Orthogonal_Vector(v2) * v1; }
 
 		real Angle_Between(const Vector2& v1, const Vector2& v2)
 		{

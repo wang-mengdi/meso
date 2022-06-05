@@ -9,33 +9,30 @@
 
 namespace Meso {
     namespace MeshFunc {
-        ////Normals
-        Vector2 Normal(const Vector2& v1, const Vector2& v2);
-        Vector3 Normal(const Vector3& v1, const Vector3& v2, const Vector3& v3);
-        template<int d> Vector<real, d> Normal(const ArrayF<Vector<real, d>, d>& v) {
-            if constexpr (d == 2) {
-                return Normal(v[0], v[1]);
-            }
-            else if constexpr (d == 3) {
-                return Normal(v[0], v[1], v[2]);
-            }
-            else {
-                Error("Dimension not supported.");
-            }
-        }
 
         ////Element edges
-        int Element_Edges(const Vector2i& v, Array<Vector2i>& edges);
-        int Element_Edges(const Vector3i& v, Array<Vector2i>& edges);
+        template<int d> int Element_Edges(const Vector<int, d>& vtx, Array<Vector2i>& edges) {
+            if constexpr (d == 2) {
+                edges.resize(1);
+                edges[0] = vtx; return 1;
+            }
+            else if constexpr (d == 3) {
+                edges.resize(3);
+                edges[0] = Vector2i(vtx[0], vtx[1]); edges[1] = Vector2i(vtx[1], vtx[2]); edges[2] = Vector2i(vtx[2], vtx[0]); return 3;
+            }
+            else {
+                Error("Dimension not supported");
+            }
+        }
 
         ////Mesh edges
         template<int d, int e_d> void Get_Edges(const SimplicialMesh<d, e_d>& mesh, Array<Vector2i>& edges) {
             Typedef_VectorEi(e_d);
             Hashset<Vector2i> edge_hashset; Array<Vector2i> element_edges;
             for (const VectorEi& vtx : mesh.elements) {
-                int n = Element_Edges(vtx, element_edges);
+                int n = Element_Edges<e_d>(vtx, element_edges);
                 for (int i = 0; i < n; i++) {
-                    edge_hashset.insert(Sorted(element_edges[i]));
+                    edge_hashset.insert(MathFunc::Sorted<2>(element_edges[i]));
                 }
             }
             for (const auto& edge : edge_hashset) { edges.push_back(edge); }
