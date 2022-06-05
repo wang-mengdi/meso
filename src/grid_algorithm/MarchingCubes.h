@@ -555,7 +555,7 @@ namespace Meso {
 			total += count;
 		}
 		
-		Array<VectorD, DEVICE> vertices = _mesh.Vertices(); vertices.resize(total);
+		Array<VectorD, DEVICE> vertices(total);
 #pragma omp parallel for
 		for (size_t i = 0; i < d; i++) edge_grid[i].Exec_Kernel(
 			&Gen_Vertice<T, d>,
@@ -566,7 +566,7 @@ namespace Meso {
 		// 3. Generate Meshes
 		thrust::device_ptr<int> mesh_count_ptr = thrust::device_pointer_cast(mesh_count.data());
 		thrust::exclusive_scan(mesh_count_ptr, mesh_count_ptr + mesh_count.size(), mesh_count_ptr);
-		Array<VectorEi, DEVICE> elements = _mesh.Elements(); elements.resize(mesh_count[mesh_count.size() - 1]);
+		Array<VectorEi, DEVICE> elements(mesh_count[mesh_count.size() - 1]);
 
 		grid.Exec_Kernel(
 			&Generate_Mesh_Kernel<T, d>,
@@ -578,8 +578,8 @@ namespace Meso {
 			ArrayFunc::Data<VectorEi, DEVICE>(elements)
 		);
 
-		//_mesh.vertices = vertices;
-		//_mesh.elements = elements;
+		_mesh.vertices = vertices;
+		_mesh.elements = elements;
 	}
 
 	template<class T, int d, DataHolder side = HOST>
