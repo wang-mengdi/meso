@@ -138,54 +138,57 @@ namespace Meso {
 			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
 
 			VectorD vortex_p1, vortex_p2;
-
 			// two vortices are 0.81 apart
 			vortex_p1[0] = grid.Center()[0] + (real)0.405;
 			vortex_p2[0] = grid.Center()[0] - (real)0.405;
 			vortex_p1[1] = grid.Center()[1]; 
 			vortex_p2[1] = vortex_p1[1];
 
-			Field<real, d> wz;
-			//wz.Resize(grid.cell_counts);
+			Field<real, d> wz_host(grid);
 
 			grid.Exec_Nodes(
 				[&](const VectorDi cell) {
 					const VectorD pos = grid.Position(cell);
 					real pr1 = pow((pos[0] - vortex_p1[0]), 2) + pow((pos[1] - vortex_p1[1]), 2);
 					real pr2 = pow((pos[0] - vortex_p2[0]), 2) + pow((pos[1] - vortex_p2[1]), 2);
-					wz(cell) = (real)1 / (real)0.3 * ((real)2 - pr1 / (real)0.09) * exp((real)0.5 * ((real)1 - pr1 / (real)0.09));
-					wz(cell) += (real)1 / (real)0.3 * ((real)2 - pr2 / (real)0.09) * exp((real)0.5 * ((real)1 - pr2 / (real)0.09));
+					wz_host(cell) = (real)1 / (real)0.3 * ((real)2 - pr1 / (real)0.09) * exp((real)0.5 * ((real)1 - pr1 / (real)0.09));
+					wz_host(cell) += (real)1 / (real)0.3 * ((real)2 - pr2 / (real)0.09) * exp((real)0.5 * ((real)1 - pr2 / (real)0.09));
 				}
 			);
 
-			Field<real, d> sol(grid.counts, 0);
+			FieldDv<real, d> wz;
+			wz = wz_host;
+
+			FieldDv<real, d> sol(grid.counts, (real)0);
 			FaceField<real, d> alpha(grid.counts, (real)1);
 
 			poisson.Init(fixed, alpha);
 			MG_precond.Init_Poisson(poisson, 2, 2);
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
 
+			int iter;
+			real error;
+			MGPCG.Solve(sol.Data(), wz.Data(), iter, error);
+
+			Field<real, d> sol_host = sol;
+
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
 					const VectorD pos = grid.Face_Center(axis, face);
 
-					if (face[axis] == 0 || face[axis] == grid.counts[axis] - 1) {}
+					if (face[axis] == 0 || face[axis] == grid.counts[axis] - 1) { return; }
 
 					const VectorDi cell_left = face - VectorDi::Unit(axis);
-
-					const VectorDi cell_right = face + VectorDi::Unit(axis);
-
+					const VectorDi cell_right = face;
 
 					if (axis == 0) {
-						initial_vel(1, face) = (sol(cell_right) - sol(cell_left)) / grid.dx;
+						initial_vel(1, face) = (sol_host(cell_right) - sol_host(cell_left)) / grid.dx;
 					}
 					else if (axis == 1) {
-						initial_vel(0, face) = (sol(cell_left) - sol(cell_right)) / grid.dx;
+						initial_vel(0, face) = (sol_host(cell_left) - sol_host(cell_right)) / grid.dx;
 					}
-
 				}
 			);
-			// initialize taylor parameter?
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
 		}
 	};
