@@ -47,6 +47,9 @@ namespace Meso {
 			vol_bc.Init(face_fixed, vol);
 			levelset.Init(velocity.grid, geom);
 
+			Info("fixed: \n{}", fixed);
+			Info("face_fixed y: \n{}", Field<bool, d>(face_fixed.grid, face_fixed.face_data[1]));
+
 			poisson.Init(velocity.grid);
 			MG_precond.Allocate_Poisson(velocity.grid);
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
@@ -107,11 +110,11 @@ namespace Meso {
 			bf::path vtk_path = metadata.base_path / bf::path(vts_name);
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 			
-			VertexMatrix<T, d> verts; ElementMatrix<d> elements;
-			Marching_Cubes<T, d, HOST>(verts, elements, levelset.phi);
-			std::string obj_name = fmt::format("mesh{:04d}.obj", metadata.current_frame);
-			bf::path obj_path = metadata.base_path / bf::path(obj_name);
-			OBJFunc::Write_OBJ(obj_path.string(), verts, elements);
+			//VertexMatrix<T, d> verts; ElementMatrix<d> elements;
+			//Marching_Cubes<T, d, HOST>(verts, elements, levelset.phi);
+			//std::string obj_name = fmt::format("surface{:04d}.obj", metadata.current_frame);
+			//bf::path obj_path = metadata.base_path / bf::path(obj_name);
+			//OBJFunc::Write_OBJ(obj_path.string(), verts, elements);
 		}
 
 		virtual void Advance(DriverMetaData& metadata) {
@@ -143,6 +146,9 @@ namespace Meso {
 			temp_field_dev = div_host;
 
 			pressure_dev.Init(temp_field_dev.grid);
+			Info("vy: \n{}", FieldDv<T, d>(velocity.grid, velocity.face_data[1]));
+			Info("rhs: \n{}", temp_field_dev);
+			Info("rhs max: {}", temp_field_dev.Max_Abs());
 			int iter; real res;
 			MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data(), iter, res);
 			Info("Solve poisson with {} iters and residual {}", iter, res);

@@ -25,7 +25,7 @@ namespace Meso {
 		}
 		Info("random generated");
 
-		OBJFunc::Write_Obj<T, d, ed>("./copy_mesh_single.obj", vertex_matrix, element_matrix);
+		OBJFunc::Write_OBJ<T, d, ed>("./copy_mesh_single.obj", vertex_matrix, element_matrix);
 		//auto mesh = std::make_shared<MeshType>();
 		//OBJFunc::Read_Mesh("../../../../../proj/_tests_reservoir/assets/CornellBox-Single.obj", mesh);
 		//OBJFunc::Write_Mesh<MeshType>("./copy_mesh_single.obj", mesh);

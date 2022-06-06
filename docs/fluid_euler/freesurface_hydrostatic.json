@@ -1,15 +1,20 @@
 {
-    "dimension": 3,
+    "dimension": 2,
     "simulator": "freesurface",
     "driver": {
         "cfl": 1.0,
         "first_frame": 0,
         "fps": 25,
-        "last_frame": 10,
+        "last_frame": 1,
         "min_step_frame_fraction": 0.0,
         "output_base_dir": "hydrostatic"
     },
     "scene": {
+        "air_density": 0.001,
+        "gravity_acc": [
+            -0.0,
+            1.0
+        ],
         "scale": 8,
         "test": 0
     }

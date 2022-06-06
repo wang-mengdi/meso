@@ -63,7 +63,7 @@ namespace Meso {
 		std::string output_name;
 		if (side == DEVICE) output_name = "./marching_cubes_GPU.obj";
 		else output_name = "./marching_cubes_CPU.obj";
-		OBJFunc::Write_Obj(output_name, vertices, faces);
+		OBJFunc::Write_OBJ(output_name, vertices, faces);
 
 		if (side == HOST) Pass("Test_Marching_Cubes[CPU] Passed with {} vertices and {} elements", vertices.rows(), faces.rows());
 		else Pass("Test_Marching_Cubes[GPU] Passed with {} vertices and {} elements", vertices.rows(), faces.rows());
