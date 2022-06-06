@@ -10,7 +10,7 @@
         "output_base_dir": "hydrostatic"
     },
     "scene": {
-        "scale": 32,
+        "scale": 8,
         "test": 0
     }
 }
