@@ -19,8 +19,8 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		//Needs to be initialized
-		T air_density;//we assume the density of fluid is 1
-		Vector<T, d> gravity_acc;
+		real air_density;//we assume the density of fluid is 1
+		VectorD gravity_acc;
 		FaceFieldDv<T, d> velocity;
 		BoundaryConditionDirect<Field<bool, d>> fixed_bc;
 		BoundaryConditionDirect<FaceField<T, d>> vol_bc;
@@ -40,8 +40,8 @@ namespace Meso {
 		Field<T, d> div_host;
 
 		void Init(json& j, ImplicitGeometry<d>& geom, Field<bool, d>& fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
-			air_density = Json::Value<T>(j, "air_density", 1e-3);
-			gravity_acc = Json::Value<Vector<T, d>>(j, "gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
+			air_density = Json::Value<real>(j, "air_density", 1e-3);
+			gravity_acc = Json::Value<VectorD>(j, "gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
 			velocity = initial_velocity;
 			velocity_bc.Init(face_fixed, initial_velocity);
 			vol_bc.Init(face_fixed, vol);
@@ -68,11 +68,11 @@ namespace Meso {
 			);
 			vol.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
-					T density = 0;
+					real density = 0;
 					VectorDi cell0 = face - VectorDi::Unit(axis), cell1 = face;
 					//there must be at least 1 valid cell
 					if (!vol.grid.Valid(cell0)) std::swap(cell0, cell1);
-					T phi0 = levelset.phi(cell0), phi1 = levelset.phi(cell1);
+					real phi0 = levelset.phi(cell0), phi1 = levelset.phi(cell1);
 					if (!vol.grid.Valid(cell1)) {
 						if (phi0 >= 0) density = air_density;
 						else density = 1.0;

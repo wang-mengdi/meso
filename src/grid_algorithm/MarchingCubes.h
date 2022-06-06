@@ -7,6 +7,7 @@
 #include "Grid.h"
 #include "Field.h"
 #include "Mesh.h"
+#include <igl/marching_cubes.h>
 
 namespace Meso {
 
@@ -367,43 +368,73 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	void Marching_Cubes_CPU(TriangleMesh<d> &_mesh, const Field<T, d>& field, const real _contour_val = 0.) {
-		Typedef_VectorD(d); 
-		Typedef_VectorEi(d);
-		
-		const Grid<d>& grid = field.grid;
-		const VectorDi cell_counts = field.grid.counts - VectorDi::Ones();
-
-		Field<int, d> v_idx_on_edge[3]; for (int i = 0;i < 3;i++) v_idx_on_edge[i].Init(Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx), -1);
-
-		Array<VectorD>& vertices = _mesh.Vertices(); vertices.clear();
-		Array<VectorEi>& elements = _mesh.Elements(); elements.clear();
-
-		grid.Exec_Nodes([&](const VectorDi cell_index) {
-			if ((cell_index - cell_counts).maxCoeff() == 0) return;
-			unsigned int cell_type = Get_Cell_Type<T, d>(field, cell_index, _contour_val);
-			int edge_type = edge_table[cell_type];
-
-			// go through all edges of one cell, then add vertex
-			for (size_t ei = 0; ei < 12; ei++) {
-				if (Has_Edge(edge_type, ei) && (Index_On_Edge<d>(cell_index, ei, v_idx_on_edge) == -1)) {
-					VectorDi v1, v2; Get_Edge_Vertex_Index<d>(cell_index, ei, v1, v2);
-					T alpha = (_contour_val - field.Get(v1)) / (field.Get(v2) - field.Get(v1));
-					VectorD pos = (1 - alpha) * grid.Position(v1) + alpha * grid.Position(v2);
-					vertices.push_back(pos); Index_On_Edge<d>(cell_index, ei, v_idx_on_edge) = (int)vertices.size() - 1;
+	void Marching_Cubes_CPU(VertexMatrix<T, d>& vertices, ElementMatrix<3>& faces, const Field<T, d, HOST>& field, const real iso_value = 0.0) {
+		if constexpr (d == 3) {
+			int xres = field.grid.counts[0];
+			int yres = field.grid.counts[1];
+			int zres = field.grid.counts[2];
+			int num_points = field.grid.DoF();
+			Matrix<T, Dynamic, Dynamic> grid_values; grid_values.resize(num_points, 1);
+			Matrix<T, Dynamic, Dynamic> grid_points; grid_points.resize(num_points, 3); 
+			OMPFunc::Exec_Indices(
+				num_points,
+				[&](const int index) {
+					int xid = index % xres;
+					int yid = (index / xres) % yres;
+					int zid = index / xres / yres;
+					Vector3i coord(xid, yid, zid);
+					grid_values(index) = field(coord);
+					Vector<real, d> pos = field.grid.Position(coord);
+					for (int i = 0; i < d; i++) {
+						grid_points(index, i) = pos[i];
+					}
 				}
-
-			}
-			for (int ti = 0;triangle_table[cell_type][ti] != -1;ti += 3) {
-				VectorDi t;
-				t[0] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 0], v_idx_on_edge);
-				t[1] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 1], v_idx_on_edge);
-				t[2] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 2], v_idx_on_edge);
-				elements.push_back(t);
-			}
-			});
-
+			);
+			igl::marching_cubes(grid_values, grid_points, xres, yres, zres, iso_value, vertices, faces);
+		}
+		else {
+			Assert(false, "Marching_Cubes_CPU not implemented for d={}", d);
+		}
 	}
+
+	//template<class T, int d>
+	//void Marching_Cubes_CPU(TriangleMesh<d> &_mesh, const Field<T, d>& field, const real _contour_val = 0.) {
+	//	Typedef_VectorD(d); 
+	//	Typedef_VectorEi(d);
+	//	
+	//	const Grid<d>& grid = field.grid;
+	//	const VectorDi cell_counts = field.grid.counts - VectorDi::Ones();
+
+	//	Field<int, d> v_idx_on_edge[3]; for (int i = 0;i < 3;i++) v_idx_on_edge[i].Init(Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx), -1);
+
+	//	Array<VectorD>& vertices = _mesh.Vertices(); vertices.clear();
+	//	Array<VectorEi>& elements = _mesh.Elements(); elements.clear();
+
+	//	grid.Exec_Nodes([&](const VectorDi cell_index) {
+	//		if ((cell_index - cell_counts).maxCoeff() == 0) return;
+	//		unsigned int cell_type = Get_Cell_Type<T, d>(field, cell_index, _contour_val);
+	//		int edge_type = edge_table[cell_type];
+
+	//		// go through all edges of one cell, then add vertex
+	//		for (size_t ei = 0; ei < 12; ei++) {
+	//			if (Has_Edge(edge_type, ei) && (Index_On_Edge<d>(cell_index, ei, v_idx_on_edge) == -1)) {
+	//				VectorDi v1, v2; Get_Edge_Vertex_Index<d>(cell_index, ei, v1, v2);
+	//				T alpha = (_contour_val - field.Get(v1)) / (field.Get(v2) - field.Get(v1));
+	//				VectorD pos = (1 - alpha) * grid.Position(v1) + alpha * grid.Position(v2);
+	//				vertices.push_back(pos); Index_On_Edge<d>(cell_index, ei, v_idx_on_edge) = (int)vertices.size() - 1;
+	//			}
+
+	//		}
+	//		for (int ti = 0;triangle_table[cell_type][ti] != -1;ti += 3) {
+	//			VectorDi t;
+	//			t[0] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 0], v_idx_on_edge);
+	//			t[1] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 1], v_idx_on_edge);
+	//			t[2] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 2], v_idx_on_edge);
+	//			elements.push_back(t);
+	//		}
+	//		});
+
+	//}
 
 	template<class T, int d>
 	__device__ unsigned int Get_Cell_Type(const Grid<d> field_grid, const T* field_data, const Vector<int, d> cell_index, const real iso_value) {
@@ -585,15 +616,30 @@ namespace Meso {
 
 	template<class T, int d, DataHolder side = HOST>
 	void Marching_Cubes(
-		TriangleMesh<d>& _mesh,
+		TriangleMesh<d>& mesh,
 		const Field<T, d, side>& field,
-		const real _contour_val = 0.
+		const real iso_value = 0.
 	) {
 		if constexpr (side == HOST) {
-			Marching_Cubes_CPU(_mesh, field, _contour_val);
+			VertexMatrix<T, d> vertices;
+			ElementMatrix<3> faces;
+			Marching_Cubes_CPU<T, d>(vertices, faces, field, iso_value);
+			mesh.vertices.resize(vertices.rows());
+			mesh.elements.resize(faces.rows());
+			for (int i = 0; i < vertices.rows(); i++) {
+				for (int j = 0; j < d; j++) {
+					mesh.vertices[i][j] = vertices(i, j);
+				}
+			}
+			for (int i = 0; i < faces.rows(); i++) {
+				for (int j = 0; j < 3; j++) {
+					mesh.elements[i][j] = faces(i, j);
+				}
+			}
+			//Marching_Cubes_CPU(_mesh, field, _contour_val);
 		}
 		else {
-			Marching_Cubes_GPU(_mesh, field, _contour_val);
+			Marching_Cubes_GPU(mesh, field, iso_value);
 		}
 	}
 }
