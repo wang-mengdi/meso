@@ -153,8 +153,7 @@ namespace Meso {
 			velocity += temp_velocity_dev;
 			velocity_bc.Apply(velocity);
 
-			Exterior_Derivative(temp_field_dev, velocity);
-			Info("After projection max div {}", temp_field_dev.Max_Abs());
+			Info("After projection max velocity {}", velocity.Max_Abs());
 		}
 	};
 }
