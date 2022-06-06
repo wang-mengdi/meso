@@ -49,7 +49,6 @@ using VectorX=Eigen::VectorX##t;        \
 using Matrix2=Eigen::Matrix2##t;        \
 using Matrix3=Eigen::Matrix3##t;        \
 using Matrix4=Eigen::Matrix4##t;        \
-using MatrixX=Eigen::MatrixX##t;        \
 using C=std::complex<real>;             \
 using Quaternion=Eigen::Quaternion##t;  \
 using AngleAxis=Eigen::AngleAxis##t;	
@@ -86,7 +85,7 @@ const int Dynamic = -1;
 using uchar = unsigned char;
 using ushort = unsigned short;
 template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
-template<class T, int n, int m> using Matrix = Eigen::Matrix<T, n, m>;
+template<class T, int n, int m, Eigen::StorageOptions opt = Eigen::RowMajor> using Matrix = Eigen::Matrix<T, n, m, opt>;
 //template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
 
 #define Typedef_VectorD(d) \

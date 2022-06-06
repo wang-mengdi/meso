@@ -374,8 +374,8 @@ namespace Meso {
 			int yres = field.grid.counts[1];
 			int zres = field.grid.counts[2];
 			int num_points = field.grid.DoF();
-			Matrix<T, Dynamic, 1> grid_values; grid_values.resize(num_points, 1);
-			Matrix<T, Dynamic, 3> grid_points; grid_points.resize(num_points, 3); 
+			Matrix<T, Dynamic, Dynamic> grid_values; grid_values.resize(num_points, 1);
+			Matrix<T, Dynamic, Dynamic> grid_points; grid_points.resize(num_points, 3); 
 			OMPFunc::Exec_Indices(
 				num_points,
 				[&](const int index) {
