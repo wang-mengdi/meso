@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 // Marching Cubes Algorithm
-// Copyright (c) (2022-), Bo Zhu, Yunquan Gu
+// Copyright (c) (2022-), Bo Zhu, Yunquan Gu, Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
@@ -537,33 +537,9 @@ namespace Meso {
 		face_matrix = Eigen::Map<ElementMatrix<3>>(elements_host[0].data(), elements_host.size(), 3);
 	}
 
-	template<class T, int d, DataHolder side = HOST>
-	void Marching_Cubes(
-		TriangleMesh<d>& mesh,
-		const Field<T, d, side>& field,
-		const real iso_value = 0.
-	) {
-		VertexMatrix<T, d> vertices;
-		ElementMatrix<3> faces;
-		if constexpr (side == HOST) {
-			Marching_Cubes_CPU<T, d>(vertices, faces, field, iso_value);
-			//Marching_Cubes_CPU(_mesh, field, _contour_val);
-		}
-		else {
-			//Marching_Cubes_GPU(mesh, field, iso_value);
-			Marching_Cubes_GPU<T, d>(vertices, faces, field, iso_value);
-		}
-		mesh.vertices.resize(vertices.rows());
-		mesh.elements.resize(faces.rows());
-		for (int i = 0; i < vertices.rows(); i++) {
-			for (int j = 0; j < d; j++) {
-				mesh.vertices[i][j] = vertices(i, j);
-			}
-		}
-		for (int i = 0; i < faces.rows(); i++) {
-			for (int j = 0; j < 3; j++) {
-				mesh.elements[i][j] = faces(i, j);
-			}
-		}
+	template<class T, int d, DataHolder side>
+	void Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<3>& face_matrix, const Field<T, d, side>& field, const real iso_value = 0.) {
+		if constexpr (side == HOST) Marching_Cubes_CPU<T, d>(vertex_matrix, face_matrix, field, iso_value);
+		else Marching_Cubes_GPU<T, d>(vertex_matrix, face_matrix, field, iso_value);
 	}
 }
