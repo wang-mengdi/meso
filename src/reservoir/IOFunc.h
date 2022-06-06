@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 // Rendering functions
-// Copyright (c) (2022-), Mengdi Wang, Yitong Deng
+// Copyright (c) (2022-), Mengdi Wang, Yitong Deng, Yunquan Gu
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
@@ -19,6 +19,7 @@
 
 #include <tiny_obj_loader.h>
 #include <igl/writeOBJ.h>
+#include <igl/readOBJ.h>
 namespace Meso {
 
 	namespace VTKFunc {
@@ -137,49 +138,10 @@ namespace Meso {
 		// `mesh->indice->normal` represents the normal on vetices, which is used for rendering. 
 		// Therefore, we only load vertices and faces from .obj file, then compute normals on each faces.
 
-		// Using tinyobj 1.0.7 
-		// ONLY support traiangle mesh now
 
-		//template<class T>
-		//void Read_Meshes(const std::string& file_name, Array<std::shared_ptr<T>>& meshes) {
-
-		//	tinyobj::attrib_t attrib;
-		//	std::vector<tinyobj::shape_t> shapes; std::vector<tinyobj::material_t> materials;
-		//	std::string warn;std::string err;
-		//	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file_name.c_str());
-		//	if (!warn.empty()) std::cout << warn << std::endl;
-		//	if (!err.empty()) std::cerr << err << std::endl;
-		//	if (!ret) exit(1);
-
-		//	meshes.resize(shapes.size());
-		//	size_t v_begin = 0; size_t v_end = 0;
-
-		//	for (size_t s = 0; s < shapes.size(); s++) {
-		//		meshes[s] = std::make_shared<T>();
-
-		//		const tinyobj::mesh_t& mesh = shapes[s].mesh;
-		//		// three vertices form a triagnle face 
-		//		for (size_t i = 0; i < mesh.indices.size() / 3; i++) {
-		//			meshes[s]->elements.push_back(Vector3i(
-		//				mesh.indices[i * 3 + 0].vertex_index - v_begin,
-		//				mesh.indices[i * 3 + 1].vertex_index - v_begin,
-		//				mesh.indices[i * 3 + 2].vertex_index - v_begin));
-
-		//			v_end = std::max({ v_end, v_begin + (size_t)meshes[s]->elements.back().maxCoeff() });
-		//		}
-		//		for (size_t i = v_begin; i <= v_end; i++) {
-		//			(*meshes[s]->vertices).push_back(Vector3(attrib.vertices[i * 3 + 0], attrib.vertices[i * 3 + 1], attrib.vertices[i * 3 + 2]));
-		//		}
-		//		v_begin = v_end + 1;
-		//	}
-		//}
-
-		//template<class T>
-		//void Read_Mesh(const std::string& file_name, std::shared_ptr<T>& mesh) {
-		//	Array<std::shared_ptr<T>> meshes;
-		//	Read_Meshes<T>(file_name, meshes);
-		//	Assert(meshes.size() == 1, "Wrong mesh number {} in {}, which should be 1", meshes.size(), file_name);
-		//	mesh = meshes[0];
+		//template<class T, int d, int ed>
+		//bool Read_Obj(const std::string& filename, const VertexMatrix<T, d>& vertex_matrix, const ElementMatrix<ed>& element_matrix) {
+		//	igl::readOBJ(filename, vertex_matrix, element_matrix);
 		//}
 
 

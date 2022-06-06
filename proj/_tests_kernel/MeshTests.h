@@ -10,25 +10,6 @@
 #include <igl/readOBJ.h>
 #include <Eigen/src/Core/Matrix.h>
 namespace Meso {
-	//template<class MeshType>
-	//void Test_Mesh_Loader_Multiple() {
-	//	Array < std::shared_ptr<MeshType>> meshes;
-	//	OBJFunc::Read_Meshes<MeshType>("../../../../../proj/_tests_reservoir/assets/CornellBox-Sphere.obj", meshes);
-	//	OBJFunc::Write_Meshes<MeshType>("./copy-mesh.obj", meshes);
-
-	//	Array < std::shared_ptr<MeshType>> copy_meshes;
-	//	OBJFunc::Read_Meshes<MeshType>("./copy-mesh.obj", copy_meshes);
-	//	Assert(meshes.size() == copy_meshes.size(), "Test_Mesh_Loader Failed: Reload mesh size doesn't match.");
-	//	for (size_t i = 0; i < meshes.size(); i++){
-	//		auto& mesh = meshes[i];
-	//		auto& c_mesh = copy_meshes[i];
-	//		Assert(mesh->Elements().size() == c_mesh->Elements().size(), "Test_Mesh_Loader Failed: faces size doesn't match.", i);
-	//		Assert(mesh->Vertices().size() == c_mesh->Vertices().size(), "Test_Mesh_Loader Failed: vertice size doesn't match.", i);
-	//		for (size_t j = 0; j < mesh->Elements().size(); j++) Assert(mesh->elements[j] == c_mesh->elements[j], "Test_Mesh_Loader Failed: faces value doesn't match.");
-	//		for (size_t j = 0; j < mesh->Vertices().size(); j++) Assert(mesh->Vertices()[j] == c_mesh->Vertices()[j], "Test_Mesh_Loader Failed: vertex value doesn't match.");
-	//	}
-	//	Pass("Test_Mesh_Loader[Multiple] Passed!");
-	//}
 
 	template<class T, int d, int ed>
 	void Test_Mesh_Loader_Single() {
