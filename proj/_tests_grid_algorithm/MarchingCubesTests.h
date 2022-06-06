@@ -42,7 +42,7 @@ namespace Meso {
 		}
 
 		OBJFunc::Write_Mesh("./marching_cubes.obj", m);
-		Pass("Test_Marching_Cubes Passed!");
+		Pass("Test_Marching_Cubes[CPU] Passed with {} vertices and {} elements", m.vertices.size(), m.elements.size());
 
 		return;
 	}
@@ -79,7 +79,7 @@ namespace Meso {
 		}
 		OBJFunc::Write_Mesh("./marching_cubes_GPU.obj", m);
 
-		Pass("Test_Marching_Cubes[GPU] Passed!");
+		Pass("Test_Marching_Cubes[GPU] Passed with {} vertices and {} elements", m.vertices.size(), m.elements.size());
 
 		return;
 	}

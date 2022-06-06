@@ -529,12 +529,12 @@ namespace Meso {
 			ArrayFunc::Data<VectorEi, DEVICE>(elements)
 		);
 
+		//copy here
 		Array<Vector<T, d>> vertices_host = vertices;
 		Array<VectorEi> elements_host = elements;
+		//copy here
 		vertex_matrix = Eigen::Map<VertexMatrix<T, d>>(vertices_host[0].data(), vertices_host.size(), d);
 		face_matrix = Eigen::Map<ElementMatrix<3>>(elements_host[0].data(), elements_host.size(), 3);
-		//_mesh.vertices = vertices;
-		//_mesh.elements = elements;
 	}
 
 	template<class T, int d, DataHolder side = HOST>
