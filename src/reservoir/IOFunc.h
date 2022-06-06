@@ -182,46 +182,35 @@ namespace Meso {
 		//	mesh = meshes[0];
 		//}
 
-		//bool Write_Obj(const std::string& filename, const tinyobj::attrib_t& attributes, const std::vector<tinyobj::shape_t>& shapes, const std::vector<tinyobj::material_t>& materials);
-		template<class T, int d, int ed>
-		bool Write_Obj(const std::string& filename, const VertexMatrix<T, d>& vertex_matrix, const ElementMatrix<ed>& element_matrix) {
-			return igl::writeOBJ<VertexMatrix<T, d>, ElementMatrix<ed>>(filename, vertex_matrix, element_matrix);
+
+
+		template<class T>
+		bool Write_SegmentMesh(const std::string& filename, const VertexMatrix<T, 2>& vertex_matrix, const ElementMatrix<2>& element_matrix) {
+			FILE* fp = fopen(filename.c_str(), "w");
+			Assert(fp != nullptr, "Failed to open file [ {} ] for write.\n", filename);
+
+			for (size_t i = 0; i < vertex_matrix.rows(); i++)
+				fprintf(fp, "v %f %f\n", vertex_matrix.row(i)[0], vertex_matrix.row(i)[1]);
+
+			fprintf(fp, "\n");
+			for (size_t i = 0; i < element_matrix.rows(); i++)
+				fprintf(fp, "l %d %d\n", element_matrix.row(i)[0] + 1, element_matrix.row(i)[1] + 1);
+
+			fclose(fp);
+			return true;
 		}
 
-		//template<class T>
-		//bool Write_Meshes(const std::string& filename, const Array<std::shared_ptr<T>>& meshes) {
-		//	tinyobj::attrib_t attribute;
-		//	std::vector<tinyobj::shape_t> shapes(meshes.size());
-
-		//	for (size_t m = 0; m < meshes.size(); m++) {
-		//		auto& mesh = meshes[m];
-		//		int offset = attribute.vertices.size();
-
-		//		for (auto& vertex : mesh->Vertices()) {
-		//			attribute.vertices.push_back(vertex[0]);
-		//			attribute.vertices.push_back(vertex[1]);
-		//			attribute.vertices.push_back(vertex[2]);
-		//		}
-
-		//		shapes[m] = tinyobj::shape_t();
-		//		for (size_t f = 0; f < mesh->Elements().size(); f++) {
-		//			shapes[m].mesh.num_face_vertices.push_back(3);
-		//			shapes[m].mesh.indices.push_back({ mesh->Elements()[f][0] + offset / 3, -1, -1 });
-		//			shapes[m].mesh.indices.push_back({ mesh->Elements()[f][1] + offset / 3, -1, -1 });
-		//			shapes[m].mesh.indices.push_back({ mesh->Elements()[f][2] + offset / 3, -1, -1 });
-		//		}
-		//	}
-
-		//	return Write_Obj(filename, attribute, shapes, std::vector<tinyobj::material_t>());
-		//}
-
-		//template<class MeshType>
-		//bool Write_Mesh(const std::string& filename, const MeshType& mesh) {
-		//	Array<std::shared_ptr<MeshType>> meshes;
-		//	meshes.push_back(std::make_shared<MeshType>(mesh));
-		//	return Write_Meshes<MeshType>(filename, meshes);
-		//}
-
+		template<class T, int d, int ed>
+		bool Write_Obj(const std::string& filename, const VertexMatrix<T, d>& vertex_matrix, const ElementMatrix<ed>& element_matrix) {
+			if constexpr (d == 2) {
+				Assert(ed == 2, "Vertex have dim={}, but element has dim={}", d, ed);
+				return Write_SegmentMesh<T>(filename, vertex_matrix, element_matrix);
+			}
+			else if constexpr (d == 3) {
+				Assert(ed > 2, "Vertex have dim={}, but element has dim={}", d, ed);
+				return igl::writeOBJ<VertexMatrix<T, d>, ElementMatrix<ed>>(filename, vertex_matrix, element_matrix);
+			}
+		}
 	}
 
 
