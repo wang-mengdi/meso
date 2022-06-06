@@ -304,25 +304,11 @@ namespace Meso {
 	{0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1} };
 
-	template<class T, int d>
-	__host__ unsigned int Get_Cell_Type(const Field<T, d>& field, const Vector<int, d> cell_index, const real iso_value) {
-		Typedef_VectorD(d);
-		unsigned int cell_type = 0;
-		if (field.Get(cell_index + VectorDi(0, 0, 0)) < iso_value) cell_type |= 1;
-		if (field.Get(cell_index + VectorDi(1, 0, 0)) < iso_value) cell_type |= 2;
-		if (field.Get(cell_index + VectorDi(1, 0, 1)) < iso_value) cell_type |= 4;
-		if (field.Get(cell_index + VectorDi(0, 0, 1)) < iso_value) cell_type |= 8;
-		if (field.Get(cell_index + VectorDi(0, 1, 0)) < iso_value) cell_type |= 16;
-		if (field.Get(cell_index + VectorDi(1, 1, 0)) < iso_value) cell_type |= 32;
-		if (field.Get(cell_index + VectorDi(1, 1, 1)) < iso_value) cell_type |= 64;
-		if (field.Get(cell_index + VectorDi(0, 1, 1)) < iso_value) cell_type |= 128;
-		return cell_type;
-	}
 
-	__host__ __device__ bool Has_Edge(const int edge_type, const int edge_index) { return (edge_type & (1 << edge_index)) == 0 ? false : true; }
+	__device__ bool Has_Edge(const int edge_type, const int edge_index) { return (edge_type & (1 << edge_index)) == 0 ? false : true; }
 
 	template<int d>
-	__host__ __device__ void Get_Edge_Vertex_Index(const Vector<int, d>& cell_index, int edge_index, Vector<int, d>& v1, Vector<int, d>& v2)
+	__device__ void Get_Edge_Vertex_Index(const Vector<int, d> cell_index, int edge_index, Vector<int, d> v1, Vector<int, d> v2)
 	{
 		Typedef_VectorD(d);
 		switch (edge_index) {
@@ -339,31 +325,6 @@ namespace Meso {
 		case 10:v1 = VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1);v2 = VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2] + 1);break;
 		case 11:v1 = VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1);v2 = VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1);break;
 		default: break;
-		}
-	}
-
-	template<int d>
-	__host__ int& Index_On_Edge(const Vector<int, d>& cell_index, const int edge_index, Field<int, d>* v_idx_on_edge)
-	{
-		Typedef_VectorD(d);
-		switch (edge_index) {
-			////axis-x edges
-		case 0:return v_idx_on_edge[0](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
-		case 2:return v_idx_on_edge[0](VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1));
-		case 4:return v_idx_on_edge[0](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]));
-		case 6:return v_idx_on_edge[0](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2] + 1));
-			////axis-y edges
-		case 8:return v_idx_on_edge[1](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
-		case 9:return v_idx_on_edge[1](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]));
-		case 11:return v_idx_on_edge[1](VectorDi(cell_index[0], cell_index[1], cell_index[2] + 1));
-		case 10:return v_idx_on_edge[1](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2] + 1));
-			////axis-z edges
-		case 3:return v_idx_on_edge[2](VectorDi(cell_index[0], cell_index[1], cell_index[2]));
-		case 1:return v_idx_on_edge[2](VectorDi(cell_index[0] + 1, cell_index[1], cell_index[2]));
-		case 7:return v_idx_on_edge[2](VectorDi(cell_index[0], cell_index[1] + 1, cell_index[2]));
-		case 5:return v_idx_on_edge[2](VectorDi(cell_index[0] + 1, cell_index[1] + 1, cell_index[2]));
-		default: break;
-
 		}
 	}
 
@@ -396,45 +357,6 @@ namespace Meso {
 			Assert(false, "Marching_Cubes_CPU not implemented for d={}", d);
 		}
 	}
-
-	//template<class T, int d>
-	//void Marching_Cubes_CPU(TriangleMesh<d> &_mesh, const Field<T, d>& field, const real _contour_val = 0.) {
-	//	Typedef_VectorD(d); 
-	//	Typedef_VectorEi(d);
-	//	
-	//	const Grid<d>& grid = field.grid;
-	//	const VectorDi cell_counts = field.grid.counts - VectorDi::Ones();
-
-	//	Field<int, d> v_idx_on_edge[3]; for (int i = 0;i < 3;i++) v_idx_on_edge[i].Init(Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx), -1);
-
-	//	Array<VectorD>& vertices = _mesh.Vertices(); vertices.clear();
-	//	Array<VectorEi>& elements = _mesh.Elements(); elements.clear();
-
-	//	grid.Exec_Nodes([&](const VectorDi cell_index) {
-	//		if ((cell_index - cell_counts).maxCoeff() == 0) return;
-	//		unsigned int cell_type = Get_Cell_Type<T, d>(field, cell_index, _contour_val);
-	//		int edge_type = edge_table[cell_type];
-
-	//		// go through all edges of one cell, then add vertex
-	//		for (size_t ei = 0; ei < 12; ei++) {
-	//			if (Has_Edge(edge_type, ei) && (Index_On_Edge<d>(cell_index, ei, v_idx_on_edge) == -1)) {
-	//				VectorDi v1, v2; Get_Edge_Vertex_Index<d>(cell_index, ei, v1, v2);
-	//				T alpha = (_contour_val - field.Get(v1)) / (field.Get(v2) - field.Get(v1));
-	//				VectorD pos = (1 - alpha) * grid.Position(v1) + alpha * grid.Position(v2);
-	//				vertices.push_back(pos); Index_On_Edge<d>(cell_index, ei, v_idx_on_edge) = (int)vertices.size() - 1;
-	//			}
-
-	//		}
-	//		for (int ti = 0;triangle_table[cell_type][ti] != -1;ti += 3) {
-	//			VectorDi t;
-	//			t[0] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 0], v_idx_on_edge);
-	//			t[1] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 1], v_idx_on_edge);
-	//			t[2] = Index_On_Edge<d>(cell_index, triangle_table[cell_type][ti + 2], v_idx_on_edge);
-	//			elements.push_back(t);
-	//		}
-	//		});
-
-	//}
 
 	template<class T, int d>
 	__device__ unsigned int Get_Cell_Type(const Grid<d> field_grid, const T* field_data, const Vector<int, d> cell_index, const real iso_value) {
@@ -512,7 +434,7 @@ namespace Meso {
 		const real _contour_val,
 		const Grid<d> edge_grid,
 		int axis,
-		int* v_idx_on_edge, Vector<real, d>* vertices)
+		int* v_idx_on_edge, Vector<T, d>* vertices)
 	{
 		Typedef_VectorD(d); Vector<int, d> cell_index = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		int index = v_idx_on_edge[edge_grid.Index(cell_index)];
@@ -520,7 +442,7 @@ namespace Meso {
 			VectorDi v1 = cell_index; VectorDi v2 = v1 + VectorDi::Unit(axis);
 			T alpha = (_contour_val - field_data[field_grid.Index(v1)]) / (field_data[field_grid.Index(v2)] - field_data[field_grid.Index(v1)]);
 			VectorD pos = (1 - alpha) * field_grid.Position(v1) + alpha * field_grid.Position(v2);
-			vertices[index] = pos;
+			vertices[index] = pos.template cast<T>();
 		}
 	}
 	
@@ -549,12 +471,9 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	void Marching_Cubes_GPU(
-		TriangleMesh<d>& _mesh,
-		const Field<T, d, DEVICE>& field,
-		const real _contour_val = 0.
-	) {
-		Typedef_VectorD(d); Typedef_VectorEi(d);
+	void Marching_Cubes_GPU(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<3>& face_matrix, const Field<T, d, DEVICE>& field, const real iso_value = 0.) {
+		Typedef_VectorD(d);
+		Typedef_VectorEi(d);
 
 		// 0. Init
 		const Grid<d>& grid = field.grid;
@@ -562,21 +481,21 @@ namespace Meso {
 
 		ArrayDv<int> mesh_count(grid.DoF() + 1, 0);
 
-		Array<Grid<d>> edge_grid(3); for (int i = 0;i < 3;i++) edge_grid[i] = Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx);
+		Array<Grid<d>> edge_grid(3); for (int i = 0; i < 3; i++) edge_grid[i] = Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx);
 		ArrayDv<Grid<d>> edge_grid_dv = edge_grid;
 
 		FieldDv<int, d> v_idx_on_edge[3]; Field<int, d> v_idx_on_edge_host[3];
-		for (int i = 0;i < 3;i++) v_idx_on_edge[i].Init(edge_grid[i], -1);
+		for (int i = 0; i < 3; i++) v_idx_on_edge[i].Init(edge_grid[i], -1);
 
 		// 1. Reserve memory for mesh
 		grid.Exec_Kernel(
 			&Mesh_Count<T, d>,
-			cell_counts, grid, field.Data_Ptr(), _contour_val, ArrayFunc::Data<Grid<d>, DEVICE>(edge_grid_dv), // const data
+			cell_counts, grid, field.Data_Ptr(), iso_value, ArrayFunc::Data<Grid<d>, DEVICE>(edge_grid_dv), // const data
 			ArrayFunc::Data<int, DEVICE>(mesh_count), v_idx_on_edge[0].Data_Ptr(), v_idx_on_edge[1].Data_Ptr(), v_idx_on_edge[2].Data_Ptr()
 		);
 
 		// 2. Generate vertices
-		size_t total = 0; 
+		size_t total = 0;
 #pragma omp parallel for
 		for (size_t i = 0; i < d; i++) {
 			size_t count = thrust::count(v_idx_on_edge[i].data->begin(), v_idx_on_edge[i].data->end(), 1);
@@ -586,13 +505,13 @@ namespace Meso {
 			thrust::copy_n(thrust::make_counting_iterator(total), count, thrust::make_permutation_iterator(v_idx_on_edge[i].data->begin(), p_iter.begin()));
 			total += count;
 		}
-		
-		Array<VectorD, DEVICE> vertices(total);
+
+		Array<Vector<T, d>, DEVICE> vertices(total);
 #pragma omp parallel for
 		for (size_t i = 0; i < d; i++) edge_grid[i].Exec_Kernel(
 			&Gen_Vertice<T, d>,
-			cell_counts, grid, field.Data_Ptr(), _contour_val, edge_grid_dv[i], i, // const data
-			v_idx_on_edge[i].Data_Ptr(), ArrayFunc::Data<VectorD, DEVICE>(vertices)
+			cell_counts, grid, field.Data_Ptr(), iso_value, edge_grid_dv[i], i, // const data
+			v_idx_on_edge[i].Data_Ptr(), ArrayFunc::Data<Vector<T, d>, DEVICE>(vertices)
 		);
 
 		// 3. Generate Meshes
@@ -603,15 +522,19 @@ namespace Meso {
 		grid.Exec_Kernel(
 			&Generate_Mesh_Kernel<T, d>,
 			cell_counts,
-			grid, field.Data_Ptr(), _contour_val,
+			grid, field.Data_Ptr(), iso_value,
 			ArrayFunc::Data<int, DEVICE>(mesh_count),
 			ArrayFunc::Data<Grid<d>, DEVICE>(edge_grid_dv),
 			v_idx_on_edge[0].Data_Ptr(), v_idx_on_edge[1].Data_Ptr(), v_idx_on_edge[2].Data_Ptr(),
 			ArrayFunc::Data<VectorEi, DEVICE>(elements)
 		);
 
-		_mesh.vertices = vertices;
-		_mesh.elements = elements;
+		Array<Vector<T, d>> vertices_host = vertices;
+		Array<VectorEi> elements_host = elements;
+		vertex_matrix = Eigen::Map<VertexMatrix<T, d>>(vertices_host[0].data(), vertices_host.size(), d);
+		face_matrix = Eigen::Map<ElementMatrix<3>>(elements_host[0].data(), elements_host.size(), 3);
+		//_mesh.vertices = vertices;
+		//_mesh.elements = elements;
 	}
 
 	template<class T, int d, DataHolder side = HOST>
@@ -620,26 +543,27 @@ namespace Meso {
 		const Field<T, d, side>& field,
 		const real iso_value = 0.
 	) {
+		VertexMatrix<T, d> vertices;
+		ElementMatrix<3> faces;
 		if constexpr (side == HOST) {
-			VertexMatrix<T, d> vertices;
-			ElementMatrix<3> faces;
 			Marching_Cubes_CPU<T, d>(vertices, faces, field, iso_value);
-			mesh.vertices.resize(vertices.rows());
-			mesh.elements.resize(faces.rows());
-			for (int i = 0; i < vertices.rows(); i++) {
-				for (int j = 0; j < d; j++) {
-					mesh.vertices[i][j] = vertices(i, j);
-				}
-			}
-			for (int i = 0; i < faces.rows(); i++) {
-				for (int j = 0; j < 3; j++) {
-					mesh.elements[i][j] = faces(i, j);
-				}
-			}
 			//Marching_Cubes_CPU(_mesh, field, _contour_val);
 		}
 		else {
-			Marching_Cubes_GPU(mesh, field, iso_value);
+			//Marching_Cubes_GPU(mesh, field, iso_value);
+			Marching_Cubes_GPU<T, d>(vertices, faces, field, iso_value);
+		}
+		mesh.vertices.resize(vertices.rows());
+		mesh.elements.resize(faces.rows());
+		for (int i = 0; i < vertices.rows(); i++) {
+			for (int j = 0; j < d; j++) {
+				mesh.vertices[i][j] = vertices(i, j);
+			}
+		}
+		for (int i = 0; i < faces.rows(); i++) {
+			for (int j = 0; j < 3; j++) {
+				mesh.elements[i][j] = faces(i, j);
+			}
 		}
 	}
 }
