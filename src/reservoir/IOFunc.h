@@ -18,7 +18,7 @@
 #include <vtkDoubleArray.h>
 
 #include <tiny_obj_loader.h>
-
+#include <igl/writeOBJ.h>
 namespace Meso {
 
 	namespace VTKFunc {
@@ -140,83 +140,91 @@ namespace Meso {
 		// Using tinyobj 1.0.7 
 		// ONLY support traiangle mesh now
 
-		template<class T>
-		void Read_Meshes(const std::string& file_name, Array<std::shared_ptr<T>>& meshes) {
+		//template<class T>
+		//void Read_Meshes(const std::string& file_name, Array<std::shared_ptr<T>>& meshes) {
 
-			tinyobj::attrib_t attrib;
-			std::vector<tinyobj::shape_t> shapes; std::vector<tinyobj::material_t> materials;
-			std::string warn;std::string err;
-			bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file_name.c_str());
-			if (!warn.empty()) std::cout << warn << std::endl;
-			if (!err.empty()) std::cerr << err << std::endl;
-			if (!ret) exit(1);
+		//	tinyobj::attrib_t attrib;
+		//	std::vector<tinyobj::shape_t> shapes; std::vector<tinyobj::material_t> materials;
+		//	std::string warn;std::string err;
+		//	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file_name.c_str());
+		//	if (!warn.empty()) std::cout << warn << std::endl;
+		//	if (!err.empty()) std::cerr << err << std::endl;
+		//	if (!ret) exit(1);
 
-			meshes.resize(shapes.size());
-			size_t v_begin = 0; size_t v_end = 0;
+		//	meshes.resize(shapes.size());
+		//	size_t v_begin = 0; size_t v_end = 0;
 
-			for (size_t s = 0; s < shapes.size(); s++) {
-				meshes[s] = std::make_shared<T>();
+		//	for (size_t s = 0; s < shapes.size(); s++) {
+		//		meshes[s] = std::make_shared<T>();
 
-				const tinyobj::mesh_t& mesh = shapes[s].mesh;
-				// three vertices form a triagnle face 
-				for (size_t i = 0; i < mesh.indices.size() / 3; i++) {
-					meshes[s]->elements.push_back(Vector3i(
-						mesh.indices[i * 3 + 0].vertex_index - v_begin,
-						mesh.indices[i * 3 + 1].vertex_index - v_begin,
-						mesh.indices[i * 3 + 2].vertex_index - v_begin));
+		//		const tinyobj::mesh_t& mesh = shapes[s].mesh;
+		//		// three vertices form a triagnle face 
+		//		for (size_t i = 0; i < mesh.indices.size() / 3; i++) {
+		//			meshes[s]->elements.push_back(Vector3i(
+		//				mesh.indices[i * 3 + 0].vertex_index - v_begin,
+		//				mesh.indices[i * 3 + 1].vertex_index - v_begin,
+		//				mesh.indices[i * 3 + 2].vertex_index - v_begin));
 
-					v_end = std::max({ v_end, v_begin + (size_t)meshes[s]->elements.back().maxCoeff() });
-				}
-				for (size_t i = v_begin; i <= v_end; i++) {
-					(*meshes[s]->vertices).push_back(Vector3(attrib.vertices[i * 3 + 0], attrib.vertices[i * 3 + 1], attrib.vertices[i * 3 + 2]));
-				}
-				v_begin = v_end + 1;
-			}
+		//			v_end = std::max({ v_end, v_begin + (size_t)meshes[s]->elements.back().maxCoeff() });
+		//		}
+		//		for (size_t i = v_begin; i <= v_end; i++) {
+		//			(*meshes[s]->vertices).push_back(Vector3(attrib.vertices[i * 3 + 0], attrib.vertices[i * 3 + 1], attrib.vertices[i * 3 + 2]));
+		//		}
+		//		v_begin = v_end + 1;
+		//	}
+		//}
+
+		//template<class T>
+		//void Read_Mesh(const std::string& file_name, std::shared_ptr<T>& mesh) {
+		//	Array<std::shared_ptr<T>> meshes;
+		//	Read_Meshes<T>(file_name, meshes);
+		//	Assert(meshes.size() == 1, "Wrong mesh number {} in {}, which should be 1", meshes.size(), file_name);
+		//	mesh = meshes[0];
+		//}
+
+		//bool Write_Obj(const std::string& filename, const tinyobj::attrib_t& attributes, const std::vector<tinyobj::shape_t>& shapes, const std::vector<tinyobj::material_t>& materials);
+		template<class T, int d, int ed>
+		bool Write_Obj(
+			const std::string& filename,
+			const VertexMatrix<T, d>& V,
+			const ElementMatrix<ed>& F
+		) {
+			return igl::writeOBJ<VertexMatrix<T, d>, ElementMatrix<ed>>(filename, V, F);
 		}
 
-		template<class T>
-		void Read_Mesh(const std::string& file_name, std::shared_ptr<T>& mesh) {
-			Array<std::shared_ptr<T>> meshes;
-			Read_Meshes<T>(file_name, meshes);
-			Assert(meshes.size() == 1, "Wrong mesh number {} in {}, which should be 1", meshes.size(), file_name);
-			mesh = meshes[0];
-		}
+		//template<class T>
+		//bool Write_Meshes(const std::string& filename, const Array<std::shared_ptr<T>>& meshes) {
+		//	tinyobj::attrib_t attribute;
+		//	std::vector<tinyobj::shape_t> shapes(meshes.size());
 
-		bool Write_Obj(const std::string& filename, const tinyobj::attrib_t& attributes, const std::vector<tinyobj::shape_t>& shapes, const std::vector<tinyobj::material_t>& materials);
+		//	for (size_t m = 0; m < meshes.size(); m++) {
+		//		auto& mesh = meshes[m];
+		//		int offset = attribute.vertices.size();
 
-		template<class T>
-		bool Write_Meshes(const std::string& filename, const Array<std::shared_ptr<T>>& meshes) {
-			tinyobj::attrib_t attribute;
-			std::vector<tinyobj::shape_t> shapes(meshes.size());
+		//		for (auto& vertex : mesh->Vertices()) {
+		//			attribute.vertices.push_back(vertex[0]);
+		//			attribute.vertices.push_back(vertex[1]);
+		//			attribute.vertices.push_back(vertex[2]);
+		//		}
 
-			for (size_t m = 0; m < meshes.size(); m++) {
-				auto& mesh = meshes[m];
-				int offset = attribute.vertices.size();
+		//		shapes[m] = tinyobj::shape_t();
+		//		for (size_t f = 0; f < mesh->Elements().size(); f++) {
+		//			shapes[m].mesh.num_face_vertices.push_back(3);
+		//			shapes[m].mesh.indices.push_back({ mesh->Elements()[f][0] + offset / 3, -1, -1 });
+		//			shapes[m].mesh.indices.push_back({ mesh->Elements()[f][1] + offset / 3, -1, -1 });
+		//			shapes[m].mesh.indices.push_back({ mesh->Elements()[f][2] + offset / 3, -1, -1 });
+		//		}
+		//	}
 
-				for (auto& vertex : mesh->Vertices()) {
-					attribute.vertices.push_back(vertex[0]);
-					attribute.vertices.push_back(vertex[1]);
-					attribute.vertices.push_back(vertex[2]);
-				}
+		//	return Write_Obj(filename, attribute, shapes, std::vector<tinyobj::material_t>());
+		//}
 
-				shapes[m] = tinyobj::shape_t();
-				for (size_t f = 0; f < mesh->Elements().size(); f++) {
-					shapes[m].mesh.num_face_vertices.push_back(3);
-					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][0] + offset / 3, -1, -1 });
-					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][1] + offset / 3, -1, -1 });
-					shapes[m].mesh.indices.push_back({ mesh->Elements()[f][2] + offset / 3, -1, -1 });
-				}
-			}
-
-			return Write_Obj(filename, attribute, shapes, std::vector<tinyobj::material_t>());
-		}
-
-		template<class MeshType>
-		bool Write_Mesh(const std::string& filename, const MeshType& mesh) {
-			Array<std::shared_ptr<MeshType>> meshes;
-			meshes.push_back(std::make_shared<MeshType>(mesh));
-			return Write_Meshes<MeshType>(filename, meshes);
-		}
+		//template<class MeshType>
+		//bool Write_Mesh(const std::string& filename, const MeshType& mesh) {
+		//	Array<std::shared_ptr<MeshType>> meshes;
+		//	meshes.push_back(std::make_shared<MeshType>(mesh));
+		//	return Write_Meshes<MeshType>(filename, meshes);
+		//}
 
 	}
 

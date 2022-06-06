@@ -27,7 +27,11 @@ namespace Meso {
             for (int i = 0; i < n; i++) x[i] = Uniform(a, b);
             return x;
         }
-
+        VectorXi Random_VectorXi(int n, int a, int b) {
+            VectorXi x(n);
+            for (int i = 0; i < n; i++) x[i] = RandInt(a, b);
+            return x;
+        }
         real Random_Sign(void) {
             return Random() < (real)0.5 ? (real) - 1 : (real) 1;
         }

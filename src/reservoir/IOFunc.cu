@@ -8,8 +8,8 @@
 
 namespace Meso {
 	namespace OBJFunc {
-		bool Write_Obj(const std::string& filename, const tinyobj::attrib_t& attributes, const std::vector<tinyobj::shape_t>& shapes, const std::vector<tinyobj::material_t>& materials) {
-			FILE* fp = fopen(filename.c_str(), "w");
+		//bool Write_Obj(const std::string& filename, const tinyobj::attrib_t& attributes, const std::vector<tinyobj::shape_t>& shapes, const std::vector<tinyobj::material_t>& materials) {
+			/*FILE* fp = fopen(filename.c_str(), "w");
 			if (!fp) {
 				fprintf(stderr, "Failed to open file [ %s ] for write.\n", filename.c_str());
 				return false;
@@ -38,6 +38,6 @@ namespace Meso {
 
 			fclose(fp);
 			return true;
-		}
+		}*/
 	}
 }
