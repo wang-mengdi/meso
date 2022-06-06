@@ -120,7 +120,7 @@ namespace Meso {
 			temp_phi_dev = levelset.phi;
 			SemiLagrangian<IntpLinearClamp>::Advect(dt, temp_field_dev, temp_phi_dev, velocity);
 			levelset.phi = temp_field_dev;
-			levelset.Fast_Marching(-1);//will calculate whole field
+			//levelset.Fast_Marching(-1);//will calculate whole field
 
 			//Advection of velocity
 			SemiLagrangian<IntpLinearPadding0>::Advect(dt, temp_velocity_dev, velocity, velocity);
@@ -141,6 +141,7 @@ namespace Meso {
 			MG_precond.Update_Poisson(poisson, 2, 2);
 			temp_field_dev = div_host;
 
+			pressure_dev.Init(temp_field_dev.grid);
 			int iter; real res;
 			MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data(), iter, res);
 			Info("Solve poisson with {} iters and residual {}", iter, res);

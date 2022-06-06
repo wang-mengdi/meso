@@ -37,9 +37,11 @@ namespace Meso {
 		void Fill(const T value) { ArrayFunc::Fill(Data(), value); }
 		bool Empty(void)const { return data == nullptr; }
 		constexpr Array<T, side>& Data(void) noexcept {
+			Assert(data != nullptr, "[Error]Field::Data: Field is uninitialized");
 			return *data;
 		}
 		constexpr const Array<T, side>& Data(void)const noexcept {
+			Assert(data != nullptr, "[Error]Field::Data: Field is uninitialized");
 			return *data;
 		}
 		constexpr T* Data_Ptr(void) noexcept {
