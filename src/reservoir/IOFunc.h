@@ -145,28 +145,22 @@ namespace Meso {
 		//}
 
 
-
-		template<class T>
-		bool Write_SegmentMesh(const std::string& filename, const VertexMatrix<T, 2>& vertex_matrix, const ElementMatrix<2>& element_matrix) {
-			FILE* fp = fopen(filename.c_str(), "w");
-			Assert(fp != nullptr, "Failed to open file [ {} ] for write.\n", filename);
-
-			for (size_t i = 0; i < vertex_matrix.rows(); i++)
-				fprintf(fp, "v %f %f\n", vertex_matrix.row(i)[0], vertex_matrix.row(i)[1]);
-
-			fprintf(fp, "\n");
-			for (size_t i = 0; i < element_matrix.rows(); i++)
-				fprintf(fp, "l %d %d\n", element_matrix.row(i)[0] + 1, element_matrix.row(i)[1] + 1);
-
-			fclose(fp);
-			return true;
-		}
-
 		template<class T, int d, int ed>
-		bool Write_Obj(const std::string& filename, const VertexMatrix<T, d>& vertex_matrix, const ElementMatrix<ed>& element_matrix) {
+		bool Write_OBJ(const std::string& filename, const VertexMatrix<T, d>& vertex_matrix, const ElementMatrix<ed>& element_matrix) {
 			if constexpr (d == 2) {
 				Assert(ed == 2, "Vertex have dim={}, but element has dim={}", d, ed);
-				return Write_SegmentMesh<T>(filename, vertex_matrix, element_matrix);
+				FILE* fp = fopen(filename.c_str(), "w");
+				Assert(fp != nullptr, "Failed to open file [ {} ] for write.\n", filename);
+
+				for (size_t i = 0; i < vertex_matrix.rows(); i++)
+					fprintf(fp, "v %f %f\n", vertex_matrix.row(i)[0], vertex_matrix.row(i)[1]);
+
+				fprintf(fp, "\n");
+				for (size_t i = 0; i < element_matrix.rows(); i++)
+					fprintf(fp, "l %d %d\n", element_matrix.row(i)[0] + 1, element_matrix.row(i)[1] + 1);
+
+				fclose(fp);
+				return true;
 			}
 			else if constexpr (d == 3) {
 				Assert(ed > 2, "Vertex have dim={}, but element has dim={}", d, ed);

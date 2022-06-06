@@ -106,11 +106,12 @@ namespace Meso {
 			std::string vts_name = fmt::format("vts{:04d}.vts", metadata.current_frame);
 			bf::path vtk_path = metadata.base_path / bf::path(vts_name);
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
-			//TriangleMesh<d> mesh;
-			//Marching_Cubes<T, d, HOST>(mesh, levelset.phi);
-			//std::string obj_name = fmt::format("mesh{:04d}.obj", metadata.current_frame);
-			//bf::path obj_path = metadata.base_path / bf::path(obj_name);
-			//OBJFunc::Write_Mesh(obj_path.string(), m);
+			
+			VertexMatrix<T, d> verts; ElementMatrix<d> elements;
+			Marching_Cubes<T, d, HOST>(verts, elements, levelset.phi);
+			std::string obj_name = fmt::format("mesh{:04d}.obj", metadata.current_frame);
+			bf::path obj_path = metadata.base_path / bf::path(obj_name);
+			OBJFunc::Write_OBJ(obj_path.string(), verts, elements);
 		}
 
 		virtual void Advance(DriverMetaData& metadata) {

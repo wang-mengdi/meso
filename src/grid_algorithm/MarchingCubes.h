@@ -538,8 +538,11 @@ namespace Meso {
 	}
 
 	template<class T, int d, DataHolder side>
-	void Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<3>& face_matrix, const Field<T, d, side>& field, const real iso_value = 0.) {
-		if constexpr (side == HOST) Marching_Cubes_CPU<T, d>(vertex_matrix, face_matrix, field, iso_value);
-		else Marching_Cubes_GPU<T, d>(vertex_matrix, face_matrix, field, iso_value);
+	void Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& face_matrix, const Field<T, d, side>& field, const real iso_value = 0.) {
+		if constexpr (d == 3) {
+			if constexpr (side == HOST) Marching_Cubes_CPU<T, d>(vertex_matrix, face_matrix, field, iso_value);
+			else Marching_Cubes_GPU<T, d>(vertex_matrix, face_matrix, field, iso_value);
+		}
+		else Assert(false, "Marching_Cubes not implemented for d={}", d);
 	}
 }
