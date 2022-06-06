@@ -184,12 +184,8 @@ namespace Meso {
 
 		//bool Write_Obj(const std::string& filename, const tinyobj::attrib_t& attributes, const std::vector<tinyobj::shape_t>& shapes, const std::vector<tinyobj::material_t>& materials);
 		template<class T, int d, int ed>
-		bool Write_Obj(
-			const std::string& filename,
-			const VertexMatrix<T, d>& V,
-			const ElementMatrix<ed>& F
-		) {
-			return igl::writeOBJ<VertexMatrix<T, d>, ElementMatrix<ed>>(filename, V, F);
+		bool Write_Obj(const std::string& filename, const VertexMatrix<T, d>& vertex_matrix, const ElementMatrix<ed>& element_matrix) {
+			return igl::writeOBJ<VertexMatrix<T, d>, ElementMatrix<ed>>(filename, vertex_matrix, element_matrix);
 		}
 
 		//template<class T>
