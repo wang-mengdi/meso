@@ -30,21 +30,21 @@ namespace Meso {
 	//	Pass("Test_Mesh_Loader[Multiple] Passed!");
 	//}
 
-	template<class MeshType>
+	template<class T, int d, int ed>
 	void Test_Mesh_Loader_Single() {
 		Info("Test_Mesh_Loader_Single");
 		// 0. generated a random mesh
-		VertexMatrix<double, 3>  V; V.resize(100, 3);
-		ElementMatrix<3> F; F.resize(100, 3);
+		VertexMatrix<T, d>  V; V.resize(100, d);
+		ElementMatrix<ed> F; F.resize(100, d);
 
 		for (size_t i = 0; i < 100; i++)
 		{
-			V.row(i) = Random::Random_VectorXd(3, 0.0, 1.0);
-			F.row(i) = Random::Random_VectorXi(3, 0  , 99);
+			V.row(i) = Random::Random_VectorXd(d, 0.0, 1.0);
+			F.row(i) = Random::Random_VectorXi(ed, 0  , 99);
 		}
 		Info("random generated");
 
-		OBJFunc::Write_Obj<double, 3>("./copy_mesh_single.obj", V, F);
+		OBJFunc::Write_Obj<T, d, ed>("./copy_mesh_single.obj", V, F);
 		//auto mesh = std::make_shared<MeshType>();
 		//OBJFunc::Read_Mesh("../../../../../proj/_tests_reservoir/assets/CornellBox-Single.obj", mesh);
 		//OBJFunc::Write_Mesh<MeshType>("./copy_mesh_single.obj", mesh);
