@@ -46,27 +46,27 @@ namespace Meso {
 			if (verbose) Info("Used time: {:.2f}s/{:.2f}s, ETA {:.2f}s", time, total_time, total_time / (i + 1));
 		}
 
-		TriangleMesh<d> mesh;
-		mesh.vertices.resize(vertices.rows());
-		mesh.elements.resize(faces.rows());
-		for (int i = 0; i < vertices.rows(); i++) {
-			for (int j = 0; j < d; j++) {
-				mesh.vertices[i][j] = vertices(i, j);
-			}
-		}
-		for (int i = 0; i < faces.rows(); i++) {
-			for (int j = 0; j < 3; j++) {
-				mesh.elements[i][j] = faces(i, j);
-			}
-		}
+		//TriangleMesh<d> mesh;
+		//mesh.vertices.resize(vertices.rows());
+		//mesh.elements.resize(faces.rows());
+		//for (int i = 0; i < vertices.rows(); i++) {
+		//	for (int j = 0; j < d; j++) {
+		//		mesh.vertices[i][j] = vertices(i, j);
+		//	}
+		//}
+		//for (int i = 0; i < faces.rows(); i++) {
+		//	for (int j = 0; j < 3; j++) {
+		//		mesh.elements[i][j] = faces(i, j);
+		//	}
+		//}
 
 		std::string output_name;
 		if (side == DEVICE) output_name = "./marching_cubes_GPU.obj";
 		else output_name = "./marching_cubes_CPU.obj";
-		OBJFunc::Write_Mesh(output_name, mesh);
+		OBJFunc::Write_Obj(output_name, vertices, faces);
 
-		if (side == HOST) Pass("Test_Marching_Cubes[CPU] Passed with {} vertices and {} elements", mesh.vertices.size(), mesh.elements.size());
-		else Pass("Test_Marching_Cubes[GPU] Passed with {} vertices and {} elements", mesh.vertices.size(), mesh.elements.size());
+		if (side == HOST) Pass("Test_Marching_Cubes[CPU] Passed with {} vertices and {} elements", vertices.rows(), faces.rows());
+		else Pass("Test_Marching_Cubes[GPU] Passed with {} vertices and {} elements", vertices.rows(), faces.rows());
 	}
 
 	//template<class T, int d>
