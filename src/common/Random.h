@@ -39,7 +39,7 @@ namespace Meso {
             return arr;
         }
         VectorXd Random_VectorXd(int n, real a = 0.0, real b = 1.0);
-
+        VectorXi Random_VectorXi(int n, int a = 0, int b = 1);
         real Random_Sign(void);
 
         template<class T>
