@@ -1,5 +1,5 @@
 {
-    "dimension": 2,
+    "dimension": 3,
     "simulator": "freesurface",
     "driver": {
         "cfl": 1.0,
