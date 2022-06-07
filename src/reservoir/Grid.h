@@ -45,8 +45,7 @@ namespace Meso {
 		}
 		__host__ __device__ VectorD Domain_Min(const GridType gtype = MAC) const { 
 			if (gtype == MAC) {
-				VectorD offset = VectorD::Ones() * 0.5 * dx;
-				return pos_min - offset;
+				return pos_min - VectorD::Ones() * 0.5 * dx;
 			}
 			return pos_min;
 		}

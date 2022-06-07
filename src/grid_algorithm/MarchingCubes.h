@@ -329,14 +329,14 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	void Marching_Cubes_CPU(VertexMatrix<T, d>& vertices, ElementMatrix<3>& faces, const Field<T, d, HOST>& field, const real iso_value = 0.0) {
+	void Marching_Cubes_CPU(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<3>& element_matrix, const Field<T, d, HOST>& field, const real iso_value = 0.0) {
 		if constexpr (d == 3) {
 			int xres = field.grid.counts[0];
 			int yres = field.grid.counts[1];
 			int zres = field.grid.counts[2];
 			int num_points = field.grid.DoF();
 			Matrix<T, Dynamic, Dynamic> grid_values; grid_values.resize(num_points, 1);
-			Matrix<T, Dynamic, Dynamic> grid_points; grid_points.resize(num_points, 3); 
+			Matrix<T, Dynamic, Dynamic> grid_points; grid_points.resize(num_points, 3);
 			OMPFunc::Exec_Indices(
 				num_points,
 				[&](const int index) {
@@ -351,7 +351,7 @@ namespace Meso {
 					}
 				}
 			);
-			igl::marching_cubes(grid_values, grid_points, xres, yres, zres, iso_value, vertices, faces);
+			igl::marching_cubes(grid_values, grid_points, xres, yres, zres, iso_value, vertex_matrix, element_matrix);
 		}
 		else {
 			Assert(false, "Marching_Cubes_CPU not implemented for d={}", d);
@@ -445,7 +445,7 @@ namespace Meso {
 			vertices[index] = pos.template cast<T>();
 		}
 	}
-	
+
 	template<class T, int d>
 	__global__ void Generate_Mesh_Kernel(
 		const Vector<int, d> cell_counts,
@@ -471,7 +471,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	void Marching_Cubes_GPU(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<3>& face_matrix, const Field<T, d, DEVICE>& field, const real iso_value = 0.) {
+	void Marching_Cubes_GPU(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<3>& element_matrix, const Field<T, d, DEVICE>& field, const real iso_value = 0.) {
 		Typedef_VectorD(d);
 		Typedef_VectorEi(d);
 
@@ -534,14 +534,121 @@ namespace Meso {
 		Array<VectorEi> elements_host = elements;
 		//copy here
 		vertex_matrix = Eigen::Map<VertexMatrix<T, d>>(vertices_host[0].data(), vertices_host.size(), d);
-		face_matrix = Eigen::Map<ElementMatrix<3>>(elements_host[0].data(), elements_host.size(), 3);
+		element_matrix = Eigen::Map<ElementMatrix<3>>(elements_host[0].data(), elements_host.size(), 3);
+	}
+
+	template<class T>
+	void Marching_Square(VertexMatrix<T, 2>& vertex_matrix, ElementMatrix<2>& element_matrix, const Field<T, 2, HOST>& field, const real iso_value) {
+		// 0. Init
+		const Grid<2>& grid = field.grid;
+		const Vector2i cell_counts = grid.counts - Vector2i::Ones();
+		Array<Vector<T, 2>> vertices; Array<Vector2i> elements;
+
+		Array<Grid<2>> edge_grid(2); for (int i = 0; i < 2; i++) edge_grid[i] = Grid<2>(grid.counts - Vector2i::Unit(i), grid.dx);
+		Field<int, 2> v_idx_on_edge[2]; for (int i = 0; i < 2; i++) v_idx_on_edge[i].Init(edge_grid[i], -1);
+
+		//  1. basic function
+		const auto Edge_Type = [&iso_value](real v0, real v1, real v2, real v3)->unsigned int
+		{
+			unsigned int type = 0;
+			if (v0 < iso_value) type |= 1;
+			if (v1 < iso_value) type |= 2;
+			if (v2 < iso_value) type |= 4;
+			if (v3 < iso_value) type |= 8;
+			return type;
+		};
+		const auto Gen_Vertex = [&field, &grid, &vertices, &iso_value](Field<int, 2>& v_idx, const Vector2i node_i, const Vector2i node_j)->void
+		{
+			const T& v1 = field(node_i); const T& v2 = field(node_j);
+			if (v_idx(node_i) == -1 && (v1 - iso_value) * (v2 - iso_value) <= 0)
+			{
+				T alpha = (v1 - iso_value) / (v1 - v2);
+				Vector2 pos = ((1 - alpha) * grid.Position(node_i) + alpha * grid.Position(node_j));
+				vertices.push_back(pos.template cast<T>()); v_idx(node_i) = (int)vertices.size() - 1;
+			};
+		};
+		// 2. main part
+		grid.Exec_Nodes(
+			[&](const Vector2i cell_index) {
+				if ((cell_index - cell_counts).maxCoeff() == 0) return;
+				const T& left_down = field(cell_index);
+				const T& right_down = field(cell_index+Vector2i::Unit(0));
+				const T& right_up = field(cell_index + Vector2i::Ones());
+				const T& left_up = field(cell_index + Vector2i::Unit(1));
+
+				// don't change the order
+				Gen_Vertex(v_idx_on_edge[0], cell_index, cell_index + Vector2i::Unit(0)); // bottom edge
+				Gen_Vertex(v_idx_on_edge[1], cell_index + Vector2i::Unit(0), cell_index + Vector2i::Ones()); // right edge
+				Gen_Vertex(v_idx_on_edge[0], cell_index + Vector2i::Unit(1), cell_index + Vector2i::Ones()); // top edge
+				Gen_Vertex(v_idx_on_edge[1], cell_index, cell_index + Vector2i::Unit(1)); // left edge
+				
+				const T center = 0.25 * (left_down + right_down + right_up + left_up);
+				switch (Edge_Type(left_down, right_down, right_up, left_up))
+				{
+				// 0 segment
+				case 0: break; case 15: break;
+				// 1 segment
+				case 1: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[1](cell_index))); break;
+				case 14: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[1](cell_index))); break;
+
+				case 2: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[1](cell_index + Vector2i::Unit(0)))); break;
+				case 13: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[1](cell_index + Vector2i::Unit(0)))); break;
+
+				case 4: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index + Vector2i::Unit(1)), v_idx_on_edge[1](cell_index + Vector2i::Unit(0)))); break;
+				case 11: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index + Vector2i::Unit(1)), v_idx_on_edge[1](cell_index + Vector2i::Unit(0)))); break;
+
+				case 8: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index + Vector2i::Unit(1)), v_idx_on_edge[1](cell_index))); break;
+				case 7: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index + Vector2i::Unit(1)), v_idx_on_edge[1](cell_index))); break;
+
+				case 3: elements.push_back(Vector2i(v_idx_on_edge[1](cell_index), v_idx_on_edge[1](cell_index + Vector2i::Unit(0)))); break;
+				case 12: elements.push_back(Vector2i(v_idx_on_edge[1](cell_index), v_idx_on_edge[1](cell_index + Vector2i::Unit(0)))); break;
+
+				case 6: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[0](cell_index + Vector2i::Unit(1)))); break;
+				case 9: elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[0](cell_index + Vector2i::Unit(1)))); break;
+
+				// 2 segments
+				case 5:
+					if ((center - iso_value) * (left_down - iso_value) <= 0)
+					{
+						elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[1](cell_index))); 
+						elements.push_back(Vector2i(v_idx_on_edge[0](cell_index + Vector2i::Unit(1)), v_idx_on_edge[1](cell_index + Vector2i::Unit(0))));
+					}
+					else {
+						elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[1](cell_index + Vector2i::Unit(0))));
+						elements.push_back(Vector2i(v_idx_on_edge[0](cell_index + Vector2i::Unit(1)), v_idx_on_edge[1](cell_index)));
+					}
+					break;
+				case 10:
+					if ((center - iso_value) * (left_down - iso_value) <= 0)
+					{
+						elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[1](cell_index)));
+						elements.push_back(Vector2i(v_idx_on_edge[0](cell_index + Vector2i::Unit(1)), v_idx_on_edge[1](cell_index + Vector2i::Unit(0))));
+					}
+					else {
+						elements.push_back(Vector2i(v_idx_on_edge[0](cell_index), v_idx_on_edge[1](cell_index + Vector2i::Unit(0))));
+						elements.push_back(Vector2i(v_idx_on_edge[0](cell_index + Vector2i::Unit(1)), v_idx_on_edge[1](cell_index)));
+					}
+					break;
+				default:
+					break;
+				}
+			}
+		);
+		Info("Test {} {}", vertices.size(), elements.size());
+
+		//vertex_matrix.resize(vertices.size(), 2); for (size_t i = 0; i < vertices.size(); i++) vertex_matrix.row(i) = vertices[i];
+		vertex_matrix = Eigen::Map<VertexMatrix<T, 2>>(vertices[0].data(), vertices.size(), 2);
+		element_matrix = Eigen::Map<ElementMatrix<2>>(elements[0].data(), elements.size(), 2);
 	}
 
 	template<class T, int d, DataHolder side>
-	void Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& face_matrix, const Field<T, d, side>& field, const real iso_value = 0.) {
+	void Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& element_matrix, const Field<T, d, side>& field, const real iso_value = 0.) {
 		if constexpr (d == 3) {
-			if constexpr (side == HOST) Marching_Cubes_CPU<T, d>(vertex_matrix, face_matrix, field, iso_value);
-			else Marching_Cubes_GPU<T, d>(vertex_matrix, face_matrix, field, iso_value);
+			if constexpr (side == HOST) Marching_Cubes_CPU<T, d>(vertex_matrix, element_matrix, field, iso_value);
+			else Marching_Cubes_GPU<T, d>(vertex_matrix, element_matrix, field, iso_value);
+		}
+		else if constexpr (d == 2) {
+			if constexpr (side == HOST) Marching_Square<T>(vertex_matrix, element_matrix, field, iso_value);
 		}
 		else Assert(false, "Marching_Cubes not implemented for d={}", d);
 	}

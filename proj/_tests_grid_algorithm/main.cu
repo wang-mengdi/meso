@@ -11,8 +11,8 @@
 using namespace Meso;
 #define __THRUST_HAS_CUDART__
 int main(){
-	Test_Marching_Cubes<float, 3, HOST>(1, false); // verify by opening marching_cubes.obj
-	Test_Marching_Cubes<double, 3, DEVICE>(1, false);
+	Test_Marching_Cubes<float>(1, true); // verify by opening marching_cubes.obj
+	// Test_Marching_Cubes<double>(1, false);
 
 	/// prime test
 	//Test_Circle_HOST<2, PointIntpLinearPadding0>(0.5, Vector<real,2>::Zero(),  1);
@@ -54,8 +54,8 @@ int main(){
 	//Test_Circle<3, PointIntpLinearPadding0, HOST>(0.02, Vector<real, 3>::Zero() + Vector<real, 3>(1, 2, 3), 1);
 	//Test_Circle<3, PointIntpLinearPadding0, HOST>(0.2, Vector<real, 3>::Zero() + Vector<real, 3>(1, 2, 3), 2);
 
-	Test_FMM_Circle<2, PointIntpLinearPadding0, HOST>(0.02, Vector<real, 2>::Zero(), 1);
+	//Test_FMM_Circle<2, PointIntpLinearPadding0, HOST>(0.02, Vector<real, 2>::Zero(), 1);
 	//Test_FMM_Circle<2, PointIntpLinearPadding0, DEVICE>(0.02, Vector<real, 2>::Zero(), 1);
-	Test_FMM_Circle<3, PointIntpLinearPadding0, HOST>(0.02, Vector<real, 3>::Zero(), 1);
+	//Test_FMM_Circle<3, PointIntpLinearPadding0, HOST>(0.02, Vector<real, 3>::Zero(), 1);
 	//Test_FMM_Circle<3, PointIntpLinearPadding0, DEVICE>(0.02, Vector<real, 3>::Zero(), 1);
 }

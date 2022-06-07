@@ -11,33 +11,9 @@
 
 namespace Meso {
 
-
-	template<class T, int d, DataHolder side>
-	void Test_Marching_Cubes(int times, bool verbose) {
-		Typedef_VectorD(d);
-
-		Timer timer;
-		Vector<int, d> counts = Vector3i(100, 100, 100);
-		VectorD domain_min = MathFunc::V<d>(0., 0., 0.);
-		Grid<d> grid(counts, 0.01, domain_min, COLLOC);
-		Field<T, d> field_host(grid, 0);
-
-		Array<T> my_data(grid.DoF());
-		VectorD center = MathFunc::V<d>(0.6, 0.6, 0.);
-		grid.Exec_Nodes(
-			[&](const VectorDi node) {
-				VectorD pos = grid.Position(node);
-				int index = grid.Index(node);
-				field_host.Data()[index] = (pos - center).norm() - 0.6;
-			}
-		);
-
-		Field<T, d, side> field = field_host;
-
-		VertexMatrix<T, d> vertices;
-		ElementMatrix<3> faces;
-		
-		timer.Reset();
+	template<class T, DataHolder side, int d>
+	void Test_Marching_Cubes_Unit(const Field<T, d, side>& field, int times, bool verbose) {
+		VertexMatrix<T, d> vertices; ElementMatrix<d> faces; Timer timer; timer.Reset();
 		for (size_t i = 0; i < times; i++)
 		{
 			Marching_Cubes<T, d, side>(vertices, faces, field);
@@ -45,34 +21,46 @@ namespace Meso {
 			double total_time = timer.Total_Time(PhysicalUnits::s);
 			if (verbose) Info("Used time: {:.2f}s/{:.2f}s, ETA {:.2f}s", time, total_time, total_time / (i + 1));
 		}
-
-		//TriangleMesh<d> mesh;
-		//mesh.vertices.resize(vertices.rows());
-		//mesh.elements.resize(faces.rows());
-		//for (int i = 0; i < vertices.rows(); i++) {
-		//	for (int j = 0; j < d; j++) {
-		//		mesh.vertices[i][j] = vertices(i, j);
-		//	}
-		//}
-		//for (int i = 0; i < faces.rows(); i++) {
-		//	for (int j = 0; j < 3; j++) {
-		//		mesh.elements[i][j] = faces(i, j);
-		//	}
-		//}
-
-		std::string output_name;
-		if (side == DEVICE) output_name = "./marching_cubes_GPU.obj";
-		else output_name = "./marching_cubes_CPU.obj";
-		OBJFunc::Write_OBJ(output_name, vertices, faces);
-
-		if (side == HOST) Pass("Test_Marching_Cubes[CPU] Passed with {} vertices and {} elements", vertices.rows(), faces.rows());
-		else Pass("Test_Marching_Cubes[GPU] Passed with {} vertices and {} elements", vertices.rows(), faces.rows());
+		std::stringstream filename;
+		filename << "./marching_" << ((d == 2) ? "square" : "cubes") << "_" << ((side == HOST) ? "CPU" : "GPU") << ".obj";
+		//sprintf(filename, "./marching_%s_%s.obj", (d == 2) ? "square" : "cubes", (side == HOST) ? "CPU" : "GPU");
+		OBJFunc::Write_OBJ(filename.str(), vertices, faces);
+		Pass("Test_Marching_Cubes[{}] Passed with {} vertices and {} elements", (side == HOST) ? "CPU" : "GPU", vertices.rows(), faces.rows());
 	}
 
-	//template<class T, int d>
-	//void Test_Marching_Cubes() {
-	//	bool verbose = false; int times = 1;
-	//	Test_Marching_Cubes_CPU<T, d>(times, verbose);
-	//	Test_Marching_Cubes_GPU<T, d>(times, verbose);
-	//}
+	template<class T>
+	void Test_Marching_Cubes(int times, bool verbose) {
+
+		// Marching Cubes
+		{
+			Grid<3> grid(Vector3i(100, 100, 100), 0.01, MathFunc::V<3>(0., 0., 0.), COLLOC);
+			Field<T, 3> field_host(grid, 0); Vector3 center = MathFunc::V<3>(0.6, 0.6, 0.);
+
+			grid.Exec_Nodes(
+				[&](const Vector3i node) {
+					Vector3 pos = grid.Position(node);
+					field_host(node) = (pos - center).norm() - 0.6;
+				}
+			);
+
+			Test_Marching_Cubes_Unit<T, DEVICE, 3>(Field<T, 3, DEVICE>(field_host), times, verbose);
+			Test_Marching_Cubes_Unit<T, HOST, 3>(field_host, times, verbose);
+
+		}
+
+		// Marching Square
+		{
+			Grid<2> grid(Vector2i(100, 100), 0.01, MathFunc::V<2>(0., 0.), COLLOC);
+			Field<T, 2> field_host(grid, 0); Vector2 center = grid.Center();
+			grid.Exec_Nodes(
+				[&](const Vector2i node) {
+					Vector2 pos = (grid.Position(node) - center);
+					field_host(node) = 1000. * pos[1] * pos[1] - 300. * pos[0] * pos[0] * sin(100. * pos[0] * pos[0]);
+				}
+			);
+			Test_Marching_Cubes_Unit<T, HOST, 2>(field_host, times, verbose);
+
+		}
+	}
+
 }
