@@ -43,12 +43,14 @@ namespace Meso {
 			air_density = Json::Value<real>(j, "air_density", 1e-3);
 			gravity_acc = Json::Value<VectorD>(j, "gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
 			velocity = initial_velocity;
+			fixed_bc.Init(fixed, fixed);
 			velocity_bc.Init(face_fixed, initial_velocity);
 			vol_bc.Init(face_fixed, vol);
 			levelset.Init(velocity.grid, geom);
 
 			Info("fixed: \n{}", fixed);
-			Info("face_fixed y: \n{}", Field<bool, d>(face_fixed.grid, face_fixed.face_data[1]));
+			Info("face_fixed: \n{}", face_fixed);
+			Info("initial_velocity: \n{}", initial_velocity);
 
 			poisson.Init(velocity.grid);
 			MG_precond.Allocate_Poisson(velocity.grid);
@@ -146,12 +148,16 @@ namespace Meso {
 			temp_field_dev = div_host;
 
 			pressure_dev.Init(temp_field_dev.grid);
-			Info("vy: \n{}", FieldDv<T, d>(velocity.grid, velocity.face_data[1]));
+			Info("v: \n{}", velocity);
 			Info("rhs: \n{}", temp_field_dev);
+			Info("fixed_host: \n{}", fixed_host);
+			Info("vol: \n{}", vol_host);
 			Info("rhs max: {}", temp_field_dev.Max_Abs());
 			int iter; real res;
 			MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data(), iter, res);
 			Info("Solve poisson with {} iters and residual {}", iter, res);
+
+			Info("solved pressure: \n{}", pressure_dev);
 
 			//velocity+=grad(p)
 			Exterior_Derivative(temp_velocity_dev, pressure_dev);
@@ -159,6 +165,8 @@ namespace Meso {
 
 			velocity += temp_velocity_dev;
 			velocity_bc.Apply(velocity);
+
+			Info("velocity after projection: \n{}", velocity);
 
 			Info("After projection max velocity {}", velocity.Max_Abs());
 		}

@@ -131,8 +131,7 @@ struct fmt::formatter<Meso::Field<T, 2, side>> {
 		return it;
 	}
 
-	void Update_String(const Meso::Field<T, 2>& F, std::string& out) {
-		out = "";
+	void Append_String(const Meso::Field<T, 2>& F, std::string& out) {
 		//out += to_string(F.grid.counts[0]);
 		for (int i = 0; i < F.grid.counts[0]; i++) {
 			for (int j = 0; j < F.grid.counts[1]; j++) {
@@ -146,11 +145,11 @@ struct fmt::formatter<Meso::Field<T, 2, side>> {
 	// stored in this formatter.
 	template <typename FormatContext>
 	auto format(const Meso::Field<T, 2, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
-		std::string out;
-		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
+		std::string out = "";
+		if constexpr (side == Meso::DataHolder::HOST) Append_String(F, out);
 		else if constexpr (side == Meso::DataHolder::DEVICE) {
 			Meso::Field<T, 2> F_host = F;
-			Update_String(F_host, out);
+			Append_String(F_host, out);
 		}
 		return format_to(ctx.out(), "{}", out);
 	}
@@ -166,7 +165,7 @@ struct fmt::formatter<Meso::Field<T, 3, side>> {
 		return it;
 	}
 
-	void Update_String(const Meso::Field<T, 3>& F, std::string& out) {
+	void Append_String(const Meso::Field<T, 3>& F, std::string& out) {
 		out = "";
 		//out += to_string(F.grid.counts[0]);
 		for (int i = 0; i < F.grid.counts[0]; i++) {
@@ -184,11 +183,11 @@ struct fmt::formatter<Meso::Field<T, 3, side>> {
 	// stored in this formatter.
 	template <typename FormatContext>
 	auto format(const Meso::Field<T, 3, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
-		std::string out;
-		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
+		std::string out = "";
+		if constexpr (side == Meso::DataHolder::HOST) Append_String(F, out);
 		else {
 			Meso::Field<T, 3> F_host = F;
-			Update_String(F_host, out);
+			Append_String(F_host, out);
 		}
 		return format_to(ctx.out(), "{}", out);
 	}
