@@ -13,7 +13,7 @@
         "air_density": 0.001,
         "gravity_acc": [
             -0.0,
-            1.0
+            -1.0
         ],
         "scale": 8,
         "test": 0
