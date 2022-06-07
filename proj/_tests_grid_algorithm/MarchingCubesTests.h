@@ -23,9 +23,8 @@ namespace Meso {
 		}
 		std::stringstream filename;
 		filename << "./marching_" << ((d == 2) ? "square" : "cubes") << "_" << ((side == HOST) ? "CPU" : "GPU") << ".obj";
-		//sprintf(filename, "./marching_%s_%s.obj", (d == 2) ? "square" : "cubes", (side == HOST) ? "CPU" : "GPU");
 		OBJFunc::Write_OBJ(filename.str(), vertices, faces);
-		Pass("Test_Marching_Cubes[{}] Passed with {} vertices and {} elements", (side == HOST) ? "CPU" : "GPU", vertices.rows(), faces.rows());
+		Pass("Test_Marching_{}[{}] Passed with {} vertices and {} elements", (d == 2) ? "Square" : "Cubes" (side == HOST) ? "CPU" : "GPU", vertices.rows(), faces.rows());
 	}
 
 	template<class T>
