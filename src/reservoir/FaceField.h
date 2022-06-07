@@ -5,7 +5,7 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Grid.h"
-
+#include "Field.h"
 
 namespace Meso {
 
@@ -64,6 +64,10 @@ namespace Meso {
 		constexpr T* Data_Ptr(const int axis) noexcept { return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data()); }
 		constexpr const T* Data_Ptr(const int axis) const noexcept {
 			return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data());
+		}
+		constexpr Field<T, d, side> Face_Reference(const int axis)const {
+			//will reference original data
+			return Field<T, d, side>(grid.Face_Grid(axis), face_data[axis]);
 		}
 
 		void operator += (const Vector<T, d> vec) {
@@ -167,16 +171,12 @@ struct fmt::formatter<Meso::FaceField<T, 2, side>> {
 		return it;
 	}
 
-	void Update_String(const Meso::FaceField<T, 2>& F, std::string& out) {
-		out = "";
+	void Append_String(const Meso::FaceField<T, 2>& F, std::string& out) {
+		fmt::formatter<Meso::Field<T, 2, side>> fmt1;
 		for (int axis = 0; axis < 2; axis++) {
 			out += "axis: "; out += std::to_string(axis); out += "\n";
-			for (int i = 0; i < F.grid.counts[0]; i++) {
-				for (int j = 0; j < F.grid.counts[1]; j++) {
-					out += Meso::StringFunc::To_String_Simple(F(axis,Eigen::Vector2i(i, j))) + " ";
-				}
-				out += "\n";
-			}
+			Meso::Field<T, 2> fi = F.Face_Reference(axis);
+			fmt1.Append_String(fi, out);
 			out += "===========\n";
 		}
 	}
@@ -186,10 +186,10 @@ struct fmt::formatter<Meso::FaceField<T, 2, side>> {
 	template <typename FormatContext>
 	auto format(const Meso::FaceField<T, 2, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
 		std::string out;
-		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
+		if constexpr (side == Meso::DataHolder::HOST) Append_String(F, out);
 		else if constexpr (side == Meso::DataHolder::DEVICE) {
 			Meso::FaceField<T, 2> F_host = F;
-			Update_String(F_host, out);
+			Append_String(F_host, out);
 		}
 		return format_to(ctx.out(), "{}", out);
 	}
@@ -206,19 +206,12 @@ struct fmt::formatter<Meso::FaceField<T, 3, side>> {
 	}
 
 	void Update_String(const Meso::FaceField<T, 3>& F, std::string& out) {
-		out = "";
+		fmt::formatter<Meso::Field<T, 3, side>> fmt1;
 		for (int axis = 0; axis < 3; axis++) {
 			out += "axis: "; out += std::to_string(axis); out += "\n";
-			for (int i = 0; i < F.grid.counts[0]; i++) {
-				for (int j = 0; j < F.grid.counts[1]; j++) {
-					for (int k = 0; k < F.grid.counts[2]; k++) {
-						out += Meso::StringFunc::To_String_Simple(F(axis,Eigen::Vector3i(i, j, k))) + " ";
-					}
-					out += "\n";
-				}
-				out += "===========\n";
-			}
-			out += "======================\n";
+			Meso::Field<T, 3> fi = F.Face_Reference(axis);
+			fmt1.Append_String(fi, out);
+			out += "===========\n";
 		}
 	}
 
@@ -226,7 +219,7 @@ struct fmt::formatter<Meso::FaceField<T, 3, side>> {
 	// stored in this formatter.
 	template <typename FormatContext>
 	auto format(const Meso::FaceField<T, 3, side>& F, FormatContext& ctx) -> decltype(ctx.out()) {
-		std::string out;
+		std::string out = "";
 		if constexpr (side == Meso::DataHolder::HOST) Update_String(F, out);
 		else {
 			Meso::FaceField<T, 3> F_host = F;
