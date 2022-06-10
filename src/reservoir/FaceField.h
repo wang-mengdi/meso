@@ -149,9 +149,6 @@ namespace Meso {
 					}
 				}
 			}
-			if constexpr (side == DEVICE) {
-				cudaFree(grid_gpu);
-			}
 		}
 	};
 

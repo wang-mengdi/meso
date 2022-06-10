@@ -23,7 +23,7 @@ namespace Eigen {
 	}
 	template<class T, int d>
 	void from_json(const json& j, Vector<T, d>& v) {
-		Assert(!j.is_object() && j.size() == d, "Illigal json when trying to parse a {}-dimension Vector: \n{}\n", d, j.dump(4));
+		Meso::Assert(!j.is_object() && j.size() == d, "Illigal json when trying to parse a {}-dimension Vector: \n{}\n", d, j.dump(4));
 		for (int i = 0; i < j.size(); i++) j.at(i).get_to(v[i]);
 	}
 
