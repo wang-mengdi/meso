@@ -8,14 +8,22 @@ namespace Meso {
         int RandInt(int a, int b)
         {
             std::uniform_int_distribution<int> uid(a, b);
+            int ret;
 #pragma omp critical
-            return uid(sequential_gen);
+            {
+                ret = uid(sequential_gen);
+            }
+            return ret;
         }
 
         real Random(void)
         {
+            real ret;
 #pragma omp critical
-            return uniform_unit_real(sequential_gen);
+            {
+                ret = uniform_unit_real(sequential_gen);
+            }
+            return ret;
         }
 
         real Uniform(real a, real b) {
