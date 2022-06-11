@@ -17,12 +17,12 @@ namespace Meso {
 	inline void Unproject_To_World(const Vector1& t, const Matrix2& e, Vector2& u) { u = e.col(0) * t[0]; }
 
 	template<int d>
-	static Vector<real, d> Project_To_Norm(const Vector<real, d>& u, const Matrix<real, d>& E) {
+	static Vector<real, d> Project_To_Norm(const Vector<real, d>& u, const Matrix<real, d, d>& E) {
 		return u.dot(E.col(d - 1)) * E.col(d - 1);
 	}
 
 	template<int d>
-	static Vector<real, d - 1> Project_To_TPlane(const Vector<real, d>& u, const Matrix<real, d>& E) {
+	static Vector<real, d - 1> Project_To_TPlane(const Vector<real, d>& u, const Matrix<real, d, d>& E) {
 		Vector<real, d - 1> t_coords;
 		for (int i = 0; i < d - 1; i++) {
 			t_coords[i] = u.dot(E.col(i));
@@ -30,7 +30,7 @@ namespace Meso {
 		return t_coords;
 	}
 	template<int d>
-	static Vector<real, d - 1> Rotate_To_TPlane(const Vector<real, d>& u, const Matrix<real, d>& E) {//same as Project_To_TPlane, but preserves length
+	static Vector<real, d - 1> Rotate_To_TPlane(const Vector<real, d>& u, const Matrix<real, d, d>& E) {//same as Project_To_TPlane, but preserves length
 		Vector<real, d - 1> t_coords;
 		for (int i = 0; i < d - 1; i++) {
 			t_coords[i] = u.dot(E.col(i));
@@ -47,7 +47,7 @@ namespace Meso {
 	}
 
 	template<int d>
-	void Set_Local_Frame_PCA(const real r, const Vector<real, d>& my_pos, const Array<Vector<real, d>>& nbs_pos, Matrix<real, d>& my_frame) {
+	void Set_Local_Frame_PCA(const real r, const Vector<real, d>& my_pos, const Array<Vector<real, d>>& nbs_pos, Matrix<real, d, d>& my_frame) {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
 		size_t nbs_num = nbs_pos.size();
 		VectorD xp = VectorD::Zero();
@@ -93,7 +93,7 @@ namespace Meso {
 	// Orient normal directions
 	// Pointing Outward from COM, can be used on simple shapes like box, or sphere.
 	template<int d>
-	void Orient_Normals_COM(const Array<Vector<real, d>>& poss, Array<Matrix<real, d>>& frames) {
+	void Orient_Normals_COM(const Array<Vector<real, d>>& poss, Array<Matrix<real, d, d>>& frames) {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
 		Assert(poss.size() == frames.size(), "[Partialce Frames] positions and frames have different sizes {}, vs {}", poss.size(), frames.size());
 		VectorD COM = ArrayFunc::Mean<VectorD>(poss);

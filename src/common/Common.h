@@ -86,7 +86,6 @@ using uchar = unsigned char;
 using ushort = unsigned short;
 template<class T, int d> using Vector = Eigen::Matrix<T, d, 1>;
 template<class T, int n, int m, Eigen::StorageOptions opt = Eigen::RowMajor> using Matrix = Eigen::Matrix<T, n, m, opt>;
-//template<class T, int d> using Matrix = Eigen::Matrix<T, d, d>;
 
 #define Typedef_VectorD(d) \
 using VectorD=Vector<real,d>; \
@@ -94,8 +93,7 @@ using VectorDi=Vector<int,d>; \
 using VectorT = Vector<real, d-1>; \
 using VectorTi = Vector<int, d-1>;
 #define Typedef_MatrixD(d) \
-using MatrixD=Matrix<real,d>; \
-using MatrixT = Matrix<real, d-1>;
+using MatrixD=Matrix<real,d,d>;
 #define Typedef_VectorEi(d) \
 using VectorEi=Vector<int,d>;
 

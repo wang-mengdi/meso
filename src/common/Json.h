@@ -18,11 +18,11 @@ using json = nlohmann::json;
 namespace Eigen {
 	//NOTE: we may need to write some specific functions -- Mengdi
 	template<class T, int d>
-	void to_json(json& j, const Vector<T, d>& v) {
+	void to_json(json& j, const Eigen::Matrix<T, d, 1>& v) {
 		j = std::vector<T>(v.data(), v.data() + d);
 	}
 	template<class T, int d>
-	void from_json(const json& j, Vector<T, d>& v) {
+	void from_json(const json& j, Eigen::Matrix<T, d, 1>& v) {
 		Meso::Assert(!j.is_object() && j.size() == d, "Illigal json when trying to parse a {}-dimension Vector: \n{}\n", d, j.dump(4));
 		for (int i = 0; i < j.size(); i++) j.at(i).get_to(v[i]);
 	}

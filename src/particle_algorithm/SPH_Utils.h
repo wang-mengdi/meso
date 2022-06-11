@@ -4,7 +4,7 @@
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "Kernels.h"
+#include "Kernel.h"
 #include "ParticleFrames.h"
 
 namespace Meso {
@@ -13,7 +13,7 @@ namespace Meso {
 	class SPH_Utils {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
 	public:
-		KernelSPH kernel;
+		Kernel kernel;
 
 	public:
 		SPH_Utils() {}	
