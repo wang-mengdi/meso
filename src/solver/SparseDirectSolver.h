@@ -11,6 +11,7 @@ namespace Meso {
 	template<class T>
 	class CholeskySparseSolver :public LinearMapping<T> {
 	public:
+		using Base=LinearMapping<T>;
 		SparseMatrixMapping<T, DEVICE> mapping;
 		T tolerance = 0;
 		cusparseMatDescr_t mat_descr;
@@ -26,14 +27,13 @@ namespace Meso {
 			Assert(XDoF() == YDoF(), "CholeskySparseSolver error: XDoF={} not equal to YDoF={}", XDoF(), YDoF());
 			checkCudaErrors(cudaGetLastError());
 		}
-		CholeskySparseSolver(SparseMatrix<T>& _mapping) : CholeskySparseSolver(_mapping, (T)0) { }
 		~CholeskySparseSolver() {
 			if (solve_handle) cusolverSpDestroy(solve_handle);
 		}
 		virtual int XDoF() const { return mapping.YDoF(); }
 		virtual int YDoF() const { return mapping.XDoF(); }
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
-			Memory_Check(x, b, "CholeskySparseSolver::Apply failed: not enough memory space");
+			Base::Memory_Check(x, b, "CholeskySparseSolver::Apply failed: not enough memory space");
 			int singularity = 0;
 			if constexpr (std::is_same<T, double>::value) {
 				cusolverSpDcsrlsvchol(

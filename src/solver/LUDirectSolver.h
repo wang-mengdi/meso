@@ -11,6 +11,7 @@ namespace Meso {
 	template<class T>
 	class LUDenseSolver :public LinearMapping<T> {
 	public:
+		using Base=LinearMapping<T>;
 		int dof;
 
 		ArrayDv<T> A;
@@ -69,7 +70,7 @@ namespace Meso {
 
 		//input b, get x
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
-			Memory_Check(x, b, "LUDenseSolver::Apply failed: not enough memory space");
+			Base::Memory_Check(x, b, "LUDenseSolver::Apply failed: not enough memory space");
 
 			//Assert(ArrayFunc::Is_Finite<T, DEVICE>(b), "LUDirect solver failed: b={}", b);
 
