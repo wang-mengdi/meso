@@ -56,6 +56,7 @@ namespace Meso {
 			thrust::copy(A_col, A_col + nnz, col.begin());
 			thrust::copy(A_val, A_val + nnz, val.begin());
 		}
+		SparseMatrixMapping(const SparseMatrix<T> &A) : SparseMatrixMapping<T,side>(std::move(A)){}
 		~SparseMatrixMapping() {
 			if (cusparseHandle) cusparseDestroy(cusparseHandle);
 		}
