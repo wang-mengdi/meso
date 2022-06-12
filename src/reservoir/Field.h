@@ -36,18 +36,18 @@ namespace Meso {
 		}
 		void Fill(const T value) { ArrayFunc::Fill(Data(), value); }
 		bool Empty(void)const { return data == nullptr; }
-		constexpr Array<T, side>& Data(void) noexcept {
+		__host__ __device__ constexpr Array<T, side>& Data(void) noexcept {
 			Assert(data != nullptr, "[Error]Field::Data: Field is uninitialized");
 			return *data;
 		}
-		constexpr const Array<T, side>& Data(void)const noexcept {
+		__host__ __device__ constexpr const Array<T, side>& Data(void)const noexcept {
 			Assert(data != nullptr, "[Error]Field::Data: Field is uninitialized");
 			return *data;
 		}
-		constexpr T* Data_Ptr(void) noexcept {
+		__host__ __device__ constexpr T* Data_Ptr(void) noexcept {
 			return thrust::raw_pointer_cast(data->data());
 		}
-		constexpr const T* Data_Ptr(void) const noexcept {
+		__host__ __device__ constexpr const T* Data_Ptr(void) const noexcept {
 			return thrust::raw_pointer_cast(data->data());
 		}
 
