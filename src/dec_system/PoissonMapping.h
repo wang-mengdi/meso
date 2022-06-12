@@ -18,6 +18,7 @@ namespace Meso {
 	//Which means adjacent faces of masked cells will have volume 0
 	template<class T, int d>
 	class MaskedPoissonMapping : public LinearMapping<T> {
+		using Base=LinearMapping<T>;
 		//Ap=-lap(p)
 		Typedef_VectorD(d);
 	public:
@@ -71,7 +72,7 @@ namespace Meso {
 			//Poisson mapping is *d*d in DEC(Discrete Exterior Calculus) theory
 			//so lap(p)=*d*d(p)
 
-			Memory_Check(Ap, p, "PoissonMapping::Apply error: not enough space");
+			Base::Memory_Check(Ap, p, "PoissonMapping::Apply error: not enough space");
 
 			//temp_cell=p, set to 0 if fixed			
 			//ArrayFunc::Copy(temp_cell.Data(), p);
