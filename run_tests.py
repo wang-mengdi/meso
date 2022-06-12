@@ -25,6 +25,10 @@ def Run_Project(proj_name):
     assert (ret==0), "Tests failed"
 
 if __name__=='__main__':
-    Run_Project("_tests_kernel")
-    Run_Project("_tests_dec_system")
-    Run_Project("_tests_grid_algorithm")
+    if len(sys.argv)==1:
+        Run_Project("_tests_kernel")
+        Run_Project("_tests_dec_system")
+        Run_Project("_tests_grid_algorithm")
+    else:
+        print("Run Test {}".format(sys.argv[1]))
+        Run_Project(sys.argv[1])

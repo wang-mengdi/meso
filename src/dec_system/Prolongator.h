@@ -35,6 +35,7 @@ namespace Meso {
 	class ProlongatorIntp : public LinearMapping<T> {
 		Typedef_VectorD(d);
 	public:
+		using Base=LinearMapping<T>;
 		Grid<d> fine_grid, coarse_grid;
 
 		ProlongatorIntp() {}
@@ -56,7 +57,7 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& fine_data, const ArrayDv<T>& coarse_data) {
-			Memory_Check(fine_data, coarse_data, "Prolongator::Apply error: not enough memory");
+			Base::Memory_Check(fine_data, coarse_data, "Prolongator::Apply error: not enough memory");
 			T* fine_ptr = ArrayFunc::Data<T, DEVICE>(fine_data);
 			const T* coarse_ptr = ArrayFunc::Data<T, DEVICE>(coarse_data);
 			fine_grid.Exec_Kernel(&Prolongator_Intp_Kernel<T, d>, fine_grid, fine_ptr, coarse_grid, coarse_ptr);
