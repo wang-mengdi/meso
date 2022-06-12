@@ -8,3 +8,9 @@
 - 如果某个类的某个构造函数的参数中没有template，那么就不能在这个构造函数的定义中添加模板。此事出现过一次：DampedJacobiSmoother类曾经有一个带模板int d的构造函数，用于用PoissonMapping初始化，后来此构造函数被移除，但模板仍然留存，这就导致编译器报了一些无法识别的编译错误，错误提示无法匹配构造函数，但不知道应该如何匹配。
 - 当调用parent class的template函数foo<T>的时候需要用parent.template foo<T>();
 - 当在src创建新的library的时候，确保有一个.cu或.cpp file。否则没有.lib文件会被创建。
+- 在`SparseSolverTests.h`中，为了支持:
+
+    ```C++
+    CholeskySparseSolver<T> solver(SparseMatrix_From_PoissonLike(grid, poisson_mapping));
+    ```
+    把`CholeskySparseSolver`和`SparseMatrixMapping`的构造函数都设置成了传入右值。右值是一个比较tricky的领域，暂时不列入标准，只是进行一些探索。
