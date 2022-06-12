@@ -18,7 +18,6 @@ namespace Meso {
 	class Grid {
 		Typedef_VectorD(d);
 	public:
-		static constexpr int block_size = (d == 2 ? 8 : 4);
 		VectorDi counts;
 		real dx;
 		VectorD pos_min;
@@ -26,12 +25,14 @@ namespace Meso {
 		Grid(const VectorDi _counts = VectorDi::Zero(), const real _dx = 0, const VectorD domain_min = VectorD::Zero(), const GridType gtype = MAC) :
 			dx(_dx)
 		{
+			constexpr int block_size = Grid<d>::Block_Size();
 			counts = MathFunc::Round_Up_To_Align<d>(_counts, block_size);
 			if (counts != _counts) Warn("Grid size not divisible by {} in dimension {}, automtically round up to {}", block_size, d, counts);
 			if (gtype == COLLOC) pos_min = domain_min;
 			else pos_min = domain_min + MathFunc::V<d>(0.5, 0.5, 0.5) * dx;
 		}
 
+		__host__ __device__ static constexpr int Block_Size(void) { return (d == 2 ? 8 : 4); }
 		__host__ __device__ VectorDi Counts(void) { return counts; }
 		__host__ __device__ real Dx(void) { return dx; }
 		__host__ __device__ int DoF(void) const { return counts.prod(); }
@@ -118,7 +119,7 @@ namespace Meso {
 		}
 
 		////Staggered grid interfaces
-		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += block_size; return fcounts; }
+		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += Grid<d>::Block_Size(); return fcounts; }
 		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
 		__host__ __device__ VectorD Face_Center(const int axis, const VectorDi face) {
 			return Face_Min(axis) + face.template cast<real>() * dx;
