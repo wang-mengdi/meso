@@ -11,13 +11,14 @@ namespace Meso {
 	template<class T>
 	class CholeskySparseSolver :public LinearMapping<T> {
 	public:
-		T tolerance = 0;
 		SparseMatrixMapping<T, DEVICE> mapping;
+		T tolerance = 0;
 		cusparseMatDescr_t mat_descr;
 		cusolverSpHandle_t solve_handle;
 		//currently we don't have a default constructor of SparseMatrixMapping
 		CholeskySparseSolver() {}
-		CholeskySparseSolver(SparseMatrix<T>& _mapping, T _tol = 0) : mapping(_mapping), tolerance(_tol) {
+		//somehow you can't say _mapping is a const -- Mengdi
+		CholeskySparseSolver(SparseMatrix<T>&& _mapping, T _tol = (T)0) : mapping(std::forward<SparseMatrix<T>>(_mapping)), tolerance(_tol) {
 			cusolverSpCreate(&solve_handle);
 			cusparseCreateMatDescr(&mat_descr);
 			cusparseSetMatType(mat_descr, CUSPARSE_MATRIX_TYPE_GENERAL);

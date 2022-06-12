@@ -40,7 +40,7 @@ namespace Meso {
 		SparseMatrixMapping() {
 			if (!cusparseHandle) cusparseCreate(&cusparseHandle);
 		}
-		SparseMatrixMapping(const Eigen::SparseMatrix<T, Eigen::RowMajor, int>& A) {
+		SparseMatrixMapping(const Eigen::SparseMatrix<T, Eigen::RowMajor, int>&& A) {
 			if (!cusparseHandle) cusparseCreate(&cusparseHandle);
 			m = A.rows(); n = A.cols(); nnz = A.nonZeros();
 
