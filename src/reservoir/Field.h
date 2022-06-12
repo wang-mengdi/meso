@@ -58,7 +58,6 @@ namespace Meso {
 			*data = f1.Data();
 		}
 
-
 		template<DataHolder side1>
 		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) {
 			Deep_Copy(f1);

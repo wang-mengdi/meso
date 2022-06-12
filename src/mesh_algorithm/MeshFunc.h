@@ -25,11 +25,11 @@ namespace Meso {
         }
 
         ////Mesh edges
-        template<int d, int e_d> void Get_Edges(const SimplicialMesh<d, e_d>& mesh, Array<Vector2i>& edges) {
+        template<class T, int d, int e_d> void Get_Edges(const SimplicialMesh<T, d, e_d>& mesh, Array<Vector2i>& edges) {
             Typedef_VectorEi(e_d);
             Hashset<Vector2i> edge_hashset; Array<Vector2i> element_edges;
-            for (const VectorEi& vtx : mesh.elements) {
-                int n = Element_Edges<e_d>(vtx, element_edges);
+            for (int row = 0; row < mesh.Elements().rows();row++) {
+                int n = Element_Edges<e_d>(mesh.Elements().row(row), element_edges);
                 for (int i = 0; i < n; i++) {
                     edge_hashset.insert(MathFunc::Sorted<2>(element_edges[i]));
                 }
