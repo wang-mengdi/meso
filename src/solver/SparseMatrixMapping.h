@@ -55,7 +55,7 @@ namespace Meso {
 			thrust::copy(A_ptr, A_ptr + m + 1, ptr.begin());
 			thrust::copy(A_col, A_col + nnz, col.begin());
 			thrust::copy(A_val, A_val + nnz, val.begin());
-		}
+		}SparseMatrixMapping(const Eigen::SparseMatrix<T, Eigen::RowMajor, int>& A) :SparseMatrixMapping<T, side>(std::move(A)) {}
 		~SparseMatrixMapping() {
 			if (cusparseHandle) cusparseDestroy(cusparseHandle);
 		}
