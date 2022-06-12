@@ -114,11 +114,7 @@ namespace Meso {
 	template<class T, int d>
 	__global__ void Set_Cell_By_Color(const Grid<d> grid, const PoissonLikeMask<d> mask, T* cell_data) {
 		Typedef_VectorD(d);
-		VectorDi coord = MathFunc::Vi<d>(
-			blockIdx.x * grid.block_size + threadIdx.x,
-			blockIdx.y * grid.block_size + threadIdx.y,
-			blockIdx.z * grid.block_size + threadIdx.z
-			);
+		VectorDi coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		int index = grid.Index(coord);
 		if (mask(coord) == 0) cell_data[index] = 1;
 		else cell_data[index] = 0;
@@ -127,11 +123,7 @@ namespace Meso {
 	template<class T, int d>
 	__global__ void Fill_Dense_Matrix_From_Result(const Grid<d> grid, const PoissonLikeMask<d> mask, const T* Ap, const int ydof, T* mat) {
 		Typedef_VectorD(d);
-		VectorDi coord = MathFunc::Vi<d>(
-			blockIdx.x * grid.block_size + threadIdx.x,
-			blockIdx.y * grid.block_size + threadIdx.y,
-			blockIdx.z * grid.block_size + threadIdx.z
-			);
+		VectorDi coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		//the cell that is switched to 1 for this time
 		VectorDi on_coord = coord + mask.Coord_Offset_To_Zero(mask.row_nnz - mask(coord));
 		if (grid.Valid(on_coord)) {
