@@ -26,6 +26,7 @@ namespace Meso {
 			Assert(XDoF() == YDoF(), "CholeskySparseSolver error: XDoF={} not equal to YDoF={}", XDoF(), YDoF());
 			checkCudaErrors(cudaGetLastError());
 		}
+		CholeskySparseSolver(SparseMatrix<T>& _mapping) : CholeskySparseSolver(_mapping, (T)0) { }
 		~CholeskySparseSolver() {
 			if (solve_handle) cusolverSpDestroy(solve_handle);
 		}

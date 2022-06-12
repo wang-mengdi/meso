@@ -29,6 +29,6 @@ if __name__=='__main__':
         Run_Project("_tests_kernel")
         Run_Project("_tests_dec_system")
         Run_Project("_tests_grid_algorithm")
-    else
+    else:
         print("Run Test {}".format(sys.argv[1]))
         Run_Project(sys.argv[1])
