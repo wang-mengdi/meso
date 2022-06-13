@@ -26,6 +26,7 @@ namespace Meso {
 			}
 			else {
 				Error("type is not supported");
+				return result_type();
 			}
 		}
 	};
