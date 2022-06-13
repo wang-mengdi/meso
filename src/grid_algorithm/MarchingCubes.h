@@ -649,6 +649,7 @@ namespace Meso {
 		}
 		else if constexpr (d == 2) {
 			if constexpr (side == HOST) Marching_Square<T>(vertex_matrix, element_matrix, field, iso_value);
+			else Assert(false,"Marching_Squares not implemented for GPU")
 		}
 		else Assert(false, "Marching_Cubes not implemented for d={}", d);
 	}

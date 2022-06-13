@@ -9,6 +9,7 @@
 namespace Meso {
 	template<class T, int d> using VertexMatrix = Eigen::Matrix<T, Eigen::Dynamic, d, Eigen::RowMajor>; //each row is the coordinate of a triangle
 	template<int e_d> using ElementMatrix = Eigen::Matrix<int, Eigen::Dynamic, e_d, Eigen::RowMajor>; //each row contains the indices of one element
+	using TriangleElementMatrix = Eigen::Matrix<int, Eigen::Dynamic, 3, Eigen::RowMajor>;
 
 	template<class T, int d, int e_d, DataHolder side = DataHolder::HOST>
 	class SimplicialMesh {
