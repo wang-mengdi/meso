@@ -48,9 +48,7 @@ void Test_Sparse_Matrix(void)
     ArrayFunc::Copy(b_d, b);
 
     //Verify our CG solver
-    int iters = 0;
-    real relative_error = 0;
-    cg.Solve(x_d, b_d, iters, relative_error);
+    auto [iters, relative_error] = cg.Solve(x_d, b_d);
     for (int i = 0; i < cols; i++) { x_cg[i] = x_d[i]; }
 
     if (x_cg.isApprox(x)) {
