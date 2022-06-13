@@ -61,11 +61,19 @@ namespace Meso {
 		FaceField<T, d> vol_host;
 		Field<T, d> div_host;
 
-		void Init(json& j, ImplicitGeometry<d>& geom, Field<CellType, d> _cell_type, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
+		void Init(json& j, ImplicitGeometry<d>& geom, Field<CellType, d> &_cell_type, FaceField<real, d>& initial_velocity) {
 			air_density = Json::Value<real>(j, "air_density", 1e-3);
 			gravity_acc = Json::Value<VectorD>(j, "gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
 			velocity = initial_velocity;
 			cell_type = _cell_type;
+			FaceField<bool, d> face_fixed(cell_type.grid);
+			face_fixed.Calc_Faces(
+				[&](const int axis, const VectorDi face) {
+					auto [cell0, cell1, val0, val1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, INVALID);
+					if (val0 == SOLID || val1 == SOLID) return true;
+					return false;
+				}
+			);
 			velocity_bc.Init(face_fixed, initial_velocity);
 			levelset.Init(velocity.grid, geom);
 
@@ -76,7 +84,7 @@ namespace Meso {
 
 		void Update_Poisson_System(Field<bool, d>& fixed, FaceField<T, d>& vol, Field<T, d>& div) {
 			//Step 1: decide cell types
-			cell_types.Calc_Nodes(
+			cell_type.Calc_Nodes(
 				[&](const VectorDi cell) {
 					if (cell_type(cell) == SOLID) {
 						return SOLID;
@@ -87,7 +95,7 @@ namespace Meso {
 			);
 
 			//Step 2: decide fixed from cell types
-			fixed.Init(velocity.grid);
+			fixed.Init(cell_type.grid);
 			fixed.Calc_Nodes(
 				[&](const VectorDi cell) {
 					if (cell_type(cell) == FLUID) return false;
@@ -96,7 +104,7 @@ namespace Meso {
 			);
 
 			//Step 3: set div to 0 for air and solid cells
-			div.Init(velocity.grid);
+			div.Init(cell_type.grid);
 			div.Exec_Nodes(
 				[&](const VectorDi cell) {
 					if (cell_type(cell) != FLUID) div(cell) = 0;
@@ -104,7 +112,7 @@ namespace Meso {
 			);
 
 			//Step 4: set vol, and modify div additionally on the interface
-			vol.Init(grid);
+			vol.Init(cell_type.grid);
 			vol.Calc_Faces(
 				[&](const int axis, const VectorDi face)->T {
 					auto [cell0, cell1, type0, type1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, INVALID);

@@ -32,29 +32,33 @@ namespace Meso {
 			else return false;
 		}
 
-		//all these passed fields are not initialized before
-		template<int d>
-		void Set_Boundary(const Grid<d> grid, const Eigen::Matrix<int, 3, 2> bc_width, const Eigen::Matrix<real, 3, 2> bc_val,
-			Field<bool, d>& cell_fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& boundary_vel) {
-			cell_fixed.Init(grid);
-			vol.Init(grid);
-			face_fixed.Init(grid);
-			boundary_vel.Init(grid);
-
-			grid.Exec_Nodes(
+		template<class T, int d>
+		void Set_Boundary_Cells(Field<T, d>& F, const Eigen::Matrix<int, 3, 2> bc_width, const T val) {
+			F.Exec_Nodes(
 				[&](const Vector<int, d> cell) {
-					cell_fixed(cell) = false;
 					for (int axis = 0; axis < d; axis++) {
 						for (int side = 0; side < 2; side++) {
-							if (Cell_In_Boundary<d>(grid, cell, axis, side, bc_width(axis, side))) {
-								cell_fixed(cell) = true;
+							if (Cell_In_Boundary<d>(F.grid, cell, axis, side, bc_width(axis, side))) {
+								F(cell) = val;
 								return;
 							}
 						}
 					}
 				}
 			);
+		}
 
+		//all these passed fields are not initialized before
+		template<int d>
+		void Set_Boundary(const Grid<d> grid, const Eigen::Matrix<int, 3, 2> bc_width, const Eigen::Matrix<real, 3, 2> bc_val,
+			Field<bool, d>& cell_fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& boundary_vel) {
+			
+			cell_fixed.Init(grid, false);
+			Set_Boundary_Cells(cell_fixed, bc_width, true);
+
+			vol.Init(grid);
+			face_fixed.Init(grid);
+			boundary_vel.Init(grid);
 			grid.Exec_Faces(
 				[&](const int axis, const Vector<int, d> face) {
 					vol(axis, face) = 1;

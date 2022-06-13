@@ -16,9 +16,7 @@ namespace Meso {
 		Typedef_VectorD(d);
 
 		//define the boundary conditions of the eulerian system
-		Field<bool, d> fixed;
-		FaceField<T, d> vol;
-		FaceField<bool, d> face_fixed;
+		Field<CellType, d> cell_type;
 		FaceField<T, d> initial_vel;
 
 		void Apply(json& j, FluidFreeSurface<T, d>& fluid) {
@@ -36,16 +34,15 @@ namespace Meso {
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 2, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
 
+			cell_type.Init(grid, FLUID);
 			Eigen::Matrix<int, 3, 2> bc_width;
-			Eigen::Matrix<real, 3, 2> bc_val;
 			bc_width << 1, 1, 1, 1, 1, 1;
-			bc_val << 0, 0, 0, 0, 0, 0;
-
-			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+			GridEulerFunc::Set_Boundary_Cells(cell_type, bc_width, SOLID);
+			initial_vel.Init(grid, 0);
 
 			Plane<d> plane(Vector<T, d>::Unit(1), grid.Center());
 
-			fluid.Init(j, plane, fixed, vol, face_fixed, initial_vel);
+			fluid.Init(j, plane, cell_type, initial_vel);
 		}
 	};
 }
