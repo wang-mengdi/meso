@@ -236,14 +236,14 @@ namespace Meso {
 			thrust::fill(a.begin(), a.end(), val);
 		}
 		template<class T>
-		T Dot(const Array<T, HOST>& a, decltype(a) b) {
+		double Dot(const Array<T, HOST>& a, decltype(a) b) {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
-			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
+			return thrust::inner_product(a.begin(), a.end(), b.begin(), (double)0);
 		}
 		template<class T>
-		T Dot(const ArrayDv<T>& a, decltype(a) b) {
+		double Dot(const ArrayDv<T>& a, decltype(a) b) {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
-			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
+			return thrust::inner_product(a.begin(), a.end(), b.begin(), (double)0);
 		}
 
 		template<class T, DataHolder side>
