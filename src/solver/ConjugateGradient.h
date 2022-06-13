@@ -1,6 +1,7 @@
 #pragma once
 #include "LinearMapping.h"
 #include "Eigen/Dense"
+#include <tuple>
 
 namespace Meso {
 
@@ -55,8 +56,9 @@ namespace Meso {
 			cublasCreate(&cublasHandle);
 		}
 
+		////return (iters,relative_error)
 		////will destroy b and reuse it to hold residule
-		void Solve(ArrayDv<T>& x, ArrayDv<T>& b, int& iters, real& relative_error) {
+		std::tuple<int, real> Solve(ArrayDv<T>& x, ArrayDv<T>& b) {
 			//https://flat2010.github.io/2018/10/26/%E5%85%B1%E8%BD%AD%E6%A2%AF%E5%BA%A6%E6%B3%95%E9%80%9A%E4%BF%97%E8%AE%B2%E4%B9%89/
 			//https://zhuanlan.zhihu.com/p/98642663
 			//See: docs/mgpcg-notes-zh.md
@@ -76,9 +78,8 @@ namespace Meso {
 			//if b is zero, just solve to zero
 			if (rhs_norm2 == 0) {
 				//d_x is zero
-				iters = 0;
-				relative_error = 0;
-				return;
+				//iters=0, relative_error=0
+				return std::make_tuple(0, (real)0);
 			}
 			//(epsilon*|b|)^2
 			real threshold_norm2 = relative_tolerance * relative_tolerance * rhs_norm2;
@@ -135,8 +136,9 @@ namespace Meso {
 				ArrayFunc::Scal(beta, p);
 				ArrayFunc::Axpy(1, z, p);
 			}
-			iters = i;
-			relative_error = sqrt(residual_norm2 / rhs_norm2);
+
+			//return (iters,relative_error)
+			return std::make_tuple(i, (real)sqrt(residual_norm2 / rhs_norm2));
 		}
 	};
 

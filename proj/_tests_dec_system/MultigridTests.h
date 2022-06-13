@@ -65,16 +65,14 @@ namespace Meso {
 		//MGPCG.Init(&poisson, &precond, false);
 		MGPCG.Init(&poisson, &precond, false, -1, 1e-6);
 		//MGPCG.Init(&poisson, nullptr, true);
-		int iters = 0;
-		real res = 0;
 		Timer timer;
-		MGPCG.Solve(x_dev.Data(), b_dev.Data(), iters, res);
+		auto [iters, relative_error] = MGPCG.Solve(x_dev.Data(), b_dev.Data());
 		//Info("MGPCG solved {} iters with relative_error={}", iters, res);
 		if (iters < 100) {
-			Pass("MGPCG test passed in {}s for counts={}, with {} iters and relative_error={}", timer.Lap_Time(), counts, iters, res);
+			Pass("MGPCG test passed in {}s for counts={}, with {} iters and relative_error={}", timer.Lap_Time(), counts, iters, relative_error);
 		}
 		else {
-			Error("MGPCG test failed for counts={}, with {} iters and relative_error={}", counts, iters, res);
+			Error("MGPCG test failed for counts={}, with {} iters and relative_error={}", counts, iters, relative_error);
 		}
 	}
 
