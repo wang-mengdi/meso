@@ -153,8 +153,7 @@ namespace Meso {
 			Info("fixed_host: \n{}", fixed_host);
 			Info("vol: \n{}", vol_host);
 			Info("rhs max: {}", temp_field_dev.Max_Abs());
-			int iter; real res;
-			MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data(), iter, res);
+			auto [iter, res] = MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data());
 			Info("Solve poisson with {} iters and residual {}", iter, res);
 
 			Info("solved pressure: \n{}", pressure_dev);
