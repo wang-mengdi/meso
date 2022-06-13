@@ -14,18 +14,40 @@
 #include "MarchingCubes.h"
 
 namespace Meso {
+
+	enum CellType : int {
+		INVALID = -1,
+		FLUID,
+		AIR,
+		SOLID
+	};
+
+	template<class T, int d>
+	std::tuple<Vector<int, d>, Vector<int, d>, T, T> Face_Neighbor_Cells_And_Values(const Field<T, d>& F, const int axis, const Vector<int, d> face, const T outside_val) {
+		Typedef_VectorD(d);
+		VectorDi cell0 = face - VectorDi::Unit(axis), cell1 = face;
+		T val0, val1;
+		if (F.grid.Valid(cell0)) val0 = F(cell0);
+		else val0 = outside_val;
+		if (F.grid.Valid(cell1)) val1 = F(cell1);
+		else val1 = outside_val;
+		return std::make_tuple(cell0, cell1, val0, val1);
+	}
+
 	template<class T, int d>
 	class FluidFreeSurface : public Simulator {
 		Typedef_VectorD(d);
 	public:
 		//Needs to be initialized
+		//physical quantities
 		real air_density;//we assume the density of fluid is 1
 		VectorD gravity_acc;
 		FaceFieldDv<T, d> velocity;
-		BoundaryConditionDirect<Field<bool, d>> fixed_bc;
-		BoundaryConditionDirect<FaceField<T, d>> vol_bc;
+		//define the system behavior
+		Field<CellType, d> cell_type;
 		BoundaryConditionDirect<FaceFieldDv<T, d>> velocity_bc;
 		LevelSet<d, PointIntpLinearClamp, HOST> levelset;
+		//utilities
 		MaskedPoissonMapping<T, d> poisson;
 		VCycleMultigridIntp<T, d> MG_precond;
 		ConjugateGradient<T> MGPCG;
@@ -39,13 +61,12 @@ namespace Meso {
 		FaceField<T, d> vol_host;
 		Field<T, d> div_host;
 
-		void Init(json& j, ImplicitGeometry<d>& geom, Field<bool, d>& fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
+		void Init(json& j, ImplicitGeometry<d>& geom, Field<CellType, d> _cell_type, FaceField<bool, d>& face_fixed, FaceField<real, d>& initial_velocity) {
 			air_density = Json::Value<real>(j, "air_density", 1e-3);
 			gravity_acc = Json::Value<VectorD>(j, "gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
 			velocity = initial_velocity;
-			fixed_bc.Init(fixed, fixed);
+			cell_type = _cell_type;
 			velocity_bc.Init(face_fixed, initial_velocity);
-			vol_bc.Init(face_fixed, vol);
 			levelset.Init(velocity.grid, geom);
 
 			poisson.Init(velocity.grid);
@@ -54,59 +75,62 @@ namespace Meso {
 		}
 
 		void Update_Poisson_System(Field<bool, d>& fixed, FaceField<T, d>& vol, Field<T, d>& div) {
-			Grid<d> grid = velocity.grid;
-			fixed.Init(grid);
-			vol.Init(grid);
-			div.Init(grid);
-
-			//Rule for fixed: if in fixed_bc or phi>=0, set fixed=true, otherwise false
-			//Rule for div: if fixed, set to 0. If is the fluid cell in interface, modify with jump
-			//otherwise div remain the same
-
-			//first mark all boundary condition of fixed cells
-			fixed_bc.Apply(fixed);
-			//then mark all air cells to fixed
-			fixed.Exec_Nodes(
+			//Step 1: decide cell types
+			cell_types.Calc_Nodes(
 				[&](const VectorDi cell) {
-					if (levelset.phi(cell) >= 0) fixed(cell) = true;
-					if (fixed(cell)) div(cell) = 0;
+					if (cell_type(cell) == SOLID) {
+						return SOLID;
+					}
+					else if (levelset.phi(cell) >= 0) return AIR;
+					else return FLUID;
 				}
 			);
+
+			//Step 2: decide fixed from cell types
+			fixed.Init(velocity.grid);
+			fixed.Calc_Nodes(
+				[&](const VectorDi cell) {
+					if (cell_type(cell) == FLUID) return false;
+					else return true;
+				}
+			);
+
+			//Step 3: set div to 0 for air and solid cells
+			div.Init(velocity.grid);
+			div.Exec_Nodes(
+				[&](const VectorDi cell) {
+					if (cell_type(cell) != FLUID) div(cell) = 0;
+				}
+			);
+
+			//Step 4: set vol, and modify div additionally on the interface
+			vol.Init(grid);
 			vol.Calc_Faces(
 				[&](const int axis, const VectorDi face)->T {
-					//If both two nb cells are invalie, then vol is 0 (outside the boundary)
-					//If at least one in two nb cells are fixed, then vol is 0
-					//If one in two nb cells are invalid, then vol is just 1/rho
-					//If two nb cells are valid, that depends on whether they're
-					//all-fluid, all-air or an interface
-					real density = 0;
-					VectorDi cell0 = face - VectorDi::Unit(axis), cell1 = face;
-					if (!vol.grid.Valid(cell0)) std::swap(cell0, cell1);
-					if (!vol.grid.Valid(cell0)) return 0;
-					//cell0 must be valid
-					if (fixed(cell0)) return 0;
-					real phi0 = levelset.phi(cell0);
-					if (!vol.grid.Valid(cell1)) {
-						if (phi0 >= 0) density = air_density;
-						else density = 1.0;
+					auto [cell0, cell1, type0, type1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, INVALID);
+					
+					//order: invalid, fluid,air,solid
+					if (type0 > type1) {
+						std::swap(cell0, cell1);
+						std::swap(type0, type1);
 					}
-					else {
-						//then both cells should be all valid
-						if (fixed(cell1)) return 0;
-						real phi1 = levelset.phi(cell1);
-						if (phi0 >= 0 && phi1 >= 0) density = air_density;//all air
-						else if (phi0 < 0 && phi1 < 0) density = 1.0;//all fluid
-						else {
-							//cell0 and cell1 are in different phases
-							//theta means the fraction of the phase of cell0
-							//that works fine for both phi0<0 and phi0>=0
-							T theta = phi0 / (phi0 - phi1);
-							T den0 = 1.0, den1 = air_density;
-							if (phi0 >= 0) std::swap(den0, den1);
-							density = theta * den0 + (1.0 - theta) * den1;
-						}
+					
+					if (type0 == INVALID && type1 == INVALID) return 0;
+					if (type0 == INVALID && type1 == FLUID) return 1.0;
+					if (type0 == INVALID && type1 == AIR) return 1.0 / air_density;
+					if (type0 == INVALID && type1 == SOLID) return 0;
+					if (type0 == FLUID && type1 == FLUID) return 1.0;
+					if (type0 == FLUID && type1 == AIR) {//interface!
+						//todo: modify div
+						real phi0 = levelset.phi(cell0), phi1 = levelset.phi(cell1);
+						T theta = phi0 / (phi0 - phi1);
+						T den0 = 1.0, den1 = air_density;
+						real density = theta * den0 + (1.0 - theta) * den1;
+						return 1.0 / density;
 					}
-					return 1.0 / density;
+					if (type0 == FLUID && type1 == SOLID) return 0;
+					//type0,type1 in {AIR,SOLID}, the result is 0
+					return 0;
 				}
 			);
 		}

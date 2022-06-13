@@ -9,9 +9,6 @@
 #include <thrust/iterator/counting_iterator.h>
 
 namespace Meso {
-
-	enum CellType { Air = 0, Fluid, Solid };
-
 	template<class T, int d, DataHolder side = HOST>
 	class Field {
 		Typedef_VectorD(d);
