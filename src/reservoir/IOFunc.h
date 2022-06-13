@@ -17,7 +17,6 @@
 #include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
 
-#include <tiny_obj_loader.h>
 #include <igl/writeOBJ.h>
 #include <igl/readOBJ.h>
 namespace Meso {

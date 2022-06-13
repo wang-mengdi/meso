@@ -58,8 +58,7 @@ namespace Meso {
 			//vel_div=div(velocity)
 			Exterior_Derivative(vel_div, velocity);
 
-			int iter; real res;
-			MGPCG.Solve(pressure.Data(), vel_div.Data(), iter, res);
+			auto [iter, res] = MGPCG.Solve(pressure.Data(), vel_div.Data());
 			Info("Solve poisson with {} iters and residual {}", iter, res);
 
 			//velocity+=grad(p)

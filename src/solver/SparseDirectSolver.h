@@ -44,10 +44,10 @@ namespace Meso {
 					mapping.valuePtr(),
 					mapping.outIndexPtr(),
 					mapping.innerIndexPtr(),
-					ArrayFunc::Data<T, DEVICE>(b),
+					ArrayFunc::Data(b),
 					tolerance,
 					/*reorder*/0,
-					ArrayFunc::Data<T, DEVICE>(x),
+					ArrayFunc::Data(x),
 					&singularity
 				);
 			}
@@ -60,10 +60,10 @@ namespace Meso {
 					mapping.valuePtr(),
 					mapping.outIndexPtr(),
 					mapping.innerIndexPtr(),
-					ArrayFunc::Data<T, DEVICE>(b),
+					ArrayFunc::Data(b),
 					tolerance,
 					/*reorder*/0,
-					ArrayFunc::Data<T, DEVICE>(x),
+					ArrayFunc::Data(x),
 					&singularity
 				);
 			}

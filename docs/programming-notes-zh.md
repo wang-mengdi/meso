@@ -14,3 +14,4 @@
     CholeskySparseSolver<T> solver(SparseMatrix_From_PoissonLike(grid, poisson_mapping));
     ```
     把`CholeskySparseSolver`和`SparseMatrixMapping`的构造函数都设置成了传入右值。右值是一个比较tricky的领域，暂时不列入标准，只是进行一些探索。
+- 在函数参数里面放一个像`teplate<T> Array<T>`这样的东西，一般无法自动推导，因为`thrust::device_vector`或者`host_vector`都有两个模板参数，第一个是`T`，第二个是`allocator<T>`.

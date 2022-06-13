@@ -26,6 +26,8 @@ void Test_Grid(void) {
 }
 
 int main() {
+    ////Part 1: test reservoir
+    
     //Test_Grid<2>(); //a visual test, not included in general tests
 
     Test_Grid_Index<float>(Vector2i(114, 514));
@@ -49,6 +51,8 @@ int main() {
     Test_Center<float, 3>(Vector3i(36, 28, 478));
     Test_Center<double, 2>(Vector2i(74, 22));
     Test_Center<double, 3>(Vector3i(381, 7, 32));*/
+
+    ////Part 2: test sover
 
     Test_Sparse_Matrix();
     Test_CG_Memory_Safe();

@@ -73,14 +73,14 @@ namespace Meso {
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& coarser_data, const ArrayDv<T>& finer_data) {
 			Base::Memory_Check(coarser_data, finer_data, "Restrictor::Apply error: not enough space");
-			T* intp_ptr_old = ArrayFunc::Data<T, DEVICE>(intp_data_old);
-			T* intp_ptr_new = ArrayFunc::Data<T, DEVICE>(intp_data_new);
-			const T* original_ptr = ArrayFunc::Data<T, DEVICE>(finer_data);
+			T* intp_ptr_old = ArrayFunc::Data(intp_data_old);
+			T* intp_ptr_new = ArrayFunc::Data(intp_data_new);
+			const T* original_ptr = ArrayFunc::Data(finer_data);
 			for (int axis = 0; axis < d; axis++) {
 				finer_grid.Exec_Kernel(&Restrictor_Intp_Axis_Kernel<T, d>, axis, finer_grid, intp_ptr_new, axis == 0 ? original_ptr : intp_ptr_old);
 				std::swap(intp_ptr_old, intp_ptr_new);
 			}
-			coarser_grid.Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarser_grid, ArrayFunc::Data<T, DEVICE>(coarser_data), finer_grid, intp_ptr_old);
+			coarser_grid.Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarser_grid, ArrayFunc::Data(coarser_data), finer_grid, intp_ptr_old);
 			checkCudaErrors(cudaGetLastError());
 		}
 	};
@@ -119,8 +119,8 @@ namespace Meso {
 
 		virtual void Apply(ArrayDv<T>& coarse_data, const ArrayDv<T>& fine_data) {
 			Memory_Check(coarse_data, fine_data, "RestrictorSum::Apply error: not enough space");
-			T* coarse_ptr = ArrayFunc::Data<T, DEVICE>(coarse_data);
-			const T* fine_ptr = ArrayFunc::Data<T, DEVICE>(fine_data);
+			T* coarse_ptr = ArrayFunc::Data(coarse_data);
+			const T* fine_ptr = ArrayFunc::Data(fine_data);
 			coarse_grid.Exec_Kernel(&Restrictor_Sum_Coarse_Kernel<T, d>, coarse_grid, coarse_ptr, fine_grid, fine_ptr);
 			checkCudaErrors(cudaGetLastError());
 		}

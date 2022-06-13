@@ -104,7 +104,7 @@ enum DataHolder { HOST = 0, DEVICE };
 
 //Array
 template<class T, DataHolder side = DataHolder::HOST>
-using Array = typename std::conditional<side == DataHolder::HOST, thrust::host_vector<T>, thrust::device_vector<T>>::type;
+using Array = typename std::conditional<side == DataHolder::HOST, thrust::host_vector<T>, thrust::device_vector<T, thrust::device_allocator<T>>>::type;
 //template<class T> using Array = thrust::host_vector<T>;
 template<class T> using ArrayDv = thrust::device_vector<T>;//device array
 template<class T, DataHolder side = DataHolder::HOST> using ArrayPtr = std::shared_ptr<Array<T, side> >;

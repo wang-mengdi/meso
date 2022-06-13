@@ -148,13 +148,13 @@ namespace Meso {
 			temp_field_dev = div_host;
 
 			pressure_dev.Init(temp_field_dev.grid);
+			Info("phi: \n{}", levelset.phi);
 			Info("v: \n{}", velocity);
 			Info("rhs: \n{}", temp_field_dev);
 			Info("fixed_host: \n{}", fixed_host);
 			Info("vol: \n{}", vol_host);
 			Info("rhs max: {}", temp_field_dev.Max_Abs());
-			int iter; real res;
-			MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data(), iter, res);
+			auto [iter, res] = MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data());
 			Info("Solve poisson with {} iters and residual {}", iter, res);
 
 			Info("solved pressure: \n{}", pressure_dev);
@@ -169,6 +169,17 @@ namespace Meso {
 			Info("velocity after projection: \n{}", velocity);
 
 			Info("After projection max velocity {}", velocity.Max_Abs());
+
+			div_host.Calc_Nodes(
+				[&](const VectorDi cell) ->T{
+					if (fixed_host(cell)) return -1;
+					else return (cell[1] - 7) * (0.04);
+				}
+			);
+			pressure_dev = div_host;
+			Info("tentative pressure: \n{}", pressure_dev);
+			poisson.Apply(temp_field_dev.Data(), pressure_dev.Data());
+			Info("tentative Ap: \n{}", temp_field_dev);
 		}
 	};
 }

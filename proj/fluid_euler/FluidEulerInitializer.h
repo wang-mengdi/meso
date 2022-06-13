@@ -166,9 +166,7 @@ namespace Meso {
 			MG_precond.Init_Poisson(poisson, 2, 2);
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
 
-			int iter;
-			real error;
-			MGPCG.Solve(sol.Data(), wz.Data(), iter, error);
+			auto [iter, error] = MGPCG.Solve(sol.Data(), wz.Data());
 
 			Field<real, d> sol_host = sol;
 

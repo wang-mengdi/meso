@@ -172,18 +172,11 @@ namespace Meso {
 		template<class ArrayT> bool Has_Less_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] <= a1[i])return true; return false; }
 		template<class ArrayT> bool Has_Greater_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] >= a1[i])return true; return false; }
 
-		template<class T, DataHolder side>
-		constexpr T* Data(Array<T, side>& arr)noexcept {
+		template<class Array1>
+		constexpr auto Data(Array1& arr)noexcept {
 			return thrust::raw_pointer_cast(arr.data());
-			//if constexpr (side == HOST) return arr.data();
-			//else return thrust::raw_pointer_cast(arr.data());
 		}
-		template<class T, DataHolder side>
-		constexpr const T* Data(const Array<T, side>& arr)noexcept {
-			return thrust::raw_pointer_cast(arr.data());
-			//if constexpr (side == HOST) return arr.data();
-			//else return thrust::raw_pointer_cast(arr.data());
-		}
+
 		template<class T, DataHolder side>
 		bool Has_Zero(const Array<T, side>& a) {
 			if constexpr (side == HOST) {
@@ -238,19 +231,14 @@ namespace Meso {
 		void Fill(Array1& a, const T val) {
 			thrust::fill(a.begin(), a.end(), val);
 		}
-		template<class T>
-		T Dot(const Array<T, HOST>& a, decltype(a) b) {
-			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
-			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
-		}
-		template<class T>
-		T Dot(const ArrayDv<T>& a, decltype(a) b) {
-			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
-			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
+		template<class Array1>
+		double Dot(const Array1& a, decltype(a) b) {
+			Assert(a.size() == b.size(), "[ArrayFunc::Dot] try to dot length {} against {}", a.size(), b.size());
+			return thrust::inner_product(a.begin(), a.end(), b.begin(), (double)0);
 		}
 		template<class T, DataHolder side>
-		auto Norm(const Array<T,side>& a) {
-			real squared_norm = (real)Dot<T>(a, a);
+		double Norm(const Array<T,side>& a) {
+			double squared_norm = Dot(a, a);
 			return sqrt(squared_norm);
 		}
 		template<class T>
@@ -381,12 +369,12 @@ namespace Meso {
 		bool Is_Approx(const Array<T>& a, const Array<T>& b) {
 			//similar to isApprox() in Eigen
 			if (a.size() != b.size()) return false;
-			T a_norm2 = Dot<T>(a, a);
-			T b_norm2 = Dot<T>(b, b);
+			double a_norm2 = Dot(a, a);
+			double b_norm2 = Dot(b, b);
 			Array<T> res; res = a;
 			Minus<Array<T>>(res, b);
-			T res_norm2 = Dot<T>(res, res);
-			T p = Eigen::NumTraits<T>::dummy_precision();
+			double res_norm2 = Dot(res, res);
+			double p = Eigen::NumTraits<T>::dummy_precision();
 			return res_norm2 <= p * p * std::min(a_norm2, b_norm2);
 		}
 		template<class T>
