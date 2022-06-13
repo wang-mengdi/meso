@@ -19,7 +19,8 @@ namespace Meso {
 		FaceField() {}
 		FaceField(const Grid<d>& _grid) { Init(_grid); }
 		FaceField(const Grid<d>& _grid, const T value) { Init(_grid);  Fill(value); }
-		template<DataHolder side1> FaceField(const FaceField<T, d, side1>& f1) { Init(f1); }
+		template<DataHolder side1> FaceField(const FaceField<T, d, side1>& f1) { Deep_Copy(f1); }
+		template<DataHolder side1> FaceField(FaceField<T, d, side1>& f1) { Deep_Copy(f1); }
 		void Fill(const T value) { for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(*face_data[axis], value); }
 		void Init(const Grid<d>& _grid, const T value) { Init(_grid); Fill(value); }
 		void Init(const Grid<d>& _grid) {

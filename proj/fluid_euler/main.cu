@@ -35,6 +35,10 @@ void Run_FluidFreeSurface(json& j) {
 }
 
 int main(int argc, char **argv) {
+	Array<real> a; a.resize(5);
+	Array<real> b = a;
+	Info("a ptr: {}", (void*)ArrayFunc::Data(a));
+	Info("b ptr: {}", (void*)ArrayFunc::Data(b));
 	try {
 		json j = {
 			{

@@ -164,9 +164,11 @@ namespace Meso {
 			Info("rhs: \n{}", temp_field_dev);
 			Info("rhs max: {}", temp_field_dev.Max_Abs());
 			FieldDv<T, d> rhs = temp_field_dev;
-			Info("saved rhs: \n{}", rhs);
+			//Info("saved rhs: \n{}", rhs);
 			Info("rhs data ptr: {}", (void*)rhs.Data_Ptr());
-			Info("temp_field_dev data ptr: {}", (void*)rhs.Data_Ptr());
+			Info("temp_field_dev data ptr: {}", (void*)temp_field_dev.Data_Ptr());
+
+			return;
 
 			pressure_dev.Init(temp_field_dev.grid);
 			auto [iter, res] = MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data());
