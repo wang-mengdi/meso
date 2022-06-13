@@ -145,9 +145,9 @@ namespace Meso {
 		int row_nnz = (d == 2 ? 5 : 7);
 		for (int flag = 0; flag < row_nnz; flag++) {//set all cells with color==flag to 1 and others to 0
 			PoissonLikeMask<d> mask(flag);
-			grid.Exec_Kernel(&Set_Cell_By_Color<T, d>, grid, mask, ArrayFunc::Data<T, DEVICE>(temp_p));
+			grid.Exec_Kernel(&Set_Cell_By_Color<T, d>, grid, mask, ArrayFunc::Data(temp_p));
 			poisson_like.Apply(temp_Ap, temp_p);
-			grid.Exec_Kernel(&Fill_Dense_Matrix_From_Result<T, d>, grid, mask, ArrayFunc::Data<T, DEVICE>(temp_Ap), rows, ArrayFunc::Data<T, DEVICE>(A));
+			grid.Exec_Kernel(&Fill_Dense_Matrix_From_Result<T, d>, grid, mask, ArrayFunc::Data(temp_Ap), rows, ArrayFunc::Data(A));
 		}
 		for (int i = 0; i < rows; i++) {
 			A[i * rows + i] += diag_add_epsilon;

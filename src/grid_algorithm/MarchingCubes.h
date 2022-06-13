@@ -490,8 +490,8 @@ namespace Meso {
 		// 1. Reserve memory for mesh
 		grid.Exec_Kernel(
 			&Mesh_Count<T, d>,
-			cell_counts, grid, field.Data_Ptr(), iso_value, ArrayFunc::Data<Grid<d>, DEVICE>(edge_grid_dv), // const data
-			ArrayFunc::Data<int, DEVICE>(mesh_count), v_idx_on_edge[0].Data_Ptr(), v_idx_on_edge[1].Data_Ptr(), v_idx_on_edge[2].Data_Ptr()
+			cell_counts, grid, field.Data_Ptr(), iso_value, ArrayFunc::Data(edge_grid_dv), // const data
+			ArrayFunc::Data(mesh_count), v_idx_on_edge[0].Data_Ptr(), v_idx_on_edge[1].Data_Ptr(), v_idx_on_edge[2].Data_Ptr()
 		);
 
 		// 2. Generate vertices
@@ -511,7 +511,7 @@ namespace Meso {
 		for (size_t i = 0; i < d; i++) edge_grid[i].Exec_Kernel(
 			&Gen_Vertice<T, d>,
 			cell_counts, grid, field.Data_Ptr(), iso_value, edge_grid_dv[i], i, // const data
-			v_idx_on_edge[i].Data_Ptr(), ArrayFunc::Data<Vector<T, d>, DEVICE>(vertices)
+			v_idx_on_edge[i].Data_Ptr(), ArrayFunc::Data(vertices)
 		);
 
 		// 3. Generate Meshes
@@ -523,10 +523,10 @@ namespace Meso {
 			&Generate_Mesh_Kernel<T, d>,
 			cell_counts,
 			grid, field.Data_Ptr(), iso_value,
-			ArrayFunc::Data<int, DEVICE>(mesh_count),
-			ArrayFunc::Data<Grid<d>, DEVICE>(edge_grid_dv),
+			ArrayFunc::Data(mesh_count),
+			ArrayFunc::Data(edge_grid_dv),
 			v_idx_on_edge[0].Data_Ptr(), v_idx_on_edge[1].Data_Ptr(), v_idx_on_edge[2].Data_Ptr(),
-			ArrayFunc::Data<VectorEi, DEVICE>(elements)
+			ArrayFunc::Data(elements)
 		);
 
 		//copy here
