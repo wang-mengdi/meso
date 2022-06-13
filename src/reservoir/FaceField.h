@@ -47,15 +47,9 @@ namespace Meso {
 		}
 
 		template<DataHolder side1>
-		FaceField<T, d, side>& operator = (const FaceField<T, d, side1>& f1) {
-			Deep_Copy(f1);
-			return *this;
-		}
+		FaceField<T, d, side>& operator = (const FaceField<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
 		template<DataHolder side1>
-		FaceField<T, d, side>& operator = (FaceField<T, d, side1>& f1) {
-			Deep_Copy(f1);
-			return *this;
-		}
+		FaceField<T, d, side>& operator = (FaceField<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
 		inline T& operator()(const int axis, const VectorDi face) { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
 		inline const T& operator()(int axis, const VectorDi face) const { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
 		inline const T Get(int axis, const VectorDi face) const { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }

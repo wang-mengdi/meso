@@ -168,39 +168,37 @@ namespace Meso {
 			Info("rhs data ptr: {}", (void*)rhs.Data_Ptr());
 			Info("temp_field_dev data ptr: {}", (void*)temp_field_dev.Data_Ptr());
 
-			return;
-
 			pressure_dev.Init(temp_field_dev.grid);
 			auto [iter, res] = MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data());
 			Info("Solve poisson with {} iters and residual {}", iter, res);
 
 			Info("solved pressure: \n{}", pressure_dev);
 
-			////velocity+=grad(p)
-			//Exterior_Derivative(temp_velocity_dev, pressure_dev);
-			//temp_velocity_dev *= poisson.vol;
+			//velocity+=grad(p)
+			Exterior_Derivative(temp_velocity_dev, pressure_dev);
+			temp_velocity_dev *= poisson.vol;
 
-			//velocity += temp_velocity_dev;
-			//velocity_bc.Apply(velocity);
+			velocity += temp_velocity_dev;
+			velocity_bc.Apply(velocity);
 
-			//Info("velocity after projection: \n{}", velocity);
+			Info("velocity after projection: \n{}", velocity);
 
-			//Info("After projection max velocity {}", velocity.Max_Abs());
+			Info("After projection max velocity {}", velocity.Max_Abs());
 
-			//div_host.Calc_Nodes(
-			//	[&](const VectorDi cell) ->T{
-			//		if (fixed_host(cell)) return 0;
-			//		else return (cell[1] - 7) * (0.04);
-			//	}
-			//);
-			//pressure_dev = div_host;
-			//Info("tentative pressure: \n{}", pressure_dev);
-			//
-			//poisson.Apply(temp_field_dev.Data(), pressure_dev.Data());
+			div_host.Calc_Nodes(
+				[&](const VectorDi cell) ->T{
+					if (fixed_host(cell)) return 0;
+					else return (cell[1] - 7) * (0.04);
+				}
+			);
+			pressure_dev = div_host;
+			Info("tentative pressure: \n{}", pressure_dev);
+			
+			poisson.Apply(temp_field_dev.Data(), pressure_dev.Data());
 			Info("tentative Ap: \n{}", temp_field_dev);
 			Info("rhs: {}", rhs);
 			temp_field_dev -= rhs;
-			//Info("residual: \n{}", temp_field_dev);
+			Info("residual: \n{}", temp_field_dev);
 		}
 	};
 }

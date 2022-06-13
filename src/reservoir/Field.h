@@ -54,23 +54,15 @@ namespace Meso {
 
 		template<DataHolder side1>
 		void Deep_Copy(const Field<T, d, side1>& f1) {
-			Info("deep copy here");
 			Init(f1.grid);
 			//deep copy
 			ArrayFunc::Copy(*data, f1.Data());
 		}
 
 		template<DataHolder side1>
-		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) {
-			Info("field operator const = here");
-			Deep_Copy(f1);
-			return *this;
-		}
+		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
 		template<DataHolder side1>
-		Field<T, d, side>& operator = (Field<T, d, side1>& f1) {
-			Deep_Copy(f1);
-			return *this;
-		}
+		Field<T, d, side>& operator = (Field<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
 		inline T& operator()(const VectorDi coord) { return (*data)[grid.Index(coord)]; }
 		inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 		const T Get(const VectorDi coord)const { return (*data)[grid.Index(coord)]; }
