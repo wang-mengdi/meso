@@ -22,7 +22,10 @@ namespace Meso {
 		Field(const Grid<d>& _grid, std::shared_ptr<Array<T, side>> _data) { grid = _grid; data = _data; }
 		Field(const Grid<d>& _grid) { Init(_grid); }
 		Field(const Grid<d> _grid, const T value) { Init(_grid, value); }
-		template<DataHolder side1> Field(const Field<T, d, side1>& f1) { *this = f1; }
+		template<DataHolder side1> Field(const Field<T, d, side1>& f1) {
+			Info("field assign here");
+			*this = f1;
+		}
 		void Init(const Grid<d> _grid) {
 			grid = _grid;
 			if (data == nullptr) data = std::make_shared<Array<T, side>>(grid.DoF());
@@ -53,9 +56,10 @@ namespace Meso {
 
 		template<DataHolder side1>
 		void Deep_Copy(const Field<T, d, side1>& f1) {
+			Info("deep copy here");
 			Init(f1.grid);
 			//deep copy
-			*data = f1.Data();
+			ArrayFunc::Copy(*data, f1.Data());
 		}
 
 		template<DataHolder side1>

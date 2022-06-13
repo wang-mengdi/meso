@@ -48,10 +48,6 @@ namespace Meso {
 			vol_bc.Init(face_fixed, vol);
 			levelset.Init(velocity.grid, geom);
 
-			Info("fixed: \n{}", fixed);
-			Info("face_fixed: \n{}", face_fixed);
-			Info("initial_velocity: \n{}", initial_velocity);
-
 			poisson.Init(velocity.grid);
 			MG_precond.Allocate_Poisson(velocity.grid);
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
@@ -63,27 +59,41 @@ namespace Meso {
 			vol.Init(grid);
 			div.Init(grid);
 
+			//Rule for fixed: if in fixed_bc or phi>=0, set fixed=true, otherwise false
+			//Rule for div: if fixed, set to 0. If is the fluid cell in interface, modify with jump
+			//otherwise div remain the same
+
 			//first mark all boundary condition of fixed cells
 			fixed_bc.Apply(fixed);
 			//then mark all air cells to fixed
 			fixed.Exec_Nodes(
 				[&](const VectorDi cell) {
 					if (levelset.phi(cell) >= 0) fixed(cell) = true;
+					if (fixed(cell)) div(cell) = 0;
 				}
 			);
-			vol.Exec_Faces(
-				[&](const int axis, const VectorDi face) {
+			vol.Calc_Faces(
+				[&](const int axis, const VectorDi face)->T {
+					//If both two nb cells are invalie, then vol is 0 (outside the boundary)
+					//If at least one in two nb cells are fixed, then vol is 0
+					//If one in two nb cells are invalid, then vol is just 1/rho
+					//If two nb cells are valid, that depends on whether they're
+					//all-fluid, all-air or an interface
 					real density = 0;
 					VectorDi cell0 = face - VectorDi::Unit(axis), cell1 = face;
-					//there must be at least 1 valid cell
 					if (!vol.grid.Valid(cell0)) std::swap(cell0, cell1);
-					real phi0 = levelset.phi(cell0), phi1 = levelset.phi(cell1);
+					if (!vol.grid.Valid(cell0)) return 0;
+					//cell0 must be valid
+					if (fixed(cell0)) return 0;
+					real phi0 = levelset.phi(cell0);
 					if (!vol.grid.Valid(cell1)) {
 						if (phi0 >= 0) density = air_density;
 						else density = 1.0;
 					}
 					else {
 						//then both cells should be all valid
+						if (fixed(cell1)) return 0;
+						real phi1 = levelset.phi(cell1);
 						if (phi0 >= 0 && phi1 >= 0) density = air_density;//all air
 						else if (phi0 < 0 && phi1 < 0) density = 1.0;//all fluid
 						else {
@@ -96,7 +106,7 @@ namespace Meso {
 							density = theta * den0 + (1.0 - theta) * den1;
 						}
 					}
-					vol(axis, face) = 1.0 / density;
+					return 1.0 / density;
 				}
 			);
 		}
@@ -147,39 +157,48 @@ namespace Meso {
 			MG_precond.Update_Poisson(poisson, 2, 2);
 			temp_field_dev = div_host;
 
-			pressure_dev.Init(temp_field_dev.grid);
 			Info("phi: \n{}", levelset.phi);
 			Info("v: \n{}", velocity);
-			Info("rhs: \n{}", temp_field_dev);
 			Info("fixed_host: \n{}", fixed_host);
 			Info("vol: \n{}", vol_host);
+			Info("rhs: \n{}", temp_field_dev);
 			Info("rhs max: {}", temp_field_dev.Max_Abs());
+			FieldDv<T, d> rhs = temp_field_dev;
+			Info("saved rhs: \n{}", rhs);
+			Info("rhs data ptr: {}", (void*)rhs.Data_Ptr());
+			Info("temp_field_dev data ptr: {}", (void*)rhs.Data_Ptr());
+
+			pressure_dev.Init(temp_field_dev.grid);
 			auto [iter, res] = MGPCG.Solve(pressure_dev.Data(), temp_field_dev.Data());
 			Info("Solve poisson with {} iters and residual {}", iter, res);
 
 			Info("solved pressure: \n{}", pressure_dev);
 
-			//velocity+=grad(p)
-			Exterior_Derivative(temp_velocity_dev, pressure_dev);
-			temp_velocity_dev *= poisson.vol;
+			////velocity+=grad(p)
+			//Exterior_Derivative(temp_velocity_dev, pressure_dev);
+			//temp_velocity_dev *= poisson.vol;
 
-			velocity += temp_velocity_dev;
-			velocity_bc.Apply(velocity);
+			//velocity += temp_velocity_dev;
+			//velocity_bc.Apply(velocity);
 
-			Info("velocity after projection: \n{}", velocity);
+			//Info("velocity after projection: \n{}", velocity);
 
-			Info("After projection max velocity {}", velocity.Max_Abs());
+			//Info("After projection max velocity {}", velocity.Max_Abs());
 
-			div_host.Calc_Nodes(
-				[&](const VectorDi cell) ->T{
-					if (fixed_host(cell)) return -1;
-					else return (cell[1] - 7) * (0.04);
-				}
-			);
-			pressure_dev = div_host;
-			Info("tentative pressure: \n{}", pressure_dev);
-			poisson.Apply(temp_field_dev.Data(), pressure_dev.Data());
+			//div_host.Calc_Nodes(
+			//	[&](const VectorDi cell) ->T{
+			//		if (fixed_host(cell)) return 0;
+			//		else return (cell[1] - 7) * (0.04);
+			//	}
+			//);
+			//pressure_dev = div_host;
+			//Info("tentative pressure: \n{}", pressure_dev);
+			//
+			//poisson.Apply(temp_field_dev.Data(), pressure_dev.Data());
 			Info("tentative Ap: \n{}", temp_field_dev);
+			Info("rhs: {}", rhs);
+			temp_field_dev -= rhs;
+			//Info("residual: \n{}", temp_field_dev);
 		}
 	};
 }

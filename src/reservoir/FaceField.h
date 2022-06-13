@@ -41,7 +41,7 @@ namespace Meso {
 			Init(f1.grid);
 			for (int i = 0; i < d; i++) {
 				//deep copy
-				*face_data[i] = f1.Data(i);
+				ArrayFunc::Copy(*face_data[i], f1.Data(i));
 			}
 		}
 
