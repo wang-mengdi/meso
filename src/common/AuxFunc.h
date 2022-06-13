@@ -370,12 +370,12 @@ namespace Meso {
 		bool Is_Approx(const Array<T>& a, const Array<T>& b) {
 			//similar to isApprox() in Eigen
 			if (a.size() != b.size()) return false;
-			T a_norm2 = Dot<T>(a, a);
-			T b_norm2 = Dot<T>(b, b);
+			double a_norm2 = Dot(a, a);
+			double b_norm2 = Dot(b, b);
 			Array<T> res; res = a;
 			Minus<Array<T>>(res, b);
-			T res_norm2 = Dot<T>(res, res);
-			T p = Eigen::NumTraits<T>::dummy_precision();
+			double res_norm2 = Dot(res, res);
+			double p = Eigen::NumTraits<T>::dummy_precision();
 			return res_norm2 <= p * p * std::min(a_norm2, b_norm2);
 		}
 		template<class T>
