@@ -235,20 +235,14 @@ namespace Meso {
 		void Fill(Array1& a, const T val) {
 			thrust::fill(a.begin(), a.end(), val);
 		}
-		template<class T>
-		double Dot(const Array<T, HOST>& a, decltype(a) b) {
-			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
+		template<class Array1>
+		double Dot(const Array1& a, decltype(a) b) {
+			Assert(a.size() == b.size(), "[ArrayFunc::Dot] try to dot length {} against {}", a.size(), b.size());
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (double)0);
 		}
-		template<class T>
-		double Dot(const ArrayDv<T>& a, decltype(a) b) {
-			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
-			return thrust::inner_product(a.begin(), a.end(), b.begin(), (double)0);
-		}
-
 		template<class T, DataHolder side>
-		auto Norm(const Array<T,side>& a) {
-			real squared_norm = (real)Dot<T>(a, a);
+		double Norm(const Array<T,side>& a) {
+			double squared_norm = Dot(a, a);
 			return sqrt(squared_norm);
 		}
 
