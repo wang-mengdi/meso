@@ -1,4 +1,6 @@
 includes("./../../src/reservoir/xmake.lua")
+includes("./../../src/geometry/xmake.lua")
+includes("./../../src/solver/xmake.lua")
 target("particle_algorithm")
     set_kind("static")
     add_headerfiles("*.h")
@@ -9,4 +11,5 @@ target("particle_algorithm")
     add_cuflags("-Xcompiler /openmp")
     add_includedirs(".",{public=true})
     add_deps("reservoir")
-    
+    add_deps("geometry")
+    add_deps("solver")

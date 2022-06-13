@@ -184,7 +184,6 @@ namespace Meso {
 			//if constexpr (side == HOST) return arr.data();
 			//else return thrust::raw_pointer_cast(arr.data());
 		}
-
 		template<class T, DataHolder side>
 		bool Has_Zero(const Array<T, side>& a) {
 			if constexpr (side == HOST) {
@@ -196,7 +195,6 @@ namespace Meso {
 			}
 			return false;
 		}
-
 		template<class T, DataHolder side>
 		bool Is_Finite(const Array<T, side>& a) {
 			if constexpr (side == HOST) {
@@ -208,14 +206,12 @@ namespace Meso {
 			}
 			return true;
 		}
-
 		template<class T>
 		bool Equals(const Array<T, HOST>& a, decltype(a) b) {
 			if (a.size() != b.size()) return false;
 			for (int i = 0; i < a.size(); i++) if (a[i] != b[i]) return false;
 			return true;
 		}
-
 		template<class T>
 		T Max_Abs(const Array<T>& a) {
 			return thrust::reduce(
@@ -238,7 +234,6 @@ namespace Meso {
 				}
 			);
 		}
-
 		template<class Array1, class T>
 		void Fill(Array1& a, const T val) {
 			thrust::fill(a.begin(), a.end(), val);
@@ -253,13 +248,11 @@ namespace Meso {
 			Assert(a.size() == b.size(), "[GPUFunc::Dot] try to dot length {} against {}", a.size(), b.size());
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (T)0);
 		}
-
 		template<class T, DataHolder side>
 		auto Norm(const Array<T,side>& a) {
 			real squared_norm = (real)Dot<T>(a, a);
 			return sqrt(squared_norm);
 		}
-
 		template<class T>
 		int Largest_Norm_Element(const Array<T>& arr)
 		{
@@ -273,14 +266,21 @@ namespace Meso {
 			}
 			return idx;
 		}
-
 		template<class T> 
 		real Largest_Norm(const Array<T>& arr) {
 			int idx = Largest_Norm_Element<T>(arr);
 			if (idx < 0) return 0;
 			else return arr[idx].norm();
 		}
-
+		template<class T>
+		T Sum(const Array<T>& v) {
+			return thrust::reduce(
+					v.begin(),
+					v.end(),
+					(T)0,
+					thrust::plus<T>()
+				);
+		}
 		template<class T> 
 		T Mean(const Array<T>& v) { 
 			return 1. / (real)v.size() *
@@ -301,7 +301,6 @@ namespace Meso {
 					[=](const T a, const T b) { return std::abs(a) + std::abs(b); }
 			);
 		}
-
 		//scalar multiplication, a*=b (where b is a scalar)
 		template<class Array1, class T>
 		void Multiply_Scalar(Array1& a, const T b) {
@@ -331,7 +330,6 @@ namespace Meso {
 		void Minus(Array1& a, const Array2& b) {
 			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 - _2);
 		}
-
 		//a=b, note it's reverse order of thrust::copy itself
 		template<class Array1, class Array2>
 		void Copy(Array1& a, const Array2& b) {
@@ -379,7 +377,6 @@ namespace Meso {
 		void Binary_Transform(const Array1& a, const Array2& b, TTFuncT func, Array3& c) {
 			thrust::transform(a.begin(), a.end(), b.begin(), c.begin(), func);
 		}
-
 		template<class T>
 		bool Is_Approx(const Array<T>& a, const Array<T>& b) {
 			//similar to isApprox() in Eigen
@@ -397,7 +394,6 @@ namespace Meso {
 			Array<T> a_host = a, b_host = b;
 			return Is_Approx<T>(a_host, b_host);
 		}
-
 //		////Dim conversion for vectors and vector arrays
 //		template<class T, int d1, int d2> void Dim_Conversion(const Vector<T, d1>& input, Vector<T, d2>& output, const T filled_value = (T)0)
 //		{
