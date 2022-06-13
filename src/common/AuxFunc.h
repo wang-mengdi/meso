@@ -172,18 +172,10 @@ namespace Meso {
 		template<class ArrayT> bool Has_Less_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] <= a1[i])return true; return false; }
 		template<class ArrayT> bool Has_Greater_Equal(const ArrayT& a0, const ArrayT& a1) { for (auto i = 0; i < a0.size(); i++)if (a0[i] >= a1[i])return true; return false; }
 
-		template<class T, DataHolder side>
-		constexpr T* Data(Array<T, side>& arr)noexcept {
-			return thrust::raw_pointer_cast(arr.data());
-			//if constexpr (side == HOST) return arr.data();
-			//else return thrust::raw_pointer_cast(arr.data());
-		}
-		template<class T, DataHolder side>
-		constexpr const T* Data(const Array<T, side>& arr)noexcept {
-			return thrust::raw_pointer_cast(arr.data());
-			//if constexpr (side == HOST) return arr.data();
-			//else return thrust::raw_pointer_cast(arr.data());
-		}
+		template<class T> constexpr T* Data(Array<T, HOST>& arr)noexcept { return thrust::raw_pointer_cast(arr.data()); }
+		template<class T> constexpr const T* Data(const Array<T, HOST>& arr)noexcept { return thrust::raw_pointer_cast(arr.data()); }
+		template<class T> constexpr T* Data(Array<T, DEVICE>& arr)noexcept { return thrust::raw_pointer_cast(arr.data()); }
+		template<class T> constexpr const T* Data(const Array<T, DEVICE>& arr)noexcept { return thrust::raw_pointer_cast(arr.data()); }
 
 		template<class T, DataHolder side>
 		bool Has_Zero(const Array<T, side>& a) {

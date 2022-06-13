@@ -76,9 +76,9 @@ namespace Meso {
 
 			ArrayFunc::Copy(x, b);
 
-			T* A_ptr = ArrayFunc::Data<T, DEVICE>(A);
-			int* piv_ptr = ArrayFunc::Data<int, DEVICE>(piv);
-			T* x_ptr = ArrayFunc::Data<T, DEVICE>(x);
+			T* A_ptr = ArrayFunc::Data(A);
+			int* piv_ptr = ArrayFunc::Data(piv);
+			T* x_ptr = ArrayFunc::Data(x);
 			cusolverStatus_t flg;
 			//int* info_ptr = ArrayFunc::Data<int, DEVICE>(info);
 			int* info_ptr = thrust::raw_pointer_cast(info.data());
