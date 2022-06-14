@@ -11,7 +11,15 @@
 using namespace Meso;
 #define __THRUST_HAS_CUDART__
 int main(){
+	Test_Fast_Marching<2, HOST>(Vector2i(16, 16));
+	//Test_FMM_Circle<2, PointIntpLinearPadding0, HOST>(0.02, Vector<real, 2>::Zero(), 1);
+	return 0;
+
 	Test_Marching_Cubes<float>(1, true); // verify by opening marching_cubes.obj
+
+	Test_Fast_Marching<2, HOST>(Vector2i(192, 168));
+	Test_Fast_Marching<3, HOST>(Vector3i(62, 40, 83));
+
 	// Test_Marching_Cubes<double>(1, false);
 
 	/// prime test
