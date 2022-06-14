@@ -68,22 +68,22 @@ namespace Meso {
 			}
 		);
 
-		Info("levelset before marching: \n{}", levelset.phi);
+		//Info("levelset before marching: \n{}", levelset.phi);
 
 		//fast marching
 		levelset.Fast_Marching(-1);
 
-		Info("levelset after marching: \n{}", levelset.phi);
+		//Info("levelset after marching: \n{}", levelset.phi);
 		
 		LevelSet<d> analytical_levelset(grid);
 		analytical_levelset.Init(grid, sphere);
-		Info("analytical levelset: \n{}", analytical_levelset.phi);
+		//Info("analytical levelset: \n{}", analytical_levelset.phi);
 
 		Field<real, d> fmm_error, analytical_error;
 		Fill_Fast_Marching_Error(fmm_error, levelset);
 		Fill_Fast_Marching_Error(analytical_error, analytical_levelset);
 		Info("fast marching error: \n{}", fmm_error);
-		Info("analytical error: \n{}", analytical_error);
+		//Info("analytical error: \n{}", analytical_error);
 
 		real max_err = fmm_error.Max_Abs();
 		real eps = sqrt(std::numeric_limits<real>::epsilon());
