@@ -204,7 +204,7 @@ namespace Meso {
 			}
 		}
 
-		////parallel iterators
+		//serial iterator
 		template<class CFunc>
 		void Iterate_Nodes(CFunc f)const {
 			const int dof = DoF();
@@ -214,13 +214,14 @@ namespace Meso {
 			}
 		}
 
+		//parallel iterator
 		template<class CFunc>//Fcell is a (void) function takes a cell index
 		void Exec_Nodes(CFunc f) const {
 			const int dof = DoF();
 #pragma omp parallel for
 			for (int c = 0; c < dof; c++) {
-				const VectorDi cell = Coord(c);
-				f(cell);
+				const VectorDi node = Coord(c);
+				f(node);
 			}
 		}
 

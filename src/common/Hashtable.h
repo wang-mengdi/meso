@@ -14,8 +14,8 @@ namespace Meso {
 	template<class T> struct MesoHash {
 		typedef T argument_type; typedef std::size_t result_type;
 		result_type operator()(argument_type const& arg) const {
-			if constexpr (std::is_same<T, Vector1i>::value) {
-				result_type const h1(std::hash<int>()(arg[0])); return h1;
+			if constexpr (std::is_same<T, int>::value) {
+				result_type const h1(std::hash<int>()(arg)); return h1;
 			}
 			else if constexpr (std::is_same<T, Vector2i>::value) {
 				result_type const h1(std::hash<int>()(arg[0])); result_type const h2(std::hash<int>()(arg[1])); return h1 ^ (h2 << 1);

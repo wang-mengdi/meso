@@ -49,6 +49,7 @@ using VectorX=Eigen::VectorX##t;        \
 using Matrix2=Eigen::Matrix2##t;        \
 using Matrix3=Eigen::Matrix3##t;        \
 using Matrix4=Eigen::Matrix4##t;        \
+using MatrixX=Eigen::MatrixX##t;        \
 using C=std::complex<real>;             \
 using Quaternion=Eigen::Quaternion##t;  \
 using AngleAxis=Eigen::AngleAxis##t;	
@@ -89,9 +90,7 @@ template<class T, int n, int m, Eigen::StorageOptions opt = Eigen::RowMajor> usi
 
 #define Typedef_VectorD(d) \
 using VectorD=Vector<real,d>; \
-using VectorDi=Vector<int,d>; \
-using VectorT = Vector<real, d-1>; \
-using VectorTi = Vector<int, d-1>;
+using VectorDi=Vector<int,d>;
 #define Typedef_MatrixD(d) \
 using MatrixD=Matrix<real,d,d>;
 #define Typedef_VectorEi(d) \
