@@ -118,7 +118,18 @@ namespace Meso {
 			}
 		}
 
-		////Staggered grid interfaces
+		////Geometry interfaces
+		//Explain the grid as a collocation grid, extract the cell grid
+		__host__ __device__ Grid<d> Cell_Grid(const GridType gtype = COLLOC)const {
+			if (gtype == COLLOC) {
+				return Grid<d>(counts, dx, pos_min + VectorD::Ones() * 0.5 * dx, COLLOC);
+			}
+			else {
+				return Grid<d>(counts, dx, pos_min, MAC);
+			}
+		}
+
+		//Explain the grid as a MAC grid, extract faces
 		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += Grid<d>::Block_Size(); return fcounts; }
 		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
 		__host__ __device__ VectorD Face_Center(const int axis, const VectorDi face) {
@@ -181,9 +192,6 @@ namespace Meso {
 			return face;
 		}
 		
-
-		__host__ __device__ VectorD Cell_Center(const VectorDi& cell) const { return pos_min + (cell.template cast<real>() + (real).5 * VectorD::Ones()) * dx; }
-
 		//// here is for adjacent, added by Zhiqi Li
 		__host__ __device__ VectorDi Nb_C(const VectorDi& coord, const int i) {
 			if constexpr (d == 2) {

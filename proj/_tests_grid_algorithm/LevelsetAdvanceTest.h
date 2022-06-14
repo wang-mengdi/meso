@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 // Test leveset on GPU and this is advanced test by senario examples
-// Copyright (c) (2022-), Zhiqi Li
+// Copyright (c) (2022-), Zhiqi Li, Mengdi Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
@@ -8,6 +8,33 @@
 #include "Timer.h"
 
 namespace Meso {
+	//Mengdi
+	template<int d, DataHolder side>
+	void Test_Fast_Marching(const Vector<int, d> counts) {
+		Typedef_VectorD(d);
+		VectorD domain_min = MathFunc::V<d>(-0.9, -1.2, 3);
+		Grid<d> grid(counts, 0.01, domain_min, MAC);
+		LevelSet<d, IntpLinearClamp, HOST> levelset(grid);
+		VectorD domain_max = grid.Domain_Max();
+		VectorD domain_len = domain_max - domain_min;
+		real min_side = domain_len.minCoeff();
+		Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.6);
+		levelset.phi.Calc_Nodes(
+			[&](const VectorDi cell) {
+				VectorD pos = grid.Position(cell);
+				real phi = sphere.Phi(pos);
+				if (phi < 2 * grid.dx) return phi;
+				else return std::numeric_limits<real>::max();
+			}
+		);
+		levelset.Fast_Marching(-1);
+		levelset.phi.Iterate_Nodes(
+			[&](const VectorDi cell) {
+
+			}
+		);
+	}
+
 	/// Here, we test the fast marching method
 	template<int d, class PointIntp,DataHolder side=HOST>
 	void Test_FMM_Circle(real dx, Vector<real, d> center = Vector<real, d>::Zero(), real radius = (real)1) {
