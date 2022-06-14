@@ -118,7 +118,48 @@ namespace Meso {
 			}
 		}
 
-		////Staggered grid interfaces
+		//// Navigate on adjacent nodes
+		//added by Zhiqi Li
+		__host__ __device__ constexpr static int Neighbor_Node_Number(void) { return d * 2; }
+		__host__ __device__ static VectorDi Neighbor_Node(const VectorDi coord, const int i) {
+			if constexpr (d == 2) {
+				const Vector2i neighbor_offset[4] = { Vector2i(-1,0),Vector2i(0,-1),Vector2i(0,1),Vector2i(1,0) };
+				return coord + neighbor_offset[i];
+			}
+			else if constexpr (d == 3) {
+				const Vector3i neighbor_offset[6] = { Vector3i(-1,0,0),Vector3i(0,-1,0),Vector3i(0,0,-1),Vector3i(0,0,1),Vector3i(0,1,0),Vector3i(1,0,0) };
+				return coord + neighbor_offset[i];
+			}
+		}
+		__host__ __device__ static VectorDi Neighbor_Node(const VectorDi coord, const int axis, const int side) {
+			if constexpr (d == 2) {
+				const int nb_ids[2][2] = { 0,3,1,2 }; return Grid<d>::Neighbor_Node(coord, nb_ids[axis][side]);
+			}
+			else if constexpr (d == 3) {
+				const int nb_ids[3][2] = { 0,5,1,4,2,3 }; return Grid<d>::Neighbor_Node(coord, nb_ids[axis][side]);
+			}
+		}
+		__host__ __device__ static int Neighbor_Node_Axis(const int i) {
+			if constexpr (d == 2) {
+				const int axies[4] = { 0,1,1,0 }; return axies[i];
+			}
+			else if constexpr (d == 3) {
+				const int axies[6] = { 0,1,2,2,1,0 }; return axies[i];
+			}
+		}
+
+		////Geometry interfaces
+		//Explain the grid as a collocation grid, extract the cell grid
+		__host__ __device__ Grid<d> Cell_Grid(const GridType gtype = COLLOC)const {
+			if (gtype == COLLOC) {
+				return Grid<d>(counts, dx, pos_min + VectorD::Ones() * 0.5 * dx, COLLOC);
+			}
+			else {
+				return Grid<d>(counts, dx, pos_min, MAC);
+			}
+		}
+
+		//Explain the grid as a MAC grid, extract faces
 		__host__ __device__ VectorDi Face_Counts(const int axis)const { VectorDi fcounts = counts; fcounts[axis] += Grid<d>::Block_Size(); return fcounts; }
 		__host__ __device__ int Face_DoF(int axis)const { return Face_Counts(axis).prod(); }
 		__host__ __device__ VectorD Face_Center(const int axis, const VectorDi face) {
@@ -179,29 +220,6 @@ namespace Meso {
 				//face[2] = ((b / nbx / nby) << 2) + (axis == 0) * idy + (axis == 1) * idy + (axis == 2) * idz;
 			}
 			return face;
-		}
-		
-
-		__host__ __device__ VectorD Cell_Center(const VectorDi& cell) const { return pos_min + (cell.template cast<real>() + (real).5 * VectorD::Ones()) * dx; }
-
-		//// here is for adjacent, added by Zhiqi Li
-		__host__ __device__ VectorDi Nb_C(const VectorDi& coord, const int i) {
-			if constexpr (d == 2) {
-				VectorDi neighbor_offset[4] = { VectorDi(-1,0),VectorDi(0,-1),VectorDi(0,1),VectorDi(1,0) };
-				return coord + neighbor_offset[i];
-			}
-			else if constexpr (d == 3) {
-				VectorDi neighbor_offset[6] = { VectorDi(-1,0,0),VectorDi(0,-1,0),VectorDi(0,0,-1),VectorDi(0,0,1),VectorDi(0,1,0),VectorDi(1,0,0) };
-				return coord + neighbor_offset[i];
-			}
-		}
-		__host__ __device__ int Nb_C_Axis(const int i) {
-			if constexpr (d == 2) {
-				int axies[4] = { 0,1,1,0 }; return axies[i];
-			}
-			else if constexpr (d == 3) {
-				int axies[6] = { 0,1,2,2,1,0 }; return axies[i];
-			}
 		}
 
 		//serial iterator
