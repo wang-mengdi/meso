@@ -13,6 +13,7 @@
 #include "Advection.h"
 #include "Simulator.h"
 #include "IOFunc.h"
+#include "GridEulerFunc.h"
 #include "device_launch_parameters.h"
 
 namespace Meso {
@@ -38,6 +39,17 @@ namespace Meso {
 	}
 
 	template<int d>
+	__global__ void Wave_Function_Correction_Kernel(const Grid<d> grid, Vector2C* wave_function, const real* pressure, const real dx_over_h_har) {
+		const int index = grid.Index(GPUFunc::Thread_Coord<d>(blockIdx, threadIdx));
+		const real cell_p = pressure[index];
+		Vector2C psi = wave_function[index];
+		thrust::complex<real> c{ thrust::exp(thrust::complex<real>(0, 1) * cell_p * dx_over_h_har) };
+		psi[0] *= c;
+		psi[1] *= c;
+		wave_function[index] = psi;
+	}
+
+	template<int d>
 	class FluidClebsch : public Simulator {
 		Typedef_VectorD(d);
 	public:
@@ -55,7 +67,7 @@ namespace Meso {
 		void Init(real h_bar_, Field<bool, d>& fixed, Field<Vector2C, d>& initial_wave_function, FaceField<real, d>& vol) {
 			h_bar = h_bar_;
 			wave_function.Deep_Copy(initial_wave_function);
-			Wave_Function_To_Velocity(velocity, wave_function);
+			Exterior_Derivative_W2V(velocity, wave_function);
 			psi_D.Init(fixed, initial_wave_function);
 			temp_velocity.Init(velocity.grid);
 			pressure.Init(velocity.grid);
@@ -67,7 +79,7 @@ namespace Meso {
 		}
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
-			real max_vel = velocity.Max_Abs();
+			real max_vel = GridEulerFunc::Linf_Norm(velocity);
 			return dx * cfl / max_vel;
 		}
 		virtual void Output(DriverMetaData& metadata) {
@@ -75,7 +87,7 @@ namespace Meso {
 			bf::path vtk_path = metadata.base_path / bf::path(vts_name);
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 		}
-		virtual void Wave_Function_To_Velocity(FaceFieldDv<real, d>& F, const FieldDv<Vector2C, d>& C) {
+		virtual void Exterior_Derivative_W2V(FaceFieldDv<real, d>& F, const FieldDv<Vector2C, d>& C) {
 			const real h_bar_over_dx = h_bar / C.grid.dx;
 			F.Init(C.grid, MathFunc::Zero<real>());
 			dim3 blocknum, blocksize;
@@ -95,6 +107,15 @@ namespace Meso {
 				W2V_Mapping_Kernel3 << <blocknum, blocksize >> > (C.grid, face_x, face_y, face_z, cell, h_bar_over_dx);
 			}*/
 		}
+		virtual void Wave_Function_Correction() {
+			wave_function.grid.Exec_Kernel(
+				&Wave_Function_Correction_Kernel<d>,
+				wave_function.grid,
+				wave_function.Data_Ptr(),
+				pressure.Data_Ptr(),
+				wave_function.grid.dx / h_bar
+			);
+		}
 		virtual void Advance(DriverMetaData& metadata) {
 			real dt = metadata.dt;
 
@@ -102,7 +123,7 @@ namespace Meso {
 			
 
 			//wave function to velocity
-			Wave_Function_To_Velocity(velocity, wave_function);
+			Exterior_Derivative_W2V(velocity, wave_function);
 
 			//projection
 			//vel_div=div(velocity)
@@ -119,7 +140,9 @@ namespace Meso {
 			psi_D.Apply(wave_function);
 
 			Exterior_Derivative(vel_div, velocity);
-			Info("After projection max div {}", vel_div.Max_Abs());
+			Info("After projection max div {}", GridEulerFunc::Linf_Norm(vel_div));
+
+			Wave_Function_Correction();
 		}
 	};
 }
