@@ -91,8 +91,7 @@ namespace Meso {
 		//);
 		//Info("max error {} at cell {}", max_err, max_err_cell);
 
-		//real eps = sqrt(std::numeric_limits<real>::epsilon());
-		real eps = 1;
+		real eps = sqrt(std::numeric_limits<real>::epsilon());
 		if (max_err > eps) Error("Fast Marching for counts={} failed with max error={}", counts, max_err);
 		else Pass("Fast Marching passed for counts={} in {}s with max error={}", counts, fmm_time, max_err);
 	}

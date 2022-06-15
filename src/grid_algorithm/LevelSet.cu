@@ -14,6 +14,31 @@
 
 namespace Meso {
 
+	bool Solve_Quadratic(const real p1, const real p2, const real dx, real& rst)
+	{
+		if (abs(p1) >= abs(p2) + dx) { rst = p2 + dx; return true; }
+		else if (abs(p2) >= abs(p1) + dx) { rst = p1 + dx; return true; }
+		else {
+			real delta = (real)2 * dx * dx - pow(p1 - p2, 2);
+			if (delta < (real)0) { std::cerr << "Error: [Levelset] negative delta in Solve_Quadratic_2" << std::endl; return false; }
+			rst = (real).5 * (p1 + p2 + sqrt(delta)); return true;
+		}
+	}
+
+	bool Solve_Quadratic(const real p1, const real p2, const real p3, const real dx, real& rst)
+	{
+		real delta = pow(p1 + p2 + p3, 2) - (real)3 * (p1 * p1 + p2 * p2 + p3 * p3 - dx * dx);
+		if (delta < (real)0) {
+			int i = 0; real p_max = abs(p1); if (abs(p2) > p_max) { i = 1; p_max = abs(p2); }if (abs(p3) > p_max) { i = 2; p_max = abs(p3); }
+			real q1, q2; if (i == 0) { q1 = p2; q2 = p3; }
+			else if (i == 1) { q1 = p1; q2 = p3; }
+			else { q1 = p1; q2 = p2; }
+			return Solve_Quadratic(q1, q2, dx, rst);
+		}
+		rst = (p1 + p2 + p3 + sqrt(delta)) / 3.0;
+		return true;
+	}
+
 	template<int d> LevelSet<d>::LevelSet(const Grid<d> _grid)
 	{
 		Init(_grid);
@@ -193,31 +218,6 @@ namespace Meso {
 			[=](const real phi_i, const real tent_i) {return MathFunc::Sign(phi_i) * tent_i; },
 			phi.Data()
 		);
-	}
-
-	template<int d> bool LevelSet<d>::Solve_Quadratic(const real p1, const real p2, const real dx, real& rst)
-	{
-		if (abs(p1) >= abs(p2) + dx) { rst = p2 + dx; return true; }
-		else if (abs(p2) >= abs(p1) + dx) { rst = p1 + dx; return true; }
-		else {
-			real delta = (real)2 * dx * dx - pow(p1 - p2, 2);
-			if (delta < (real)0) { std::cerr << "Error: [Levelset] negative delta in Solve_Quadratic_2" << std::endl; return false; }
-			rst = (real).5 * (p1 + p2 + sqrt(delta)); return true;
-		}
-	}
-
-	template<int d> bool LevelSet<d>::Solve_Quadratic(const real p1, const real p2, const real p3, const real dx, real& rst)
-	{
-		real delta = pow(p1 + p2 + p3, 2) - (real)3 * (p1 * p1 + p2 * p2 + p3 * p3 - dx * dx);
-		if (delta < (real)0) {
-			int i = 0; real p_max = abs(p1); if (abs(p2) > p_max) { i = 1; p_max = abs(p2); }if (abs(p3) > p_max) { i = 2; p_max = abs(p3); }
-			real q1, q2; if (i == 0) { q1 = p2; q2 = p3; }
-			else if (i == 1) { q1 = p1; q2 = p3; }
-			else { q1 = p1; q2 = p2; }
-			return Solve_Quadratic(q1, q2, dx, rst);
-		}
-		rst = (p1 + p2 + p3 + sqrt(delta))/3.0; 
-		return true;
 	}
 
 	template<int d> real LevelSet<d>::Solve_Eikonal(const VectorDi& cell, const Field<real, d>& tent, const Array<ushort>& done)

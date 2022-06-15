@@ -58,8 +58,6 @@ namespace Meso {
 		void Fast_Marching(const real band_width = (real)-1);
 	protected:
 		real Solve_Eikonal(const VectorDi& cell, const Field<real, d>& tent, const Array<ushort>& done);
-		bool Solve_Quadratic(const real p1, const real p2, const real dx, real& rst);
-		bool Solve_Quadratic(const real p1, const real p2, const real p3, const real dx, real& rst);
 	};
 
 //	template<int d, class PointIntp, DataHolder side = HOST> class LevelSet {
