@@ -116,9 +116,9 @@ namespace Meso {
 			else return std::make_tuple(false, old_tent);
 		}
 
-		//if is_dijkstra is set to false, it will only relax cells which done(cell)==true, that's for the interface fix
+		//if relax_part is set to true, it will only relax cells which done(cell)==true, that's for the interface fix
 		//otherwise it's a normal Dijkstra
-		void Relax_Heap(std::priority_queue<PRI, Array<PRI>, std::greater<PRI> > &heap, Field<real,d> &tent, Array<ushort>& done, const Field<real,d> phi, const bool is_dijkstra) {
+		void Relax_Heap(std::priority_queue<PRI, Array<PRI>, std::greater<PRI> > &heap, Field<real,d> &tent, Array<ushort>& done, const Field<real,d> phi, const bool relax_part) {
 			const Grid<d> grid = phi.grid;
 			while (!heap.empty()) {
 				const real top_val = heap.top().first;
@@ -132,11 +132,9 @@ namespace Meso {
 					VectorDi nb = grid.Neighbor_Node(cell, i);
 					if (!grid.Valid(nb))continue;
 					const int nb_idx = grid.Index(nb);
-					//relaxation
-					if (!done[nb_idx]) {
-						auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
-						if (relaxed) heap.push(PRI(val, nb_idx));
-					}
+					if (done[nb_idx] != relax_part) continue;
+					auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
+					if (relaxed) heap.push(PRI(val, nb_idx));
 				}
 			}
 		}

@@ -170,7 +170,7 @@ namespace Meso {
 		//// Step 4: relax the other part of field
 #pragma omp parallel for
 		for (int h = 0; h < 2; h++) {
-			Relax_Heap(heaps[h], tent, done, phi, true);
+			Relax_Heap(heaps[h], tent, done, phi, false);
 			//auto& heap = heaps[h];
 			//while (!heap.empty()) {
 			//	const real top_val = heap.top().first;
