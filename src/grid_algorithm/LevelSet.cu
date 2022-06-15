@@ -152,18 +152,40 @@ namespace Meso {
 			else {
 				Error("[Levelset] bad preconditioning");
 			}
+#pragma omp critical
+			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), c)); }
 		}
 
-		//// Step 3: perform relaxation on interface cells to fix their values
-		//// initialize heap with front cells
+		Info("heap sizes0: {} {}", heaps[0].size(), heaps[1].size());
+
+#pragma omp parallel for
+		for (int h = 0; h < 2; h++) {
+			Relax_Heap(heaps[h], tent, done, phi, true);
+		}
+
+		Info("heap sizes1: {} {}", heaps[0].size(), heaps[1].size());
+
 #pragma omp parallel for
 		for (int i = 0; i < cell_num; i++) {
 			const VectorDi cell = grid.Coord(i);
-			if (!done[i]) continue;
-			auto [relax_success, val] = Relax_Node(cell, phi, tent, done);
+			if (done[i]) {
 #pragma omp critical
-			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
+				{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
+			}
 		}
+
+		Info("heap sizes2: {} {}", heaps[0].size(), heaps[1].size());
+
+		//// Step 3: perform relaxation on interface cells to fix their values
+		//// initialize heap with front cells
+//#pragma omp parallel for
+//		for (int i = 0; i < cell_num; i++) {
+//			const VectorDi cell = grid.Coord(i);
+//			if (!done[i]) continue;
+//			auto [relax_success, val] = Relax_Node(cell, phi, tent, done);
+//#pragma omp critical
+//			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
+//		}
 
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM: Build heap");
 

@@ -133,6 +133,7 @@ namespace Meso {
 					if (!grid.Valid(nb))continue;
 					const int nb_idx = grid.Index(nb);
 					if (done[nb_idx] != relax_part) continue;
+					if (MathFunc::Sign(phi(cell)) != MathFunc::Sign(phi(nb))) continue;
 					auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
 					if (relaxed) heap.push(PRI(val, nb_idx));
 				}
