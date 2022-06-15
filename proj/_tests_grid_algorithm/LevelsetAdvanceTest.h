@@ -91,20 +91,32 @@ namespace Meso {
 		//else Pass("Fast Marching passed for counts={} in {}s with max error={}", counts, fmm_time, max_err);
 	}
 
-	//Mengdi
-	template<int d, DataHolder side>
-	void Test_Fast_Marching(const Vector<int, d> counts) {
-		Typedef_VectorD(d);
-		VectorD domain_min = MathFunc::V<d>(-0.9, -1.2, 3);
-		Grid<d> grid(counts, 0.01, domain_min, MAC);
-		LevelSet<d> levelset(grid);
-		VectorD domain_max = grid.Domain_Max();
-		VectorD domain_len = domain_max - domain_min;
-		real min_side = domain_len.minCoeff();
-		//Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.3);
-		Sphere<d> sphere(domain_min + domain_len * 0.5, min_side * 0.3);
+	////Mengdi
+	//template<int d, DataHolder side>
+	//void Test_Fast_Marching(const Vector<int, d> counts) {
+	//	Typedef_VectorD(d);
+	//	VectorD domain_min = MathFunc::V<d>(-0.9, -1.2, 3);
+	//	Grid<d> grid(counts, 0.01, domain_min, MAC);
+	//	LevelSet<d> levelset(grid);
+	//	VectorD domain_max = grid.Domain_Max();
+	//	VectorD domain_len = domain_max - domain_min;
+	//	real min_side = domain_len.minCoeff();
+	//	//Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.3);
+	//	Sphere<d> sphere(domain_min + domain_len * 0.5, min_side * 0.3);
 
-		Test_Fast_Marching<d, side>(grid, sphere);
+	//	Test_Fast_Marching<d, side>(grid, sphere);
+	//}
+
+
+	//Mengdi
+	//See: Some Improvements of the Fast Marching Method
+	template<int d>
+	void Test_Fast_Marching(int scale) {
+		Typedef_VectorD(d);
+		real dx = 4.0 / scale;
+		VectorD domain_min = MathFunc::V<d>(-2, -2, -2);
+		VectorDi counts = MathFunc::Vi<d>(scale, scale, scale);
+		Grid<d> grid(counts, dx, domain_min, MAC);
 	}
 
 	///// Here, we test the fast marching method
