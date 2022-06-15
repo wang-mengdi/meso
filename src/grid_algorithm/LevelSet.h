@@ -54,6 +54,7 @@ namespace Meso {
 
 		//////////////////////////////////////////////////////////////////////////
 		////Fast marching
+		
 		void Fast_Marching(const real band_width = (real)-1);
 	protected:
 		real Solve_Eikonal(const VectorDi& cell, const Field<real, d>& tent, const Array<ushort>& done);

@@ -152,7 +152,7 @@ namespace Meso {
 				}
 			}
 #pragma omp critical
-			{heaps[MathFunc::Sign(tent(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
+			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
 		}
 
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM: Build heap");
