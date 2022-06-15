@@ -156,14 +156,14 @@ namespace Meso {
 			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), c)); }
 		}
 
-		Info("heap sizes0: {} {}", heaps[0].size(), heaps[1].size());
+		//Info("heap sizes0: {} {}", heaps[0].size(), heaps[1].size());
 
 #pragma omp parallel for
 		for (int h = 0; h < 2; h++) {
 			Relax_Heap(heaps[h], tent, done, phi, true);
 		}
 
-		Info("heap sizes1: {} {}", heaps[0].size(), heaps[1].size());
+		//Info("heap sizes1: {} {}", heaps[0].size(), heaps[1].size());
 
 #pragma omp parallel for
 		for (int i = 0; i < cell_num; i++) {
@@ -174,7 +174,7 @@ namespace Meso {
 			}
 		}
 
-		Info("heap sizes2: {} {}", heaps[0].size(), heaps[1].size());
+		//Info("heap sizes2: {} {}", heaps[0].size(), heaps[1].size());
 
 		//// Step 3: perform relaxation on interface cells to fix their values
 		//// initialize heap with front cells

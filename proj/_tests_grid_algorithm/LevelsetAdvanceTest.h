@@ -6,10 +6,11 @@
 #pragma once
 #include "LevelSet.h"
 #include "Timer.h"
+#include "GridEulerFunc.h"
 
 namespace Meso {
 	template<int d>
-	void Fill_Fast_Marching_Error(Field<real, d>& error, const LevelSet<d>& levelset) {
+	void Fill_Eikonal_Error(Field<real, d>& error, const LevelSet<d>& levelset) {
 		Typedef_VectorD(d);
 		//calculate the residual of Eikonal equation by Rouy-Tourin
 		error.Init(levelset.phi.grid);
@@ -74,9 +75,16 @@ namespace Meso {
 		//}
 
 		Field<real, d> fmm_error;
-		Fill_Fast_Marching_Error(fmm_error, levelset);
+		Fill_Eikonal_Error(fmm_error, levelset);
+		real max_eikonal_error = GridEulerFunc::Linf_Norm(fmm_error);
 
-		real max_err = fmm_error.Max_Abs();
+		LevelSet<d> analytical_levelset;
+		analytical_levelset.Init(grid, sphere);
+		levelset.phi -= analytical_levelset.phi;
+		
+		real max_distance_error = GridEulerFunc::Linf_Norm(levelset.phi);
+
+		//real max_err = fmm_error.Max_Abs();
 
 		////for debugging
 		//real max_err = -1;
@@ -91,9 +99,12 @@ namespace Meso {
 		//);
 		//Info("max error {} at cell {}", max_err, max_err_cell);
 
-		real eps = sqrt(std::numeric_limits<real>::epsilon());
-		if (max_err > eps) Error("Fast Marching for counts={} failed with max error={}", counts, max_err);
-		else Pass("Fast Marching passed for counts={} in {}s with max error={}", counts, fmm_time, max_err);
+		Pass("Fast Marching passed for counts={} in {}s with eikonal linf error={} and distance linf error={}", counts, fmm_time, max_eikonal_error, max_distance_error);
+
+		//real eps = 1;
+		//real eps = sqrt(std::numeric_limits<real>::epsilon());
+		//if (max_distance_error > eps) Error("Fast Marching for counts={} failed with max error={}", counts, max_err);
+		//else Pass("Fast Marching passed for counts={} in {}s with max error={}", counts, fmm_time, max_err);
 	}
 
 	///// Here, we test the fast marching method

@@ -11,6 +11,11 @@
 
 namespace Meso {
 	namespace GridEulerFunc {
+		template<class T, int d>
+		T Linf_Norm(const Field<T, d> F) {
+			return ArrayFunc::Max_Abs<T>(F.Data());
+		}
+
 		template<int d>
 		bool Cell_In_Boundary(const Grid<d> grid, const Vector<int, d> cell, int axis, int side, int width) {
 			if (side == 0) return cell[axis] < width;
