@@ -11,22 +11,25 @@
 using namespace Meso;
 #define __THRUST_HAS_CUDART__
 int main(){
-	Test_Fast_Marching<2>(8);
-	Test_Fast_Marching<2>(16);
-	Test_Fast_Marching<2>(32);
-	Test_Fast_Marching<2>(64);
-	Test_Fast_Marching<2>(128);
+	//Test_Fast_Marching<2>(8);
+	//Test_Fast_Marching<2>(16);
+	//Test_Fast_Marching<2>(32);
+	//Test_Fast_Marching<2>(64);
+	//Test_Fast_Marching<2>(128);
 
-	Test_Fast_Marching<3>(8);
-	Test_Fast_Marching<3>(16);
-	Test_Fast_Marching<3>(32);
-	Test_Fast_Marching<3>(64);
-	Test_Fast_Marching<3>(128);
+	//Test_Fast_Marching<3>(8);
+	//Test_Fast_Marching<3>(16);
+	//Test_Fast_Marching<3>(32);
+	//Test_Fast_Marching<3>(64);
+	//Test_Fast_Marching<3>(128);
 
-	return 0;
+	//return 0;
 
 	Test_Marching_Cubes<float>(1, true); // verify by opening marching_cubes.obj
 	Test_Marching_Cubes<double>(1, false);
+
+	Test_Fast_Marching<2>(128);
+	Test_Fast_Marching<3>(128);
 
 	//Test_Fast_Marching<2, HOST>(Vector2i(192, 168));
 	//Test_Fast_Marching<3, HOST>(Vector3i(62, 40, 83));
