@@ -170,10 +170,7 @@ namespace Meso {
 			}
 
 			if (is_relaxed) {
-				real temp = Solve_Eikonal(cell, phi, tent, done);
-				if (temp < tent(cell)) {
-					tent(cell) = temp;
-				}
+				auto [relax_success, val] = Relax_Node(cell, phi, tent, done);
 			}
 #pragma omp critical
 			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
@@ -199,10 +196,10 @@ namespace Meso {
 					const int nb_idx = grid.Index(nb);
 					//relaxation
 					if (!done[nb_idx]) {
-						real temp = Solve_Eikonal(nb, phi, tent, done);
+						auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
 #pragma omp critical
 						{
-							if (temp < tent(nb)) { tent(nb) = temp; heap.push(PRI(temp, nb_idx)); }
+							if (relaxed) { heap.push(PRI(val, nb_idx)); }
 						}
 					}
 				}

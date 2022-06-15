@@ -58,7 +58,8 @@ namespace Meso {
 		
 		void Fast_Marching(const real band_width = (real)-1);
 	protected:
-		real Solve_Eikonal(const VectorDi& cell, const Field<real, d>& phi, const Field<real, d>& tent, const Array<ushort>& done)
+		//return [is_relaxed, cell_value]
+		std::tuple<bool, real> Relax_Node(const VectorDi& cell, const Field<real, d>& phi, Field<real, d>& tent, const Array<ushort>& done)
 		{
 			const Grid<d> grid = phi.grid;
 
@@ -99,7 +100,13 @@ namespace Meso {
 				Error("[Levelset] bad solving Eikonal");
 			} break;
 			}
-			return new_phi;
+
+			real old_tent = tent(cell);
+			if (new_phi < old_tent) {
+				tent(cell) = new_phi;
+				return std::make_tuple(true, new_phi);
+			}
+			else return std::make_tuple(false, old_tent);
 		}
 	};
 
