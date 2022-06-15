@@ -155,7 +155,6 @@ namespace Meso {
 		}
 
 		//// Step 3: perform relaxation on interface cells to fix their values
-
 		//// initialize heap with front cells
 #pragma omp parallel for
 		for (int i = 0; i < cell_num; i++) {
