@@ -1,11 +1,11 @@
 //////////////////////////////////////////////////////////////////////////
 // Clebsch Fluid: Implementation of Schrödinger's Smoke [Chern et al. 2015]
-// Copyright (c) (2022-), Bo Zhu, Mengdi Wang
+// Copyright (c) (2022-), Bo Zhu, Mengdi Wang, Zhecheng Wang
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <complex>
+#include <thrust/complex.h>
 #include <array>
 
 #include "Multigrid.h"
@@ -17,8 +17,7 @@
 
 namespace Meso {
 	using namespace std::complex_literals;
-	using C = std::complex<real>;
-	using Vector2C = Vector<C, 2>;
+	using Vector2C = Vector<thrust::complex<real>, 2>;
 	__global__ void W2V_Mapping_Kernel2(const Grid<2> grid, real* face_x, real* face_y, const Vector2C* cell, const real h_bar_over_dx)
 	{
 		const int i = threadIdx.x + blockIdx.x * blockDim.x;
@@ -26,16 +25,16 @@ namespace Meso {
 
 		if (i > grid.counts[0] - 1 || j > grid.counts[1] - 1) return;
 
-		const Vector2C cell_data = cell[grid.Index(Vector2i(i, j))];
+		const Vector2C cell_data = cell[grid.Index(i, j)];
 		int face_ind;
 
 		// x-axis faces
 		face_ind = grid.Face_Index(0, Vector2i(i + 1, j));
-		face_x[face_ind] = h_bar_over_dx * std::arg(cell_data.dot(cell[grid.Index(Vector2i(i + 1, j))]));
+		face_x[face_ind] = h_bar_over_dx * thrust::arg(cell_data.dot(cell[grid.Index(i + 1, j)]));
 
 		// y-axis faces
 		face_ind = grid.Face_Index(1, Vector2i(i, j + 1));
-		face_y[face_ind] = h_bar_over_dx * std::arg(cell_data.dot(cell[grid.Index(Vector2i(i, j + 1))]));
+		face_y[face_ind] = h_bar_over_dx * thrust::arg(cell_data.dot(cell[grid.Index(i, j + 1)]));
 	}
 
 	template<int d>
@@ -56,7 +55,7 @@ namespace Meso {
 		void Init(real h_bar_, Field<bool, d>& fixed, Field<Vector2C, d>& initial_wave_function, FaceField<real, d>& vol) {
 			h_bar = h_bar_;
 			wave_function.Deep_Copy(initial_wave_function);
-			velocity.Init(vol.grid);
+			Wave_Function_To_Velocity(velocity, wave_function);
 			psi_D.Init(fixed, initial_wave_function);
 			temp_velocity.Init(velocity.grid);
 			pressure.Init(velocity.grid);
