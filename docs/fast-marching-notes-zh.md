@@ -18,7 +18,7 @@ $$
 
 ## 离散化
 
-以二维为例，采用Rouy-Tourin法：
+以二维为例，采用迎风格式离散化，也就是所谓的Rouy-Tourin格式：
 
 $$
 \begin{aligned}

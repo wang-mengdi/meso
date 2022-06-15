@@ -14,7 +14,7 @@
 
 namespace Meso {
 
-	real Solve_Quadratic(const real p1, const real p2, const real dx)
+	real Solve_Upwind_Eikonal2(const real p1, const real p2, const real dx)
 	{
 		if (abs(p1) >= abs(p2) + dx)  return p2 + dx;
 		else if (abs(p2) >= abs(p1) + dx)  return p1 + dx;
@@ -25,7 +25,7 @@ namespace Meso {
 		}
 	}
 
-	real Solve_Quadratic(const real p1, const real p2, const real p3, const real dx)
+	real Solve_Upwind_Eikonal3(const real p1, const real p2, const real p3, const real dx)
 	{
 		real delta = pow(p1 + p2 + p3, 2) - (real)3 * (p1 * p1 + p2 * p2 + p3 * p3 - dx * dx);
 		if (delta < (real)0) {
@@ -33,7 +33,7 @@ namespace Meso {
 			real q1, q2; if (i == 0) { q1 = p2; q2 = p3; }
 			else if (i == 1) { q1 = p1; q2 = p3; }
 			else { q1 = p1; q2 = p2; }
-			return Solve_Quadratic(q1, q2, dx);
+			return Solve_Upwind_Eikonal2(q1, q2, dx);
 		}
 		return (p1 + p2 + p3 + sqrt(delta)) / 3.0;
 	}
@@ -251,10 +251,10 @@ namespace Meso {
 			int j = 0;
 			for (int i = 0; i < d; i++)
 				if (correct_axis[i] != 0) p[j++] = correct_phi[i];
-			new_phi = Solve_Quadratic(p[0], p[1], grid.dx);
+			new_phi = Solve_Upwind_Eikonal2(p[0], p[1], grid.dx);
 		} break;
 		case 3: {
-			new_phi = Solve_Quadratic(correct_phi[0], correct_phi[1], correct_phi[2], grid.dx);
+			new_phi = Solve_Upwind_Eikonal3(correct_phi[0], correct_phi[1], correct_phi[2], grid.dx);
 		} break;
 		default: {
 			Error("[Levelset] bad solving Eikonal");
