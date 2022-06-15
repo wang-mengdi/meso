@@ -197,10 +197,7 @@ namespace Meso {
 					//relaxation
 					if (!done[nb_idx]) {
 						auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
-#pragma omp critical
-						{
-							if (relaxed) { heap.push(PRI(val, nb_idx)); }
-						}
+						if (relaxed) heap.push(PRI(val, nb_idx));
 					}
 				}
 			}
