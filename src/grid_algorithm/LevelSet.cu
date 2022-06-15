@@ -100,7 +100,7 @@ namespace Meso {
 
 		Field<real, d> tent(grid, band_width < 0 ? std::numeric_limits<real>::max() : band_width);
 		Array<ushort> done(grid.DoF(), 0);
-		using PRI = std::pair<real, int>;
+		
 		std::priority_queue<PRI, Array<PRI>, std::greater<PRI> > heaps[2];
 		const int cell_num = grid.DoF();
 		//real far_from_intf_phi_val=grid.dx*(real)5;
@@ -170,26 +170,27 @@ namespace Meso {
 		//// Step 4: relax the other part of field
 #pragma omp parallel for
 		for (int h = 0; h < 2; h++) {
-			auto& heap = heaps[h];
-			while (!heap.empty()) {
-				const real top_val = heap.top().first;
-				const int cell_idx = heap.top().second;
-				const VectorDi cell = grid.Coord(cell_idx);
-				heap.pop();
-				if (tent(cell) != top_val) continue;
-				done[cell_idx] = true;
+			Relax_Heap(heaps[h], tent, done, phi, true);
+			//auto& heap = heaps[h];
+			//while (!heap.empty()) {
+			//	const real top_val = heap.top().first;
+			//	const int cell_idx = heap.top().second;
+			//	const VectorDi cell = grid.Coord(cell_idx);
+			//	heap.pop();
+			//	if (tent(cell) != top_val) continue;
+			//	done[cell_idx] = true;
 
-				for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
-					VectorDi nb = grid.Neighbor_Node(cell, i);
-					if (!grid.Valid(nb))continue;
-					const int nb_idx = grid.Index(nb);
-					//relaxation
-					if (!done[nb_idx]) {
-						auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
-						if (relaxed) heap.push(PRI(val, nb_idx));
-					}
-				}
-			}
+			//	for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
+			//		VectorDi nb = grid.Neighbor_Node(cell, i);
+			//		if (!grid.Valid(nb))continue;
+			//		const int nb_idx = grid.Index(nb);
+			//		//relaxation
+			//		if (!done[nb_idx]) {
+			//			auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
+			//			if (relaxed) heap.push(PRI(val, nb_idx));
+			//		}
+			//	}
+			//}
 		}
 
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM: Traverse heap");

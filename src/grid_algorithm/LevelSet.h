@@ -22,6 +22,7 @@ namespace Meso {
 	class LevelSet
 	{
 		Typedef_VectorD(d);
+		using PRI = std::pair<real, int>;
 	public:
 		Field<real, d> phi;
 		bool verbose = true;
@@ -113,6 +114,31 @@ namespace Meso {
 				return std::make_tuple(true, new_phi);
 			}
 			else return std::make_tuple(false, old_tent);
+		}
+
+		//if is_dijkstra is set to false, it will only relax cells which done(cell)==true, that's for the interface fix
+		//otherwise it's a normal Dijkstra
+		void Relax_Heap(std::priority_queue<PRI, Array<PRI>, std::greater<PRI> > &heap, Field<real,d> &tent, Array<ushort>& done, const Field<real,d> phi, const bool is_dijkstra) {
+			const Grid<d> grid = phi.grid;
+			while (!heap.empty()) {
+				const real top_val = heap.top().first;
+				const int cell_idx = heap.top().second;
+				const VectorDi cell = grid.Coord(cell_idx);
+				heap.pop();
+				if (tent(cell) != top_val) continue;
+				done[cell_idx] = true;
+
+				for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
+					VectorDi nb = grid.Neighbor_Node(cell, i);
+					if (!grid.Valid(nb))continue;
+					const int nb_idx = grid.Index(nb);
+					//relaxation
+					if (!done[nb_idx]) {
+						auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
+						if (relaxed) heap.push(PRI(val, nb_idx));
+					}
+				}
+			}
 		}
 	};
 
