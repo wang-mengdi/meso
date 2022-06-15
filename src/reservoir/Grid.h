@@ -57,7 +57,7 @@ namespace Meso {
 			}
 			return domain_max;
 		}
-		__host__ __device__ VectorD Center(void) {
+		__host__ __device__ VectorD Center(void) const {
 			return (real)0.5 * (Domain_Min(MAC) + Domain_Max(MAC));
 		}
 
