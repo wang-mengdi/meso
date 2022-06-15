@@ -73,9 +73,11 @@ namespace Meso {
 		//Timer timer;
 		//timer.Reset();
 
-		int tgt_idx = grid.Index(15, 8, 9);
-		Info("index of 15,8,9: {}", tgt_idx);
-		VectorDi tgt_cell = MathFunc::Vi<d>(15, 8, 9);
+		VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
+		VectorDi tgt_cell1 = MathFunc::Vi<d>(8, 17, 8);
+		int tgt_idx = grid.Index(tgt_cell);
+		Info("index of {}: {}", tgt_cell, tgt_idx);
+		
 
 		Field<real, d> tent(grid, band_width < 0 ? std::numeric_limits<real>::max() : band_width);
 		Array<ushort> done(grid.DoF(), 0);
@@ -96,16 +98,16 @@ namespace Meso {
 				VectorDi nb = grid.Neighbor_Node(cell, j);
 				if (!grid.Valid(nb))continue;
 				if (Is_Interface(cell, nb)) {
-					if (cell == MathFunc::Vi<d>(16, 8, 9)) {
-						Info("{} is interface, i={}, idx={}", cell, i, grid.Index(cell));
-					}
+					//if (cell == MathFunc::Vi<d>(16, 8, 9)) {
+					//	Info("{} is interface, i={}, idx={}", cell, i, grid.Index(cell));
+					//}
 					done[i] = 1; break;
 				}
 			}
 		}
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM Precond: find interface");
 
-		Info("finding cell {} tent {}", MathFunc::Vi<d>(16, 8, 9), tent(MathFunc::Vi<d>(16, 8, 9)));
+		//Info("finding cell {} tent {}", MathFunc::Vi<d>(16, 8, 9), tent(MathFunc::Vi<d>(16, 8, 9)));
 
 		//// calculate interface phi values
 #pragma omp parallel for
@@ -134,42 +136,42 @@ namespace Meso {
 				}
 				hmnc_mean = sqrt((real)1 / hmnc_mean);
 				tent(cell) = hmnc_mean;
-#pragma omp critical
-				{
-					{heaps[MathFunc::Sign(hmnc_mean) > 0 ? 0 : 1].push(PRI(hmnc_mean, c)); }
-				}
 			}
 			else {
 				std::cerr << "Error: [Levelset] bad preconditioning" << std::endl;
 				std::exit(1);
 			}
 		}
-		Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(16, 8, 9), tent(MathFunc::Vi<d>(16, 8, 9)));
+		Info("after preconditioning cell {} tent {}", tgt_cell, tent(tgt_cell));
+		Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(9, 16, 8), tent(MathFunc::Vi<d>(9, 16, 8)));
+		Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(9, 17, 9), tent(MathFunc::Vi<d>(9, 17, 9)));
+		Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(10, 17, 8), tent(MathFunc::Vi<d>(10, 17, 8)));
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM Precond: calculate interface phi");
 
-//		//// initialize heap with front cells
-//#pragma omp parallel for
-//		for (int i = 0; i < cell_num; i++) {
-//			const VectorDi cell = grid.Coord(i);
-//			bool is_front = false;
-//			for (int j = 0; j < Grid<d>::Neighbor_Node_Number(); j++) {
-//				VectorDi nb = grid.Neighbor_Node(cell, j);
-//				if (!grid.Valid(nb))continue;
-//				const int nb_idx = grid.Index(nb);
-//				if (done[nb_idx]) { is_front = true; break; }
-//			}
-//
-//			if (is_front) {
-//				real temp = Solve_Eikonal(cell, tent, done);
-//				if (temp < tent(cell)) {
-//					tent(cell) = temp;
-//#pragma omp critical
-//					{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(temp, i)); }
-//				}
-//			}
-//		}
+		//// initialize heap with front cells
+#pragma omp parallel for
+		for (int i = 0; i < cell_num; i++) {
+			const VectorDi cell = grid.Coord(i);
+			if (!done[i]) continue;
+			bool is_relaxed = false;
+			for (int j = 0; j < Grid<d>::Neighbor_Node_Number(); j++) {
+				VectorDi nb = grid.Neighbor_Node(cell, j);
+				if (!grid.Valid(nb))continue;
+				const int nb_idx = grid.Index(nb);
+				if (done[nb_idx]) { is_relaxed = true; break; }
+			}
 
-		Info("front cell cell {} tent {}", MathFunc::Vi<d>(16, 8, 9), tent(MathFunc::Vi<d>(16, 8, 9)));
+			if (is_relaxed) {
+				real temp = Solve_Eikonal(cell, tent, done);
+				if (temp < tent(cell)) {
+					tent(cell) = temp;
+				}
+			}
+#pragma omp critical
+			{heaps[MathFunc::Sign(tent(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
+		}
+
+		//Info("front cell cell {} tent {}", MathFunc::Vi<d>(16, 8, 9), tent(MathFunc::Vi<d>(16, 8, 9)));
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM: Build heap");
 
 		//// heap traversing
@@ -181,8 +183,9 @@ namespace Meso {
 				const int cell_idx = heap.top().second;
 				const VectorDi cell = grid.Coord(cell_idx);
 				heap.pop();
-				if (cell_idx == tgt_idx) Info(" heap traversing h={} tgt cell: {}", h, cell);
-				if (tent(cell) != top_val)continue;
+				if (cell == tgt_cell || cell == tgt_cell1) Info("h={} cell {} is checked to {}", h, cell, tent(cell));
+				if (tent(cell) != top_val) continue;
+				if (cell == tgt_cell || cell == tgt_cell1) Info("h={} cell {} is done to {}", h, cell, tent(cell));
 				done[cell_idx] = 1;
 
 				for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
@@ -243,6 +246,8 @@ namespace Meso {
 	{
 		const Grid<d> grid = phi.grid;
 
+		VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
+
 		// calculate correct phi from nb interface cells
 		VectorD correct_phi = VectorD::Ones() * std::numeric_limits<real>::max();
 		VectorDi correct_axis = VectorDi::Zero();
@@ -251,7 +256,7 @@ namespace Meso {
 			if (!grid.Valid(nb)) continue;
 			const int nb_idx = grid.Index(nb);
 			if (done[nb_idx]) {
-				if (cell == MathFunc::Vi<d>(15, 8, 9)) {
+				if (cell == tgt_cell) {
 					Info("cell {} tent {} nb cell {} tent {}", cell, tent(cell), nb, tent(nb));
 				}
 				int axis = grid.Neighbor_Node_Axis(i); correct_axis[axis] = 1;
@@ -285,7 +290,7 @@ namespace Meso {
 		} break;
 		}
 
-		if (cell == MathFunc::Vi<d>(15, 8, 9)) {
+		if (cell == tgt_cell) {
 			Info("solve eikonal tgt cell {} correct axis num {} to {}", cell, n, new_phi);
 		}
 		return new_phi;

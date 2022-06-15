@@ -15,6 +15,7 @@ namespace Meso {
 		error.Init(levelset.phi.grid);
 		error.Calc_Nodes(
 			[&](const VectorDi cell)->real {
+				VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
 				real phi0 = levelset.phi(cell);
 				//real abs_phi0 = std::abs(phi0);
 				real sum = 0;
@@ -28,6 +29,8 @@ namespace Meso {
 						if (MathFunc::Sign(phi0) != MathFunc::Sign(phi1)) return 0;
 						diff = std::max(diff, (phi0 - phi1) * MathFunc::Sign(phi0));
 						
+						if (cell == tgt_cell) Info("cell {} phi {} axis {} nb {} phi {} diff {}", cell, phi0, axis, nb_cell, phi1, diff);
+
 						//real abs_phi1 = std::fabs(phi1);
 						//diff = std::max(diff, abs_phi0 - abs_phi1);
 						//if (cell[0] == 5 && cell[1] == 0) {
@@ -74,7 +77,7 @@ namespace Meso {
 		levelset.Fast_Marching(-1);
 		real fmm_time = timer.Lap_Time(PhysicalUnits::s);
 		
-		VectorDi tgt_cell = MathFunc::Vi<d>(15, 8, 9);
+		VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
 		Info("after fast marching cell {} phi {}", tgt_cell, levelset.phi(tgt_cell));
 		for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
 			VectorDi nb = Grid<d>::Neighbor_Node(tgt_cell, i);
