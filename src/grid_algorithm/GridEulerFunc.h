@@ -11,9 +11,18 @@
 
 namespace Meso {
 	namespace GridEulerFunc {
-		template<class T, int d>
-		T Linf_Norm(const Field<T, d> F) {
+		template<class T, int d, DataHolder side>
+		T Linf_Norm(const Field<T, d, side>& F) {
 			return ArrayFunc::Max_Abs<T>(F.Data());
+		}
+
+		template<class T, int d, DataHolder side>
+		T Linf_Norm(const FaceField<T, d, side>& F) {
+			T axis_max = (T)0;
+			for (int axis = 0; axis < d; axis++) {
+				axis_max = std::max(axis_max, ArrayFunc::Max_Abs<T>(F.Data(axis)));
+			}
+			return axis_max;
 		}
 
 		template<int d>

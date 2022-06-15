@@ -17,9 +17,6 @@ namespace Meso {
 	template<class T>
 	__global__ void D_CoCell_Mapping_Kernel2(Grid<2> grid, T* face_x, T* face_y, const T* cell)
 	{
-		const int nbx = gridDim.x;
-		const int nby = gridDim.y;
-
 		const int bx = blockIdx.x;
 		const int by = blockIdx.y;
 
@@ -66,10 +63,6 @@ namespace Meso {
 	template<class T>
 	__global__ void D_CoCell_Mapping_Kernel3(Grid<3> grid, T* face_x, T* face_y, T* face_z, const T* cell)
 	{
-		const int nbx = gridDim.x;
-		const int nby = gridDim.y;
-		const int nbz = gridDim.z;
-
 		const int bx = blockIdx.x;
 		const int by = blockIdx.y;
 		const int bz = blockIdx.z;
@@ -129,9 +122,6 @@ namespace Meso {
 	template<class T>
 	__global__ void D_Face_Mapping_Kernel2(Grid<2> grid, T* cell, const T* face_x, const T* face_y)
 	{
-		const int nbx = gridDim.x;
-		const int nby = gridDim.y;
-
 		const int bx = blockIdx.x;
 		const int by = blockIdx.y;
 
@@ -176,10 +166,6 @@ namespace Meso {
 	template<class T>
 	__global__ void D_Face_Mapping_Kernel3(Grid<3> grid, T* cell, const T* face_x, const T* face_y, const T* face_z)
 	{
-		const int nbx = gridDim.x;
-		const int nby = gridDim.y;
-		const int nbz = gridDim.z;
-
 		const int bx = blockIdx.x;
 		const int by = blockIdx.y;
 		const int bz = blockIdx.z;
