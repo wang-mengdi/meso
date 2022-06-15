@@ -105,9 +105,7 @@ namespace Meso {
 		const int cell_num = grid.DoF();
 		//real far_from_intf_phi_val=grid.dx*(real)5;
 
-		//////////////////////////////////////////////////////////////////////////
-		////precondition
-		//// find interface cells
+		//// Step 1: find interface cells
 #pragma omp parallel for
 		for (int i = 0; i < cell_num; i++) {
 			const VectorDi cell = grid.Coord(i);
@@ -123,7 +121,7 @@ namespace Meso {
 		}
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM Precond: find interface");
 
-		//// calculate interface phi values
+		//// Step 2: calculate initial phi values for interface cells
 #pragma omp parallel for
 		for (int c = 0; c < cell_num; c++) {
 			if (!done[c])continue;		////select interface cells
@@ -156,6 +154,8 @@ namespace Meso {
 			}
 		}
 
+		//// Step 3: perform relaxation on interface cells to fix their values
+
 		//// initialize heap with front cells
 #pragma omp parallel for
 		for (int i = 0; i < cell_num; i++) {
@@ -168,7 +168,7 @@ namespace Meso {
 
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM: Build heap");
 
-		//// heap traversing
+		//// Step 4: relax the other part of field
 #pragma omp parallel for
 		for (int h = 0; h < 2; h++) {
 			auto& heap = heaps[h];
