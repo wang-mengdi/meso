@@ -63,12 +63,15 @@ namespace Meso {
 		{
 			const Grid<d> grid = phi.grid;
 
+			int sgn = MathFunc::Sign(phi(cell));
+
 			// calculate correct phi from nb interface cells
 			VectorD correct_phi = VectorD::Ones() * std::numeric_limits<real>::max();
 			VectorDi correct_axis = VectorDi::Zero();
 			for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
 				VectorDi nb = grid.Neighbor_Node(cell, i);
 				if (!grid.Valid(nb)) continue;
+				//if (!grid.Valid(nb) || MathFunc::Sign(phi(nb)) != sgn) continue;
 				const int nb_idx = grid.Index(nb);
 				if (done[nb_idx]) {
 					int axis = grid.Neighbor_Node_Axis(i); correct_axis[axis] = 1;
@@ -79,7 +82,10 @@ namespace Meso {
 			real new_phi;
 			int n = correct_axis.sum();
 
+			real old_tent = tent(cell);
+
 			switch (n) {
+			case 0: return std::make_tuple(false, old_tent);
 			case 1: {
 				real c_phi;
 				for (int i = 0; i < d; i++)
@@ -101,7 +107,7 @@ namespace Meso {
 			} break;
 			}
 
-			real old_tent = tent(cell);
+			
 			if (new_phi < old_tent) {
 				tent(cell) = new_phi;
 				return std::make_tuple(true, new_phi);

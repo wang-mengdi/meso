@@ -161,17 +161,7 @@ namespace Meso {
 		for (int i = 0; i < cell_num; i++) {
 			const VectorDi cell = grid.Coord(i);
 			if (!done[i]) continue;
-			bool is_relaxed = false;
-			for (int j = 0; j < Grid<d>::Neighbor_Node_Number(); j++) {
-				VectorDi nb = grid.Neighbor_Node(cell, j);
-				if (!grid.Valid(nb))continue;
-				const int nb_idx = grid.Index(nb);
-				if (done[nb_idx]) { is_relaxed = true; break; }
-			}
-
-			if (is_relaxed) {
-				auto [relax_success, val] = Relax_Node(cell, phi, tent, done);
-			}
+			auto [relax_success, val] = Relax_Node(cell, phi, tent, done);
 #pragma omp critical
 			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
 		}
