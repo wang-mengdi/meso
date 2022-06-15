@@ -15,7 +15,7 @@ namespace Meso {
 		error.Init(levelset.phi.grid);
 		error.Calc_Nodes(
 			[&](const VectorDi cell)->real {
-				VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
+				//VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
 				real phi0 = levelset.phi(cell);
 				//real abs_phi0 = std::abs(phi0);
 				real sum = 0;
@@ -29,7 +29,7 @@ namespace Meso {
 						if (MathFunc::Sign(phi0) != MathFunc::Sign(phi1)) return 0;
 						diff = std::max(diff, (phi0 - phi1) * MathFunc::Sign(phi0));
 						
-						if (cell == tgt_cell) Info("cell {} phi {} axis {} nb {} phi {} diff {}", cell, phi0, axis, nb_cell, phi1, diff);
+						//if (cell == tgt_cell) Info("cell {} phi {} axis {} nb {} phi {} diff {}", cell, phi0, axis, nb_cell, phi1, diff);
 
 						//real abs_phi1 = std::fabs(phi1);
 						//diff = std::max(diff, abs_phi0 - abs_phi1);

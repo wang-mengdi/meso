@@ -72,11 +72,6 @@ namespace Meso {
 		Grid<d> grid = phi.grid;
 		//Timer timer;
 		//timer.Reset();
-
-		VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
-		VectorDi tgt_cell1 = MathFunc::Vi<d>(8, 17, 8);
-		int tgt_idx = grid.Index(tgt_cell);
-		Info("index of {}: {}", tgt_cell, tgt_idx);
 		
 
 		Field<real, d> tent(grid, band_width < 0 ? std::numeric_limits<real>::max() : band_width);
@@ -142,10 +137,10 @@ namespace Meso {
 				std::exit(1);
 			}
 		}
-		Info("after preconditioning cell {} tent {}", tgt_cell, tent(tgt_cell));
-		Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(9, 16, 8), tent(MathFunc::Vi<d>(9, 16, 8)));
-		Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(9, 17, 9), tent(MathFunc::Vi<d>(9, 17, 9)));
-		Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(10, 17, 8), tent(MathFunc::Vi<d>(10, 17, 8)));
+		//Info("after preconditioning cell {} tent {}", tgt_cell, tent(tgt_cell));
+		//Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(9, 16, 8), tent(MathFunc::Vi<d>(9, 16, 8)));
+		//Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(9, 17, 9), tent(MathFunc::Vi<d>(9, 17, 9)));
+		//Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(10, 17, 8), tent(MathFunc::Vi<d>(10, 17, 8)));
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM Precond: calculate interface phi");
 
 		//// initialize heap with front cells
@@ -171,7 +166,6 @@ namespace Meso {
 			{heaps[MathFunc::Sign(tent(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
 		}
 
-		//Info("front cell cell {} tent {}", MathFunc::Vi<d>(16, 8, 9), tent(MathFunc::Vi<d>(16, 8, 9)));
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM: Build heap");
 
 		//// heap traversing
@@ -183,9 +177,7 @@ namespace Meso {
 				const int cell_idx = heap.top().second;
 				const VectorDi cell = grid.Coord(cell_idx);
 				heap.pop();
-				if (cell == tgt_cell || cell == tgt_cell1) Info("h={} cell {} is checked to {}", h, cell, tent(cell));
 				if (tent(cell) != top_val) continue;
-				if (cell == tgt_cell || cell == tgt_cell1) Info("h={} cell {} is done to {}", h, cell, tent(cell));
 				done[cell_idx] = 1;
 
 				for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
@@ -194,9 +186,6 @@ namespace Meso {
 					const int nb_idx = grid.Index(nb);
 					//relaxation
 					if (!done[nb_idx]) {
-						if (nb == tgt_cell) {
-							Info("calculate cell {} from {}", nb, cell);
-						}
 						real temp = Solve_Eikonal(nb, tent, done);
 #pragma omp critical
 						{

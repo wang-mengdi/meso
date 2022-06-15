@@ -11,8 +11,8 @@
 using namespace Meso;
 #define __THRUST_HAS_CUDART__
 int main(){
-	Test_Fast_Marching<3, HOST>(Vector3i(32, 32, 32));
-	return 0;
+	//Test_Fast_Marching<3, HOST>(Vector3i(32, 32, 32));
+	//return 0;
 
 	Test_Marching_Cubes<float>(1, true); // verify by opening marching_cubes.obj
 	Test_Marching_Cubes<double>(1, false);
