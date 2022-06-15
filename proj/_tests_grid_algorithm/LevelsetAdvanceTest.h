@@ -53,8 +53,8 @@ namespace Meso {
 		VectorD domain_max = grid.Domain_Max();
 		VectorD domain_len = domain_max - domain_min;
 		real min_side = domain_len.minCoeff();
-		//Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.6);
-		Sphere<d> sphere(domain_min + domain_len * 0.5, min_side * 0.3);
+		Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.3);
+		//Sphere<d> sphere(domain_min + domain_len * 0.5, min_side * 0.3);
 
 		//fill the levelset
 		levelset.phi.Calc_Nodes(
@@ -82,12 +82,12 @@ namespace Meso {
 		Field<real, d> fmm_error, analytical_error;
 		Fill_Fast_Marching_Error(fmm_error, levelset);
 		Fill_Fast_Marching_Error(analytical_error, analytical_levelset);
-		Info("fast marching error: \n{}", fmm_error);
+		//Info("fast marching error: \n{}", fmm_error);
 		//Info("analytical error: \n{}", analytical_error);
 
 		real max_err = fmm_error.Max_Abs();
-		real eps = sqrt(std::numeric_limits<real>::epsilon());
-		Info("epsilon: {}", eps);
+		//real eps = sqrt(std::numeric_limits<real>::epsilon());
+		real eps = levelset.phi.grid.dx;
 		if (max_err > eps) Error("Fast Marching for counts={} failed with max error={}", counts, max_err);
 		else Pass("Fast Marching passed for counts={} with max error={}", counts, max_err);
 	}

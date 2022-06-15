@@ -634,7 +634,7 @@ namespace Meso {
 				}
 			}
 		);
-		Info("Test {} {}", vertices.size(), elements.size());
+		//Info("Test {} {}", vertices.size(), elements.size());
 
 		//vertex_matrix.resize(vertices.size(), 2); for (size_t i = 0; i < vertices.size(); i++) vertex_matrix.row(i) = vertices[i];
 		vertex_matrix = Eigen::Map<VertexMatrix<T, 2>>(vertices[0].data(), vertices.size(), 2);
