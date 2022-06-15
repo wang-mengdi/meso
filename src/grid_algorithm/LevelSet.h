@@ -30,7 +30,8 @@ namespace Meso {
 		LevelSet() {}
 		LevelSet(const Grid<d> _grid);
 		void Init(const Grid<d> _grid);
-		void Init(const Grid<d> _grid, ImplicitGeometry<d>& geom) {
+		template<class Shape>
+		void Init(const Grid<d> _grid, Shape geom) {
 			Init(_grid);
 			phi.Calc_Nodes(
 				[&](const VectorDi cell) {
