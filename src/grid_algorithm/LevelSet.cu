@@ -14,18 +14,18 @@
 
 namespace Meso {
 
-	bool Solve_Quadratic(const real p1, const real p2, const real dx, real& rst)
+	real Solve_Quadratic(const real p1, const real p2, const real dx)
 	{
-		if (abs(p1) >= abs(p2) + dx) { rst = p2 + dx; return true; }
-		else if (abs(p2) >= abs(p1) + dx) { rst = p1 + dx; return true; }
+		if (abs(p1) >= abs(p2) + dx)  return p2 + dx;
+		else if (abs(p2) >= abs(p1) + dx)  return p1 + dx;
 		else {
 			real delta = (real)2 * dx * dx - pow(p1 - p2, 2);
-			if (delta < (real)0) { std::cerr << "Error: [Levelset] negative delta in Solve_Quadratic_2" << std::endl; return false; }
-			rst = (real).5 * (p1 + p2 + sqrt(delta)); return true;
+			Assert(delta >= 0, "Error: solve quadratic delta={}", delta);
+			return (real).5 * (p1 + p2 + sqrt(delta));
 		}
 	}
 
-	bool Solve_Quadratic(const real p1, const real p2, const real p3, const real dx, real& rst)
+	real Solve_Quadratic(const real p1, const real p2, const real p3, const real dx)
 	{
 		real delta = pow(p1 + p2 + p3, 2) - (real)3 * (p1 * p1 + p2 * p2 + p3 * p3 - dx * dx);
 		if (delta < (real)0) {
@@ -33,10 +33,9 @@ namespace Meso {
 			real q1, q2; if (i == 0) { q1 = p2; q2 = p3; }
 			else if (i == 1) { q1 = p1; q2 = p3; }
 			else { q1 = p1; q2 = p2; }
-			return Solve_Quadratic(q1, q2, dx, rst);
+			return Solve_Quadratic(q1, q2, dx);
 		}
-		rst = (p1 + p2 + p3 + sqrt(delta)) / 3.0;
-		return true;
+		return (p1 + p2 + p3 + sqrt(delta)) / 3.0;
 	}
 
 	template<int d> LevelSet<d>::LevelSet(const Grid<d> _grid)
@@ -252,10 +251,10 @@ namespace Meso {
 			int j = 0;
 			for (int i = 0; i < d; i++)
 				if (correct_axis[i] != 0) p[j++] = correct_phi[i];
-			Solve_Quadratic(p[0], p[1], grid.dx, new_phi);
+			new_phi = Solve_Quadratic(p[0], p[1], grid.dx);
 		} break;
 		case 3: {
-			Solve_Quadratic(correct_phi[0], correct_phi[1], correct_phi[2], grid.dx, new_phi);
+			new_phi = Solve_Quadratic(correct_phi[0], correct_phi[1], correct_phi[2], grid.dx);
 		} break;
 		default: {
 			Error("[Levelset] bad solving Eikonal");
