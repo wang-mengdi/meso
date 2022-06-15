@@ -31,7 +31,7 @@ namespace Meso {
 			if (gtype == COLLOC) pos_min = domain_min;
 			else pos_min = domain_min + MathFunc::V<d>(0.5, 0.5, 0.5) * dx;
 		}
-
+//=============================================First part: basic data==========================================================
 		__host__ __device__ static constexpr int Block_Size(void) { return (d == 2 ? 8 : 4); }
 		__host__ __device__ VectorDi Counts(void) { return counts; }
 		__host__ __device__ real Dx(void) { return dx; }
@@ -117,7 +117,7 @@ namespace Meso {
 				return Vector3i(x, y, z);
 			}
 		}
-
+//========================================Second part: geometry operation=================================================================
 		//// Navigate on adjacent nodes
 		//added by Zhiqi Li
 		__host__ __device__ constexpr static int Neighbor_Node_Number(void) { return d * 2; }
@@ -145,6 +145,17 @@ namespace Meso {
 			}
 			else if constexpr (d == 3) {
 				const int axies[6] = { 0,1,2,2,1,0 }; return axies[i];
+			}
+		}
+
+		//Navigate on neighbor ring
+		__host__ __device__ constexpr static int Neighbor_Ring_Number(void) { return std::pow(3, d);}
+		__host__ __device__ static VectorDi Neighbor_Ring_Node(const VectorDi coord, const int index) {
+			if constexpr (d == 2) {
+				assert(index >= 0 && index < 9); int i = index / 3; int j = index % 3; return coord + Vector2i(-1 + i, -1 + j);
+			}
+			else if constexpr (d == 3) {
+				assert(index >= 0 && index < 27); int i = index / 9; int m = index % 9; int j = m / 3; int k = m % 3; return coord + Vector3i(-1 + i, -1 + j, -1 + k);
 			}
 		}
 
@@ -221,19 +232,19 @@ namespace Meso {
 			}
 			return face;
 		}
-
+//======================================================Third part: iterators==================================================================
 		//serial iterator
 		template<class CFunc>
 		void Iterate_Nodes(CFunc f)const {
 			const int dof = DoF();
 			for (int c = 0; c < dof; c++) {
-				const VectorDi cell = Coord(c);
-				f(cell);
+				const VectorDi node = Coord(c);
+				f(node);
 			}
 		}
 
 		//parallel iterator
-		template<class CFunc>//Fcell is a (void) function takes a cell index
+		template<class CFunc>
 		void Exec_Nodes(CFunc f) const {
 			const int dof = DoF();
 #pragma omp parallel for
