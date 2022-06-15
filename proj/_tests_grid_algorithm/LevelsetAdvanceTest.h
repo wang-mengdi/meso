@@ -68,28 +68,21 @@ namespace Meso {
 			}
 		);
 
-		//Info("levelset before marching: \n{}", levelset.phi);
-
-		//fast marching
-		levelset.Fast_Marching(-1);
-
-		//Info("levelset after marching: \n{}", levelset.phi);
 		
-		LevelSet<d> analytical_levelset(grid);
-		analytical_levelset.Init(grid, sphere);
-		//Info("analytical levelset: \n{}", analytical_levelset.phi);
-
-		Field<real, d> fmm_error, analytical_error;
+		//fast marching
+		Timer timer;
+		levelset.Fast_Marching(-1);
+		real fmm_time = timer.Lap_Time(PhysicalUnits::s);
+		
+		Field<real, d> fmm_error;
 		Fill_Fast_Marching_Error(fmm_error, levelset);
-		Fill_Fast_Marching_Error(analytical_error, analytical_levelset);
-		//Info("fast marching error: \n{}", fmm_error);
-		//Info("analytical error: \n{}", analytical_error);
+		//Fill_Fast_Marching_Error(analytical_error, analytical_levelset);
 
 		real max_err = fmm_error.Max_Abs();
 		//real eps = sqrt(std::numeric_limits<real>::epsilon());
-		real eps = levelset.phi.grid.dx;
+		real eps = levelset.phi.grid.dx * 2;
 		if (max_err > eps) Error("Fast Marching for counts={} failed with max error={}", counts, max_err);
-		else Pass("Fast Marching passed for counts={} with max error={}", counts, max_err);
+		else Pass("Fast Marching passed for counts={} in {}s with max error={}", counts, fmm_time, max_err);
 	}
 
 	///// Here, we test the fast marching method

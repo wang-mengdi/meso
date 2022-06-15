@@ -47,8 +47,9 @@ namespace Meso {
 		real Cell_Fraction(const VectorDi& cell) const;		////approximate cell volume using phi value
 
 		////Helper functions
-		static real Sign(const real phi) { return phi <= (real)0 ? (real)-1 : (real)1; }
-		static bool Interface(const real phi_1, const real phi_2) { return Sign(phi_1) != Sign(phi_2); }
+		//static real Sign(const real phi) { return phi <= (real)0 ? (real)-1 : (real)1; }
+		bool Is_Interface(const VectorDi cell0, const VectorDi cell1) { return MathFunc::Sign(phi(cell0)) != MathFunc::Sign(phi(cell1)); }
+		//static bool Interface(const real phi_1, const real phi_2) { return Sign(phi_1) != Sign(phi_2); }
 		static real Theta(const real phi_1, const real phi_2) { return phi_1 / (phi_1 - phi_2); }
 
 		//////////////////////////////////////////////////////////////////////////

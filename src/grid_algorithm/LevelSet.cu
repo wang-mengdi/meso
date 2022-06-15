@@ -91,7 +91,7 @@ namespace Meso {
 			for (int j = 0; j < Grid<d>::Neighbor_Node_Number(); j++) {
 				VectorDi nb = grid.Neighbor_Node(cell, j);
 				if (!grid.Valid(nb))continue;
-				if (Interface(phi(cell), phi(nb))) { done[i] = 1; break; }
+				if (Is_Interface(cell, nb)) { done[i] = 1; break; }
 			}
 		}
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM Precond: find interface");
@@ -108,7 +108,7 @@ namespace Meso {
 				VectorDi nb = grid.Neighbor_Node(cell, i);
 				if (!grid.Valid(nb)) continue;
 				const int nb_idx = grid.Index(nb);
-				if (done[nb_idx] && Interface(phi(cell), phi(nb))) {
+				if (done[nb_idx] && Is_Interface(cell, nb)) {
 					real c_phi = Theta(phi(cell), phi(nb)) * grid.dx; // always non-negative
 					int axis = grid.Neighbor_Node_Axis(i);
 					correct_axis[axis] = 1;
@@ -148,7 +148,7 @@ namespace Meso {
 				if (temp < tent(cell)) {
 					tent(cell) = temp;
 #pragma omp critical
-					{heaps[Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(temp, i)); }
+					{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(temp, i)); }
 				}
 			}
 		}
@@ -184,7 +184,7 @@ namespace Meso {
 		ArrayFunc::Binary_Transform(
 			phi.Data(),
 			tent.Data(),
-			[=](const real phi_i, const real tent_i) {return Sign(phi_i) * tent_i; },
+			[=](const real phi_i, const real tent_i) {return MathFunc::Sign(phi_i) * tent_i; },
 			phi.Data()
 		);
 
