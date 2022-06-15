@@ -15,9 +15,7 @@ namespace Meso {
 		error.Init(levelset.phi.grid);
 		error.Calc_Nodes(
 			[&](const VectorDi cell)->real {
-				//VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
 				real phi0 = levelset.phi(cell);
-				//real abs_phi0 = std::abs(phi0);
 				real sum = 0;
 				for (int axis = 0; axis < d; axis++) {
 					real diff = 0;
@@ -28,17 +26,8 @@ namespace Meso {
 						//fast marching don't check 
 						if (MathFunc::Sign(phi0) != MathFunc::Sign(phi1)) return 0;
 						diff = std::max(diff, (phi0 - phi1) * MathFunc::Sign(phi0));
-						
-						//if (cell == tgt_cell) Info("cell {} phi {} axis {} nb {} phi {} diff {}", cell, phi0, axis, nb_cell, phi1, diff);
-
-						//real abs_phi1 = std::fabs(phi1);
-						//diff = std::max(diff, abs_phi0 - abs_phi1);
-						//if (cell[0] == 5 && cell[1] == 0) {
-						//	Info("cell {} phi0 {} axis {} side {} nb_cell {} phi1 {} diff {}", cell, phi0, axis, side, nb_cell, phi1, diff);
-						//}
 					}
 					sum += diff * diff;
-					//Info("cell {} axis {} diff {} sum {}", cell, axis, diff, sum);
 				}
 				sum = sqrt(sum / (levelset.phi.grid.dx * levelset.phi.grid.dx));
 				return sum - 1.0;
@@ -86,22 +75,24 @@ namespace Meso {
 
 		Field<real, d> fmm_error;
 		Fill_Fast_Marching_Error(fmm_error, levelset);
-		//Fill_Fast_Marching_Error(analytical_error, analytical_levelset);
+		Fill_Fast_Marching_Error(analytical_error, analytical_levelset);
 
-		//real max_err = fmm_error.Max_Abs();
-		real max_err = -1;
-		VectorDi max_err_cell;
-		fmm_error.Iterate_Nodes(
-			[&](const VectorDi cell) {
-				if (std::fabs(fmm_error(cell)) > max_err) {
-					max_err = std::fabs(fmm_error(cell));
-					max_err_cell = cell;
-				}
-			}
-		);
-		Info("max error {} at cell {}", max_err, max_err_cell);
-		//real eps = sqrt(std::numeric_limits<real>::epsilon());
-		real eps = levelset.phi.grid.dx * 2;
+		real max_err = fmm_error.Max_Abs();
+
+		////for debugging
+		//real max_err = -1;
+		//VectorDi max_err_cell;
+		//fmm_error.Iterate_Nodes(
+		//	[&](const VectorDi cell) {
+		//		if (std::fabs(fmm_error(cell)) > max_err) {
+		//			max_err = std::fabs(fmm_error(cell));
+		//			max_err_cell = cell;
+		//		}
+		//	}
+		//);
+		//Info("max error {} at cell {}", max_err, max_err_cell);
+
+		real eps = sqrt(std::numeric_limits<real>::epsilon());
 		if (max_err > eps) Error("Fast Marching for counts={} failed with max error={}", counts, max_err);
 		else Pass("Fast Marching passed for counts={} in {}s with max error={}", counts, fmm_time, max_err);
 	}

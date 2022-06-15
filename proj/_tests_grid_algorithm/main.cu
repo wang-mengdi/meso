@@ -24,6 +24,7 @@ int main(){
 	Test_Fast_Marching<2, HOST>(Vector2i(16, 16));
 	Test_Fast_Marching<2, HOST>(Vector2i(32, 32));
 	Test_Fast_Marching<2, HOST>(Vector2i(64, 64));
+	Test_Fast_Marching<2, HOST>(Vector2i(128, 128));
 
 	Test_Fast_Marching<3, HOST>(Vector3i(8, 8, 8));
 	Test_Fast_Marching<3, HOST>(Vector3i(16, 16, 16));

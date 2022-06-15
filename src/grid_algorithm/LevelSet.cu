@@ -93,16 +93,11 @@ namespace Meso {
 				VectorDi nb = grid.Neighbor_Node(cell, j);
 				if (!grid.Valid(nb))continue;
 				if (Is_Interface(cell, nb)) {
-					//if (cell == MathFunc::Vi<d>(16, 8, 9)) {
-					//	Info("{} is interface, i={}, idx={}", cell, i, grid.Index(cell));
-					//}
 					done[i] = 1; break;
 				}
 			}
 		}
 		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM Precond: find interface");
-
-		//Info("finding cell {} tent {}", MathFunc::Vi<d>(16, 8, 9), tent(MathFunc::Vi<d>(16, 8, 9)));
 
 		//// calculate interface phi values
 #pragma omp parallel for
@@ -133,15 +128,9 @@ namespace Meso {
 				tent(cell) = hmnc_mean;
 			}
 			else {
-				std::cerr << "Error: [Levelset] bad preconditioning" << std::endl;
-				std::exit(1);
+				Error("[Levelset] bad preconditioning");
 			}
 		}
-		//Info("after preconditioning cell {} tent {}", tgt_cell, tent(tgt_cell));
-		//Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(9, 16, 8), tent(MathFunc::Vi<d>(9, 16, 8)));
-		//Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(9, 17, 9), tent(MathFunc::Vi<d>(9, 17, 9)));
-		//Info("preconditioning cell {} tent {}", MathFunc::Vi<d>(10, 17, 8), tent(MathFunc::Vi<d>(10, 17, 8)));
-		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM Precond: calculate interface phi");
 
 		//// initialize heap with front cells
 #pragma omp parallel for
@@ -235,8 +224,6 @@ namespace Meso {
 	{
 		const Grid<d> grid = phi.grid;
 
-		VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
-
 		// calculate correct phi from nb interface cells
 		VectorD correct_phi = VectorD::Ones() * std::numeric_limits<real>::max();
 		VectorDi correct_axis = VectorDi::Zero();
@@ -245,9 +232,6 @@ namespace Meso {
 			if (!grid.Valid(nb)) continue;
 			const int nb_idx = grid.Index(nb);
 			if (done[nb_idx]) {
-				if (cell == tgt_cell) {
-					Info("cell {} tent {} nb cell {} tent {}", cell, tent(cell), nb, tent(nb));
-				}
 				int axis = grid.Neighbor_Node_Axis(i); correct_axis[axis] = 1;
 				correct_phi[axis] = std::min(correct_phi[axis], tent(nb));
 			}
@@ -274,13 +258,8 @@ namespace Meso {
 			Solve_Quadratic(correct_phi[0], correct_phi[1], correct_phi[2], grid.dx, new_phi);
 		} break;
 		default: {
-			std::cerr << "Error: [Levelset] bad solving Eikonal" << std::endl;
-			std::exit(1);
+			Error("[Levelset] bad solving Eikonal");
 		} break;
-		}
-
-		if (cell == tgt_cell) {
-			Info("solve eikonal tgt cell {} correct axis num {} to {}", cell, n, new_phi);
 		}
 		return new_phi;
 	}
