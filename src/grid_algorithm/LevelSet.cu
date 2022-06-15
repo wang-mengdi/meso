@@ -170,7 +170,7 @@ namespace Meso {
 			}
 
 			if (is_relaxed) {
-				real temp = Solve_Eikonal(cell, tent, done);
+				real temp = Solve_Eikonal(cell, phi, tent, done);
 				if (temp < tent(cell)) {
 					tent(cell) = temp;
 				}
@@ -199,7 +199,7 @@ namespace Meso {
 					const int nb_idx = grid.Index(nb);
 					//relaxation
 					if (!done[nb_idx]) {
-						real temp = Solve_Eikonal(nb, tent, done);
+						real temp = Solve_Eikonal(nb, phi, tent, done);
 #pragma omp critical
 						{
 							if (temp < tent(nb)) { tent(nb) = temp; heap.push(PRI(temp, nb_idx)); }
@@ -217,50 +217,6 @@ namespace Meso {
 			[=](const real phi_i, const real tent_i) {return MathFunc::Sign(phi_i) * tent_i; },
 			phi.Data()
 		);
-	}
-
-	template<int d> real LevelSet<d>::Solve_Eikonal(const VectorDi& cell, const Field<real, d>& tent, const Array<ushort>& done)
-	{
-		const Grid<d> grid = phi.grid;
-
-		// calculate correct phi from nb interface cells
-		VectorD correct_phi = VectorD::Ones() * std::numeric_limits<real>::max();
-		VectorDi correct_axis = VectorDi::Zero();
-		for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
-			VectorDi nb = grid.Neighbor_Node(cell, i);
-			if (!grid.Valid(nb)) continue;
-			const int nb_idx = grid.Index(nb);
-			if (done[nb_idx]) {
-				int axis = grid.Neighbor_Node_Axis(i); correct_axis[axis] = 1;
-				correct_phi[axis] = std::min(correct_phi[axis], tent(nb));
-			}
-		}
-		// update phi on the cell
-		real new_phi;
-		int n = correct_axis.sum();
-
-		switch (n) {
-		case 1: {
-			real c_phi;
-			for (int i = 0; i < d; i++)
-				if (correct_axis[i] != 0) { c_phi = correct_phi[i]; break; }
-			new_phi = grid.dx + c_phi;
-		} break;
-		case 2: {
-			real p[2];
-			int j = 0;
-			for (int i = 0; i < d; i++)
-				if (correct_axis[i] != 0) p[j++] = correct_phi[i];
-			new_phi = Solve_Upwind_Eikonal2(p[0], p[1], grid.dx);
-		} break;
-		case 3: {
-			new_phi = Solve_Upwind_Eikonal3(correct_phi[0], correct_phi[1], correct_phi[2], grid.dx);
-		} break;
-		default: {
-			Error("[Levelset] bad solving Eikonal");
-		} break;
-		}
-		return new_phi;
 	}
 
 	template class LevelSet<2>;
