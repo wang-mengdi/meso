@@ -117,7 +117,7 @@ namespace Meso {
 				VectorDi nb = grid.Neighbor_Node(cell, j);
 				if (!grid.Valid(nb))continue;
 				if (Is_Interface(cell, nb)) {
-					done[i] = 1; break;
+					done[i] = true; break;
 				}
 			}
 		}
@@ -178,7 +178,7 @@ namespace Meso {
 				const VectorDi cell = grid.Coord(cell_idx);
 				heap.pop();
 				if (tent(cell) != top_val) continue;
-				done[cell_idx] = 1;
+				done[cell_idx] = true;
 
 				for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
 					VectorDi nb = grid.Neighbor_Node(cell, i);
