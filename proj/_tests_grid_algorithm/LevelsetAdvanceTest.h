@@ -36,24 +36,15 @@ namespace Meso {
 		);
 	}
 
-	//Mengdi
 	template<int d, DataHolder side>
-	void Test_Fast_Marching(const Vector<int, d> counts) {
+	void Test_Fast_Marching(Grid<d> grid, const ImplicitGeometry<d>& shape) {
 		Typedef_VectorD(d);
-		VectorD domain_min = MathFunc::V<d>(-0.9, -1.2, 3);
-		Grid<d> grid(counts, 0.01, domain_min, MAC);
 		LevelSet<d> levelset(grid);
-		VectorD domain_max = grid.Domain_Max();
-		VectorD domain_len = domain_max - domain_min;
-		real min_side = domain_len.minCoeff();
-		//Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.3);
-		Sphere<d> sphere(domain_min + domain_len * 0.5, min_side * 0.3);
-
 		//fill the levelset
 		levelset.phi.Calc_Nodes(
 			[&](const VectorDi cell)->real {
 				VectorD pos = grid.Position(cell);
-				real phi = sphere.Phi(pos);
+				real phi = shape.Phi(pos);
 				if (std::fabs(phi) < 3 * grid.dx) return phi;
 				else return phi * 2;
 				//else return std::numeric_limits<real>::max();
@@ -61,27 +52,20 @@ namespace Meso {
 			}
 		);
 
-		
 		//fast marching
 		Timer timer;
 		levelset.Fast_Marching(-1);
 		real fmm_time = timer.Lap_Time(PhysicalUnits::s);
-		
-		//VectorDi tgt_cell = MathFunc::Vi<d>(9, 17, 8);
-		//Info("after fast marching cell {} phi {}", tgt_cell, levelset.phi(tgt_cell));
-		//for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
-		//	VectorDi nb = Grid<d>::Neighbor_Node(tgt_cell, i);
-		//	Info("after fast marching cell {} phi {}", nb, levelset.phi(nb));
-		//}
+
 
 		Field<real, d> fmm_error;
 		Fill_Eikonal_Error(fmm_error, levelset);
 		real max_eikonal_error = GridEulerFunc::Linf_Norm(fmm_error);
 
 		LevelSet<d> analytical_levelset;
-		analytical_levelset.Init(grid, sphere);
+		analytical_levelset.Init(grid, shape);
 		levelset.phi -= analytical_levelset.phi;
-		
+
 		real max_distance_error = GridEulerFunc::Linf_Norm(levelset.phi);
 
 		//real max_err = fmm_error.Max_Abs();
@@ -99,12 +83,28 @@ namespace Meso {
 		//);
 		//Info("max error {} at cell {}", max_err, max_err_cell);
 
-		Pass("Fast Marching passed for counts={} in {}s with eikonal linf error={} and distance linf error={}", counts, fmm_time, max_eikonal_error, max_distance_error);
+		Pass("Fast Marching test passed for counts={} in {}s with eikonal linf error={} and distance linf error={}", grid.counts, fmm_time, max_eikonal_error, max_distance_error);
 
 		//real eps = 1;
 		//real eps = sqrt(std::numeric_limits<real>::epsilon());
 		//if (max_distance_error > eps) Error("Fast Marching for counts={} failed with max error={}", counts, max_err);
 		//else Pass("Fast Marching passed for counts={} in {}s with max error={}", counts, fmm_time, max_err);
+	}
+
+	//Mengdi
+	template<int d, DataHolder side>
+	void Test_Fast_Marching(const Vector<int, d> counts) {
+		Typedef_VectorD(d);
+		VectorD domain_min = MathFunc::V<d>(-0.9, -1.2, 3);
+		Grid<d> grid(counts, 0.01, domain_min, MAC);
+		LevelSet<d> levelset(grid);
+		VectorD domain_max = grid.Domain_Max();
+		VectorD domain_len = domain_max - domain_min;
+		real min_side = domain_len.minCoeff();
+		//Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.3);
+		Sphere<d> sphere(domain_min + domain_len * 0.5, min_side * 0.3);
+
+		Test_Fast_Marching<d, side>(grid, sphere);
 	}
 
 	///// Here, we test the fast marching method

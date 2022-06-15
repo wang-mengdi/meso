@@ -39,6 +39,14 @@ namespace Meso {
 				}
 			);
 		}
+		void Init(const Grid<d> _grid, const ImplicitGeometry<d> &geom) {
+			Init(_grid);
+			phi.Calc_Nodes(
+				[&](const VectorDi cell) {
+					return geom.Phi(_grid.Position(cell));
+				}
+			);
+		}
 
 		//real Phi(const VectorD& pos) const;
 
@@ -54,10 +62,8 @@ namespace Meso {
 		bool Is_Interface(const VectorDi cell0, const VectorDi cell1) { return MathFunc::Sign(phi(cell0)) != MathFunc::Sign(phi(cell1)); }
 		//static bool Interface(const real phi_1, const real phi_2) { return Sign(phi_1) != Sign(phi_2); }
 		static real Theta(const real phi_1, const real phi_2) { return phi_1 / (phi_1 - phi_2); }
-
-		//////////////////////////////////////////////////////////////////////////
-		////Fast marching
 		
+		//At the beginning of fast marching, the signs must be correct
 		void Fast_Marching(const real band_width = (real)-1);
 	protected:
 		//return [is_relaxed, cell_value]
