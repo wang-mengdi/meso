@@ -88,14 +88,15 @@ namespace Meso {
 		template<class T1> void operator *= (const T1 a) {
 			for (int axis = 0; axis < d; axis++) ArrayFunc::Multiply_Scalar(Data(axis), a);
 		}
-
-		T Max_Abs(void) {
-			real max_val = 0;
-			for (int axis = 0; axis < d; axis++) {
-				max_val = std::max<T>(max_val, ArrayFunc::Max_Abs<T>(Data(axis)));
-			}
-			return max_val;
-		}
+		
+		//TODO: replace with Linf_Norm in GridEulerFunc.h
+		//T Max_Abs(void) {
+		//	real max_val = 0;
+		//	for (int axis = 0; axis < d; axis++) {
+		//		max_val = std::max<T>(max_val, ArrayFunc::Max_Abs<T>(Data(axis)));
+		//	}
+		//	return max_val;
+		//}
 
 		template<class ICFunc>
 		void Iterate_Faces(ICFunc f) {

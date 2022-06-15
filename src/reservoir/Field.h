@@ -65,10 +65,7 @@ namespace Meso {
 		const T Get(const VectorDi coord)const { return (*data)[grid.Index(coord)]; }
 		template<class T1> void operator *= (const T1 a) { ArrayFunc::Multiply_Scalar(Data(), a); }
 		void operator -= (const Field<T, d, side>& f1) { ArrayFunc::Minus(Data(), f1.Data()); }
-
-		T Max_Abs(void) {
-			return ArrayFunc::Max_Abs<T>(Data());
-		}
+		void operator /= (const Field<T, d, side>& f1) { ArrayFunc::Divide(Data(), f1.Data()); }
 
 		template<class CFunc>
 		void Iterate_Nodes(CFunc f) {

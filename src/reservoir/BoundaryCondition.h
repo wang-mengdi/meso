@@ -46,7 +46,6 @@ namespace Meso {
 					}
 				}
 			);
-			std::sort(bc_pairs.begin(), bc_pairs.end());
 			int n = bc_pairs.size();
 			Array<int> ind_host(n);
 			Array<T> val_host(n);
