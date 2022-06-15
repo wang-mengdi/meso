@@ -117,6 +117,8 @@ namespace Meso {
 		VectorD domain_min = MathFunc::V<d>(-2, -2, -2);
 		VectorDi counts = MathFunc::Vi<d>(scale, scale, scale);
 		Grid<d> grid(counts, dx, domain_min, MAC);
+		Sphere<d> sphere(VectorD::Zero(), 0.5);
+		Test_Fast_Marching<d, HOST>(grid, sphere);
 	}
 
 	///// Here, we test the fast marching method
