@@ -53,8 +53,8 @@ namespace Meso {
 		VectorD domain_max = grid.Domain_Max();
 		VectorD domain_len = domain_max - domain_min;
 		real min_side = domain_len.minCoeff();
-		Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.3);
-		//Sphere<d> sphere(domain_min + domain_len * 0.5, min_side * 0.3);
+		//Sphere<d> sphere(domain_min + domain_len * 0.2, min_side * 0.3);
+		Sphere<d> sphere(domain_min + domain_len * 0.5, min_side * 0.3);
 
 		//fill the levelset
 		levelset.phi.Calc_Nodes(
@@ -74,11 +74,29 @@ namespace Meso {
 		levelset.Fast_Marching(-1);
 		real fmm_time = timer.Lap_Time(PhysicalUnits::s);
 		
+		VectorDi tgt_cell = MathFunc::Vi<d>(15, 8, 9);
+		Info("after fast marching cell {} phi {}", tgt_cell, levelset.phi(tgt_cell));
+		for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
+			VectorDi nb = Grid<d>::Neighbor_Node(tgt_cell, i);
+			Info("after fast marching cell {} phi {}", nb, levelset.phi(nb));
+		}
+
 		Field<real, d> fmm_error;
 		Fill_Fast_Marching_Error(fmm_error, levelset);
 		//Fill_Fast_Marching_Error(analytical_error, analytical_levelset);
 
-		real max_err = fmm_error.Max_Abs();
+		//real max_err = fmm_error.Max_Abs();
+		real max_err = -1;
+		VectorDi max_err_cell;
+		fmm_error.Iterate_Nodes(
+			[&](const VectorDi cell) {
+				if (std::fabs(fmm_error(cell)) > max_err) {
+					max_err = std::fabs(fmm_error(cell));
+					max_err_cell = cell;
+				}
+			}
+		);
+		Info("max error {} at cell {}", max_err, max_err_cell);
 		//real eps = sqrt(std::numeric_limits<real>::epsilon());
 		real eps = levelset.phi.grid.dx * 2;
 		if (max_err > eps) Error("Fast Marching for counts={} failed with max error={}", counts, max_err);
