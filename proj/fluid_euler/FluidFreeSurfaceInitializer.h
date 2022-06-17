@@ -32,7 +32,7 @@ namespace Meso {
 			T side_len = 1.0;
 			T dx = side_len / scale;
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 2, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
 			cell_type.Init(grid, FLUID);
 			Eigen::Matrix<int, 3, 2> bc_width;

@@ -330,27 +330,49 @@ namespace Meso {
 
 	template<class T, int d>
 	void Marching_Cubes_CPU(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<3>& element_matrix, const Field<T, d, HOST>& field, const real iso_value = 0.0) {
+		Assert(field.grid.Is_Unpadded(), "Marching_Cubes_CPU field.grid {} padding not allowed", field.grid);
+		Typedef_VectorD(d);
 		if constexpr (d == 3) {
-			int xres = field.grid.counts[0];
-			int yres = field.grid.counts[1];
-			int zres = field.grid.counts[2];
-			int num_points = field.grid.DoF();
+			Vector3i counts = field.grid.Counts();
+			int xres = counts[0];
+			int yres = counts[1];
+			int zres = counts[2];
+			int num_points = counts.prod();
 			Matrix<T, Dynamic, Dynamic> grid_values; grid_values.resize(num_points, 1);
 			Matrix<T, Dynamic, Dynamic> grid_points; grid_points.resize(num_points, 3);
-			OMPFunc::Exec_Indices(
-				num_points,
-				[&](const int index) {
-					int xid = index % xres;
-					int yid = (index / xres) % yres;
-					int zid = index / xres / yres;
-					Vector3i coord(xid, yid, zid);
-					grid_values(index) = field(coord);
-					Vector<real, d> pos = field.grid.Position(coord);
+			field.Exec_Nodes(
+				[&](const VectorDi node) {
+					const int index = node[0] + xres * node[1] + xres * yres * node[2];
+					grid_values(index) = field(node);
+					VectorD pos = field.grid.Position(node);
+					//grid_points.row(index) = pos;
 					for (int i = 0; i < d; i++) {
 						grid_points(index, i) = pos[i];
 					}
 				}
 			);
+
+			//Vector3i counts = field.grid.Counts();
+			//int xres = counts[0];
+			//int yres = counts[1];
+			//int zres = counts[2];
+			///int num_points = field.grid.DoF();
+			//Matrix<T, Dynamic, Dynamic> grid_values; grid_values.resize(num_points, 1);
+			//Matrix<T, Dynamic, Dynamic> grid_points; grid_points.resize(num_points, 3);
+			//OMPFunc::Exec_Indices(
+			//	num_points,
+			//	[&](const int index) {
+			//		int xid = index % xres;
+			//		int yid = (index / xres) % yres;
+			//		int zid = index / xres / yres;
+			//		Vector3i coord(xid, yid, zid);
+			//		grid_values(index) = field(coord);
+			//		Vector<real, d> pos = field.grid.Position(coord);
+			//		for (int i = 0; i < d; i++) {
+			//			grid_points(index, i) = pos[i];
+			//		}
+			//	}
+			//);
 			igl::marching_cubes(grid_values, grid_points, xres, yres, zres, iso_value, vertex_matrix, element_matrix);
 		}
 		else {
@@ -472,16 +494,18 @@ namespace Meso {
 
 	template<class T, int d>
 	void Marching_Cubes_GPU(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<3>& element_matrix, const Field<T, d, DEVICE>& field, const real iso_value = 0.) {
+		Assert(field.grid.Is_Unpadded(), "Marching_Cubes_GPU field.grid {} padding not allowed", field.grid);
+
 		Typedef_VectorD(d);
 		Typedef_VectorEi(d);
 
 		// 0. Init
-		const Grid<d>& grid = field.grid;
-		const VectorDi cell_counts = grid.counts - VectorDi::Ones();
+		const Grid<d> grid = field.grid;
+		const VectorDi cell_counts = grid.Counts() - VectorDi::Ones();
 
-		ArrayDv<int> mesh_count(grid.DoF() + 1, 0);
+		ArrayDv<int> mesh_count(grid.Memory_Size() + 1, 0);
 
-		Array<Grid<d>> edge_grid(3); for (int i = 0; i < 3; i++) edge_grid[i] = Grid<d>(grid.counts - VectorDi::Unit(i), grid.dx);
+		Array<Grid<d>> edge_grid(3); for (int i = 0; i < 3; i++) edge_grid[i] = Grid<d>(grid.Counts() - VectorDi::Unit(i), grid.dx);
 		ArrayDv<Grid<d>> edge_grid_dv = edge_grid;
 
 		FieldDv<int, d> v_idx_on_edge[3]; Field<int, d> v_idx_on_edge_host[3];
@@ -539,12 +563,14 @@ namespace Meso {
 
 	template<class T>
 	void Marching_Square(VertexMatrix<T, 2>& vertex_matrix, ElementMatrix<2>& element_matrix, const Field<T, 2, HOST>& field, const real iso_value) {
+		Assert(field.grid.Is_Unpadded(), "Marching_Square field.grid {} padding not allowed", field.grid);
+
 		// 0. Init
 		const Grid<2>& grid = field.grid;
-		const Vector2i cell_counts = grid.counts - Vector2i::Ones();
+		const Vector2i cell_counts = grid.Counts() - Vector2i::Ones();
 		Array<Vector<T, 2>> vertices; Array<Vector2i> elements;
 
-		Array<Grid<2>> edge_grid(2); for (int i = 0; i < 2; i++) edge_grid[i] = Grid<2>(grid.counts - Vector2i::Unit(i), grid.dx);
+		Array<Grid<2>> edge_grid(2); for (int i = 0; i < 2; i++) edge_grid[i] = Grid<2>(grid.Counts() - Vector2i::Unit(i), grid.dx);
 		Field<int, 2> v_idx_on_edge[2]; for (int i = 0; i < 2; i++) v_idx_on_edge[i].Init(edge_grid[i], -1);
 
 		//  1. basic function
@@ -643,6 +669,7 @@ namespace Meso {
 
 	template<class T, int d, DataHolder side>
 	void Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& element_matrix, const Field<T, d, side>& field, const real iso_value = 0.) {
+		Assert(field.grid.Is_Unpadded(), "marching cubes field.grid {} padding not allowed", field.grid);
 		if constexpr (d == 3) {
 			if constexpr (side == HOST) Marching_Cubes_CPU<T, d>(vertex_matrix, element_matrix, field, iso_value);
 			else Marching_Cubes_GPU<T, d>(vertex_matrix, element_matrix, field, iso_value);

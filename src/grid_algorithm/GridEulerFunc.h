@@ -12,15 +12,16 @@
 namespace Meso {
 	namespace GridEulerFunc {
 		template<class T, int d, DataHolder side>
-		T Linf_Norm(const Field<T, d, side>& F) {
+		T Linf_Norm(Field<T, d, side>& F) {
+			F.Set_Padding_To(0);
 			return ArrayFunc::Max_Abs<T>(F.Data());
 		}
 
 		template<class T, int d, DataHolder side>
-		T Linf_Norm(const FaceField<T, d, side>& F) {
+		T Linf_Norm(FaceField<T, d, side>& F) {
 			T axis_max = (T)0;
 			for (int axis = 0; axis < d; axis++) {
-				axis_max = std::max(axis_max, ArrayFunc::Max_Abs<T>(F.Data(axis)));
+				axis_max = Linf_Norm(F.Face_Reference(axis));
 			}
 			return axis_max;
 		}
@@ -28,14 +29,14 @@ namespace Meso {
 		template<int d>
 		bool Cell_In_Boundary(const Grid<d> grid, const Vector<int, d> cell, int axis, int side, int width) {
 			if (side == 0) return cell[axis] < width;
-			else if (side == 1) return cell[axis] >= grid.counts[axis] - width;
+			else if (side == 1) return cell[axis] >= grid.Counts()[axis] - width;
 			return false;
 		}
 
 		template<int d>
 		bool Face_In_Boundary(const Grid<d> grid, int axis, const Vector<int, d> face, int chk_axis, int side, int width) {
 			int lbound = width;
-			int rbound = (width == -1) ? grid.Face_Grid(axis).counts[chk_axis] + 1 : grid.counts[chk_axis] - width;
+			int rbound = (width == -1) ? grid.Face_Grid(axis).Counts()[chk_axis] + 1 : grid.Counts()[chk_axis] - width;
 			if (side == 0) {
 				if (axis == chk_axis) return face[chk_axis] <= lbound;
 				else return face[chk_axis] < lbound;

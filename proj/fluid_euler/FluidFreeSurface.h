@@ -12,6 +12,7 @@
 #include "IOFunc.h"
 #include "LevelSet.h"
 #include "MarchingCubes.h"
+#include "GridEulerFunc.h"
 
 namespace Meso {
 
@@ -46,7 +47,7 @@ namespace Meso {
 		//define the system behavior
 		Field<CellType, d> cell_type;
 		BoundaryConditionDirect<FaceFieldDv<T, d>> velocity_bc;
-		LevelSet<d, PointIntpLinearClamp, HOST> levelset;
+		LevelSet<d> levelset;
 		//utilities
 		MaskedPoissonMapping<T, d> poisson;
 		VCycleMultigridIntp<T, d> MG_precond;
@@ -145,7 +146,7 @@ namespace Meso {
 
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
-			real max_vel = velocity.Max_Abs();
+			real max_vel = GridEulerFunc::Linf_Norm(velocity);
 			return dx * cfl / max_vel;
 		}
 
@@ -180,7 +181,7 @@ namespace Meso {
 
 			//projection
 			//vel_div=div(velocity)
-			Exterior_Derivative(temp_field_dev, velocity);
+			ExteriorDerivativePadding0::Apply(temp_field_dev, velocity);
 
 			div_host = temp_field_dev;
 			Update_Poisson_System(fixed_host, vol_host, div_host);
@@ -196,7 +197,7 @@ namespace Meso {
 			//Info("solved pressure: \n{}", pressure_dev);
 
 			//velocity+=grad(p)
-			Exterior_Derivative(temp_velocity_dev, pressure_dev);
+			ExteriorDerivativePadding0::Apply(temp_velocity_dev, pressure_dev);
 			temp_velocity_dev *= poisson.vol;
 
 			velocity += temp_velocity_dev;
@@ -204,7 +205,7 @@ namespace Meso {
 
 			//Info("velocity after projection: \n{}", velocity);
 
-			Info("After projection max velocity {}", velocity.Max_Abs());
+			Info("After projection max velocity {}", GridEulerFunc::Linf_Norm(velocity));
 		}
 	};
 }

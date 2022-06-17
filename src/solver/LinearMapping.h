@@ -8,9 +8,9 @@ namespace Meso {
 	class LinearMapping
 	{
 	public:
-		virtual int XDoF() const = 0;//former xdof
+		virtual int XDoF() const = 0;//former xdof, size of input
 
-		virtual int YDoF() const = 0;//number of rows
+		virtual int YDoF() const = 0;//number of rows, size of output
 
 		//input p, get Ap
 		//Ap must be allocated, but may be set to arbitrary values

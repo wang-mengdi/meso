@@ -13,9 +13,9 @@ namespace Meso {
 	class GridGSMask {
 		Typedef_VectorD(d);
 	public:
-		Grid<d> grid;
+		GridIndexer<d> grid;
 		GridGSMask() {};
-		GridGSMask(const Grid<d> _grid) {
+		GridGSMask(const GridIndexer<d> _grid) {
 			grid = _grid;
 		}
 		__host__ __device__ int operator () (const int idx)const {
@@ -47,7 +47,7 @@ namespace Meso {
 			iter_num = _iter_num;
 			order = _order;
 			dof = mapping->XDoF();
-			Poisson_Diagonal(one_over_diag, _mapping);
+			PoissonLike_Diagonal(one_over_diag, _mapping);
 			ArrayFunc::Unary_Transform(one_over_diag, 1.0 / thrust::placeholders::_1, one_over_diag);
 			x_temp.resize(dof);
 			mask = GridGSMask<d>(_mapping.Grid());

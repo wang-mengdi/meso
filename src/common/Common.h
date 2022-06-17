@@ -67,6 +67,7 @@ using Vector3##t=Eigen::Vector3##t;             \
 using Vector4##t=Eigen::Vector4##t;             \
 using VectorX##t=Eigen::VectorX##t;				
 
+//Fan: careful the matrices here are ColMajor by default
 #define Declare_Eigen_Matrix_Types(type,t)		\
 using Matrix1##t=Eigen::Matrix<type,1,1>;       \
 using Matrix2##t=Eigen::Matrix2##t;             \

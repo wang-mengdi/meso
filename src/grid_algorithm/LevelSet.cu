@@ -43,11 +43,6 @@ namespace Meso {
 		Init(_grid);
 	}
 
-	template<int d> void LevelSet<d>::Init(const Grid<d> _grid)
-	{
-		phi.Init(_grid, std::numeric_limits<real>::max());
-	}
-
 
 	//template<int d> real LevelSet<d>::Phi(const VectorD& pos) const
 	//{
@@ -97,12 +92,11 @@ namespace Meso {
 		//Timer timer;
 		//timer.Reset();
 		
-
 		Field<real, d> tent(grid, band_width < 0 ? std::numeric_limits<real>::max() : band_width);
-		Array<ushort> done(grid.DoF(), 0);
+		Array<ushort> done(grid.Memory_Size(), 0);
 		
 		std::priority_queue<PRI, Array<PRI>, std::greater<PRI> > heaps[2];
-		const int cell_num = grid.DoF();
+		const int cell_num = grid.Counts().prod();
 		//real far_from_intf_phi_val=grid.dx*(real)5;
 
 		//// Step 1: find interface cells
@@ -156,14 +150,14 @@ namespace Meso {
 			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), c)); }
 		}
 
-		//Info("heap sizes0: {} {}", heaps[0].size(), heaps[1].size());
+		//// Step 3: perform relaxation on interface cells to fix their values
+		//// NOTE: interface cells will solve Eikonal equation with cells on the other side of the interface,
+		//// with their ABS values instead of actual phi values
 
 #pragma omp parallel for
 		for (int h = 0; h < 2; h++) {
 			Relax_Heap(heaps[h], tent, done, phi, true);
 		}
-
-		//Info("heap sizes1: {} {}", heaps[0].size(), heaps[1].size());
 
 #pragma omp parallel for
 		for (int i = 0; i < cell_num; i++) {
@@ -173,49 +167,12 @@ namespace Meso {
 				{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
 			}
 		}
-
-		//Info("heap sizes2: {} {}", heaps[0].size(), heaps[1].size());
-
-		//// Step 3: perform relaxation on interface cells to fix their values
-		//// initialize heap with front cells
-//#pragma omp parallel for
-//		for (int i = 0; i < cell_num; i++) {
-//			const VectorDi cell = grid.Coord(i);
-//			if (!done[i]) continue;
-//			auto [relax_success, val] = Relax_Node(cell, phi, tent, done);
-//#pragma omp critical
-//			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
-//		}
-
-		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM: Build heap");
-
+		
 		//// Step 4: relax the other part of field
 #pragma omp parallel for
 		for (int h = 0; h < 2; h++) {
 			Relax_Heap(heaps[h], tent, done, phi, false);
-			//auto& heap = heaps[h];
-			//while (!heap.empty()) {
-			//	const real top_val = heap.top().first;
-			//	const int cell_idx = heap.top().second;
-			//	const VectorDi cell = grid.Coord(cell_idx);
-			//	heap.pop();
-			//	if (tent(cell) != top_val) continue;
-			//	done[cell_idx] = true;
-
-			//	for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
-			//		VectorDi nb = grid.Neighbor_Node(cell, i);
-			//		if (!grid.Valid(nb))continue;
-			//		const int nb_idx = grid.Index(nb);
-			//		//relaxation
-			//		if (!done[nb_idx]) {
-			//			auto [relaxed, val] = Relax_Node(nb, phi, tent, done);
-			//			if (relaxed) heap.push(PRI(val, nb_idx));
-			//		}
-			//	}
-			//}
 		}
-
-		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM: Traverse heap");
 
 		ArrayFunc::Binary_Transform(
 			phi.Data(),

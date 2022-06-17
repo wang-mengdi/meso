@@ -38,7 +38,7 @@ namespace Meso {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
 			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
@@ -54,7 +54,7 @@ namespace Meso {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
@@ -65,7 +65,7 @@ namespace Meso {
 
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
-					if (axis == 0 && face[1] >= grid.counts[1] - 2) {
+					if (axis == 0 && face[1] >= grid.Counts()[1] - 2) {
 						if (!face_fixed(axis, face)) {
 							face_fixed(axis, face) = true;
 							initial_vel(axis, face) = 1.0;
@@ -82,7 +82,7 @@ namespace Meso {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
 			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
@@ -125,7 +125,7 @@ namespace Meso {
 			int scale = Json::Value(j, "scale", 32);
 			real dx = 1.0 / scale;
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), MAC);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 			MaskedPoissonMapping<real, d> poisson;
 			VCycleMultigridIntp<real, d> MG_precond;
 			ConjugateGradient<real> MGPCG;
@@ -159,8 +159,8 @@ namespace Meso {
 			FieldDv<real, d> wz;
 			wz = wz_host;
 
-			FieldDv<real, d> sol(grid.counts, (real)0);
-			FaceField<real, d> alpha(grid.counts, (real)1);
+			FieldDv<real, d> sol(grid.Counts(), (real)0);
+			FaceField<real, d> alpha(grid.Counts(), (real)1);
 
 			poisson.Init(fixed, alpha);
 			MG_precond.Init_Poisson(poisson, 2, 2);
@@ -174,7 +174,7 @@ namespace Meso {
 				[&](const int axis, const VectorDi face) {
 					const VectorD pos = grid.Face_Center(axis, face);
 
-					if (face[axis] == 0 || face[axis] == grid.counts[axis] - 1) { return; }
+					if (face[axis] == 0 || face[axis] == grid.Counts()[axis] - 1) { return; }
 
 					const VectorDi cell_left = face - VectorDi::Unit(axis);
 					const VectorDi cell_right = face;

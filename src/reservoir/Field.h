@@ -16,16 +16,15 @@ namespace Meso {
 		Grid<d> grid;
 		std::shared_ptr<Array<T, side>> data = nullptr;
 		Field() {}
-		Field(const Grid<d>& _grid, std::shared_ptr<Array<T, side>> _data) { grid = _grid; data = _data; }
-		Field(const Grid<d>& _grid) { Init(_grid); }
+		Field(const Grid<d> _grid, std::shared_ptr<Array<T, side>> _data) { grid = _grid; data = _data; }
+		Field(const Grid<d> _grid) { Init(_grid); }
 		Field(const Grid<d> _grid, const T value) { Init(_grid, value); }
 		template<DataHolder side1> Field(const Field<T, d, side1>& f1) { Deep_Copy(f1); }
 		template<DataHolder side1> Field(Field<T, d, side1>& f1) { Deep_Copy(f1); }
 		void Init(const Grid<d> _grid) {
 			grid = _grid;
-			if (data == nullptr) data = std::make_shared<Array<T, side>>(grid.DoF());
-			else data->resize(grid.DoF());
-			//data.resize(grid.DoF());
+			if (data == nullptr) data = std::make_shared<Array<T, side>>(grid.Memory_Size());
+			else data->resize(grid.Memory_Size());
 			checkCudaErrors(cudaGetLastError());
 		}
 		void Init(const Grid<d> _grid, const T value) {
@@ -67,29 +66,36 @@ namespace Meso {
 		void operator -= (const Field<T, d, side>& f1) { ArrayFunc::Minus(Data(), f1.Data()); }
 		void operator /= (const Field<T, d, side>& f1) { ArrayFunc::Divide(Data(), f1.Data()); }
 
-		template<class CFunc>
-		void Iterate_Nodes(CFunc f) {
-			const int dof = grid.DoF();
-			for (int c = 0; c < dof; c++) {
-				f(grid.Coord(c));
-			}
+		void Set_Padding_To(const T val) {
+			int memory_size = grid.Memory_Size();
+			thrust::counting_iterator<int> idxfirst(0);
+			thrust::counting_iterator<int> idxlast = idxfirst + memory_size;
+			GridIndexer<d> gridind = grid;
+			thrust::transform_if(
+				idxfirst, idxlast,//first,last
+				data->begin(),//result
+				[=] __host__ __device__ (const int i) {return (T)0; },//op
+				[gridind] __host__ __device__ (const int idx) {return !gridind.Valid(gridind.Coord(idx)); }//pred
+			);
 		}
+
+		template<class CFunc> 
+		void Iterate_Nodes(CFunc f) { grid.Iterate_Nodes(f); }
 
 		/// Modify by Zhiqi Li, add surpoort for GPU
 		template<class CFuncT>//CFuncT is a function: VectorDi->T, takes the cell index
 		void Calc_Nodes(CFuncT f) {
 			Assert(data != nullptr, "Field::Calc_Cells error: nullptr data");
-			const int dof = grid.DoF();
+			const int memory_size = grid.Memory_Size();
 			thrust::counting_iterator<int> idxfirst(0);
-			thrust::counting_iterator<int> idxlast = idxfirst + dof;
+			thrust::counting_iterator<int> idxlast = idxfirst + memory_size;
 			Grid<d> grid2 = grid;
-			thrust::transform(
-				idxfirst,
-				idxlast,
-				data->begin(),
-				[f, grid2](const int idx) {
-				return f(grid2.Coord(idx));
-			}
+			thrust::transform_if(
+				idxfirst,//first
+				idxlast,//last
+				data->begin(),//result
+				[f, grid2](const int idx) { return f(grid2.Coord(idx)); },//op
+				[grid2](const int idx) {return grid2.Valid(grid2.Coord(idx)); }//pred
 			);
 		}
 
@@ -121,8 +127,9 @@ struct fmt::formatter<Meso::Field<T, 2, side>> {
 
 	void Append_String(const Meso::Field<T, 2>& F, std::string& out) {
 		//out += to_string(F.grid.counts[0]);
-		for (int i = 0; i < F.grid.counts[0]; i++) {
-			for (int j = 0; j < F.grid.counts[1]; j++) {
+		Meso::Vector2i counts = F.grid.Counts();
+		for (int i = 0; i < counts[0]; i++) {
+			for (int j = 0; j < counts[1]; j++) {
 				out += Meso::StringFunc::To_String_Simple(F(Eigen::Vector2i(i, j))) + " ";
 			}
 			out += "\n";

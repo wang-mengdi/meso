@@ -6,6 +6,8 @@
 #include "Stretching.h"
 #include "Simulator.h"
 #include "IOFunc.h"
+#include "GridEulerFunc.h"
+
 namespace Meso {
 	template<int d>
 	class FluidImpulse : public Simulator {
@@ -39,7 +41,7 @@ namespace Meso {
 
 		virtual real CFL_Time(const real cfl) {
 			real dx = velocity.grid.dx;
-			real max_vel = velocity.Max_Abs();
+			real max_vel = GridEulerFunc::Linf_Norm(velocity);
 			return dx * cfl / max_vel;
 		}
 
@@ -56,25 +58,25 @@ namespace Meso {
 			velocity = temp_velocity;
 			
 			//stretching
-			Exterior_Derivative<VectorD,d>(inverse_flow_map_grad, inverse_flow_map);
+			ExteriorDerivativePadding0::Apply<VectorD, d>(inverse_flow_map_grad, inverse_flow_map);
 			inverse_flow_map_grad *= (real)1 / velocity.grid.dx;
 			Stretching::Covector_Stretching(temp_velocity, inverse_flow_map_grad, velocity);
 			velocity = temp_velocity;	//Not sure with the boundary condition here
 			psi_N.Apply(velocity);
 			//projection
-			Exterior_Derivative(vel_div, velocity);
+			ExteriorDerivativePadding0::Apply(vel_div, velocity);
 
 			auto [iter, res] = MGPCG.Solve(pressure.Data(), vel_div.Data());
 			Info("Solve poisson with {} iters and residual {}", iter, res);
 
-			Exterior_Derivative(temp_velocity, pressure);
+			ExteriorDerivativePadding0::Apply(temp_velocity, pressure);
 			temp_velocity *= poisson.vol;
 
 			velocity += temp_velocity;
 			psi_N.Apply(velocity);
 
-			Exterior_Derivative(vel_div, velocity);
-			Info("After projection max div {}", vel_div.Max_Abs());
+			ExteriorDerivativePadding0::Apply(vel_div, velocity);
+			Info("After projection max div {}", GridEulerFunc::Linf_Norm(vel_div));
 		}
 	};
 }

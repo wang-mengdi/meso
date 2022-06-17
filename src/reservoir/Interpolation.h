@@ -17,7 +17,7 @@ namespace Meso {
 	class PointIntpLinear {
 	public:
 		template<class T, int d>
-		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		static T __host__ __device__ Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			Typedef_VectorD(d);
 			static constexpr int dx[8] = { 0,1,0,1,0,1,0,1 };
 			static constexpr int dy[8] = { 0,0,1,1,0,0,1,1 };
@@ -49,7 +49,7 @@ namespace Meso {
 	class PointIntpLinearPadding0 {
 	public:
 		template<class T, int d>
-		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		static T __host__ __device__ Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			static constexpr T padding_val = 0;
 			//considering invalid datas as 0
 			Typedef_VectorD(d);
@@ -83,7 +83,7 @@ namespace Meso {
 	class PointIntpLinearClamp {
 	public:
 		template<class T, int d>
-		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> _coord, const Vector<real, d> _frac) {
+		static T __host__ __device__ Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> _coord, const Vector<real, d> _frac) {
 			static constexpr T padding_val = 0;
 			//considering invalid datas as 0
 			Typedef_VectorD(d);
@@ -93,9 +93,10 @@ namespace Meso {
 			//clamping
 			VectorDi coord = _coord;
 			VectorD frac = _frac;
+			VectorDi counts = grid.Counts();
 			for (int axis = 0; axis < d; axis++) {
 				if (coord[axis] < 0) coord[axis] = 0, frac[axis] = 0;
-				if (coord[axis] > grid.counts[axis] - 2) coord[axis] = grid.counts[axis] - 2, frac[axis] = 1;
+				if (coord[axis] > counts[axis] - 2) coord[axis] = counts[axis] - 2, frac[axis] = 1;
 			}
 			if constexpr (d == 2) {
 				real w[2][2] = { {1.0 - frac[0],frac[0]},{1.0 - frac[1],frac[1]} };
@@ -126,7 +127,7 @@ namespace Meso {
 	public:
 		Interpolation() {}
 		template<class T, int d>
-		static T __host__ __device__ Value(const Grid<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		static T __host__ __device__ Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
 			return PointIntp::Value(grid, data, coord, frac);
 		}
 		template<class T, int d>
@@ -167,10 +168,11 @@ namespace Meso {
 		}
 		template<class T, int d, DataHolder side>
 		static Vector<T, d> __host__ __device__ Face_Vector(const FaceField<T, d, side>& vector_field, const Vector<real, d> pos) {
-			const auto& grid = vector_field.grid;
-			Grid<d> g0 = grid.Face_Grid(0), g1 = grid.Face_Grid(1), g2 = grid.Face_Grid(2);
-			const T* v0 = vector_field.Data_Ptr(0), * v1 = vector_field.Data_Ptr(1), * v2 = vector_field.Data_Ptr(2);
-			return Interpolation<PointIntp>::Face_Vector(g0, v0, g1, v1, g2, v2, pos);
+			Vector<T, d> ret;
+			for (int axis = 0; axis < d; axis++) {
+				ret[axis] = Interpolation<PointIntp>::Value(vector_field.grid.Face_Grid(axis), vector_field.Data_Ptr(axis), pos);
+			}
+			return ret;
 		}
 	}; 
 

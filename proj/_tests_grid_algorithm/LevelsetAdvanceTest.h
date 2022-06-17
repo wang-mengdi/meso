@@ -83,7 +83,7 @@ namespace Meso {
 		//);
 		//Info("max error {} at cell {}", max_err, max_err_cell);
 
-		Pass("Fast Marching test passed for counts={} in {}s with eikonal linf error={} and distance linf error={}", grid.counts, fmm_time, max_eikonal_error, max_distance_error);
+		Pass("Fast Marching test passed for counts={} in {}s with eikonal linf error={} and distance linf error={}", grid.Counts(), fmm_time, max_eikonal_error, max_distance_error);
 
 		//real eps = 1;
 		//real eps = sqrt(std::numeric_limits<real>::epsilon());
@@ -116,7 +116,7 @@ namespace Meso {
 		real dx = 4.0 / scale;
 		VectorD domain_min = MathFunc::V<d>(-2, -2, -2);
 		VectorDi counts = MathFunc::Vi<d>(scale, scale, scale);
-		Grid<d> grid(counts, dx, domain_min, MAC);
+		Grid<d> grid(counts, dx, domain_min, CENTER);
 		Sphere<d> sphere(VectorD::Zero(), 0.5);
 		Test_Fast_Marching<d, HOST>(grid, sphere);
 	}

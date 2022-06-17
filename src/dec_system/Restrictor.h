@@ -11,7 +11,7 @@
 namespace Meso {
 
 	template<class T, int d>
-	__global__ void Restrictor_Intp_Axis_Kernel(const int axis, const Grid<d> grid, T* intp_data, const T* original_data) {
+	__global__ void Restrictor_Intp_Axis_Kernel(const int axis, const GridIndexer<d> grid, T* intp_data, const T* original_data) {
 		Typedef_VectorD(d);
 		VectorDi coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		T data0, data1, data2, data3;
@@ -21,16 +21,16 @@ namespace Meso {
 		if (coord[axis] < 0) data0 = 0;
 		else data0 = original_data[grid.Index(coord)];
 		coord[axis] += 2;
-		if (coord[axis] >= grid.counts[axis]) data2 = 0;
+		if (coord[axis] >= grid.Dimension(axis)) data2 = 0;
 		else data2 = original_data[grid.Index(coord)];
 		coord[axis]++;
-		if (coord[axis] >= grid.counts[axis]) data3 = 0;
+		if (coord[axis] >= grid.Dimension(axis)) data3 = 0;
 		else data3 = original_data[grid.Index(coord)];
 		intp_data[idx] = (data0 + 3 * data1 + 3 * data2 + data3) / 8;
 	}
 
 	template<class T, int d>
-	__global__ void Restrictor_Intp_Coarser_Kernel(const Grid<d> coarser_grid, T* coarser_data, const Grid<d> finer_grid, const T* finer_data) {
+	__global__ void Restrictor_Intp_Coarser_Kernel(const GridIndexer<d> coarser_grid, T* coarser_data, const GridIndexer<d> finer_grid, const T* finer_data) {
 		Typedef_VectorD(d);
 		VectorDi coarser_coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		VectorDi finer_coord = coarser_coord * 2;
@@ -45,16 +45,18 @@ namespace Meso {
 	class RestrictorIntp : public LinearMapping<T> {
 	public:
 		using Base=LinearMapping<T>;
-		Grid<d> coarser_grid, finer_grid;
+		GridIndexer<d> coarser_grid, finer_grid;
 		ArrayDv<T> intp_data_old;
 		ArrayDv<T> intp_data_new;
 
 		RestrictorIntp() {}
-		RestrictorIntp(const Grid<d> coarse, const Grid<d> fine) {
+		RestrictorIntp(const GridIndexer<d> coarse, const GridIndexer<d> fine) {
 			Init(coarse, fine);
 		}
 
-		void Init(const Grid<d> _coarser, const Grid<d> _finer) {
+		void Init(const GridIndexer<d> _coarser, const GridIndexer<d> _finer) {
+			Assert(_coarser.Is_Unpadded(), "RestrictorIntp: _coarser {} invalid, must be unpadded", _coarser);
+			Assert(_finer.Is_Unpadded(), "RestrictorIntp: _finer {} invalid, must be unpadded", _finer);
 			coarser_grid = _coarser, finer_grid = _finer;
 			intp_data_old.resize(XDoF());
 			intp_data_new.resize(XDoF());
@@ -62,12 +64,12 @@ namespace Meso {
 
 		//number of cols
 		virtual int XDoF() const {
-			return finer_grid.DoF();
+			return finer_grid.Counts().prod();
 		}
 
 		//number of rows
 		virtual int YDoF() const {
-			return coarser_grid.DoF();
+			return coarser_grid.Counts().prod();
 		}
 
 		//input p, get Ap

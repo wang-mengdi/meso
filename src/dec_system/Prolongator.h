@@ -11,7 +11,7 @@
 
 namespace Meso {
 	template<class T, int d>
-	__global__ void Prolongator_Intp_Kernel(const Grid<d> fine_grid, T* fine_data, const Grid<d> coarse_grid, const T* coarse_data) {
+	__global__ void Prolongator_Intp_Kernel(const GridIndexer<d> fine_grid, T* fine_data, const GridIndexer<d> coarse_grid, const T* coarse_data) {
 		Typedef_VectorD(d);
 		VectorDi fine_coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		VectorDi coarse_coord;
@@ -36,23 +36,25 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		using Base=LinearMapping<T>;
-		Grid<d> fine_grid, coarse_grid;
+		GridIndexer<d> fine_grid, coarse_grid;
 
 		ProlongatorIntp() {}
-		ProlongatorIntp(const Grid<d> _fine, const Grid<d> _coarse) { Init(_fine, _coarse); }
+		ProlongatorIntp(const GridIndexer<d> _fine, const GridIndexer<d> _coarse) { Init(_fine, _coarse); }
 
-		void Init(const Grid<d> _fine, const Grid<d> _coarse) {
+		void Init(const GridIndexer<d> _fine, const GridIndexer<d> _coarse) {
+			Assert(_fine.Is_Unpadded(), "ProlongatorIntp: _fine {} invalid, must be unpadded", _fine);
+			Assert(_coarse.Is_Unpadded(), "ProlongatorIntp: _coarse {} invalid, must be unpadded", _coarse);
 			fine_grid = _fine;
 			coarse_grid = _coarse;
 		}
 		//number of cols
 		virtual int XDoF() const {
-			return coarse_grid.DoF();
+			return coarse_grid.Counts().prod();
 		}
 
 		//number of rows
 		virtual int YDoF() const {
-			return fine_grid.DoF();
+			return fine_grid.Counts().prod();
 		}
 
 		//input p, get Ap

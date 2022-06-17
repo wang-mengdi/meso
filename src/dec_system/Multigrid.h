@@ -80,15 +80,16 @@ namespace Meso {
 		template<int d>
 		void Allocate_Poisson(const Grid<d> _grid) {
 			Typedef_VectorD(d);
+			Assert(_grid.Is_Unpadded(), "Multigrid::Allocate_Poisson error: _grid {} padding not allowed", _grid);
 
-			VectorDi grid_size = _grid.counts;
+			VectorDi grid_size = _grid.Counts();
 			int grid_min_size = grid_size.minCoeff();
 			L = (int)std::ceil(log2(grid_min_size)) - 3;
 			Array<Grid<d>> grids(L + 1);
 			grids[0] = _grid;
-			dof = grids[0].DoF();
+			dof = grids[0].Counts().prod();
 			for (int i = 1; i <= L; i++) {
-				grid_size /= 2;
+				grid_size = MathFunc::Round_Up_To_Align<d>(grid_size / 2, Grid<d>::Block_Size());
 				grids[i] = Grid<d>(grid_size);
 			}
 
@@ -121,7 +122,7 @@ namespace Meso {
 			bs.resize(L + 1);
 			rs.resize(L + 1);//seem rs only need L
 			for (int i = 0; i <= L; i++) {
-				int n = grids[i].DoF();
+				int n = grids[i].Counts().prod();
 				xs[i].resize(n);
 				bs[i].resize(n);
 				rs[i].resize(n);
