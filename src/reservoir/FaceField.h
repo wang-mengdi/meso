@@ -26,7 +26,8 @@ namespace Meso {
 		void Init(const Grid<d>& _grid) {
 			grid = _grid;
 			for (int axis = 0; axis < d; axis++) {
-				int n = grid.Face_DoF(axis);
+				Grid<d> face_grid = grid.Face_Grid(axis);
+				int n = face_grid.Memory_Size();
 				if (face_data[axis] == nullptr) face_data[axis] = std::make_shared<Array<T, side>>(n);
 				else face_data[axis]->resize(n);
 				checkCudaErrors(cudaGetLastError());
@@ -61,6 +62,7 @@ namespace Meso {
 			return face_data[axis] == nullptr ? nullptr : thrust::raw_pointer_cast(face_data[axis]->data());
 		}
 		constexpr Field<T, d, side> Face_Reference(const int axis)const {
+			Assert(face_data[axis] != nullptr, "Field::Face_Reference error: empty face_data[{}]", axis);
 			//will reference original data
 			return Field<T, d, side>(grid.Face_Grid(axis), face_data[axis]);
 		}
@@ -88,25 +90,10 @@ namespace Meso {
 		template<class T1> void operator *= (const T1 a) {
 			for (int axis = 0; axis < d; axis++) ArrayFunc::Multiply_Scalar(Data(axis), a);
 		}
-		
-		//TODO: replace with Linf_Norm in GridEulerFunc.h
-		//T Max_Abs(void) {
-		//	real max_val = 0;
-		//	for (int axis = 0; axis < d; axis++) {
-		//		max_val = std::max<T>(max_val, ArrayFunc::Max_Abs<T>(Data(axis)));
-		//	}
-		//	return max_val;
-		//}
-
+	
 		template<class ICFunc>
 		void Iterate_Faces(ICFunc f) {
-			for (int axis = 0; axis < d; axis++) {
-				int n = grid.Face_DoF(axis);
-				for (int i = 0; i < n; i++) {
-					VectorDi face = grid.Face_Coord(axis, i);
-					f(axis, face);
-				}
-			}
+			grid.Iterate_Faces(f);
 		}
 
 		template<class ICFunc>
@@ -118,32 +105,9 @@ namespace Meso {
 		void Calc_Faces(ICFuncT f) {
 			Grid<d> grid2 = grid;
 			for (int axis = 0; axis < d; axis++) {
-				Assert(face_data[axis] != nullptr, "FaceField::Calc_Faces error: nullptr data at axis {}", axis);
-				const int dof = grid.Face_DoF(axis);
-				/// Note!
-				/// Why I write the lambda out here:
-				/// A strange error: For this host platform, an extended lambda cannot be defined inside the 'if'
-				/// or 'else' block of a constexpr if statement
-				if constexpr (side == DEVICE) {
-					auto f_device = [f, axis, grid2]__device__(const int idx) {
-						return f(axis, grid2.Face_Coord(axis, idx));
-					};
-					thrust::counting_iterator<int> idxfirst(0);
-					thrust::counting_iterator<int> idxlast = idxfirst + dof;
-					thrust::transform(
-						idxfirst,
-						idxlast,
-						face_data[axis]->begin(),
-						f_device
-					);
-				}
-				else {
-#pragma omp parallel for
-					for (int i = 0; i < dof; i++) {
-						VectorDi face = grid2.Face_Coord(axis, i);
-						(*this)(axis, face) = f(axis, face);
-					}
-				}
+				auto face_node_f = std::bind(f, axis, std::placeholders::_1);
+				Field<T, d, side> face_field = Face_Reference(axis);
+				face_field.Calc_Nodes(face_node_f);
 			}
 		}
 	};

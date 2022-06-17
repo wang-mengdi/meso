@@ -28,15 +28,16 @@ namespace Meso {
 			Typedef_VectorD(d);
 			const auto grid = F.grid;
 			int nx, ny, nz;
+			VectorDi counts = grid.Counts();
 			if constexpr (d == 2) {
-				nx = grid.counts[0];
-				ny = grid.counts[1];
+				nx = counts[0];
+				ny = counts[1];
 				nz = 1;
 			}
 			else {
-				nx = grid.counts[0];
-				ny = grid.counts[1];
-				nz = grid.counts[2];
+				nx = counts[0];
+				ny = counts[1];
+				nz = counts[2];
 			}
 
 			// setup VTK

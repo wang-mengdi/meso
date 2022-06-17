@@ -30,12 +30,12 @@ enum GridType { MAC = 0, COLLOC };
 
 此外，我们可以发现，交错网格中，某一轴向的面心数据点亦是一组晶格数据点，也就是说，这组数据点同样构成一个`Grid<d>`.在`Grid<d>`当中，我们提供生成所有cell center/face center数据点所对应`Grid<d>`的接口，即`Cell_Grid()`和`Face_Grid()`.其中，`Cell_Grid()`默认将当前网格解释成一个同位网格，而`Face_Grid()`默认将当前网格解释成一个交错网格。
 
-例如，假如你把某个`Grid<3> grid;`视作一个同位网格，那么它$(i,j,k)$号node的位置应该是`grid.Position(Vector3i(i,j,k))`，而如果你把它视作一个交错网格，那么这个位置就应该是
-
+例如，对于某个`Grid<3> grid;`，无论它是同位网格还是交错网格，其$(i,j,k)$号node的位置都应该是`grid.Position(Vector3i(i,j,k))`。而如下代码：
 ```c++
 Grid<3> cell_grid=grid.Cell_Grid();
 return cell_grid.Position(Vector3i(i,j,k));
 ```
+的含义是，把`grid`解释为一个交错网格的顶点网格，求$(i,j,k)$号cell center的位置。
 
 此外，出于提升性能考虑，我们额外提供了无需通过`Face_Grid()`显式生成一个`Grid<d>`对象也能处理面心node的接口，这是因为在不可压流体求解时，我们需要在CUDA内核函数中频繁计算面心数据的地址。
 

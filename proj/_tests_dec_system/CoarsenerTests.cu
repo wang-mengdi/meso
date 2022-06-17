@@ -7,8 +7,9 @@ namespace Meso {
 	void Test_Coarsener2(const Vector2i counts)
 	{
 		Field<bool, 2> finer_data{ Grid<2>(counts) };
+		Vector2i finer_counts = finer_data.grid.Counts();
 
-		int fnx = finer_data.grid.counts[0], fny = finer_data.grid.counts[1];
+		int fnx = finer_counts[0], fny = finer_counts[1];
 		for (int i = 0; i < fnx; i++) {
 			real frac = (i + 0.0) / fnx;
 			for (int j = 0; j < fny; j++) {
@@ -17,8 +18,9 @@ namespace Meso {
 			}
 		}
 
-		Field<bool, 2> coarser_data(Grid<2>(counts / 2));
-		int cnx = coarser_data.grid.counts[0], cny = coarser_data.grid.counts[1];
+		Vector2i coarse_counts = MathFunc::Round_Up_To_Align<2>(counts / 2, Grid<2>::Block_Size());
+		Field<bool, 2> coarser_data{ Grid<2>(coarse_counts) };
+		int cnx = coarse_counts[0], cny = coarse_counts[1];
 		for (int i = 0; i < cnx; i++) {
 			for (int j = 0; j < cny; j++) {
 				//bool fixed = true;
@@ -60,8 +62,9 @@ namespace Meso {
 	void Test_Coarsener3(const Vector3i counts)
 	{
 		Field<bool, 3> finer_data{ Grid<3>(counts) };
+		Vector3i finer_counts = finer_data.grid.Counts();
 
-		int fnx = finer_data.grid.counts[0], fny = finer_data.grid.counts[1], fnz = finer_data.grid.counts[2];
+		int fnx = finer_counts[0], fny = finer_counts[1], fnz = finer_counts[2];
 		for (int i = 0; i < fnx; i++) {
 			real frac = (i + 0.0) / fnx;
 			for (int j = 0; j < fny; j++) {
@@ -72,8 +75,10 @@ namespace Meso {
 			}
 		}
 
-		Field<bool, 3> coarser_data{ Grid<3>(counts / 2) };
-		int cnx = coarser_data.grid.counts[0], cny = coarser_data.grid.counts[1], cnz = coarser_data.grid.counts[2];
+		Vector3i coarser_counts = MathFunc::Round_Up_To_Align<3>(counts / 2, Grid<3>::Block_Size());
+		Field<bool, 3> coarser_data{ Grid<3>(coarser_counts) };
+		
+		int cnx = coarser_counts[0], cny = coarser_counts[1], cnz = coarser_counts[2];
 		for (int i = 0; i < cnx; i++) {
 			for (int j = 0; j < cny; j++) {
 				for (int k = 0; k < cnz; k++) {

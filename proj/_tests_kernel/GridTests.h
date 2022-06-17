@@ -16,7 +16,7 @@ namespace Meso {
 		Grid<d> grid(counts);
 		Field<int, d> visited(grid, -1);
 		//test ind-cell and cell-ind
-		int n = grid.DoF();
+		int n = grid.Memory_Size();
 		for (int i = 0; i < n; i++) {
 			Vector<int, d> cell = grid.Coord(i);
 			int i1 = grid.Index(cell);
@@ -44,14 +44,15 @@ namespace Meso {
 
 		FaceField<int, d> fvisited(grid, -1);
 		for (int axis = 0; axis < d; axis++) {
-			int fn = grid.Face_DoF(axis);
+			Grid<d> face_grid = grid.Face_Grid(axis);
+			int fn = face_grid.Memory_Size();
 			for (int i = 0; i < fn; i++) {
 				Vector<int, d> face = grid.Face_Coord(axis, i);
 				int i1 = grid.Face_Index(axis, face);
 				Assert(i == i1, "Test_Grid_Index2 failed: axis={}, face {} and index {} doesn't match", axis, face, i);
 				fvisited(axis, face) = 1;
 			}
-			Vector<int, d> fcnt = grid.Face_Counts(axis);
+			Vector<int, d> fcnt = face_grid.Memory_Counts();
 			if constexpr (d == 2) {
 				for (int i = 0; i < fcnt[0]; i++) {
 					for (int j = 0; j < fcnt[1]; j++) {

@@ -53,11 +53,11 @@ namespace Meso {
 			}
 		);
 		mapping.Init(fixed, vol);
-		ArrayDv<T> diag_dev(grid.DoF());
+		ArrayDv<T> diag_dev(mapping.YDoF());
 		PoissonLike_Diagonal(diag_dev, mapping);
 		Array<T> diag_host = diag_dev;
 
-		EigenVec vec_diag_grdt(grid.DoF());
+		EigenVec vec_diag_grdt(mapping.YDoF());
 		grid.Exec_Nodes(
 			[&](const VectorDi cell) {
 				int idx = grid.Index(cell);
@@ -74,8 +74,8 @@ namespace Meso {
 				}
 			}
 		);
-		EigenVec vec_diag_host(grid.DoF());
-		for (int i = 0; i < grid.DoF(); i++) vec_diag_host[i] = diag_host[i];
+		EigenVec vec_diag_host(mapping.YDoF());
+		for (int i = 0; i < mapping.YDoF(); i++) vec_diag_host[i] = diag_host[i];
 		if (vec_diag_grdt.isApprox(vec_diag_host)) Pass("Test_Poisson_Diagonal passed for counts={}", counts);
 		else Error("Test_Poisson_Diagonal failed for counts={}", counts);
 		//Info("vec_diag_grdt: {}", vec_diag_grdt);

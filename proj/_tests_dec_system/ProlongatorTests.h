@@ -15,11 +15,11 @@ void Test_Prolongator_Intp(const Vector<int, d> fine_counts) {
 	//test that restrict(prolongate())==identity
 	Typedef_VectorD(d);
 	Grid<d> fine_grid(fine_counts, 0.5, VectorD::Zero());
-	Grid<d> coarse_grid(fine_counts / 2, 1.0, VectorD::Zero());
+	Grid<d> coarse_grid(MathFunc::Round_Up_To_Align<d>(fine_counts / 2, Grid<d>::Block_Size()), 1.0, VectorD::Zero());
 	Field<T, d> coarse_host(coarse_grid, 0);
 	coarse_host(MathFunc::Vi<d>(5, 5, 5)) = 1;
 	//Random::Fill_Random_Array<T>(coarse_host.data, -5.0, 10.0);
-	Grid<d> coarse_pad_grid(coarse_grid.counts + VectorDi::Ones(), 1.0, -VectorD::Ones() * 1.0);
+	Grid<d> coarse_pad_grid(coarse_grid.Counts() + VectorDi::Ones(), 1.0, -VectorD::Ones() * 1.0);
 	Field<T, d> coarse_pad(coarse_pad_grid, 0);
 	coarse_pad.Calc_Nodes(
 		[&](const VectorDi cell) ->T {

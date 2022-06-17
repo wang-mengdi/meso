@@ -19,7 +19,7 @@ template<class T, int d>
 void Test_Restrictor_Intp(const Vector<int, d> counts) {
 	Typedef_VectorD(d);
 	Grid<d> finer_grid(counts);
-	Grid<d> coarser_grid(counts / 2);
+	Grid<d> coarser_grid(MathFunc::Round_Up_To_Align<d>(counts / 2, Grid<d>::Block_Size()));
 	Field<T, d> finer_host(finer_grid);
 	Field<T, d> coarser_host(coarser_grid);
 	Random::Fill_Random_Array<T>(finer_host.Data());

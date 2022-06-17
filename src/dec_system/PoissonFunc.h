@@ -15,9 +15,9 @@ namespace Meso {
 	class ChessboardMask {
 	public:
 		Typedef_VectorD(d);
-		Grid<d> grid;
+		GridIndexer<d> grid;
 		const int color;
-		ChessboardMask(const Grid<d>& _grid, const int _color) :grid(_grid), color(_color) {}
+		ChessboardMask(const GridIndexer<d> _grid, const int _color) :grid(_grid), color(_color) {}
 		__host__ __device__ int operator () (const int idx) {
 			VectorDi coord = grid.Coord(idx);
 			//note that XNOR is NOT*XOR, and ^0x1 equals to NOT
@@ -112,7 +112,7 @@ namespace Meso {
 	};
 
 	template<class T, int d>
-	__global__ void Set_Cell_By_Color(const Grid<d> grid, const PoissonLikeMask<d> mask, T* cell_data) {
+	__global__ void Set_Cell_By_Color(const GridIndexer<d> grid, const PoissonLikeMask<d> mask, T* cell_data) {
 		Typedef_VectorD(d);
 		VectorDi coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		int index = grid.Index(coord);
@@ -121,7 +121,7 @@ namespace Meso {
 	}
 	//column-major
 	template<class T, int d>
-	__global__ void Fill_Dense_Matrix_From_Result(const Grid<d> grid, const PoissonLikeMask<d> mask, const T* Ap, const int ydof, T* mat) {
+	__global__ void Fill_Dense_Matrix_From_Result(const GridIndexer<d> grid, const PoissonLikeMask<d> mask, const T* Ap, const int ydof, T* mat) {
 		Typedef_VectorD(d);
 		VectorDi coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		//the cell that is switched to 1 for this time
@@ -133,7 +133,7 @@ namespace Meso {
 	}
 	//column-major
 	template<class T, int d>
-	void Dense_Matrix_From_PoissonLike(int& cols, int& rows, ArrayDv<T>& A, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
+	void Dense_Matrix_From_PoissonLike(int& cols, int& rows, ArrayDv<T>& A, const GridIndexer<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
 		ArrayDv<T> temp_p, temp_Ap;
 		cols = poisson_like.XDoF();
 		rows = poisson_like.YDoF();
@@ -155,14 +155,14 @@ namespace Meso {
 	}
 	//column-major
 	template<class T, int d>
-	void DenseMatrixMapping_From_PoissonLike(DenseMatrixMapping<T>& dense_mapping, const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
+	void DenseMatrixMapping_From_PoissonLike(DenseMatrixMapping<T>& dense_mapping, const GridIndexer<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
 		Dense_Matrix_From_PoissonLike(dense_mapping.cols, dense_mapping.rows, dense_mapping.A, grid, poisson_like, diag_add_epsilon);
 	}
 
 	//Will add epsilon*I to the system
 	//The reason of that feature is that a Poisson system may have a eigen value 0, add epsilon*I will make it positive definite
 	template<class T, int d>
-	SparseMatrix<T> SparseMatrix_From_PoissonLike(const Grid<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
+	SparseMatrix<T> SparseMatrix_From_PoissonLike(const GridIndexer<d> grid, LinearMapping<T>& poisson_like, T diag_add_epsilon = 0) {
 		int cols, rows;
 		ArrayDv<T> A_dev;
 		//column-major

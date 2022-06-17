@@ -32,7 +32,7 @@ namespace Meso {
 
 		// Marching Cubes
 		{
-			Grid<3> grid(Vector3i(100, 100, 100), 0.01, MathFunc::V<3>(0., 0., 0.), COLLOC);
+			Grid<3> grid(Vector3i(100, 100, 100), 0.01, MathFunc::V<3>(0., 0., 0.), CORNER);
 			Field<T, 3> field_host(grid, 0); Vector3 center = MathFunc::V<3>(0.6, 0.6, 0.);
 
 			grid.Exec_Nodes(
@@ -49,7 +49,7 @@ namespace Meso {
 
 		// Marching Square
 		{
-			Grid<2> grid(Vector2i(100, 100), 0.01, MathFunc::V<2>(0., 0.), COLLOC);
+			Grid<2> grid(Vector2i(104, 104), 0.01, MathFunc::V<2>(0., 0.), CORNER);
 			Field<T, 2> field_host(grid, 0); Vector2 center = grid.Center();
 			grid.Exec_Nodes(
 				[&](const Vector2i node) {

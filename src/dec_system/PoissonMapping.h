@@ -7,7 +7,7 @@
 #include "LinearMapping.h"
 #include "Field.h"
 #include "FaceField.h"
-#include "DifferentialExteriorCalculus.h"
+#include "ExteriorDerivative.h"
 #include "AuxFunc.h"
 #include "BoundaryCondition.h"
 using namespace thrust::placeholders;
@@ -16,7 +16,7 @@ namespace Meso {
 	//Negative Poisson mapping -lap(p), except some masked points
 	//Masked cells will be viewed as 0 in poisson mapping
 	//Which means adjacent faces of masked cells will have volume 0
-	template<class T, int d>
+	template<class T, int d, class ExteriorDerivative=ExteriorDerivativePadding0>
 	class MaskedPoissonMapping : public LinearMapping<T> {
 		using Base=LinearMapping<T>;
 		//Ap=-lap(p)
@@ -31,20 +31,21 @@ namespace Meso {
 		FaceFieldDv<T, d> temp_face;
 		
 		MaskedPoissonMapping() {}
-		MaskedPoissonMapping(const Grid<d>& grid) { Allocate_Memory(grid); }
+		MaskedPoissonMapping(const Grid<d> grid) { Allocate_Memory(grid); }
 
-		void Allocate_Memory(const Grid<d>& grid) {
-			dof = grid.DoF();
+		void Allocate_Memory(const Grid<d> grid) {
+			Assert(grid.Is_Unpadded(), "MaskedPoissonMapping: invalid grid {}, padding not allowed", grid);
+			dof = grid.Memory_Size();
 			vol.Init(grid);
 			fixed.Init(grid);
 			temp_cell.Init(grid);
 			temp_face.Init(grid);
 		}
-		void Init(const Grid<d>& grid) {
+		void Init(const Grid<d> grid) {
 			Allocate_Memory(grid);
 		}
 		void Init(const Field<bool, d>& _fixed, const FaceField<T, d>& _vol) {
-			Assert(_fixed.grid.counts == _vol.grid.counts, "MaskedPoissonMapping::Init error: grid size of fixed is {} however vol is {}", _fixed.grid.counts, _vol.grid.counts);
+			Assert(_fixed.grid.Indexer() == _vol.grid.Indexer(), "MaskedPoissonMapping::Init error: _fixed grid {} unequal to _vol grid {}", _fixed.grid, _vol.grid);
 			Allocate_Memory(_fixed.grid);
 			vol.Deep_Copy(_vol);
 			//cell_bc.Init(_fixed);
@@ -82,7 +83,7 @@ namespace Meso {
 
 			//temp_face = grad(temp_cell) *. vol
 			//d(p) ----- 1-form
-			Exterior_Derivative(temp_face, temp_cell);
+			ExteriorDerivative::Apply(temp_face, temp_cell);
 			//d(p) *. vol ----- 1-form
 			temp_face *= vol;
 
@@ -91,7 +92,7 @@ namespace Meso {
 
 			//temp_cell = div(temp_face)
 			//d*d(p) *. vol ----- 3-form
-			Exterior_Derivative(temp_cell, temp_face);
+			ExteriorDerivative::Apply(temp_cell, temp_face);
 			temp_cell *= -1;
 
 			//Hodge star is identity here

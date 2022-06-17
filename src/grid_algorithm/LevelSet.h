@@ -29,7 +29,10 @@ namespace Meso {
 	public:
 		LevelSet() {}
 		LevelSet(const Grid<d> _grid);
-		void Init(const Grid<d> _grid);
+		void Init(const Grid<d> _grid) {
+			Assert(_grid.Is_Unpadded(), "Levelset::Init _grid={}, padding not allowed", _grid);
+			phi.Init(_grid, std::numeric_limits<real>::max());
+		}
 		template<class Shape>
 		void Init(const Grid<d> _grid, Shape geom) {
 			Init(_grid);

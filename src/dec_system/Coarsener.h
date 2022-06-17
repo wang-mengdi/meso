@@ -11,7 +11,7 @@
 
 namespace Meso {
 	template<int d>
-	__global__ void Coarsen_Fixed_Kernel(const Grid<d> grid_coarser, bool* coarser_fixed, const Grid<d> grid_finer, const bool* finer_fixed) {
+	__global__ void Coarsen_Fixed_Kernel(const GridIndexer<d> grid_coarser, bool* coarser_fixed, const Grid<d> grid_finer, const bool* finer_fixed) {
 		Typedef_VectorD(d);
 		static const int dx[8] = { 0,1,0,1,0,1,0,1 };
 		static const int dy[8] = { 0,0,1,1,0,0,1,1 };
@@ -27,7 +27,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	__global__ void Coarsen_Vol_Kernel(const int axis, const Grid<d> coarser_grid, T* coarser_data, const Grid<d> finer_grid, const T* finer_data) {
+	__global__ void Coarsen_Vol_Kernel(const int axis, const GridIndexer<d> coarser_grid, T* coarser_data, const GridIndexer<d> finer_grid, const T* finer_data) {
 		Typedef_VectorD(d);
 		VectorDi coarser_face = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
 		VectorDi finer_face = coarser_face * 2;

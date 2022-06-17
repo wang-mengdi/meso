@@ -5,12 +5,12 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "DifferentialExteriorCalculus.h"
+#include "ExteriorDerivative.h"
 #include "Random.h"
 using namespace Meso;
 
 //test: facefield=d(field)
-template<class T, int d>
+template<class T, int d, class ExteriorDerivative>
 void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
 	Typedef_VectorD(d);
 	Grid<d> grid(counts);
@@ -18,7 +18,7 @@ void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
 	Random::Fill_Random_Array<T>(field_host.Data(), -3, 10);
 	FieldDv<T, d> field_dev = field_host;
 	FaceFieldDv<T, d> facefield_ext_dev;
-	Exterior_Derivative(facefield_ext_dev, field_dev);
+	ExteriorDerivative::Apply(facefield_ext_dev, field_dev);
 	FaceField<T, d> facefield_ext_host = facefield_ext_dev;
 	FaceField<T, d> facefield_naive(grid);
 	facefield_naive.Calc_Faces(
@@ -36,10 +36,10 @@ void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
 			return;
 		}
 	}
-	Pass("Test_Exterior_Derivative_Cell passed for counts={}", counts);
+	Pass("Test_Exterior_Derivative_Cell failed for counts={}", counts);
 }
 
-template<class T, int d>
+template<class T, int d, class ExteriorDerivative>
 void Test_Exterior_Derivative_Face(const Vector<int, d> counts) {
 	Typedef_VectorD(d);
 	Grid<d> grid(counts);
@@ -53,7 +53,7 @@ void Test_Exterior_Derivative_Face(const Vector<int, d> counts) {
 	//);
 	FaceFieldDv<T, d> F_dev = F_host;
 	FieldDv<T, d> C_ext_dev;
-	Exterior_Derivative(C_ext_dev, F_dev);
+	ExteriorDerivative::Apply(C_ext_dev, F_dev);
 	Field<T, d> C_ext_host = C_ext_dev;
 	Field<T, d> C_naive(grid);
 	C_naive.Calc_Nodes(
@@ -70,6 +70,6 @@ void Test_Exterior_Derivative_Face(const Vector<int, d> counts) {
 		Pass("Test_Exterior_Derivative_Face passed for counts={}", counts);
 	}
 	else {
-		Error("Test_Exterior_Derivative_Face passed for counts={}", counts);
+		Error("Test_Exterior_Derivative_Face failed for counts={}", counts);
 	}
 }

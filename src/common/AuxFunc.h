@@ -84,8 +84,8 @@ namespace Meso {
 		}
 
 		////Eigen zero compiler fix
-		template<class T> T Zero() { return (T)0; }
-#define Define_Zero(VecT) template<> inline VecT Zero<VecT>(){return VecT::Zero();}
+		template<class T> __host__ __device__ constexpr T Zero() { return (T)0; }
+#define Define_Zero(VecT) template<>  __host__ __device__ inline VecT Zero<VecT>(){return VecT::Zero();}
 		Define_Zero(Matrix2); Define_Zero(Matrix3); Define_Zero(Matrix4);
 		Define_Zero(Vector1); Define_Zero(Vector2); Define_Zero(Vector3);
 		Define_Zero(Vector4);
