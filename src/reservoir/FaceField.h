@@ -46,6 +46,10 @@ namespace Meso {
 				ArrayFunc::Copy(*face_data[i], f1.Data(i));
 			}
 		}
+		void Shallow_Copy(const FaceField<T, d, side>& f1) {
+			grid = f1.grid;
+			for (int i = 0; i < 3; i++) face_data[i] = f1.face_data[i];
+		}
 
 		template<DataHolder side1>
 		FaceField<T, d, side>& operator = (const FaceField<T, d, side1>& f1) { Deep_Copy(f1); return *this; }

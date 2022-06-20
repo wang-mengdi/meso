@@ -20,14 +20,13 @@ namespace Meso {
 		FaceField<T, d> initial_vel;
 
 		void Apply(json& j, FluidFreeSurface<T, d>& fluid) {
-			int test = Json::Value(j, "test", 0);
-			switch (test) {
-			case 0:Case_0(j, fluid); break;
-			default:Assert(false, "test {} not exist", test); break;
-			}
+			std::string test = Json::Value(j, "test", std::string("hydrostatic"));
+			if (test == "hydrostatic") Init_Hydrostatic(j, fluid);
+			else if (test == "dropfall") Init_DropFall(j, fluid);
+			else Assert(false, "test {} not exist", test);
 		}
 
-		void Case_0(json& j, FluidFreeSurface<T, d>& fluid) {
+		void Init_Hydrostatic(json& j, FluidFreeSurface<T, d>& fluid) {
 			int scale = Json::Value<int>(j, "scale", 32);
 			T side_len = 1.0;
 			T dx = side_len / scale;
@@ -43,6 +42,24 @@ namespace Meso {
 			Plane<d> plane(Vector<T, d>::Unit(1), grid.Center());
 
 			fluid.Init(j, plane, cell_type, initial_vel);
+		}
+
+		void Init_DropFall(json& j, FluidFreeSurface<T, d>& fluid) {
+			int scale = Json::Value<int>(j, "scale", 32);
+			T side_len = 1.0;
+			T dx = side_len / scale;
+			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 2, 1);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
+
+			cell_type.Init(grid, FLUID);
+			Eigen::Matrix<int, 3, 2> bc_width;
+			bc_width << 1, 1, 1, 1, 1, 1;
+			GridEulerFunc::Set_Boundary_Cells(cell_type, bc_width, SOLID);
+			initial_vel.Init(grid, 0);
+
+			Sphere<d> sphere(grid.Center() + VectorD::Unit(1) * 0.25, side_len * 0.2);
+
+			fluid.Init(j, sphere, cell_type, initial_vel);
 		}
 	};
 }
