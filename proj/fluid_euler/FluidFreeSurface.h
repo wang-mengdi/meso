@@ -14,6 +14,7 @@
 #include "MarchingCubes.h"
 #include "GridEulerFunc.h"
 #include <vtkTriangle.h>
+#include <vtkLine.h>
 #include <vtkCellData.h>
 #include <vtkCellArray.h>
 
@@ -169,17 +170,27 @@ namespace Meso {
 				Vector3 pos3 = MathFunc::V<3>(pos);
 				nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
 			}
-
-			for (int i = 0; i < elements.rows(); i++) {
-				vtkNew<vtkTriangle> triangle;
-				triangle->GetPointIds()->SetId(0, elements(i, 0));
-				triangle->GetPointIds()->SetId(1, elements(i, 1));
-				triangle->GetPointIds()->SetId(2, elements(i, 2));
-				cellArray->InsertNextCell(triangle);
-			}
-
 			unstructured_grid->SetPoints(nodes);
-			unstructured_grid->SetCells(VTK_TRIANGLE, cellArray);
+
+			if constexpr (d == 2) {
+				for (int i = 0; i < elements.rows(); i++) {
+					vtkNew<vtkLine> line;
+					line->GetPointIds()->SetId(0, elements(i, 0));
+					line->GetPointIds()->SetId(1, elements(i, 1));
+					cellArray->InsertNextCell(line);
+				}
+				unstructured_grid->SetCells(VTK_LINE, cellArray);
+			}
+			else if constexpr (d == 3) {
+				for (int i = 0; i < elements.rows(); i++) {
+					vtkNew<vtkTriangle> triangle;
+					triangle->GetPointIds()->SetId(0, elements(i, 0));
+					triangle->GetPointIds()->SetId(1, elements(i, 1));
+					triangle->GetPointIds()->SetId(2, elements(i, 2));
+					cellArray->InsertNextCell(triangle);
+				}
+				unstructured_grid->SetCells(VTK_TRIANGLE, cellArray);
+			}
 
 			writer->SetFileName(file_name.c_str());
 			writer->SetInputData(unstructured_grid);
@@ -192,19 +203,7 @@ namespace Meso {
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 			
 			VertexMatrix<T, d> verts; ElementMatrix<d> elements;
-			//VectorD center = velocity.grid.Center() - VectorD::Unit(1) * (1 - metadata.current_time);
-			////Info("current time {} center {}", metadata.current_time, center);
-			//Info("output frame {} current time {}", metadata.current_frame, metadata.current_time);
-			//Sphere<d> sphere(center, 0.2);
-			//LevelSet<d> my_levelset; my_levelset.Init(velocity.grid, sphere);
-			//Marching_Cubes<T, d, HOST>(verts, elements, my_levelset.phi);
-
 			Marching_Cubes<T, d, HOST>(verts, elements, levelset.phi);
-
-			//std::string obj_name = fmt::format("surface{:04d}.obj", metadata.current_frame);
-			//bf::path obj_path = metadata.base_path / bf::path(obj_name);
-			//OBJFunc::Write_OBJ(obj_path.string(), verts, elements);
-
 			std::string surface_name = fmt::format("surface{:04d}.vtu", metadata.current_frame);
 			bf::path surface_path = metadata.base_path / bf::path(surface_name);
 			Output_Mesh_As_VTU(verts, elements, surface_path.string());
@@ -217,7 +216,7 @@ namespace Meso {
 			temp_phi_dev = levelset.phi;
 			SemiLagrangian<IntpLinearClamp>::Advect(dt, temp_field_dev, temp_phi_dev, velocity);
 			levelset.phi = temp_field_dev;
-			//levelset.Fast_Marching(-1);//will calculate whole field
+			levelset.Fast_Marching(-1);//will calculate whole field
 
 			//Advection of velocity
 			SemiLagrangian<IntpLinearPadding0>::Advect(dt, temp_velocity_dev, velocity, velocity);
