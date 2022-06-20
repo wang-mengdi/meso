@@ -13,6 +13,9 @@
 #include "LevelSet.h"
 #include "MarchingCubes.h"
 #include "GridEulerFunc.h"
+#include <vtkTriangle.h>
+#include <vtkCellData.h>
+#include <vtkCellArray.h>
 
 namespace Meso {
 
@@ -150,22 +153,61 @@ namespace Meso {
 			return dx * cfl / max_vel;
 		}
 
+		void Output_Mesh_As_VTU(const VertexMatrix<T, d> &verts, const ElementMatrix<d> &elements, const std::string file_name) {
+			Typedef_VectorD(d);
+
+			// setup VTK
+			vtkNew<vtkXMLUnstructuredGridWriter> writer;
+			vtkNew<vtkUnstructuredGrid> unstructured_grid;
+
+			vtkNew<vtkPoints> nodes;
+			nodes->Allocate(verts.rows());
+			vtkNew<vtkCellArray> cellArray;
+
+			for (int i = 0; i < verts.rows(); i++) {
+				Vector<T, d> pos = verts.row(i);
+				Vector3 pos3 = MathFunc::V<3>(pos);
+				nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
+			}
+
+			for (int i = 0; i < elements.rows(); i++) {
+				vtkNew<vtkTriangle> triangle;
+				triangle->GetPointIds()->SetId(0, elements(i, 0));
+				triangle->GetPointIds()->SetId(1, elements(i, 1));
+				triangle->GetPointIds()->SetId(2, elements(i, 2));
+				cellArray->InsertNextCell(triangle);
+			}
+
+			unstructured_grid->SetPoints(nodes);
+			unstructured_grid->SetCells(VTK_TRIANGLE, cellArray);
+
+			writer->SetFileName(file_name.c_str());
+			writer->SetInputData(unstructured_grid);
+			writer->Write();
+		}
+
 		virtual void Output(DriverMetaData& metadata) {
 			std::string vts_name = fmt::format("vts{:04d}.vts", metadata.current_frame);
 			bf::path vtk_path = metadata.base_path / bf::path(vts_name);
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 			
 			VertexMatrix<T, d> verts; ElementMatrix<d> elements;
-			VectorD center = velocity.grid.Center() - VectorD::Unit(1) * (1 - metadata.current_time);
-			//Info("current time {} center {}", metadata.current_time, center);
-			Info("output frame {} current time {}", metadata.current_frame, metadata.current_time);
-			Sphere<d> sphere(center, 0.2);
-			LevelSet<d> my_levelset; my_levelset.Init(velocity.grid, sphere);
-			Marching_Cubes<T, d, HOST>(verts, elements, my_levelset.phi);
-			//Marching_Cubes<T, d, HOST>(verts, elements, levelset.phi);
-			std::string obj_name = fmt::format("surface{:04d}.obj", metadata.current_frame);
-			bf::path obj_path = metadata.base_path / bf::path(obj_name);
-			OBJFunc::Write_OBJ(obj_path.string(), verts, elements);
+			//VectorD center = velocity.grid.Center() - VectorD::Unit(1) * (1 - metadata.current_time);
+			////Info("current time {} center {}", metadata.current_time, center);
+			//Info("output frame {} current time {}", metadata.current_frame, metadata.current_time);
+			//Sphere<d> sphere(center, 0.2);
+			//LevelSet<d> my_levelset; my_levelset.Init(velocity.grid, sphere);
+			//Marching_Cubes<T, d, HOST>(verts, elements, my_levelset.phi);
+
+			Marching_Cubes<T, d, HOST>(verts, elements, levelset.phi);
+
+			//std::string obj_name = fmt::format("surface{:04d}.obj", metadata.current_frame);
+			//bf::path obj_path = metadata.base_path / bf::path(obj_name);
+			//OBJFunc::Write_OBJ(obj_path.string(), verts, elements);
+
+			std::string surface_name = fmt::format("surface{:04d}.vtu", metadata.current_frame);
+			bf::path surface_path = metadata.base_path / bf::path(surface_name);
+			Output_Mesh_As_VTU(verts, elements, surface_path.string());
 		}
 
 		virtual void Advance(DriverMetaData& metadata) {
