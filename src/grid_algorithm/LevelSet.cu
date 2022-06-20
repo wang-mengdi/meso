@@ -61,12 +61,6 @@ namespace Meso {
 
 	//}
 
-	//template<int d> Vector<real, d> LevelSet<d>::Closest_Point(const VectorD& pos, const real epsilon) const
-	//{
-	//	VectorD normal = Gradient(pos); normal.normalize();
-	//	return pos - normal * (Phi(pos) + epsilon);
-	//}
-
 	//template<int d> Vector<real, d> LevelSet<d>::Closest_Point_With_Iterations(const VectorD& pos, const int max_iter/*=5*/) const
 	//{
 	//	VectorD intf_pos = pos;

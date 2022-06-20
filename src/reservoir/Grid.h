@@ -302,7 +302,7 @@ namespace Meso {
 			VectorD offset = -VectorD::Unit(axis) * 0.5 * dx;
 			return pos_min + offset;
 		}
-		__host__ __device__ VectorD Face_Center(const int axis, const VectorDi face) {
+		__host__ __device__ constexpr VectorD Face_Center(const int axis, const VectorDi face) const {
 			return Face_Min(axis) + face.template cast<real>() * dx;
 		}
 		__host__ __device__ Grid<d> Face_Grid(const int axis)const {

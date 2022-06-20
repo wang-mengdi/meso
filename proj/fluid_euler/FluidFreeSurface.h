@@ -13,6 +13,7 @@
 #include "LevelSet.h"
 #include "MarchingCubes.h"
 #include "GridEulerFunc.h"
+#include "Interpolator.h"
 #include <vtkTriangle.h>
 #include <vtkLine.h>
 #include <vtkCellData.h>
@@ -210,16 +211,31 @@ namespace Meso {
 		}
 
 		void Extrapolation(FaceFieldDv<T, d>& velocity) {
-			FaceField<T, d> velocity_host = velocity;
-			velocity_host.Exec_Faces(
+			const auto grid = velocity.grid;
+			FaceField<bool, d> face_valid_mask(grid);
+			face_valid_mask.Calc_Faces(
 				[&](const int axis, const VectorDi face) {
-					VectorD pos = velocity.grid.Face_Center(axis, face);
-					real face_phi = IntpLinearClamp::Value(levelset.phi, pos);
-					if (face_phi > 0) {
-						//VectorD 
-					}
+					VectorD pos = grid.Face_Center(axis, face);
+					return IntpLinearClamp::Value(levelset.phi, pos) < 0;
 				}
 			);
+
+			std::array<InterpolatorLinearWithMask<T, d, HOST>, d> intp;
+			for (int i = 0; i < d; i++) intp[i].Init_Shallow(face_valid_mask.Face_Reference(i));
+			FaceField<T, d> velocity_host = velocity;
+			velocity_host.Calc_Faces(
+				[&](const int axis, const VectorDi face) {
+					VectorD pos = grid.Face_Center(axis, face);
+					real face_phi = IntpLinearClamp::Value(levelset.phi, pos);
+					if (face_phi > 0) {
+						VectorD interface_pos = levelset.Closest_Point(pos);
+						return intp[axis].Value1(velocity_host.Face_Reference(axis), interface_pos);
+					}
+					else return velocity_host(axis, face);
+				}
+			);
+
+			velocity = velocity_host;
 		}
 
 		virtual void Advance(DriverMetaData& metadata) {
@@ -263,9 +279,12 @@ namespace Meso {
 			velocity += temp_velocity_dev;
 			velocity_bc.Apply(velocity);
 
-			//Info("velocity after projection: \n{}", velocity);
-
 			Info("After projection max velocity {}", GridEulerFunc::Linf_Norm(velocity));
+
+			Extrapolation(velocity);
+			velocity_bc.Apply(velocity);
+
+			//Info("velocity after projection: \n{}", velocity);
 		}
 	};
 }

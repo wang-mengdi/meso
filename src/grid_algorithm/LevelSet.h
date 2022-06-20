@@ -51,7 +51,23 @@ namespace Meso {
 			);
 		}
 
-		//real Phi(const VectorD& pos) const;
+		real Phi(const VectorD pos) const {
+			return IntpLinearClamp::Value(phi, pos);
+		}
+
+		VectorD Gradient(const VectorD pos) const
+		{
+			real dx = phi.grid.dx;
+			VectorD normal;
+			for (int i = 0; i < d; i++)normal[i] = (Phi(pos + VectorD::Unit(i) * dx) - Phi(pos - VectorD::Unit(i) * dx)) / (dx * 2);
+			return normal;
+		}
+
+		VectorD Closest_Point(const VectorD& pos, const real epsilon = 0) const
+		{
+			VectorD normal = Gradient(pos); normal.normalize();
+			return pos - normal * (Phi(pos) + epsilon);
+		}
 
 		//VectorD Closest_Point(const VectorD& pos, const real epsilon = (real)0) const;
 		//VectorD Closest_Point_With_Iterations(const VectorD& pos, const int max_iter = 5) const;
