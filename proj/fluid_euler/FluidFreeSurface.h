@@ -209,6 +209,19 @@ namespace Meso {
 			Output_Mesh_As_VTU(verts, elements, surface_path.string());
 		}
 
+		void Extrapolation(FaceFieldDv<T, d>& velocity) {
+			FaceField<T, d> velocity_host = velocity;
+			velocity_host.Exec_Faces(
+				[&](const int axis, const VectorDi face) {
+					VectorD pos = velocity.grid.Face_Center(axis, face);
+					real face_phi = IntpLinearClamp::Value(levelset.phi, pos);
+					if (face_phi > 0) {
+						//VectorD 
+					}
+				}
+			);
+		}
+
 		virtual void Advance(DriverMetaData& metadata) {
 			real dt = metadata.dt;
 
