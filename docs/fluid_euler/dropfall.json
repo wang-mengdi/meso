@@ -1,5 +1,5 @@
 {
-    "dimension": 2,
+    "dimension": 3,
     "simulator": "freesurface",
     "driver": {
         "cfl": 1.0,
@@ -12,10 +12,11 @@
     "scene": {
         "air_density": 0.001,
         "gravity_acc": [
-            -0.0,
-            -1.0
+            0.0,
+            -1.0,
+            0.0
         ],
-        "scale": 64,
+        "scale": 32,
         "test": "dropfall"
     }
 }

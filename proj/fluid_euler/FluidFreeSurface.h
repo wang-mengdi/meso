@@ -64,7 +64,7 @@ namespace Meso {
 
 		void Init(json& j, ImplicitGeometry<d>& geom, Field<CellType, d> &_cell_type, FaceField<real, d>& initial_velocity) {
 			air_density = Json::Value<real>(j, "air_density", 1e-3);
-			gravity_acc = Json::Value<VectorD>(j, "gravity_acc", Vector<T, d>::Unit(1) * (-9.8));
+			gravity_acc = MathFunc::V<d>(Json::Value<Vector3>(j, "gravity_acc", Vector3::Unit(1) * (-9.8)));
 			velocity = initial_velocity;
 			cell_type = _cell_type;
 			FaceField<bool, d> face_fixed(cell_type.grid);
@@ -156,7 +156,13 @@ namespace Meso {
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 			
 			VertexMatrix<T, d> verts; ElementMatrix<d> elements;
-			Marching_Cubes<T, d, HOST>(verts, elements, levelset.phi);
+			VectorD center = velocity.grid.Center() - VectorD::Unit(1) * (1 - metadata.current_time);
+			//Info("current time {} center {}", metadata.current_time, center);
+			Info("output frame {} current time {}", metadata.current_frame, metadata.current_time);
+			Sphere<d> sphere(center, 0.2);
+			LevelSet<d> my_levelset; my_levelset.Init(velocity.grid, sphere);
+			Marching_Cubes<T, d, HOST>(verts, elements, my_levelset.phi);
+			//Marching_Cubes<T, d, HOST>(verts, elements, levelset.phi);
 			std::string obj_name = fmt::format("surface{:04d}.obj", metadata.current_frame);
 			bf::path obj_path = metadata.base_path / bf::path(obj_name);
 			OBJFunc::Write_OBJ(obj_path.string(), verts, elements);
