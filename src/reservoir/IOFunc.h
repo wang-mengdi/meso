@@ -84,47 +84,17 @@ namespace Meso {
 			VTS_Add_Field(vtk_grid, vf_host, name);
 		}
 
-
-
-		template<class T, int d, DataHolder side>
-		void Write_VTS(const FaceField<T, d, side>& F, std::string file_name) {
-			Assert(!F.Empty(), "VTKFunc::Output_VTS error: empty FaceField");
+		template<int d>
+		void VTS_Init_Grid(vtkStructuredGrid& vtk_grid, const Grid<d> grid) {
 			Typedef_VectorD(d);
-			const auto grid = F.grid;
 			int nx, ny, nz;
 			VectorDi counts = grid.Counts();
-			if constexpr (d == 2) {
-				nx = counts[0];
-				ny = counts[1];
-				nz = 1;
-			}
-			else {
-				nx = counts[0];
-				ny = counts[1];
-				nz = counts[2];
-			}
+			if constexpr (d == 2) nx = counts[0], ny = counts[1], nz = 1;
+			else nx = counts[0], ny = counts[1], nz = counts[2];
 
-			// setup VTK
-			vtkNew<vtkXMLStructuredGridWriter> writer;
-			vtkNew<vtkStructuredGrid> structured_grid;
-			structured_grid->SetDimensions(nx, ny, nz);
+			vtk_grid.SetDimensions(nx, ny, nz);
 			vtkNew<vtkPoints> nodes;
 			nodes->Allocate(nx * ny * nz);
-			//vtkDoubleArray* prsArray = vtkDoubleArray::New();
-			//prsArray->SetNumberOfComponents(1);
-			//prsArray->SetName("Pressure");
-			//vtkNew<vtkDoubleArray> velArray;
-			//velArray->SetName("Velocity");
-			//velArray->SetNumberOfComponents(3);
-
-			//FaceField<T, d> F_host = F;
-			//Field<VectorD, d> vf_host(grid);
-			//vf_host.Calc_Nodes(
-			//	[&](const VectorDi& cell) {
-			//		VectorD pos = grid.Position(cell);
-			//		return IntpLinear::Face_Vector(F_host, pos);
-			//	}
-			//);
 
 			for (int k = 0; k < nz; k++) {
 				for (int j = 0; j < ny; j++) {
@@ -133,21 +103,23 @@ namespace Meso {
 						VectorD pos = grid.Position(cell);
 						Vector3 pos3 = MathFunc::V<3>(pos);
 						nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
-
-						////VectorD vec = Interpolation<PointIntpLinear>::Face_Vector<T, d, HOST>(field_host, pos);
-						//VectorD vec = vf_host(cell);
-						//Vector3 vec3 = MathFunc::V<3>(vec);
-						//velArray->InsertNextTuple3(vec3[0], vec3[1], vec3[2]);
-						////velArray->InsertNextTuple3(pos3[0], pos3[1], pos3[2]);
 					}
 				}
 			}
 
-			structured_grid->SetPoints(nodes);
+			vtk_grid.SetPoints(nodes);
+		}
+
+		template<class T, int d, DataHolder side>
+		void Write_VTS(const FaceField<T, d, side>& F, std::string file_name) {
+			Assert(!F.Empty(), "VTKFunc::Output_VTS error: empty FaceField");
+			Typedef_VectorD(d);
+
+			// setup VTK
+			vtkNew<vtkXMLStructuredGridWriter> writer;
+			vtkNew<vtkStructuredGrid> structured_grid;
+			VTS_Init_Grid(*structured_grid, F.grid);
 			VTS_Add_Vector(*structured_grid, F, "velocity");
-			//structured_grid->GetPointData()->AddArray(velArray);
-			//structured_grid->GetPointData()->SetActiveVectors("velocity");
-			//structured_grid->GetPointData()->AddArray(prsArray);
 
 #if (VTK_MAJOR_VERSION >=6)
 			writer->SetInputData(structured_grid);
