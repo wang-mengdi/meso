@@ -61,10 +61,10 @@ namespace Meso {
         }
         virtual VectorD Normal(const VectorD& pos)const { return Wall_Normal(pos); }
         VectorD Edge_Lengths() const { return max_corner - min_corner; }
-        VectorD Center() const { return (real).5 * (min_corner + max_corner); }
-        Box<d> Enlarged(const Box<d>& box2) const { return Box<d>(MathFunc::Cwise_Min(min_corner, box2.min_corner), MathFunc::Cwise_Max(max_corner, box2.max_corner)); }
-        Box<d> Enlarged(const VectorD& length) const { return Box<d>(min_corner - length, max_corner + length); }
-        Box<d> Rescaled(const real factor) const { VectorD length = Edge_Lengths(); return Box<d>(min_corner - length * factor * (real).5, max_corner + length * factor * (real).5); }
+        //VectorD Center() const { return (real).5 * (min_corner + max_corner); }
+        //Box<d> Enlarged(const Box<d>& box2) const { return Box<d>(MathFunc::Cwise_Min(min_corner, box2.min_corner), MathFunc::Cwise_Max(max_corner, box2.max_corner)); }
+        //Box<d> Enlarged(const VectorD& length) const { return Box<d>(min_corner - length, max_corner + length); }
+        //Box<d> Rescaled(const real factor) const { VectorD length = Edge_Lengths(); return Box<d>(min_corner - length * factor * (real).5, max_corner + length * factor * (real).5); }
         VectorD Wall_Normal(const VectorD& pos) const
         {
             VectorD normal = VectorD::Zero();
@@ -75,7 +75,7 @@ namespace Meso {
             if (normal != VectorD::Zero()) { return normal.normalized(); }
             return VectorD::Zero();
         }
-        static Box<d> Infi_Min() { const real fmax = std::numeric_limits<real>::max(); return Box<d>(Vector<real, d>::Ones() * fmax, Vector<real, d>::Ones() * (real)-fmax); }
+        //static Box<d> Infi_Min() { const real fmax = std::numeric_limits<real>::max(); return Box<d>(Vector<real, d>::Ones() * fmax, Vector<real, d>::Ones() * (real)-fmax); }
     };
 
 	template<int d> 
@@ -96,4 +96,16 @@ namespace Meso {
 		virtual VectorD Normal(const VectorD& pos) const { return n; }
 	};
 
+	//template<int d>
+	//class GeometryUnion : public ImplicitGeometry<d> {
+	//public:
+	//	GeometryUnion(const ImplicitGeometry<d>& a, const ImplicitGeometry<d>& b) {
+
+	//	}
+	//	Array<std::shared_ptr<ImplicitGeomtry<d>>> geoms;
+	//	virtual real Phi(const VectorD& pos) const {
+	//		return (pos - center).norm() - radius;
+	//	}
+	//	//virtual VectorD Normal(const VectorD& pos) const { return (pos - center).normalized(); }
+	//};
 }
