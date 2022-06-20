@@ -20,7 +20,7 @@ void Print_Grid_Index2(Vector2i counts) {
             F(cell) = grid.Index(cell);
         }
     );
-    Info("grid counts: {}", F.grid.Counts());
+    Info("grid: {}", F.grid);
     Info("indicies: \n{}", F);
 }
 
@@ -29,7 +29,7 @@ int main() {
     
     //a visual test, not included in general tests
     //Print_Grid_Index2(Vector2i(9, 7));
-    //Print_Grid_Index2(Vector2i(16, 8));
+    //Print_Grid_Index2(Vector2i(64, 64));
 
     //Test for an unpadded grid, if coord-index is a one-to-one mapping
     //So here the dimensions must be unpadded

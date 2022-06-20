@@ -394,8 +394,8 @@ struct fmt::formatter<Meso::Grid<d>> {
 		std::string out = "";
 		Meso::Vector<int, d> valid_counts = G.Counts();
 		Meso::Vector<int, d> memory_counts = G.Memory_Counts();
-		if constexpr (d == 2) out += fmt::format("[{},{}]->[{},{}]", valid_counts[0], valid_counts[1], memory_counts[0], memory_counts[1]);
-		else if constexpr (d == 3)out += fmt::format("[{},{},{}]->[{},{},{}]", valid_counts[0], valid_counts[1], valid_counts[2], memory_counts[0], memory_counts[1], memory_counts[2]);
+		if constexpr (d == 2) out += fmt::format("[{},{}]->[{},{}] box {}-{}", valid_counts[0], valid_counts[1], memory_counts[0], memory_counts[1], G.Domain_Min(), G.Domain_Max());
+		else if constexpr (d == 3)out += fmt::format("[{},{},{}]->[{},{},{}] box {}-{}", valid_counts[0], valid_counts[1], valid_counts[2], memory_counts[0], memory_counts[1], memory_counts[2], G.Domain_Min(), G.Domain_Max());
 		return format_to(ctx.out(), "{}", out);
 	}
 };
