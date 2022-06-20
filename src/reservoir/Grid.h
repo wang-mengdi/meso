@@ -219,24 +219,24 @@ namespace Meso {
 		__host__ __device__ constexpr VectorD Position(const VectorDi node)const {
 			return pos_min + node.template cast<real>() * dx;
 		}
-		__host__ __device__ VectorD Domain_Min(const GridType gtype) const { 
+		__host__ __device__ constexpr VectorD Node_Min(void)const { return pos_min; }
+		__host__ __device__ constexpr VectorD Node_Max(void)const { return Position(Counts() - VectorDi::Ones()); }
+		__host__ __device__ VectorD Center(void) const {
+			//grid type doesn't matter
+			return (real)0.5 * (Node_Min() + Node_Max());
+		}
+		__host__ __device__ VectorD Domain_Min(const GridType gtype) const {
 			if (gtype == CENTER) {
 				return pos_min - VectorD::Ones() * 0.5 * dx;
 			}
 			return pos_min;
 		}
 		__host__ __device__ VectorD Domain_Max(const GridType gtype) const {
-			VectorD domain_max = pos_min + Base::Counts().template cast<real>() * dx;
+			VectorD node_max = Node_Max();
 			if (gtype == CENTER) {
-				return domain_max + VectorD::Ones() * 0.5 * dx;
+				return node_max + VectorD::Ones() * 0.5 * dx;
 			}
-			return domain_max;
-		}
-		__host__ __device__ constexpr VectorD Node_Min(void)const { return pos_min; }
-		__host__ __device__ constexpr VectorD Node_Max(void)const { return Position(Counts() - VectorDi::Ones()); }
-		__host__ __device__ VectorD Center(void) const {
-			//grid type doesn't matter
-			return (real)0.5 * (Node_Min() + Node_Max());
+			return node_max;
 		}
 
 		__host__ __device__ void Get_Fraction(const VectorD pos, VectorDi& node, VectorD& frac)const {
