@@ -54,6 +54,10 @@ namespace Meso {
 			//deep copy
 			ArrayFunc::Copy(*data, f1.Data());
 		}
+		void Shallow_Copy(const Field<T, d, side>& f1) {
+			grid = f1.grid;
+			data = f1.data;
+		}
 
 		template<DataHolder side1>
 		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) { Deep_Copy(f1); return *this; }

@@ -23,47 +23,65 @@ namespace Meso {
 
 	namespace VTKFunc {
 		template<class T, int d, DataHolder side>
-		void VTS_Add_Vector(vtkNew<vtkStructuredGrid> vtk_grid, const FaceField<T, d, side>& F, const std::string name) {
-			//vtk_grid must be already allocated and initialized with points
+		void VTS_Add_Field(vtkStructuredGrid& vtk_grid, const Field<T, d, side>& F, const std::string name) {
 			Typedef_VectorD(d);
 			const auto grid = F.grid;
 			int nx, ny, nz;
 			VectorDi counts = grid.Counts();
-			if constexpr (d == 2) {
-				nx = counts[0], ny = counts[1], nz = 1;
-			}
-			else {
-				nx = counts[0], ny = counts[1], nz = counts[2];
-			}
+			if constexpr (d == 2) nx = counts[0], ny = counts[1], nz = 1;
+			else nx = counts[0], ny = counts[1], nz = counts[2];
 
-			FaceField<T, d> F_host;
+			constexpr bool is_vec3 = std::is_same<T, Vector3>::value;
+
+			vtkNew<vtkDoubleArray> f_array;
+			f_array->SetName(name.c_str());
+			if (is_vec3) f_array->SetNumberOfComponents(3);
+			else f_array->SetNumberOfComponents(1);
+
+			Field<T, d> F_host;
 			if constexpr (side == HOST) F_host.Shallow_Copy(F);
 			else F_host.Deep_Copy(F);
-			Field<VectorD, d> vf_host(grid);
-			vf_host.Calc_Nodes(
-				[&](const VectorDi& cell) {
-					VectorD pos = grid.Position(cell);
-					return IntpLinear::Face_Vector(F_host, pos);
-				}
-			);
-
-			vtkNew<vtkDoubleArray> v_array;
-			v_array->SetName(name);
-			v_array->SetNumberOfComponents(3);
 
 			for (int k = 0; k < nz; k++) {
 				for (int j = 0; j < ny; j++) {
 					for (int i = 0; i < nx; i++) {
 						VectorDi cell = MathFunc::Vi<d>(i, j, k);
-						VectorD vec = vf_host(cell);
-						Vector3 vec3 = MathFunc::V<3>(vec);
-						v_array->InsertNextTuple3(vec3[0], vec3[1], vec3[2]);
+						if constexpr (std::is_same<T, Vector3>::value) {
+							Vector3 vec3 = F_host(cell);
+							f_array->InsertNextTuple3(vec3[0], vec3[1], vec3[2]);
+						}
+						else {
+							f_array->InsertNextValue(F_host(cell));
+							//f_array->InsertComponent(F_host(cell));
+						}
 					}
 				}
 			}
 
-			vtk_grid->GetPointData()->AddArray(velArray);
-			vtk_grid->GetPointData()->SetActiveVectors("velocity");
+			vtk_grid.GetPointData()->AddArray(f_array);
+			if (is_vec3) vtk_grid.GetPointData()->SetActiveVectors(name.c_str());
+			else vtk_grid.GetPointData()->SetActiveScalars(name.c_str());
+		}
+
+		template<class T, int d, DataHolder side>
+		void VTS_Add_Vector(vtkStructuredGrid& vtk_grid, const FaceField<T, d, side>& F, const std::string name) {
+			//vtk_grid must be already allocated and initialized with points
+			Typedef_VectorD(d);
+			const auto grid = F.grid;
+
+			FaceField<T, d> F_host;
+			if constexpr (side == HOST) F_host.Shallow_Copy(F);
+			else F_host.Deep_Copy(F);
+
+			Field<Vector3, d> vf_host(grid);
+			vf_host.Calc_Nodes(
+				[&](const VectorDi& cell) {
+					VectorD pos = grid.Position(cell);
+					return MathFunc::V<3>(IntpLinear::Face_Vector(F_host, pos));
+				}
+			);
+
+			VTS_Add_Field(vtk_grid, vf_host, name);
 		}
 
 
@@ -95,18 +113,18 @@ namespace Meso {
 			//vtkDoubleArray* prsArray = vtkDoubleArray::New();
 			//prsArray->SetNumberOfComponents(1);
 			//prsArray->SetName("Pressure");
-			vtkNew<vtkDoubleArray> velArray;
-			velArray->SetName("Velocity");
-			velArray->SetNumberOfComponents(3);
+			//vtkNew<vtkDoubleArray> velArray;
+			//velArray->SetName("Velocity");
+			//velArray->SetNumberOfComponents(3);
 
-			FaceField<T, d> F_host = F;
-			Field<VectorD, d> vf_host(grid);
-			vf_host.Calc_Nodes(
-				[&](const VectorDi& cell) {
-					VectorD pos = grid.Position(cell);
-					return IntpLinear::Face_Vector(F_host, pos);
-				}
-			);
+			//FaceField<T, d> F_host = F;
+			//Field<VectorD, d> vf_host(grid);
+			//vf_host.Calc_Nodes(
+			//	[&](const VectorDi& cell) {
+			//		VectorD pos = grid.Position(cell);
+			//		return IntpLinear::Face_Vector(F_host, pos);
+			//	}
+			//);
 
 			for (int k = 0; k < nz; k++) {
 				for (int j = 0; j < ny; j++) {
@@ -116,18 +134,19 @@ namespace Meso {
 						Vector3 pos3 = MathFunc::V<3>(pos);
 						nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
 
-						//VectorD vec = Interpolation<PointIntpLinear>::Face_Vector<T, d, HOST>(field_host, pos);
-						VectorD vec = vf_host(cell);
-						Vector3 vec3 = MathFunc::V<3>(vec);
-						velArray->InsertNextTuple3(vec3[0], vec3[1], vec3[2]);
-						//velArray->InsertNextTuple3(pos3[0], pos3[1], pos3[2]);
+						////VectorD vec = Interpolation<PointIntpLinear>::Face_Vector<T, d, HOST>(field_host, pos);
+						//VectorD vec = vf_host(cell);
+						//Vector3 vec3 = MathFunc::V<3>(vec);
+						//velArray->InsertNextTuple3(vec3[0], vec3[1], vec3[2]);
+						////velArray->InsertNextTuple3(pos3[0], pos3[1], pos3[2]);
 					}
 				}
 			}
 
 			structured_grid->SetPoints(nodes);
-			structured_grid->GetPointData()->AddArray(velArray);
-			structured_grid->GetPointData()->SetActiveVectors("velocity");
+			VTS_Add_Vector(*structured_grid, F, "velocity");
+			//structured_grid->GetPointData()->AddArray(velArray);
+			//structured_grid->GetPointData()->SetActiveVectors("velocity");
 			//structured_grid->GetPointData()->AddArray(prsArray);
 
 #if (VTK_MAJOR_VERSION >=6)
