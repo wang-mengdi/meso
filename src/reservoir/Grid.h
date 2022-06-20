@@ -216,25 +216,27 @@ namespace Meso {
 //=============================================First part: basic data==========================================================
 		__host__ __device__ real Dx(void) { return dx; }
 
-		__host__ __device__ VectorD Position(const VectorDi node)const {
+		__host__ __device__ constexpr VectorD Position(const VectorDi node)const {
 			return pos_min + node.template cast<real>() * dx;
 		}
-		__host__ __device__ VectorD Domain_Min(const GridType gtype = CENTER) const { 
+		__host__ __device__ VectorD Domain_Min(const GridType gtype) const { 
 			if (gtype == CENTER) {
 				return pos_min - VectorD::Ones() * 0.5 * dx;
 			}
 			return pos_min;
 		}
-		__host__ __device__ VectorD Domain_Max(const GridType gtype = CENTER) const {
+		__host__ __device__ VectorD Domain_Max(const GridType gtype) const {
 			VectorD domain_max = pos_min + Base::Counts().template cast<real>() * dx;
 			if (gtype == CENTER) {
 				return domain_max + VectorD::Ones() * 0.5 * dx;
 			}
 			return domain_max;
 		}
+		__host__ __device__ constexpr VectorD Node_Min(void)const { return pos_min; }
+		__host__ __device__ constexpr VectorD Node_Max(void)const { return Position(Counts() - VectorDi::Ones()); }
 		__host__ __device__ VectorD Center(void) const {
 			//grid type doesn't matter
-			return (real)0.5 * (Domain_Min(CENTER) + Domain_Max(CENTER));
+			return (real)0.5 * (Node_Min() + Node_Max());
 		}
 
 		__host__ __device__ void Get_Fraction(const VectorD pos, VectorDi& node, VectorD& frac)const {
@@ -394,8 +396,8 @@ struct fmt::formatter<Meso::Grid<d>> {
 		std::string out = "";
 		Meso::Vector<int, d> valid_counts = G.Counts();
 		Meso::Vector<int, d> memory_counts = G.Memory_Counts();
-		if constexpr (d == 2) out += fmt::format("[{},{}]->[{},{}] box {}-{}", valid_counts[0], valid_counts[1], memory_counts[0], memory_counts[1], G.Domain_Min(), G.Domain_Max());
-		else if constexpr (d == 3)out += fmt::format("[{},{},{}]->[{},{},{}] box {}-{}", valid_counts[0], valid_counts[1], valid_counts[2], memory_counts[0], memory_counts[1], memory_counts[2], G.Domain_Min(), G.Domain_Max());
+		if constexpr (d == 2) out += fmt::format("[{},{}]->[{},{}] node box {}-{}", valid_counts[0], valid_counts[1], memory_counts[0], memory_counts[1], G.Node_Min(), G.Node_Max());
+		else if constexpr (d == 3)out += fmt::format("[{},{},{}]->[{},{},{}] node box {}-{}", valid_counts[0], valid_counts[1], valid_counts[2], memory_counts[0], memory_counts[1], memory_counts[2], G.Node_Min(), G.Node_Max());
 		return format_to(ctx.out(), "{}", out);
 	}
 };

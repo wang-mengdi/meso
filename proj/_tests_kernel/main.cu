@@ -13,7 +13,7 @@
 using namespace Meso;
 
 void Print_Grid_Index2(Vector2i counts) {
-    Grid<2> grid(counts);
+    Grid<2> grid(counts, 1.0 / 7, Vector2::Zero(), CORNER);
     Field<int, 2> F(grid);
     grid.Exec_Nodes(
         [&](const Vector2i& cell) {
@@ -28,7 +28,7 @@ int main() {
     ////Part 1: test reservoir
     
     //a visual test, not included in general tests
-    //Print_Grid_Index2(Vector2i(9, 7));
+    Print_Grid_Index2(Vector2i(8, 8));
     //Print_Grid_Index2(Vector2i(64, 64));
 
     //Test for an unpadded grid, if coord-index is a one-to-one mapping
