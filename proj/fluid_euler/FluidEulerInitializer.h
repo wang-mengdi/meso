@@ -6,7 +6,7 @@
 #pragma once
 
 #include "FluidEuler.h"
-#include "ImplicitGeometry.h"
+#include "ImplicitManifold.h"
 #include "Json.h"
 #include "GridEulerFunc.h"
 

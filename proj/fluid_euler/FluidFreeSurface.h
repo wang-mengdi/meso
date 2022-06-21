@@ -67,7 +67,7 @@ namespace Meso {
 		FaceField<T, d> vol_host;
 		Field<T, d> div_host;
 
-		void Init(json& j, ImplicitGeometry<d>& geom, Field<CellType, d> &_cell_type, FaceField<real, d>& initial_velocity) {
+		void Init(json& j, const ImplicitManifold<d>& geom, Field<CellType, d> &_cell_type, FaceField<real, d>& initial_velocity) {
 			air_density = Json::Value<real>(j, "air_density", 1e-3);
 			gravity_acc = MathFunc::V<d>(Json::Value<Vector3>(j, "gravity_acc", Vector3::Unit(1) * (-9.8)));
 			velocity = initial_velocity;

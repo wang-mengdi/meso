@@ -58,12 +58,12 @@ namespace Meso {
 			ImplicitManifoldPtr<d> min_manifold;
 			for (auto manifold : manifolds) {
 				real phi = manifold.Phi(pos);
-				if (std::fabs(phi) < std::fabs(min_phi_abs)) {
+				if (std::fabs(phi) < std::fabs(min_phi)) {
 					min_phi = phi;
 					min_manifold = manifold;
 				}
 			}
-			return std::make_tuple(min_phi, min_manifold;)
+			return std::make_tuple(min_phi, min_manifold);
 		}
 		real Phi(const VectorD pos)const {
 			auto [phi, manifold] = Closest_Manifold(pos);

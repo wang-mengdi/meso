@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FluidImpulse.h"
-#include "ImplicitGeometry.h"
+#include "ImplicitManifold.h"
 #include "Json.h"
 
 namespace Meso {
