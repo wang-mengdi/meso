@@ -14,58 +14,78 @@ namespace Meso {
 	////////////////////////////////////////////////////////////////////////
 	//Base class
 	////////////////////////////////////////////////////////////////////////
-	template<int d> class ImplicitGeometry
+	template<int d> class ImplicitGeometryBase
 	{
 		Typedef_VectorD(d);
 	public:
-		ImplicitGeometry() {}
-		virtual real Phi(const VectorD& pos) const = 0;
-		virtual bool Inside(const VectorD& pos) const { return Phi(pos) < (real)0; }
-		virtual VectorD Normal(const VectorD& pos) const = 0;//MUST BE NORMALIZED
+		ImplicitGeometryBase() {}
+		virtual real Phi(const VectorD pos) const = 0;
+		virtual bool Inside(const VectorD pos) const { return Phi(pos) < (real)0; }
+		virtual VectorD Normal(const VectorD pos) const = 0;//MUST BE NORMALIZED
 	};
 
-	template<int d> class Sphere : public ImplicitGeometry<d>
+	template<int d>
+	class ImplicitGeometry {
+		Typedef_VectorD(d);
+	public:
+		std::shared_ptr<ImplicitGeometryBase<d>> data_ptr;
+		real Phi(const VectorD pos)const { return data_ptr->Phi(pos); }
+		bool Inside(const VectorD pos)const { return data_ptr->Inside(pos); }
+		VectorD Normal(const VectorD pos) const { return data_ptr->Normal(pos); }
+	};
+
+	template<int d, class Shape>
+	class ImplicitGeometryShape: public ImplicitGeometry<d> {
+	public:
+		template<class... Args>
+		ImplicitGeometryShape(const Args...args) {
+			data_ptr = std::make_shared<Shape>(args...);
+		}
+	};
+
+	template<int d> 
+	class SphereShape : public ImplicitGeometryBase<d>
 	{
 		Typedef_VectorD(d);
 	public:
 		VectorD center = VectorD::Zero();
 		real radius = (real)1;
-		Sphere(const VectorD& _center, const real _radius) :center(_center), radius(_radius) {}
-		Sphere<d>& operator=(const Sphere<d>& copy) { center = copy.center; radius = copy.radius; return *this; }
-		Sphere(const Sphere<d>& copy) { *this = copy; }
+		SphereShape(const VectorD _center, const real _radius) :center(_center), radius(_radius) {}
+		//SphereShape<d>& operator=(const Sphere<d>& copy) { center = copy.center; radius = copy.radius; return *this; }
+		//SphereShape(const Sphere<d>& copy) { *this = copy; }
 
-		virtual real Phi(const VectorD& pos) const { return (pos - center).norm() - radius; }
-		virtual VectorD Normal(const VectorD& pos) const { return (pos - center).normalized(); }
+		virtual real Phi(const VectorD pos) const { return (pos - center).norm() - radius; }
+		virtual VectorD Normal(const VectorD pos) const { return (pos - center).normalized(); }
 	};
 
-    template<int d> class Box : public ImplicitGeometry<d>
+    template<int d> class BoxShape : public ImplicitGeometryBase<d>
     {
         Typedef_VectorD(d);
     public:
         VectorD min_corner, max_corner;
 
-        Box(const VectorD& _min = VectorD::Zero(), const VectorD& _max = VectorD::Zero()) :min_corner(_min), max_corner(_max) {}
-        Box(const VectorD& center, const real side_length) {
-            VectorD offset = VectorD::Ones() * side_length * 0.5;
-            min_corner = center - offset;
-            max_corner = center + offset;
-        }
-        Box<d>& operator=(const Box<d>& copy) { min_corner = copy.min_corner; max_corner = copy.max_corner; return *this; }
-        Box(const Box<d>& copy) { *this = copy; }
+		BoxShape(const VectorD _min = VectorD::Zero(), const VectorD _max = VectorD::Zero()) :min_corner(_min), max_corner(_max) {}
+		//BoxShape(const VectorD& center, const real side_length) {
+  //          VectorD offset = VectorD::Ones() * side_length * 0.5;
+  //          min_corner = center - offset;
+  //          max_corner = center + offset;
+  //      }
+		//BoxShape<d>& operator=(const Box<d>& copy) { min_corner = copy.min_corner; max_corner = copy.max_corner; return *this; }
+		//BoxShape(const Box<d>& copy) { *this = copy; }
 
-        virtual bool Inside(const VectorD& pos) const { return ArrayFunc::All_Greater_Equal(pos, min_corner) && ArrayFunc::All_Less_Equal(pos, max_corner); }
-        virtual real Phi(const VectorD& pos) const
+        virtual bool Inside(const VectorD pos) const { return ArrayFunc::All_Greater_Equal(pos, min_corner) && ArrayFunc::All_Less_Equal(pos, max_corner); }
+        virtual real Phi(const VectorD pos) const
         {
             VectorD phi = (pos - Center()).cwiseAbs() - (real).5 * Edge_Lengths(); VectorD zero = VectorD::Zero();
             if (!ArrayFunc::All_Less_Equal(phi, zero)) { return (phi.cwiseMax(zero)).norm(); }return phi.maxCoeff();
         }
-        virtual VectorD Normal(const VectorD& pos)const { return Wall_Normal(pos); }
+        virtual VectorD Normal(const VectorD pos)const { return Wall_Normal(pos); }
         VectorD Edge_Lengths() const { return max_corner - min_corner; }
         //VectorD Center() const { return (real).5 * (min_corner + max_corner); }
         //Box<d> Enlarged(const Box<d>& box2) const { return Box<d>(MathFunc::Cwise_Min(min_corner, box2.min_corner), MathFunc::Cwise_Max(max_corner, box2.max_corner)); }
         //Box<d> Enlarged(const VectorD& length) const { return Box<d>(min_corner - length, max_corner + length); }
         //Box<d> Rescaled(const real factor) const { VectorD length = Edge_Lengths(); return Box<d>(min_corner - length * factor * (real).5, max_corner + length * factor * (real).5); }
-        VectorD Wall_Normal(const VectorD& pos) const
+        VectorD Wall_Normal(const VectorD pos) const
         {
             VectorD normal = VectorD::Zero();
             for (int i = 0; i < d; i++) {
@@ -79,7 +99,7 @@ namespace Meso {
     };
 
 	template<int d> 
-	class Plane : public ImplicitGeometry<d>
+	class PlaneShape : public ImplicitGeometryBase<d>
 	{
 		Typedef_VectorD(d);
 	public:
@@ -87,13 +107,13 @@ namespace Meso {
 		VectorD p;
 		real b;
 
-		Plane(const VectorD _n, const VectorD _p) :n(_n), p(_p) { n.normalize(); b = n.dot(p); }
-		Plane<d>& operator=(const Plane<d>& copy) { n = copy.n; p = copy.p; b = copy.b; return *this; }
-		Plane(const Plane<d>& copy) { *this = copy; }
+		PlaneShape(const VectorD _n, const VectorD _p) :n(_n), p(_p) { n.normalize(); b = n.dot(p); }
+		//SphereShape<d>& operator=(const SphereShape<d>& copy) { n = copy.n; p = copy.p; b = copy.b; return *this; }
+		//SphereShape(const SphereShape<d>& copy) { *this = copy; }
 
-		virtual bool Inside(const VectorD& pos) const { return n.dot(pos) - b < (real)0; }
-		virtual real Phi(const VectorD& pos) const { return (n.dot(pos) - b); }
-		virtual VectorD Normal(const VectorD& pos) const { return n; }
+		virtual bool Inside(const VectorD pos) const { return n.dot(pos) - b < (real)0; }
+		virtual real Phi(const VectorD pos) const { return (n.dot(pos) - b); }
+		virtual VectorD Normal(const VectorD pos) const { return n; }
 	};
 
 	//template<int d>
@@ -108,4 +128,8 @@ namespace Meso {
 	//	}
 	//	//virtual VectorD Normal(const VectorD& pos) const { return (pos - center).normalized(); }
 	//};
+
+	template<int d> using Sphere = ImplicitGeometryShape<d, SphereShape<d>>;
+	template<int d> using Plane = ImplicitGeometryShape<d, PlaneShape<d>>;
+	template<int d> using Box = ImplicitGeometryShape<d, BoxShape<d>>;
 }
