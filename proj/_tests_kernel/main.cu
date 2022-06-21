@@ -28,7 +28,7 @@ int main() {
     ////Part 1: test reservoir
     
     //a visual test, not included in general tests
-    Print_Grid_Index2(Vector2i(8, 8));
+    //Print_Grid_Index2(Vector2i(8, 8));
     //Print_Grid_Index2(Vector2i(64, 64));
 
     //Test for an unpadded grid, if coord-index is a one-to-one mapping
