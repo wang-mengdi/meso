@@ -14,37 +14,69 @@ namespace Meso {
 	////////////////////////////////////////////////////////////////////////
 	//Base class
 	////////////////////////////////////////////////////////////////////////
-	template<int d> class ImplicitGeometryBase
-	{
+
+	template<int d>
+	class ImplicitManifold {
 		Typedef_VectorD(d);
 	public:
-		ImplicitGeometryBase() {}
-		virtual real Phi(const VectorD pos) const = 0;
-		virtual bool Inside(const VectorD pos) const { return Phi(pos) < (real)0; }
+		virtual real Phi(const VectorD pos)const = 0;
+		virtual bool Inside(const VectorD pos)const { return Phi(pos) < (real)0; }
 		virtual VectorD Normal(const VectorD pos) const = 0;//MUST BE NORMALIZED
 	};
 
 	template<int d>
-	class ImplicitGeometry {
+	class ImplicitManifoldPtr: public ImplicitManifold<d> {
 		Typedef_VectorD(d);
 	public:
-		std::shared_ptr<ImplicitGeometryBase<d>> data_ptr;
+		std::shared_ptr<ImplicitManifold<d>> data_ptr;
 		real Phi(const VectorD pos)const { return data_ptr->Phi(pos); }
-		bool Inside(const VectorD pos)const { return data_ptr->Inside(pos); }
 		VectorD Normal(const VectorD pos) const { return data_ptr->Normal(pos); }
 	};
 
 	template<int d, class Shape>
-	class ImplicitGeometryShape: public ImplicitGeometry<d> {
+	class ImplicitManifoldShape: public ImplicitManifoldPtr<d> {
 	public:
 		template<class... Args>
-		ImplicitGeometryShape(const Args...args) {
+		ImplicitManifoldShape(const Args...args) {
 			data_ptr = std::make_shared<Shape>(args...);
 		}
 	};
 
+	//The sub-manifolds can't intersect
+	template<int d>
+	class ImplicitUnion : public ImplicitManifold<d> {
+		Typedef_VectorD(d);
+	public:
+		Array<ImplicitManifoldPtr<d>> manifolds;
+		ImplicitUnion(const ImplicitManifoldPtr<d> manifold1, const ImplicitManifoldPtr<d> manifold2) {
+			manifolds.push_back(manifold1);
+			manifolds.push_back(manifold2);
+		}
+		std::tuple<real, ImplicitManifoldPtr<d>> Closest_Manifold(const VectorD pos)const {
+			//return the one with the minimum abs phi
+			real min_phi = std::numeric_limits<real>::max();
+			ImplicitManifoldPtr<d> min_manifold;
+			for (auto manifold : manifolds) {
+				real phi = manifold.Phi(pos);
+				if (std::fabs(phi) < std::fabs(min_phi_abs)) {
+					min_phi = phi;
+					min_manifold = manifold;
+				}
+			}
+			return std::make_tuple(min_phi, min_manifold;)
+		}
+		real Phi(const VectorD pos)const {
+			auto [phi, manifold] = Closest_Manifold(pos);
+			return phi;
+		}
+		VectorD Normal(const VectorD pos)const {
+			auto [phi, manifold] = Closest_Manifold(pos);
+			return manifold.Normal(pos);
+		}
+	};
+
 	template<int d> 
-	class SphereShape : public ImplicitGeometryBase<d>
+	class SphereShape : public ImplicitManifold<d>
 	{
 		Typedef_VectorD(d);
 	public:
@@ -54,11 +86,11 @@ namespace Meso {
 		//SphereShape<d>& operator=(const Sphere<d>& copy) { center = copy.center; radius = copy.radius; return *this; }
 		//SphereShape(const Sphere<d>& copy) { *this = copy; }
 
-		virtual real Phi(const VectorD pos) const { return (pos - center).norm() - radius; }
-		virtual VectorD Normal(const VectorD pos) const { return (pos - center).normalized(); }
+		real Phi(const VectorD pos) const { return (pos - center).norm() - radius; }
+		VectorD Normal(const VectorD pos) const { return (pos - center).normalized(); }
 	};
 
-    template<int d> class BoxShape : public ImplicitGeometryBase<d>
+    template<int d> class BoxShape : public ImplicitManifold<d>
     {
         Typedef_VectorD(d);
     public:
@@ -73,13 +105,13 @@ namespace Meso {
 		//BoxShape<d>& operator=(const Box<d>& copy) { min_corner = copy.min_corner; max_corner = copy.max_corner; return *this; }
 		//BoxShape(const Box<d>& copy) { *this = copy; }
 
-        virtual bool Inside(const VectorD pos) const { return ArrayFunc::All_Greater_Equal(pos, min_corner) && ArrayFunc::All_Less_Equal(pos, max_corner); }
-        virtual real Phi(const VectorD pos) const
+        bool Inside(const VectorD pos) const { return ArrayFunc::All_Greater_Equal(pos, min_corner) && ArrayFunc::All_Less_Equal(pos, max_corner); }
+        real Phi(const VectorD pos) const
         {
             VectorD phi = (pos - Center()).cwiseAbs() - (real).5 * Edge_Lengths(); VectorD zero = VectorD::Zero();
             if (!ArrayFunc::All_Less_Equal(phi, zero)) { return (phi.cwiseMax(zero)).norm(); }return phi.maxCoeff();
         }
-        virtual VectorD Normal(const VectorD pos)const { return Wall_Normal(pos); }
+        VectorD Normal(const VectorD pos)const { return Wall_Normal(pos); }
         VectorD Edge_Lengths() const { return max_corner - min_corner; }
         //VectorD Center() const { return (real).5 * (min_corner + max_corner); }
         //Box<d> Enlarged(const Box<d>& box2) const { return Box<d>(MathFunc::Cwise_Min(min_corner, box2.min_corner), MathFunc::Cwise_Max(max_corner, box2.max_corner)); }
@@ -99,7 +131,7 @@ namespace Meso {
     };
 
 	template<int d> 
-	class PlaneShape : public ImplicitGeometryBase<d>
+	class PlaneShape : public ImplicitManifold<d>
 	{
 		Typedef_VectorD(d);
 	public:
@@ -111,9 +143,9 @@ namespace Meso {
 		//SphereShape<d>& operator=(const SphereShape<d>& copy) { n = copy.n; p = copy.p; b = copy.b; return *this; }
 		//SphereShape(const SphereShape<d>& copy) { *this = copy; }
 
-		virtual bool Inside(const VectorD pos) const { return n.dot(pos) - b < (real)0; }
-		virtual real Phi(const VectorD pos) const { return (n.dot(pos) - b); }
-		virtual VectorD Normal(const VectorD pos) const { return n; }
+		bool Inside(const VectorD pos) const { return n.dot(pos) - b < (real)0; }
+		real Phi(const VectorD pos) const { return (n.dot(pos) - b); }
+		VectorD Normal(const VectorD pos) const { return n; }
 	};
 
 	//template<int d>
@@ -129,7 +161,7 @@ namespace Meso {
 	//	//virtual VectorD Normal(const VectorD& pos) const { return (pos - center).normalized(); }
 	//};
 
-	template<int d> using Sphere = ImplicitGeometryShape<d, SphereShape<d>>;
-	template<int d> using Plane = ImplicitGeometryShape<d, PlaneShape<d>>;
-	template<int d> using Box = ImplicitGeometryShape<d, BoxShape<d>>;
+	template<int d> using Sphere = ImplicitManifoldShape<d, SphereShape<d>>;
+	template<int d> using Plane = ImplicitManifoldShape<d, PlaneShape<d>>;
+	template<int d> using Box = ImplicitManifoldShape<d, BoxShape<d>>;
 }

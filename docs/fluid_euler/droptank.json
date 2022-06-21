@@ -1,0 +1,22 @@
+{
+    "dimension": 2,
+    "simulator": "freesurface",
+    "driver": {
+        "cfl": 1.0,
+        "first_frame": 0,
+        "fps": 25,
+        "last_frame": 100,
+        "min_step_frame_fraction": 0.0,
+        "output_base_dir": "droptank"
+    },
+    "scene": {
+        "air_density": 0.001,
+        "gravity_acc": [
+            0.0,
+            -1.0,
+            0.0
+        ],
+        "scale": 32,
+        "test": "droptank"
+    }
+}

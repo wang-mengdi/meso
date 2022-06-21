@@ -37,7 +37,7 @@ namespace Meso {
 	}
 
 	template<int d, DataHolder side>
-	void Test_Fast_Marching(Grid<d> grid, const ImplicitGeometry<d>& shape) {
+	void Test_Fast_Marching(Grid<d> grid, const ImplicitManifold<d>& shape) {
 		Typedef_VectorD(d);
 		LevelSet<d> levelset(grid);
 		//fill the levelset

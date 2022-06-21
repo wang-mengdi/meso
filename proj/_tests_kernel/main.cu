@@ -7,7 +7,7 @@
 #include "GridTests.h"
 #include "InterpolationTests.h"
 #include "MeshTests.h"
-#include "ImplicitGeometry.h"
+#include "ImplicitManifold.h"
 #include "SparseTests.h"
 
 using namespace Meso;
@@ -25,8 +25,10 @@ void Print_Grid_Index2(Vector2i counts) {
 }
 
 int main() {
+    Sphere<3> sphere(Vector3::Zero(), 1.0);
+
     ////Part 1: test reservoir
-    
+
     //a visual test, not included in general tests
     //Print_Grid_Index2(Vector2i(8, 8));
     //Print_Grid_Index2(Vector2i(64, 64));

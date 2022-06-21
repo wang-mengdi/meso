@@ -9,7 +9,7 @@
 #include "Common.h"
 #include "AuxFunc.h"
 #include "Interpolation.h"
-#include "ImplicitGeometry.h"
+#include "ImplicitManifold.h"
 #include<iostream>
 //#include "cuda_runtime.h"
 #include <typeinfo>
@@ -42,7 +42,7 @@ namespace Meso {
 				}
 			);
 		}
-		void Init(const Grid<d> _grid, const ImplicitGeometry<d> &geom) {
+		void Init(const Grid<d> _grid, const ImplicitManifold<d> &geom) {
 			Init(_grid);
 			phi.Calc_Nodes(
 				[&](const VectorDi cell) {
