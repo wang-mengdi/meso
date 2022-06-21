@@ -155,7 +155,7 @@ namespace Meso {
 				face[1] = ((b_ind / fnbx) << 3) + idy;
 			}
 			else if constexpr (d == 3) {
-				int fnbx = nbx + (axis == 0), fnby = nby + (axis == 1), fnbz = nbz + (axis == 2);
+				int fnbx = nbx + (axis == 0), fnby = nby + (axis == 1);
 				int idx = face_index & 0b11, idy = (face_index & 0b1100) >> 2, idz = (face_index & 0b110000) >> 4;
 				int b = face_index >> 6;
 
@@ -220,7 +220,7 @@ namespace Meso {
 			return pos_min + node.template cast<real>() * dx;
 		}
 		__host__ __device__ constexpr VectorD Node_Min(void)const { return pos_min; }
-		__host__ __device__ constexpr VectorD Node_Max(void)const { return Position(Counts() - VectorDi::Ones()); }
+		__host__ __device__ constexpr VectorD Node_Max(void)const { return Position(Base::Counts() - VectorDi::Ones()); }
 		__host__ __device__ VectorD Center(void) const {
 			//grid type doesn't matter
 			return (real)0.5 * (Node_Min() + Node_Max());
