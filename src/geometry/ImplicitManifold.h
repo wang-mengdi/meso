@@ -91,16 +91,21 @@ namespace Meso {
 	};
 
 	template<int d>
-	class EllipsoidShape : public ImplicitManifold<d>
+	class PlaneShape : public ImplicitManifold<d>
 	{
 		Typedef_VectorD(d);
 	public:
-		VectorD center = VectorD::Zero();
-		VectorD radius = MathFunc::V<d>(1., 0.5, 1.);
-		EllipsoidShape(const VectorD _center, const VectorD _radius) :center(_center), radius(_radius) {}
+		VectorD p;
+		VectorD n;
+		real b;
 
-		real Phi(const VectorD pos) const { const VectorD diff = pos - center; real k1 = MathFunc::Cwise_Divide(diff, radius).norm(); real k2 = (diff / radius.squaredNorm()).norm(); return k1 * (k1 - 1.0) / k2; }
-		VectorD Normal(const VectorD pos) const { return (pos - center).normalized(); }	// TODO: fix ellipsoid normal
+		PlaneShape(const VectorD _p, const VectorD _n = VectorD::Unit(1)) :p(_p), n(_n) { n.normalize(); b = n.dot(p); }
+		//SphereShape<d>& operator=(const SphereShape<d>& copy) { n = copy.n; p = copy.p; b = copy.b; return *this; }
+		//SphereShape(const SphereShape<d>& copy) { *this = copy; }
+
+		bool Inside(const VectorD pos) const { return n.dot(pos) - b < (real)0; }
+		real Phi(const VectorD pos) const { return (n.dot(pos) - b); }
+		VectorD Normal(const VectorD pos) const { return n; }
 	};
 
     template<int d> class BoxShape : public ImplicitManifold<d>
@@ -143,22 +148,17 @@ namespace Meso {
         //static Box<d> Infi_Min() { const real fmax = std::numeric_limits<real>::max(); return Box<d>(Vector<real, d>::Ones() * fmax, Vector<real, d>::Ones() * (real)-fmax); }
     };
 
-	template<int d> 
-	class PlaneShape : public ImplicitManifold<d>
+	template<int d>
+	class EllipsoidShape : public ImplicitManifold<d>
 	{
 		Typedef_VectorD(d);
 	public:
-		VectorD p;
-		VectorD n;
-		real b;
+		VectorD center = VectorD::Zero();
+		VectorD radius = MathFunc::V<d>(1., 0.5, 1.);
+		EllipsoidShape(const VectorD _center, const VectorD _radius) :center(_center), radius(_radius) {}
 
-		PlaneShape(const VectorD _p, const VectorD _n = VectorD::Unit(1)) :p(_p), n(_n) { n.normalize(); b = n.dot(p); }
-		//SphereShape<d>& operator=(const SphereShape<d>& copy) { n = copy.n; p = copy.p; b = copy.b; return *this; }
-		//SphereShape(const SphereShape<d>& copy) { *this = copy; }
-
-		bool Inside(const VectorD pos) const { return n.dot(pos) - b < (real)0; }
-		real Phi(const VectorD pos) const { return (n.dot(pos) - b); }
-		VectorD Normal(const VectorD pos) const { return n; }
+		real Phi(const VectorD pos) const { const VectorD diff = pos - center; real k1 = MathFunc::Cwise_Divide(diff, radius).norm(); real k2 = (diff / radius.squaredNorm()).norm(); return k1 * (k1 - 1.0) / k2; }
+		VectorD Normal(const VectorD pos) const { return (pos - center).normalized(); }	// TODO: fix ellipsoid normal
 	};
 
 	//template<int d>
