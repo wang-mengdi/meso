@@ -147,6 +147,8 @@ namespace Meso {
 		template<class T, int dim> inline int Max_Index(const Vector<T, dim>& v) { int i_max = 0; for (int i = 1; i < dim; i++)if (v[i] > v[i_max])i_max = i; return i_max; }
 		template<class T, int dim> inline Vector<T, dim> Cwise_Min(const Vector<T, dim>& v1, const Vector<T, dim>& v2) { return v1.cwiseMin(v2); }
 		template<class T, int dim> inline Vector<T, dim> Cwise_Max(const Vector<T, dim>& v1, const Vector<T, dim>& v2) { return v1.cwiseMax(v2); }
+		template<class T, int dim> inline Vector<T, dim> Cwise_Multiply(const Vector<T, dim>& v1, const Vector<T, dim>& v2) { return v1.cwiseProduct(v2); }
+		template<class T, int dim> inline Vector<T, dim> Cwise_Divide(const Vector<T, dim>& v1, const Vector<T, dim>& v2) { Vector<T, dim> v; for (int i = 0; i < dim; i++) v[i] = v1[i] / v2[i]; return v; }
 
 		////eigenvectors, svd, polar decomposition
 		////eigenvector/value corresponding to the eigenvalue with the max magnitude

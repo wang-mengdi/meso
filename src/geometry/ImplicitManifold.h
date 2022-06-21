@@ -90,6 +90,19 @@ namespace Meso {
 		VectorD Normal(const VectorD pos) const { return (pos - center).normalized(); }
 	};
 
+	template<int d>
+	class EllipsoidShape : public ImplicitManifold<d>
+	{
+		Typedef_VectorD(d);
+	public:
+		VectorD center = VectorD::Zero();
+		VectorD radius = MathFunc::V<d>(1., 0.5, 1.);
+		EllipsoidShape(const VectorD _center, const VectorD _radius) :center(_center), radius(_radius) {}
+
+		real Phi(const VectorD pos) const { const VectorD diff = pos - center; real k1 = MathFunc::Cwise_Divide(diff, radius).norm(); real k2 = (diff / radius.squaredNorm()).norm(); return k1 * (k1 - 1.0) / k2; }
+		VectorD Normal(const VectorD pos) const { return (pos - center).normalized(); }	// TODO: fix ellipsoid normal
+	};
+
     template<int d> class BoxShape : public ImplicitManifold<d>
     {
         Typedef_VectorD(d);
@@ -108,7 +121,7 @@ namespace Meso {
         bool Inside(const VectorD pos) const { return ArrayFunc::All_Greater_Equal(pos, min_corner) && ArrayFunc::All_Less_Equal(pos, max_corner); }
         real Phi(const VectorD pos) const
         {
-            VectorD phi = (pos - Center()).cwiseAbs() - (real).5 * Edge_Lengths(); VectorD zero = VectorD::Zero();
+            VectorD phi = (pos - (min_corner + max_corner) * 0.5).cwiseAbs() - (real).5 * Edge_Lengths(); VectorD zero = VectorD::Zero();
             if (!ArrayFunc::All_Less_Equal(phi, zero)) { return (phi.cwiseMax(zero)).norm(); }return phi.maxCoeff();
         }
         VectorD Normal(const VectorD pos)const { return Wall_Normal(pos); }
@@ -135,11 +148,11 @@ namespace Meso {
 	{
 		Typedef_VectorD(d);
 	public:
-		VectorD n;
 		VectorD p;
+		VectorD n;
 		real b;
 
-		PlaneShape(const VectorD _n, const VectorD _p) :n(_n), p(_p) { n.normalize(); b = n.dot(p); }
+		PlaneShape(const VectorD _p, const VectorD _n = VectorD::Unit(1)) :p(_p), n(_n) { n.normalize(); b = n.dot(p); }
 		//SphereShape<d>& operator=(const SphereShape<d>& copy) { n = copy.n; p = copy.p; b = copy.b; return *this; }
 		//SphereShape(const SphereShape<d>& copy) { *this = copy; }
 
@@ -164,4 +177,5 @@ namespace Meso {
 	template<int d> using Sphere = ImplicitManifoldShape<d, SphereShape<d>>;
 	template<int d> using Plane = ImplicitManifoldShape<d, PlaneShape<d>>;
 	template<int d> using Box = ImplicitManifoldShape<d, BoxShape<d>>;
+	template<int d> using Ellipsoid = ImplicitManifoldShape<d, EllipsoidShape<d>>;
 }
