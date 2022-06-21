@@ -38,7 +38,7 @@ namespace Meso {
 	public:
 		template<class... Args>
 		ImplicitManifoldShape(const Args...args) {
-			data_ptr = std::make_shared<Shape>(args...);
+			this->data_ptr = std::make_shared<Shape>(args...);
 		}
 	};
 
