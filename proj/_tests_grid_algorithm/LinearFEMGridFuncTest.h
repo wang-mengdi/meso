@@ -12,8 +12,8 @@ namespace Meso {
 		MatrixX K_e;
 		MatrixX K_e_table;
 
-		LinearFEMFunc::Cell_Stiffness_Matrix<2>(youngs, poisson, (real) 1, K_e);
-		LinearFEMFunc::Cell_Stiffness_Matrix<2>(youngs, poisson, K_e_table);
+		LinearFEMFunc::Cell_Stiffness_Matrix<d>(youngs, poisson, (real) 1, K_e);
+		LinearFEMFunc::Cell_Stiffness_Matrix<d>(youngs, poisson, K_e_table);
 
 		if (!K_e.isApprox(K_e_table)) { Error("The element stiffness matrix for d={} is not the same as that from table",d);}
 		else { Pass("The element stiffness matrix for d={} is the same as that from table", d);}

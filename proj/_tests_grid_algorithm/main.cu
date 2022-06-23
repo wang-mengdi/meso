@@ -81,5 +81,5 @@ int main(){
 	//Test_FMM_Circle<3, PointIntpLinearPadding0, DEVICE>(0.02, Vector<real, 3>::Zero(), 1);
 
 	//test linear FEM Grid
-	Test_Linear_FEM_Grid<2>((real)1, 0.15);
+	Test_Linear_FEM_Grid<2>((real)1, 0.3);
 }

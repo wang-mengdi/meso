@@ -28,8 +28,8 @@ namespace Meso {
 			//N3=1/4(1+s)(1+t)
 			
 			/*
-			dN1/ds dN2/ds dN3/ds dN3/ds
-			dN1/dt dN2/dt dN3/dt dN4/dt
+			dN0/ds dN1/ds dN2/ds dN3/ds
+			dN0/dt dN1/dt dN2/dt dN3/dt
 			*/
 
 			/* the order of the shape function matters
@@ -46,10 +46,37 @@ namespace Meso {
 
 		template<> void dNde<3>(const Vector3& natural_coord, MatrixX& dNde)
 		{
+			//N0=1/8(1-s)(1-t)(1-q)
+			//N1=1/8(1+s)(1-t)(1-q)
+			//N2=1/8(1-s)(1+t)(1-q)
+			//N3=1/8(1+s)(1+t)(1-q)
+			//N4=1/8(1-s)(1-t)(1+q)
+			//N5=1/8(1+s)(1-t)(1+q)
+			//N6=1/8(1-s)(1+t)(1+q)
+			//N7=1/8(1+s)(1+t)(1+q)
+
+			/*
+			dN0/ds dN1/ds dN2/ds dN3/ds dN4/ds dN5/ds dN6/ds dN7/ds
+			dN0/dt dN1/dt dN2/dt dN3/dt dN4/dt dN5/dt dN6/dt dN7/dt
+			dN0/dq dN1/dq dN2/dq dN3/dq dN4/dq dN5/dq dN6/dq dN7/dq
+			*/
+
+			/*			far		t  q
+			   N6 --  N7		| /
+			  /|	 /|			|/
+			 / |    / |			-->s
+			N2-|- N3  |
+			|  N4 |- N5
+			| /	  |  /
+			|/	  | /
+			N0 -- N1
+			close
+			*/
+
 			const real s = natural_coord[0]; const real t = natural_coord[1]; const real q = natural_coord[2];
-			dNde << -(1 - t) * (1 - q), -(1 - t) * (1 + q), -(1 + t) * (1 - q), -(1 + t) * (1 + q), (1 - t)* (1 - q), (1 - t)* (1 + q), (1 + t)* (1 - q), (1 + t)* (1 + q),
-					-(1 - s) * (1 - q), -(1 - s) * (1 + q), (1 - s)* (1 - q), (1 - s)* (1 + q), -(1 + s) * (1 - q), -(1 + s) * (1 + q), (1 + s)* (1 - q), (1 + s)* (1 + q),
-					-(1 - s) * (1 - t), (1 - s)* (1 - t), -(1 - s) * (1 + t), (1 - s)* (1 + t), -(1 + s) * (1 - t), (1 + s)* (1 - t), -(1 + s) * (1 + t), (1 + s)* (1 + t);
+			dNde << -(1 - t) * (1 - q), (1 - t) * (1 - q), -(1 + t) * (1 - q), (1 + t) * (1 + q), -(1 - t)* (1 + q), (1 - t)* (1 + q), -(1 + t)* (1 + q), (1 + t)* (1 + q),
+					-(1 - s) * (1 - q), -(1 + s) * (1 - q), (1 - s)* (1 - q), (1 + s)* (1 - q), -(1 - s) * (1 + q), -(1 + s) * (1 + q), (1 - s)* (1 + q), (1 + s)* (1 + q),
+					-(1 - s) * (1 - t), -(1 + s)* (1 - t), -(1 - s) * (1 + t), -(1 + s)* (1 + t), (1 - s) * (1 - t), (1 + s)* (1 - t), (1 - s) * (1 + t), (1 + s)* (1 + t);
 			dNde *= (real).125;
 		}
 
@@ -78,20 +105,27 @@ namespace Meso {
 
 		template<> void Cell_Strain_Displacement_Matrix<3>(const Vector3& natural_coord, const real dx, MatrixX& B)
 		{
-			const int d = 3; int tensor_n = d * (d + 1) / 2; int r = tensor_n; int vtx_n = (int)pow(2, d); int c = d * vtx_n;
-			B.resize(r, c); B.fill(0);
-			MatrixX dNdX(d, vtx_n); Cell_dNdX<d>(natural_coord, dx, dNdX);
+			/*
+				dN0/dx	0	0	dN1/dx	0	0	dN2/dx	0	0	dN3/dx	0	0	dN4/dx	0	0	dN5/dx	0	0	dN6/dx	0	0	dN7/dx	0	0
+				0	dN0/dy	0	0	dN1/dy	0	0	dN2/dy	0	0	dN3/dy	0	0	dN4/dy	0	0	dN5/dy	0	0	dN6/dy	0	0	dN7/dy	0
+				0	0	dN0/dz	0	0	dN1/dz	0	0	dN2/dz	0	0	dN3/dz	0	0	dN4/dz	0	0	dN5/dz	0	0	dN6/dz	0	0	dN7/dz
+				dN0/dy	dN0/dx	0	dN1/dy	dN1/dx	0	N2/dy	dN2/dx	0	dN3/dy	dN3/dx	0	dN4/dy	dN4/dx	0	dN5/dy	dN5/dx	0	N6/dy	dN6/dx	0	dN7/dy	dN7/dx	0
+				0	dN0/dz	dN0/dy	0	dN1/dz	dN1/dy	0	N2/dz	dN2/dy	0	dN3/dz	dN3/dy	0	dN4/dz	dN4/dy	0	dN5/dz	dN5/dy	0	N6/dz	dN6/dy	0	dN7/dz	dN7/dy
+				dN0/dz	0	dN0/dx	dN1/dz	0	dN1/dx	N2/dz	0	dN2/dx	dN3/dz	0	dN3/dx	dN4/dz	0	dN4/dx	dN5/dz	0	dN5/dx	N6/dz	0	dN6/dx	dN7/dz	0	dN7/dx
+			*/
+			int vtx_n = (int)pow(2, 3);
+			B.resize(6, 24); B.fill(0);
+			MatrixX dNdX(3, vtx_n); Cell_dNdX<3>(natural_coord, dx, dNdX);
 
 			const int x = 0; const int y = 1; const int z = 2;
-			Set_Cell_B_Elements_Helper<d>(0, 0, dNdX.row(x), B);
-			Set_Cell_B_Elements_Helper<d>(1, 1, dNdX.row(y), B);
-			Set_Cell_B_Elements_Helper<d>(2, 2, dNdX.row(z), B);
-			Set_Cell_B_Elements_Helper<d>(3, 0, dNdX.row(y), B);
-			Set_Cell_B_Elements_Helper<d>(3, 1, dNdX.row(x), B);
-			Set_Cell_B_Elements_Helper<d>(4, 1, dNdX.row(z), B);
-			Set_Cell_B_Elements_Helper<d>(4, 2, dNdX.row(y), B);
-			Set_Cell_B_Elements_Helper<d>(5, 0, dNdX.row(z), B);
-			Set_Cell_B_Elements_Helper<d>(5, 2, dNdX.row(x), B);
+			for (int i = 0; i < 7; i++) {
+				B(0, i * 3) = dNdX(x, i);
+				B(1, i * 3 + 1) = dNdX(y, i);
+				B(2, i * 3 + 2) = dNdX(z, i);
+				B(3, i * 3) = dNdX(y, i); B(3, i * 3+1) = dNdX(x, i);
+				B(4, i * 3 + 1) = dNdX(z, i); B(4, i * 3 + 2) = dNdX(y, i);
+				B(5, i * 3 ) = dNdX(z, i);	B(5, i * 3+2) = dNdX(x, i);
+			}
 		}
 
 		template<int d> void Cell_Stiffness_Matrix(const real youngs, const real poisson, const real dx, MatrixX& K_e)
@@ -148,11 +182,6 @@ namespace Meso {
 			return;
 		}
 
-		template<int d> void Set_Cell_B_Elements_Helper(const int r, const int c, const VectorX& dN, MatrixX& B)
-		{
-			for (int i = 0; i < (int)dN.size(); i++)B(r, c + i * d) = dN[i];
-		}
-
 		////////////////////////////////////////////////////////////////////////
 		//Gaussian integration
 		template<> void Initialize_Gaussian_Integration_Points<2>(ArrayF2P<Vector2, 2>& points, ArrayF2P<real, 2>& weights) //2^2=4 sample points
@@ -170,8 +199,13 @@ namespace Meso {
 		//Operations on the global stiffness matrix
 		template<int d> void Add_Cell_Stiffness_Matrix(/*rst*/SparseMatrix<real>& K, const MatrixX& K_e, const Array<int>& node_indices)
 		{
-			const int node_n = (int)node_indices.size(); for (int Ke_i = 0; Ke_i < node_n; Ke_i++) {
-				int K_i = node_indices[Ke_i]; for (int Ke_j = 0; Ke_j < node_n; Ke_j++) { int K_j = node_indices[Ke_j]; SparseFunc::Add_Block<d>(K, K_i, K_j, K_e, Ke_i, Ke_j); }
+			const int node_n = (int)node_indices.size(); 
+			for (int Ke_i = 0; Ke_i < node_n; Ke_i++) {
+				int K_i = node_indices[Ke_i]; 
+				for (int Ke_j = 0; Ke_j < node_n; Ke_j++) { 
+					int K_j = node_indices[Ke_j]; 
+					SparseFunc::Add_Block<d>(K, K_i, K_j, K_e, Ke_i, Ke_j); 
+				}
 			}
 		}
 		template void Add_Cell_Stiffness_Matrix<2>(/*rst*/SparseMatrix<real>& K, const MatrixX& K_e, const Array<int>& nodes);
