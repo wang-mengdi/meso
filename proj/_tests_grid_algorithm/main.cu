@@ -7,6 +7,7 @@
 #include "LevelsetPrimeTest.h"
 #include "LevelsetAdvanceTest.h"
 #include "MarchingCubesTests.h"
+#include "LinearFEMGridFuncTest.h"
 
 using namespace Meso;
 #define __THRUST_HAS_CUDART__
@@ -78,4 +79,7 @@ int main(){
 	//Test_FMM_Circle<2, PointIntpLinearPadding0, DEVICE>(0.02, Vector<real, 2>::Zero(), 1);
 	//Test_FMM_Circle<3, PointIntpLinearPadding0, HOST>(0.02, Vector<real, 3>::Zero(), 1);
 	//Test_FMM_Circle<3, PointIntpLinearPadding0, DEVICE>(0.02, Vector<real, 3>::Zero(), 1);
+
+	//test linear FEM Grid
+	Test_Linear_FEM_Grid<2>((real)1, 0.15);
 }
