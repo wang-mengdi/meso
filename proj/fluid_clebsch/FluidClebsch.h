@@ -19,23 +19,27 @@
 namespace Meso {
 	using namespace std::complex_literals;
 	using Vector2C = Vector<thrust::complex<real>, 2>;
-	__global__ void W2V_Mapping_Kernel2(const Grid<2> grid, real* face_x, real* face_y, const Vector2C* cell, const real h_bar_over_dx)
+	__global__ void W2V_Mapping_Kernel2_Padding0(const Grid<2> grid, real* face_x, real* face_y, const Vector2C* cell, const real h_bar_over_dx)
 	{
-		const int i = threadIdx.x + blockIdx.x * blockDim.x;
-		const int j = threadIdx.y + blockIdx.y * blockDim.y;
+		Typedef_VectorD(2);
+		VectorDi coord = GPUFunc::Thread_Coord<2>(blockIdx, threadIdx);
 
-		if (i > grid.counts[0] - 1 || j > grid.counts[1] - 1) return;
+		if (!grid.Valid(coord)) return;
 
-		const Vector2C cell_data = cell[grid.Index(i, j)];
-		int face_ind;
+		const Vector2C cell_data = cell[grid.Index(coord)];
+		const Vector2C cell_data_conj(thrust::conj(cell_data[0]), thrust::conj(cell_data[1]));
 
-		// x-axis faces
-		face_ind = grid.Face_Index(0, Vector2i(i + 1, j));
-		face_x[face_ind] = h_bar_over_dx * thrust::arg(cell_data.dot(cell[grid.Index(i + 1, j)]));
+		int face_ind_x = Neighbor_Face_Index(grid, coord, 0, 1);
+		int face_ind_y = Neighbor_Face_Index(grid, coord, 1, 1);
 
-		// y-axis faces
-		face_ind = grid.Face_Index(1, Vector2i(i, j + 1));
-		face_y[face_ind] = h_bar_over_dx * thrust::arg(cell_data.dot(cell[grid.Index(i, j + 1)]));
+		if (face_ind_x != -1 && grid.Valid(coord + VectorDi::Unit(0))) {
+			const Vector2C nb_cell_data = cell[grid.Index(coord + VectorDi::Unit(0))];
+			face_x[face_ind_x] = h_bar_over_dx * thrust::arg(cell_data_conj.dot(nb_cell_data));
+		}
+		if (face_ind_y != -1 && grid.Valid(coord + VectorDi::Unit(1))) {
+			const Vector2C nb_cell_data = cell[grid.Index(coord + VectorDi::Unit(1))];
+			face_x[face_ind_y] = h_bar_over_dx * thrust::arg(cell_data_conj.dot(nb_cell_data));
+		}
 	}
 
 	template<int d>
@@ -43,7 +47,7 @@ namespace Meso {
 		const int index = grid.Index(GPUFunc::Thread_Coord<d>(blockIdx, threadIdx));
 		const real cell_p = pressure[index];
 		Vector2C psi = wave_function[index];
-		thrust::complex<real> c{ thrust::exp(thrust::complex<real>(0, 1) * cell_p * dx_over_h_har) };
+		thrust::complex<real> c(thrust::exp(thrust::complex<real>(0, -1) * cell_p * dx_over_h_har));
 		psi[0] *= c;
 		psi[1] *= c;
 		wave_function[index] = psi;
@@ -87,25 +91,16 @@ namespace Meso {
 			bf::path vtk_path = metadata.base_path / bf::path(vts_name);
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 		}
+		virtual void Schrödinger_Solve() {
+
+		}
 		virtual void Exterior_Derivative_W2V(FaceFieldDv<real, d>& F, const FieldDv<Vector2C, d>& C) {
+			Assert(!C.Empty(), "Exterior_Derivative_W2V C->F error: C is empty");
 			const real h_bar_over_dx = h_bar / C.grid.dx;
 			F.Init(C.grid, MathFunc::Zero<real>());
-			dim3 blocknum, blocksize;
-			C.grid.Get_Kernel_Dims(blocknum, blocksize);
 			const Vector2C* cell = C.Data_Ptr();
-			if constexpr (d == 2) {
-				real* face_x = F.Data_Ptr(0);
-				real* face_y = F.Data_Ptr(1);
-
-				W2V_Mapping_Kernel2 << <blocknum, blocksize >> > (C.grid, face_x, face_y, cell, h_bar_over_dx);
-			}
-			/*else if constexpr (d == 3) {
-				real* face_x = F.Data_Ptr(0);
-				real* face_y = F.Data_Ptr(1);
-				real* face_z = F.Data_Ptr(2);
-
-				W2V_Mapping_Kernel3 << <blocknum, blocksize >> > (C.grid, face_x, face_y, face_z, cell, h_bar_over_dx);
-			}*/
+			if constexpr (d == 2) C.grid.Exec_Kernel(&W2V_Mapping_Kernel2_Padding0, C.grid, F.Data_Ptr(0), F.Data_Ptr(1), cell, h_bar_over_dx);
+			//else if constexpr (d == 3) C.grid.Exec_Kernel(&W2V_Mapping_Kernel3_Padding0, C.grid, F.Data_Ptr(0), F.Data_Ptr(1), F.Data_Ptr(2), cell, h_bar_over_dx);
 		}
 		virtual void Wave_Function_Correction() {
 			wave_function.grid.Exec_Kernel(
@@ -120,28 +115,34 @@ namespace Meso {
 			real dt = metadata.dt;
 
 			//TODO: solve
-			
+			Schrödinger_Solve();
 
+			Info("Vel before W2V {}", velocity);
 			//wave function to velocity
 			Exterior_Derivative_W2V(velocity, wave_function);
+			Info("Vel after W2V {}", velocity);
 
 			//projection
 			//vel_div=div(velocity)
-			Exterior_Derivative(vel_div, velocity);
+			ExteriorDerivativePadding0::Apply(vel_div, velocity);
+			Info("Div vel {}", vel_div);
 
 			auto [iter, res] = MGPCG.Solve(pressure.Data(), vel_div.Data());
 			Info("Solve poisson with {} iters and residual {}", iter, res);
+			Info("Pressure {}", pressure);
 
 			//velocity+=grad(p)
-			Exterior_Derivative(temp_velocity, pressure);
+			ExteriorDerivativePadding0::Apply(temp_velocity, pressure);
 			temp_velocity *= poisson.vol;
 
 			velocity += temp_velocity;
+			Info("Vel after projection {}", velocity);
+
 			psi_D.Apply(wave_function);
 
-			Exterior_Derivative(vel_div, velocity);
+			ExteriorDerivativePadding0::Apply(vel_div, velocity);
 			Info("After projection max div {}", GridEulerFunc::Linf_Norm(vel_div));
-
+			
 			Wave_Function_Correction();
 		}
 	};
