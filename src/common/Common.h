@@ -212,6 +212,36 @@ struct fmt::formatter<Meso::Vector<T, d> > {
     }
 };
 
+template <class T>
+struct fmt::formatter<Meso::ArrayDv<T> > {
+    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+        //https://fmt.dev/latest/api.html#udt
+        auto it = ctx.begin(), end = ctx.end();
+        if (it != end && *it != '}') throw format_error("invalid format");
+
+        // Return an iterator past the end of the parsed range:
+        return it;
+    }
+
+    // Formats the point p using the parsed format specification (presentation)
+    // stored in this formatter.
+    template <typename FormatContext>
+    auto format(const Meso::ArrayDv<T>& _vec, FormatContext& ctx) -> decltype(ctx.out()) {
+        Meso::Array<T> vec = _vec;
+        std::string out = "";
+        out += '[';
+        auto it = std::begin(vec);
+        auto end = std::end(vec);
+        out += std::to_string(*it); it++;
+        for (; it != end; ++it) {
+            out += ", ";
+            out += std::to_string(*it);
+        }
+        out += ']';
+        return format_to(ctx.out(), "{}", out);
+    }
+};
+
 ////fmt adaptor for eigen vector
 //template <class T> struct fmt::formatter<Eigen::Matrix<T, 3, 3> > {
 //    constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
