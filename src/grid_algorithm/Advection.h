@@ -124,8 +124,8 @@ namespace Meso {
 			advected_result.Init(original_value.grid);
 			for (int axis = 0; axis < d; axis++) {
 				const auto face_grid = original_value.grid.Face_Grid(axis);
-				Field<T, d, side> face_origin(face_grid, original_value.face_data[axis]);
-				Field<T, d, side> face_result(face_grid, advected_result.face_data[axis]);
+				Field<T, d, side> face_origin = original_value.Face_Reference(axis);
+				Field<T, d, side> face_result = advected_result.Face_Reference(axis);
 				Advect(dt, face_result, face_origin, velocity);
 			}
 		}
