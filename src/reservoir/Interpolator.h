@@ -28,10 +28,14 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		//only interpolate on cells which are valid and valid_mask==true 
-		Field<bool, d, side> valid_mask;
+		//Field<bool, d, side> valid_mask;
+		Grid<d> mask_grid;
+		const bool* mask_ptr;
 
 		void Init_Shallow(const Field<bool, d, side>& _valid_mask) {
-			valid_mask.Shallow_Copy(_valid_mask);
+			//valid_mask.Shallow_Copy(_valid_mask);
+			mask_grid = _valid_mask.grid;
+			mask_ptr = _valid_mask.Data_Ptr();
 		}
 
 		__host__ __device__ T Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
@@ -46,7 +50,7 @@ namespace Meso {
 				for (int s = 0; s < 4; s++) {
 					int d0 = dx[s], d1 = dy[s];
 					VectorDi refr_coord(coord[0] + d0, coord[1] + d1);
-					if (grid.Valid(refr_coord) && valid_mask(refr_coord)) {
+					if (grid.Valid(refr_coord) && mask_ptr[mask_grid.Index(refr_coord)]) {
 						T weight = w[0][d0] * w[1][d1];
 						weight_sum += weight;
 						value_sum += weight * data[grid.Index(coord[0] + d0, coord[1] + d1)];
@@ -58,7 +62,7 @@ namespace Meso {
 				for (int s = 0; s < 8; s++) {
 					int d0 = dx[s], d1 = dy[s], d2 = dz[s];
 					VectorDi refr_coord(coord[0] + d0, coord[1] + d1, coord[2] + d2);
-					if (grid.Valid(refr_coord) && valid_mask(refr_coord)) {
+					if (grid.Valid(refr_coord) && mask_ptr[mask_grid.Index(refr_coord)]) {
 						T weight = w[0][d0] * w[1][d1] * w[2][d2];
 						weight_sum += weight;
 						value_sum += weight * data[grid.Index(coord[0] + d0, coord[1] + d1, coord[2] + d2)];
