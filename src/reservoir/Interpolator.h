@@ -14,12 +14,32 @@ namespace Meso {
 	class Interpolator {
 		Typedef_VectorD(d);
 	public:
-		__host__ __device__ virtual T Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) = 0;
-		__host__ __device__ T Value1(Field<T, d, side>&& F, const Vector<real, d> pos) {
+		__host__ __device__ virtual T Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) const = 0;
+		__host__ __device__ T Value(Field<T, d, side>&& F, const Vector<real, d> pos) const {
 			const T* data_ptr = F.Data_Ptr();
 			Vector<int, d> node; Vector<real, d> frac;
 			F.grid.Get_Fraction(pos, node, frac);
 			return Value(F.grid, data_ptr, node, frac);
+		}
+		__host__ __device__ Vector<T, d> Face_Vector(const Grid<d> g0, const T* v0, const Grid<d> g1, const T* v1, const Grid<d> g2, const T* v2, const Vector<real, d> pos) const {
+			Vector<T, d> ret;
+			VectorDi node; VectorD frac;
+			//x
+			{
+				g0.Get_Fraction(pos, node, frac);
+				ret[0] = Value(g0, v0, node, frac);
+			}
+			//y
+			if constexpr (d >= 2) {
+				g1.Get_Fraction(pos, node, frac);
+				ret[1] = Value(g1, v1, node, frac);
+			}
+			//z
+			if constexpr (d >= 3) {
+				g2.Get_Fraction(pos, node, frac);
+				ret[2] = Value(g2, v2, node, frac);
+			}
+			return ret;
 		}
 	};
 
@@ -38,7 +58,7 @@ namespace Meso {
 			mask_ptr = _valid_mask.Data_Ptr();
 		}
 
-		__host__ __device__ T Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) {
+		__host__ __device__ T Value(const GridIndexer<d> grid, const T* data, const Vector<int, d> coord, const Vector<real, d> frac) const {
 			static constexpr T padding_val = 0;
 			//considering invalid datas as 0
 			static constexpr int dx[8] = { 0,1,0,1,0,1,0,1 };
