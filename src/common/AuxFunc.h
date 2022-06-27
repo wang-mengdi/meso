@@ -262,8 +262,9 @@ namespace Meso {
 			if (idx < 0) return 0;
 			else return arr[idx].norm();
 		}
-		template<class T>
-		T Sum(const Array<T>& v) {
+		template<class Array1>
+		decltype(auto) Sum(const Array1& v) {
+			using T = decltype(v[0]);
 			return thrust::reduce(
 					v.begin(),
 					v.end(),
