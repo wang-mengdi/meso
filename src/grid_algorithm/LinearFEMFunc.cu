@@ -118,7 +118,7 @@ namespace Meso {
 			MatrixX dNdX(3, vtx_n); Cell_dNdX<3>(natural_coord, dx, dNdX);
 
 			const int x = 0; const int y = 1; const int z = 2;
-			for (int i = 0; i < 7; i++) {
+			for (int i = 0; i < 8; i++) {
 				B(0, i * 3) = dNdX(x, i);
 				B(1, i * 3 + 1) = dNdX(y, i);
 				B(2, i * 3 + 2) = dNdX(z, i);
@@ -135,9 +135,9 @@ namespace Meso {
 			Initialize_Gaussian_Integration_Points<d>(points, weights);
 			MatrixX E; Strain_Stress_Matrix_Linear<d>(youngs, poisson, E);
 			real J_det = pow(dx / (real)2, (real)d);
-
+			
 			for (auto i = 0; i < points.size(); i++) {
-				MatrixX B; Cell_Strain_Displacement_Matrix<d>(points[i], dx, B);	
+				MatrixX B; Cell_Strain_Displacement_Matrix<d>(points[i], dx, B);
 				MatrixX K0; K0 = B.transpose() * E * B * J_det * weights[i];
 				K_e += K0;
 			}
