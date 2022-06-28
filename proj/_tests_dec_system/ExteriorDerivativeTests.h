@@ -36,7 +36,7 @@ void Test_Exterior_Derivative_Cell(const Vector<int, d> counts) {
 			return;
 		}
 	}
-	Pass("Test_Exterior_Derivative_Cell failed for counts={}", counts);
+	Pass("Test_Exterior_Derivative_Cell passed for counts={}", counts);
 }
 
 template<class T, int d, class ExteriorDerivative>
