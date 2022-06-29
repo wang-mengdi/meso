@@ -7,11 +7,12 @@
 namespace Meso {
 	namespace LinearFEMFunc
 	{
+		const static Vector3i CORNER_OFFSETS[] = {Vector3i(0,0,0), Vector3i(1,0,0), Vector3i(1,1,0), Vector3i(0,1,0), Vector3i(0,0,1), Vector3i(1,0,1), Vector3i(1,1,1), Vector3i(0,1,1) };
 		//correspondence of index to corner coordinate given a center coordinate
 		template<int d> Vector<int, d> Corner_Offset(const Vector<int, d>& center, int i) {
 			Assert(i < pow(2, d), "Corner_Offset: index out of  range");
 			if constexpr (d == 2) { return center + Vector2i(i & 0x1, (i >> 1) & 0x1); }
-			else if constexpr (d == 3) { return center + Vector3i(i & 0x1, (i >> 1) & 0x1, (i >> 2) & 0x1); }
+			else if constexpr (d == 3) { return center + CORNER_OFFSETS[i];}
 			else { Error("Corner_Offset: dimension not supported"); return Vector<int, d>(); }
 		}
 
