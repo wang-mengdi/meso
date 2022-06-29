@@ -77,7 +77,8 @@ namespace Meso {
 			vf_host.Calc_Nodes(
 				[&](const VectorDi& cell) {
 					VectorD pos = grid.Position(cell);
-					return MathFunc::V<3>(IntpLinear::Face_Vector(F_host, pos));
+					Vector<real, d> vec = IntpLinear::Face_Vector(F_host, pos).template cast<real>();
+					return MathFunc::V<3>(vec);
 				}
 			);
 
