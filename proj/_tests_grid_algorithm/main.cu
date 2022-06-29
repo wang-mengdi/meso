@@ -82,4 +82,5 @@ int main(){
 
 	//test linear FEM Grid
 	Test_Linear_FEM_Grid<2>((real)1, 0.3);
+	Test_Linear_FEM_Grid<3>((real)1, 0.3);
 }

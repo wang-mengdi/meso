@@ -48,12 +48,12 @@ namespace Meso {
 		{
 			//N0=1/8(1-s)(1-t)(1-q)
 			//N1=1/8(1+s)(1-t)(1-q)
-			//N2=1/8(1-s)(1+t)(1-q)
-			//N3=1/8(1+s)(1+t)(1-q)
+			//N2=1/8(1+s)(1+t)(1-q)
+			//N3=1/8(1-s)(1+t)(1-q)
 			//N4=1/8(1-s)(1-t)(1+q)
 			//N5=1/8(1+s)(1-t)(1+q)
-			//N6=1/8(1-s)(1+t)(1+q)
-			//N7=1/8(1+s)(1+t)(1+q)
+			//N6=1/8(1+s)(1+t)(1+q)
+			//N7=1/8(1-s)(1+t)(1+q)
 
 			/*
 			dN0/ds dN1/ds dN2/ds dN3/ds dN4/ds dN5/ds dN6/ds dN7/ds
@@ -62,10 +62,10 @@ namespace Meso {
 			*/
 
 			/*			far		t  q
-			   N6 --  N7		| /
+			   N7 --  N6		| /
 			  /|	 /|			|/
 			 / |    / |			-->s
-			N2-|- N3  |
+			N3-|- N2  |
 			|  N4 |- N5
 			| /	  |  /
 			|/	  | /
@@ -74,15 +74,15 @@ namespace Meso {
 			*/
 
 			const real s = natural_coord[0]; const real t = natural_coord[1]; const real q = natural_coord[2];
-			dNde << -(1 - t) * (1 - q), (1 - t) * (1 - q), -(1 + t) * (1 - q), (1 + t) * (1 + q), -(1 - t)* (1 + q), (1 - t)* (1 + q), -(1 + t)* (1 + q), (1 + t)* (1 + q),
-					-(1 - s) * (1 - q), -(1 + s) * (1 - q), (1 - s)* (1 - q), (1 + s)* (1 - q), -(1 - s) * (1 + q), -(1 + s) * (1 + q), (1 - s)* (1 + q), (1 + s)* (1 + q),
-					-(1 - s) * (1 - t), -(1 + s)* (1 - t), -(1 - s) * (1 + t), -(1 + s)* (1 + t), (1 - s) * (1 - t), (1 + s)* (1 - t), (1 - s) * (1 + t), (1 + s)* (1 + t);
+			dNde << -(1 - t) * (1 - q), (1 - t) * (1 - q), (1 + t) * (1 - q), -(1 + t) * (1 - q), -(1 - t)* (1 + q), (1 - t)* (1 + q), (1 + t)* (1 + q), -(1 + t) * (1 + q),
+					-(1 - s) * (1 - q), -(1 + s) * (1 - q), (1 + s)* (1 - q), (1 - s)* (1 - q), -(1 - s) * (1 + q), -(1 + s) * (1 + q), (1 + s)* (1 + q), (1 - s)* (1 + q),
+					-(1 - s) * (1 - t), -(1 + s)* (1 - t), -(1 + s)* (1 + t), -(1 - s) * (1 + t), (1 - s) * (1 - t), (1 + s)* (1 - t), (1 + s)* (1 + t), (1 - s)* (1 + t);
 			dNde *= (real).125;
 		}
 
 		template<int d> void Cell_dNdX(const Vector<real, d>& natural_coord, const real dx, MatrixX& dNdX)
 		{
-			dNde<d>(natural_coord, dNdX); dNdX *= ((real)2 / dx); //changed from 0.5/dx
+			dNde<d>(natural_coord, dNdX); dNdX *= ((real)2 / dx); //dn/dx=dn/de*de/dx, de/dx=2/dx
 		}
 
 		template<> void Cell_Strain_Displacement_Matrix<2>(const Vector2& natural_coord, const real dx, MatrixX& B)
@@ -135,7 +135,6 @@ namespace Meso {
 			Initialize_Gaussian_Integration_Points<d>(points, weights);
 			MatrixX E; Strain_Stress_Matrix_Linear<d>(youngs, poisson, E);
 			real J_det = pow(dx / (real)2, (real)d);
-			
 			for (auto i = 0; i < points.size(); i++) {
 				MatrixX B; Cell_Strain_Displacement_Matrix<d>(points[i], dx, B);
 				MatrixX K0; K0 = B.transpose() * E * B * J_det * weights[i];
@@ -178,21 +177,108 @@ namespace Meso {
 
 		template<> void Cell_Stiffness_Matrix<3>(const real youngs, const real poisson, MatrixX& K_e)
 		{
-			Info("Not implemented yet");
-			return;
+			K_e.resize(24, 24); K_e.fill((real)0);
+			VectorX k(14);
+			k << -((real)6*poisson -(real) 4) /9, (real)1 / (real)12, -(real)1 /(real) 9, -((real)4 * poisson - (real)1)/ (real)12, ((real)4 * poisson -(real)1) / 12, (real)1 / (real)18, (real)1 / (real)24,
+				-(real)1 / (real)12, ((real)6* poisson -(real)5) / (real)36, -((real)4* poisson - (real)1) / (real)24, -(real)1 / (real)24, ((real)4* poisson-(real)1) / (real)24, ((real)3* poisson -(real)1) / (real)18, ((real)3* poisson -(real) 2) / (real)18;
+			MatrixX k0(6, 6); MatrixX k1(6, 6); MatrixX k2(6, 6); MatrixX k3(6, 6); MatrixX k4(6, 6); MatrixX k5(6, 6);
+			/*k1 k2 k2 k3 k5 k5
+			  k2 k2 k1 k4 k7 k6
+			  k3 k4 k4 k1 k8 k8
+			  k5 k6 k7 k8 k1 k2
+			  k5 k7 k6 k8 k2 k1*/
+			k0.row(0) << k[0], k[1] ,k[1] ,k[2] ,k[4] , k[4];
+			k0.row(1) << k[1], k[0], k[1], k[3], k[5], k[6];
+			k0.row(2) << k[1], k[1], k[0], k[3], k[6], k[5];
+			k0.row(3) << k[2], k[3], k[3], k[0], k[7], k[7];
+			k0.row(4) << k[4], k[5], k[6], k[7], k[0], k[1];
+			k0.row(5) << k[4], k[6], k[5], k[7], k[1], k[0];
+			/*k9 k8 k12 k6 k4 k7
+			  k8 k9 k12 k5 k3 k5
+			  k10 k10 k13 k7 k4 k6
+			  k6 k5 k11 k9 k2 k10
+			  k4 k3 k5 k2 k9 k12
+			  k11 k4 k6 k12 k10 k13*/
+			k1.row(0) << k[8], k[7], k[11], k[5], k[3], k[6];
+			k1.row(1) << k[7], k[8], k[11], k[4], k[2], k[4];
+			k1.row(2) << k[9], k[9], k[12], k[6], k[3], k[5];
+			k1.row(3) << k[5], k[4], k[10], k[8], k[1], k[9];
+			k1.row(4) << k[3], k[2], k[4], k[1], k[8], k[11];
+			k1.row(5) << k[10], k[3], k[5], k[11], k[9], k[12];
+			/*k6 k7 k4 k9 k12 k8
+			  k7 k6 k4 k10 k13 k10
+			  k5 k5 k3 k8 k12 k9
+			  k9 k10 k2 k6 k11 k5
+			  k12 k13 k10 k11 k6 k4
+			  k2 k12 k9 k4 k5 k3*/
+			k2.row(0) << k[5], k[6], k[3], k[8], k[11], k[7];
+			k2.row(1) << k[6], k[5], k[3], k[9], k[12], k[9];
+			k2.row(2) << k[4], k[4], k[2], k[7], k[11], k[8];
+			k2.row(3) << k[8], k[9], k[1], k[5], k[10], k[4];
+			k2.row(4) << k[11], k[12], k[9], k[10], k[5], k[3];
+			k2.row(5) << k[1], k[11], k[8], k[3], k[4], k[2];
+			/*k14 k11 k11 k13 k10 k10
+			  k11 k14 k11 k12 k9 k8
+			  k11 k11 k14 k12 k8 k9
+			  k13 k12 k12 k14 k7 k7
+			  k10 k9 k8 k7 k14 k11
+			  k10 k8 k9 k7 k11 k14*/
+			k3.row(0) << k[13], k[10], k[10], k[12], k[9], k[9];
+			k3.row(1) << k[10], k[13], k[10], k[11], k[8], k[7];
+			k3.row(2) << k[10], k[10], k[13], k[11], k[7], k[8];
+			k3.row(3) << k[12], k[11], k[11], k[13], k[6], k[6];
+			k3.row(4) << k[9], k[8], k[7], k[6], k[13], k[10];
+			k3.row(5) << k[9], k[7], k[8], k[6], k[10], k[13];
+			/*k1 k2 k8 k3 k5 k4
+			  k2 k1 k8 k4 k6 k11
+			  k8 k8 k1 k5 k11 k6
+			  k3 k4 k5 k1 k8 k2
+			  k5 k6 k11 k8 k1 k8
+			  k4 k11 k6 k2 k8 k1*/
+			k4.row(0) << k[0], k[1], k[7], k[2], k[4], k[3];
+			k4.row(1) << k[1], k[0], k[7], k[3], k[5], k[10];
+			k4.row(2) << k[7], k[7], k[0], k[4], k[10], k[5];
+			k4.row(3) << k[2], k[3], k[4], k[0], k[7], k[1];
+			k4.row(4) << k[4], k[5], k[10], k[7], k[0], k[7];
+			k4.row(5) << k[3], k[10], k[5], k[1], k[7], k[0];
+			/*k14 k11 k7 k13 k10 k12
+			  k11 k14 k7 k12 k9 k2
+			  k7 k7 k14 k10 k2 k9
+			  k13 k12 k10 k14 k7 k11
+			  k10 k9 k2 k7 k14 k7
+			  k12 k2 k9 k11 k7 k14*/
+			k5.row(0) << k[13], k[10], k[6], k[12], k[9], k[11];
+			k5.row(1) << k[10], k[13], k[6], k[11], k[8], k[1];
+			k5.row(2) << k[6], k[6], k[13], k[9], k[1], k[8];
+			k5.row(3) << k[12], k[11], k[9], k[13], k[6], k[10];
+			k5.row(4) << k[9], k[8], k[1], k[6], k[13], k[6];
+			k5.row(5) << k[11], k[1], k[8], k[10], k[6], k[13];
+			
+			/*k1 k2 k3 k4
+			kT2 k5 k6 kT4
+			kT3 k6 kT5 kT2
+			k4 k3 k2 kT1*/
+			K_e.block<6, 6>(0, 0) = k0; K_e.block<6, 6>(0, 6) = k1;	K_e.block<6, 6>(0, 12) = k2; K_e.block<6, 6>(0, 18) = k3;
+			K_e.block<6, 6>(6, 0) = k1.transpose(); K_e.block<6, 6>(6, 6) = k4;	K_e.block<6, 6>(6, 12) = k5; K_e.block<6, 6>(6, 18) = k2.transpose();
+			K_e.block<6, 6>(12, 0) = k2.transpose(); K_e.block<6, 6>(12, 6) = k5;	K_e.block<6, 6>(12, 12) = k4.transpose(); K_e.block<6, 6>(12, 18) = k1.transpose();
+			K_e.block<6, 6>(18, 0) = k3; K_e.block<6, 6>(18, 6) = k2;	K_e.block<6, 6>(18, 12) = k1; K_e.block<6, 6>(18, 18) = k0.transpose();
+
+			K_e *= youngs;
+			K_e /= (((real)1 +poisson)*((real)1 - (real)2*poisson));
+			K_e /= (real)2; //account for the change of coordinate
 		}
 
 		////////////////////////////////////////////////////////////////////////
 		//Gaussian integration
 		template<> void Initialize_Gaussian_Integration_Points<2>(ArrayF2P<Vector2, 2>& points, ArrayF2P<real, 2>& weights) //2^2=4 sample points
 		{
-			real c = (real)1 / sqrt((real)3); points[0] = Vector2(-c, -c); points[1] = Vector2(-c, c); points[2] = Vector2(c, -c); points[3] = Vector2(c, c); ArrayFunc::Fill(weights, (real)1);
+			real c = (real)1 / sqrt((real)3); points[0] = Vector2(-c, -c); points[1] = Vector2(c, -c); points[2] = Vector2(-c, c); points[3] = Vector2(c, c); ArrayFunc::Fill(weights, (real)1);
 		}
 
 		template<> void Initialize_Gaussian_Integration_Points<3>(ArrayF2P<Vector3, 3>& points, ArrayF2P<real, 3>& weights) //2^3=8 sample points
 		{
-			real c = (real)1 / sqrt((real)3); points[0] = Vector3(-c, -c, -c); points[1] = Vector3(-c, -c, c); points[2] = Vector3(-c, c, -c); points[3] = Vector3(-c, c, c);
-			points[4] = Vector3(c, -c, -c); points[5] = Vector3(c, -c, c); points[6] = Vector3(c, c, -c); points[7] = Vector3(c, c, c); ArrayFunc::Fill(weights, (real)1);
+			real c = (real)1 / sqrt((real)3); points[0] = Vector3(-c, -c, -c); points[1] = Vector3(c, -c, -c); points[2] = Vector3(c, c, -c); points[3] = Vector3(-c, c, -c);
+			points[4] = Vector3(-c, -c, c); points[5] = Vector3(c, -c, c); points[6] = Vector3(c, c, c); points[7] = Vector3(-c, c, c); ArrayFunc::Fill(weights, (real)1);
 		}
 
 		////////////////////////////////////////////////////////////////////////
