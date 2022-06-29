@@ -167,7 +167,7 @@ namespace Meso {
 			vtkNew<vtkCellArray> cellArray;
 
 			for (int i = 0; i < verts.rows(); i++) {
-				Vector<T, d> pos = verts.row(i);
+				Vector<real, d> pos = verts.row(i).template cast<real>();
 				Vector3 pos3 = MathFunc::V<3>(pos);
 				nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
 			}
