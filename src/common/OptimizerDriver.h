@@ -20,9 +20,9 @@ public:
 		Info("Iteration {} cost {:.3f}s, {}s passed", meta_data.iter_count, step_seconds, completed_seconds);
 	}
 
-	void Output(Optimizer& optimizer, bf::path base_path, const int iter) {
-		Info("Output iter {} to {}", iter, base_path.string());
-		optimizer.Output(base_path, iter);
+	void Output(Optimizer& optimizer, OptimizerDriverMetaData& meta_data) {
+		Info("Output iter {} to {}", meta_data.iter_count, meta_data.base_path.string());
+		optimizer.Output(meta_data);
 	}
 
 	void Advance(Optimizer& optimizer, OptimizerDriverMetaData& meta_data) {
@@ -30,16 +30,16 @@ public:
 		bf::path base_path(meta_data.output_base_dir);
 		FileFunc::Create_Directory(base_path);
 
-		Output(optimizer, base_path, meta_data.iter_count);
+		Output(optimizer, meta_data);
 		meta_data.iter_count++;
 
 		while (!optimizer.Is_Converged(meta_data) && meta_data.iter_count<meta_data.max_iter_num) {
 			optimizer.Optimize(meta_data);
 			Print_Iteration_Info(iter_timer,meta_data);
-			Output(optimizer, base_path,meta_data.iter_count);
+			Output(optimizer, meta_data);
 			meta_data.iter_count++;
 		}
-
+		meta_data.data_output.close();
 		Info("Optimizer converges after {} iters", meta_data.iter_count-1);
 	}
 

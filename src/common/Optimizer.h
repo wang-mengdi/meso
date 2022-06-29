@@ -10,7 +10,7 @@
 namespace Meso {
 	class Optimizer {
 	public:
-		virtual void Output(const bf::path base_path, const int iter) = 0;
+		virtual void Output(OptimizerDriverMetaData& meta_data) = 0;
 		virtual void Optimize(OptimizerDriverMetaData& meta_data) = 0;
 		virtual bool Is_Converged(OptimizerDriverMetaData& meta_data) = 0;
 	};
