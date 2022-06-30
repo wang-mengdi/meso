@@ -7,5 +7,6 @@ target("geometry")
     add_cugencodes("native","compute_61")
     add_cuflags("-extended-lambda --std c++17")
     add_includedirs(".",{public=true})
+    add_packages("eigen",{public=false})
     add_deps("common")
     

@@ -13,5 +13,6 @@ target("reservoir")
     add_packages("vtk",{public=true})
     add_packages("nanoflann",{public=true})
     add_packages("libigl",{public=true})
+    add_packages("eigen",{public=false})
     add_deps("common")
     
