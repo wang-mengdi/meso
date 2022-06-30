@@ -2,7 +2,7 @@
 
 - 使用`Json::Value()`解析字符串时，必须显式指定模板std::string，即`Json::Value<std::string>(...);`，或把默认值参数显式转化为std::string，即`Json::Value(j,"parameter",(std::string)"some_string");`，否则会报一个模板解析错误，大概是什么什么东西无法和const char*转换。
 - `Interpolation`中用到了`FaceField`，而`FaceField`中的`Output_Vtk`使用了`Interpolation`，此处循环定义通过在`Interpolation.h`中对`FaceField`类的forward declare解决。若不解决，会报一个"FaceField不是模板"的错误。
-- 目前无法使用Eigen的incomplete cholesky preconditioner，会报一个“无法访问private typedef”的错误。
+- 目前无法使用Eigen的incomplete cholesky preconditioner，会报一个“无法访问private typedef”的错误。这个在simplex里面是通过自己魔改eigen实现的，因此为兼容考虑，在96515390b7d1bc36d527a76224b79c92a629a03e不再以public模式引用eigen包，而是在每一个xmake.lua里面非public地add_package一遍。
 - 目前我们无法在Eigen的3.4.0版本中使用Quaternion或者Matrix3初始化一个AngleAxis类。
 - 目前OBJFunc使用tinyobjload的1.0.7版本（xmake repo版本原因），等xmake更新后再换成2.0.0的API
 - 如果某个类的某个构造函数的参数中没有template，那么就不能在这个构造函数的定义中添加模板。此事出现过一次：DampedJacobiSmoother类曾经有一个带模板int d的构造函数，用于用PoissonMapping初始化，后来此构造函数被移除，但模板仍然留存，这就导致编译器报了一些无法识别的编译错误，错误提示无法匹配构造函数，但不知道应该如何匹配。
