@@ -25,6 +25,7 @@ namespace Meso {
 			int test = Json::Value(j, "test", 0);
 			switch (test) {
 			case 0:Case_0(j, fluid); break;
+			case 1:Case_1(j, fluid); break;
 			default:Assert(false, "test {} not exist", test); break;
 			}
 		}
@@ -78,9 +79,10 @@ namespace Meso {
 			grid.Exec_Nodes(
 				[&](const Vector<int, d> cell) {
 					const VectorD pos = grid.Position(cell);
-					Vector2C psi(thrust::complex<real>(1.0 / std::sqrt(1.01), 0.), thrust::complex<real>(0.1 / std::sqrt(1.01), 0.));
+					Vector2C psi(C(1.0 / std::sqrt(1.01), 0.), C(0.1 / std::sqrt(1.01), 0.));
 					const real phase = velocity.dot(pos);
-					for (int i = 0; i < 2; i++) psi[i] *= thrust::complex<real>(thrust::exp(thrust::complex<real>(0., 1.) * phase));
+					for (int i = 0; i < 2; i++) psi[i] *= C(thrust::exp(C(0., 1.) * phase));
+					std::cout << psi[0] << ", " << psi[1] << std::endl;
 					initial_wave_func(cell) = psi;
 				}
 			);
@@ -93,13 +95,13 @@ namespace Meso {
 			grid.Exec_Nodes(
 				[&](const Vector<int, d> cell) {
 					const VectorD pos = grid.Position(cell);
-					Vector2C psi(thrust::complex<real>(1.0 / std::sqrt(1.01), 0.), thrust::complex<real>(0.1 / std::sqrt(1.01), 0.));
+					Vector2C psi(C(1.0 / std::sqrt(1.01), 0.), C(0.1 / std::sqrt(1.01), 0.));
 					const real phase = velocity.dot(pos);
-					for (int i = 0; i < 2; i++) psi[i] *= thrust::complex<real>(thrust::exp(thrust::complex<real>(0., 1.) * phase));
+					for (int i = 0; i < 2; i++) psi[i] *= C(thrust::exp(C(0., 1.) * phase));
 					const real rx = (pos[0] - c[0]) / r;
 					const real r2 = (pos - c).squaredNorm() / std::pow(r, 2);
 					const real fR = std::exp(-std::pow(r2 / (real)9, (real)4));
-					const thrust::complex<real> q(2. * rx * fR / (r2 + 1), (r2 + 1. - 2. * fR) / (r2 + 1));
+					const C q(2. * rx * fR / (r2 + 1), (r2 + 1. - 2. * fR) / (r2 + 1));
 					psi[0] *= q;
 					initial_wave_func(cell) = psi;
 				}
@@ -119,8 +121,27 @@ namespace Meso {
 			bc_val << 0, 0, 0, 0, 0, 0;
 
 			Set_Boundary(grid, bc_width, bc_val, fixed, vol);
-			VectorD background_velocity = 1. * VectorD::Unit(1);
+			VectorD background_velocity = -1. * VectorD::Unit(1);
 			Initialize_Constant_Velocity(grid, initial_wave_func, background_velocity);
+			real h_bar = Json::Value(j, "h_bar", 0.01);
+			fluid.Init(h_bar, fixed, initial_wave_func, vol);
+		}
+
+		//initialized vortex ring test
+		void Case_1(json& j, FluidClebsch<d>& fluid) {
+			int scale = Json::Value(j, "scale", 32);
+			real dx = 1.0 / scale;
+			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
+
+			Eigen::Matrix<int, 3, 2> bc_width;
+			Eigen::Matrix<real, 3, 2> bc_val;
+			bc_width << 1, 1, 1, 1, 1, 1;
+			bc_val << 0, 0, 0, 0, 0, 0;
+
+			Set_Boundary(grid, bc_width, bc_val, fixed, vol);
+			VectorD background_velocity = 0. * VectorD::Unit(1);
+			Initialize_Vortex_Ring(grid, initial_wave_func, background_velocity);
 			real h_bar = Json::Value(j, "h_bar", 0.01);
 			fluid.Init(h_bar, fixed, initial_wave_func, vol);
 		}

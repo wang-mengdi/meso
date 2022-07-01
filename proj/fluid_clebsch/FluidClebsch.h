@@ -5,7 +5,6 @@
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <thrust/complex.h>
 #include <array>
 
 #include "Multigrid.h"
@@ -17,29 +16,40 @@
 #include "device_launch_parameters.h"
 
 namespace Meso {
-	using namespace std::complex_literals;
-	using Vector2C = Vector<thrust::complex<real>, 2>;
+	using Vector2C = Vector<C, 2>;
 	__global__ void W2V_Mapping_Kernel2_Padding0(const Grid<2> grid, real* face_x, real* face_y, const Vector2C* cell, const real h_bar_over_dx)
 	{
 		Typedef_VectorD(2);
 		VectorDi coord = GPUFunc::Thread_Coord<2>(blockIdx, threadIdx);
 
 		if (!grid.Valid(coord)) return;
-
-		const Vector2C cell_data = cell[grid.Index(coord)];
+		const Vector2C& cell_data = cell[grid.Index(coord)];
 		const Vector2C cell_data_conj(thrust::conj(cell_data[0]), thrust::conj(cell_data[1]));
 
 		int face_ind_x = Neighbor_Face_Index(grid, coord, 0, 1);
 		int face_ind_y = Neighbor_Face_Index(grid, coord, 1, 1);
 
 		if (face_ind_x != -1 && grid.Valid(coord + VectorDi::Unit(0))) {
-			const Vector2C nb_cell_data = cell[grid.Index(coord + VectorDi::Unit(0))];
+			const Vector2C& nb_cell_data = cell[grid.Index(coord + VectorDi::Unit(0))];
 			face_x[face_ind_x] = h_bar_over_dx * thrust::arg(cell_data_conj.dot(nb_cell_data));
 		}
 		if (face_ind_y != -1 && grid.Valid(coord + VectorDi::Unit(1))) {
-			const Vector2C nb_cell_data = cell[grid.Index(coord + VectorDi::Unit(1))];
-			face_x[face_ind_y] = h_bar_over_dx * thrust::arg(cell_data_conj.dot(nb_cell_data));
+			const Vector2C& nb_cell_data = cell[grid.Index(coord + VectorDi::Unit(1))];
+			face_y[face_ind_y] = h_bar_over_dx * thrust::arg(cell_data_conj.dot(nb_cell_data));
+			//Vector2i face_coord_y = grid.Face_Coord(1, face_ind_y);
+			//printf("cell_data_conj:\n(%f,%f), (%f,%f)\nnb_cell_data:\n(%f,%f), (%f,%f)\n\nface_coord_y:[%d,%d]\nface_y[face_ind_y]:\n%f\n",
+			//	cell_data_conj[0].real(), cell_data_conj[0].imag(), cell_data_conj[1].real(), cell_data_conj[1].imag(),
+			//	nb_cell_data[0].real(), nb_cell_data[0].imag(), nb_cell_data[1].real(), nb_cell_data[1].imag(),
+			//	face_coord_y[0], face_coord_y[1], face_y[face_ind_y]);
 		}
+	}
+
+	template<int d>
+	__global__ void Wave_Function_Normalization_Kernel(const Grid<d> grid, Vector2C* wave_function) {
+		const int index = grid.Index(GPUFunc::Thread_Coord<d>(blockIdx, threadIdx));
+		Vector2C psi = wave_function[index];
+		real norm = std::sqrt(thrust::norm(psi[0]) + thrust::norm(psi[1]));	// thrust::norm returns norm of magnitude of a complex number
+		wave_function[index] = psi / norm;
 	}
 
 	template<int d>
@@ -47,7 +57,7 @@ namespace Meso {
 		const int index = grid.Index(GPUFunc::Thread_Coord<d>(blockIdx, threadIdx));
 		const real cell_p = pressure[index];
 		Vector2C psi = wave_function[index];
-		thrust::complex<real> c(thrust::exp(thrust::complex<real>(0, -1) * cell_p * dx_over_h_har));
+		C c(thrust::exp(C(0, -1) * cell_p * dx_over_h_har));
 		psi[0] *= c;
 		psi[1] *= c;
 		wave_function[index] = psi;
@@ -68,10 +78,13 @@ namespace Meso {
 		MaskedPoissonMapping<real, d> poisson;
 		VCycleMultigridIntp<real, d> MG_precond;
 		ConjugateGradient<real> MGPCG;
+		ConjugateGradient<real> CG;
 		void Init(real h_bar_, Field<bool, d>& fixed, Field<Vector2C, d>& initial_wave_function, FaceField<real, d>& vol) {
 			h_bar = h_bar_;
 			wave_function.Deep_Copy(initial_wave_function);
 			Exterior_Derivative_W2V(velocity, wave_function);
+			Info("Fixed {}", fixed);
+			Info("Vol {}", vol);
 			psi_D.Init(fixed, initial_wave_function);
 			temp_velocity.Init(velocity.grid);
 			pressure.Init(velocity.grid);
@@ -93,6 +106,13 @@ namespace Meso {
 		}
 		virtual void Schrödinger_Solve() {
 
+		}
+		virtual void Normalize() {
+			wave_function.grid.Exec_Kernel(
+				&Wave_Function_Normalization_Kernel<d>,
+				wave_function.grid,
+				wave_function.Data_Ptr()
+			);
 		}
 		virtual void Exterior_Derivative_W2V(FaceFieldDv<real, d>& F, const FieldDv<Vector2C, d>& C) {
 			Assert(!C.Empty(), "Exterior_Derivative_W2V C->F error: C is empty");
@@ -117,6 +137,8 @@ namespace Meso {
 			//TODO: solve
 			Schrödinger_Solve();
 
+			Normalize();
+
 			Info("Vel before W2V {}", velocity);
 			//wave function to velocity
 			Exterior_Derivative_W2V(velocity, wave_function);
@@ -138,12 +160,11 @@ namespace Meso {
 			velocity += temp_velocity;
 			Info("Vel after projection {}", velocity);
 
-			psi_D.Apply(wave_function);
-
 			ExteriorDerivativePadding0::Apply(vel_div, velocity);
 			Info("After projection max div {}", GridEulerFunc::Linf_Norm(vel_div));
 			
 			Wave_Function_Correction();
+			psi_D.Apply(wave_function);
 		}
 	};
 }

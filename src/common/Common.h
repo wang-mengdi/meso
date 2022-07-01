@@ -9,6 +9,7 @@
 #include "cublas_v2.h"
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
+#include <thrust/complex.h>
 #include <vector_functions.h>
 #include "driver_types.h"
 
@@ -50,7 +51,7 @@ using Matrix2=Eigen::Matrix2##t;        \
 using Matrix3=Eigen::Matrix3##t;        \
 using Matrix4=Eigen::Matrix4##t;        \
 using MatrixX=Eigen::MatrixX##t;        \
-using C=std::complex<real>;             \
+using C=thrust::complex<real>;          \
 using Quaternion=Eigen::Quaternion##t;  \
 using AngleAxis=Eigen::AngleAxis##t;	
 
@@ -81,6 +82,12 @@ Declare_Eigen_Vector_Types(double, d);
 Declare_Eigen_Matrix_Types(int, i)
 Declare_Eigen_Matrix_Types(float, f)
 Declare_Eigen_Matrix_Types(double, d)
+
+//Zhecheng: special thrust::complex eigen vector
+using Vector2c=Eigen::Matrix<C,1,1>;            \
+using Vector3c=Eigen::Matrix<C,2,1>;            \
+using Vector4c=Eigen::Matrix<C,3,1>;            \
+using VectorXc=Eigen::Matrix<C,4,1>;
 
 //Eigen::Dynamic
 const int Dynamic = -1;
