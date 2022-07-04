@@ -162,6 +162,26 @@ namespace Meso {
 		Vector3 Min_Eigenvector(const Matrix3& v);
 		real Min_Eigenvalue(const Matrix2& v);
 		real Min_Eigenvalue(const Matrix3& v);
+
+		//absolute(a - b) <= (atol + rtol * absolute(b))
+		template<typename DerivedA, typename DerivedB>
+		bool All_Close(const Eigen::DenseBase<DerivedA>& a,
+			const Eigen::DenseBase<DerivedB>& b,
+			const typename DerivedA::RealScalar& rtol
+			= Eigen::NumTraits<typename DerivedA::RealScalar>::dummy_precision(),
+			const typename DerivedA::RealScalar& atol
+			= Eigen::NumTraits<typename DerivedA::RealScalar>::epsilon())
+		{
+			return ((a.derived() - b.derived()).array().abs()
+				<= (atol + rtol * b.derived().array().abs())).all();
+		}
+
+		template<typename T1, typename T2> bool Close(T1 a, T2 b, const typename T1 rtol
+			= Eigen::NumTraits<typename T1>::dummy_precision(),
+			const typename T1 atol
+			= Eigen::NumTraits<typename T1>::epsilon()) {
+			return abs(a - b) <= atol + rtol * abs(b);
+		}
 	}
 
 	namespace ArrayFunc {
