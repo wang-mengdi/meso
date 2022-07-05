@@ -14,5 +14,18 @@
     CholeskySparseSolver<T> solver(SparseMatrix_From_PoissonLike(grid, poisson_mapping));
     ```
     把`CholeskySparseSolver`和`SparseMatrixMapping`的构造函数都设置成了传入右值。右值是一个比较tricky的领域，暂时不列入标准，只是进行一些探索。
-- 在函数参数里面放一个像`teplate<T> Array<T>`这样的东西，一般无法自动推导，因为`thrust::device_vector`或者`host_vector`都有两个模板参数，第一个是`T`，第二个是`allocator<T>`.
+- 在函数参数里面放一个像`template<T> Array<T>`这样的东西，一般无法自动推导，因为`thrust::device_vector`或者`host_vector`都有两个模板参数，第一个是`T`，第二个是`allocator<T>`.
 - 在求解泊松系统时，如果边界条件封闭（即周围一圈都是墙），那么意味着对应的线性系统有非平凡零空间（即，可以把流体压强加上任意常数$C$而不改变结果）。特别地，如果没有任何受力，那么`MultiGrid`最粗一层的直接求解会十分倾向于解出来一个错误的压强，甚至直接出现`NaN`.根据目前我们的观察，这种问题仅仅会在这一个特定的情况下出现，一旦流体“动起来”基本就没有问题了，如果调试遇到不必特别在意。
+- 在global函数中，特定情况下不能使用VectorD，应显示写出`Vector<T,d>`，例如以下情况，不然数值会不变。具体原因不详。
+  ```template<class T, int d>
+	__global__ static void Covector_Stretching_Cell(const Grid<d> grid, T* result_data, const Vector<T, d>* inverse_flow_map_grad, 
+		const Grid<d> gv0, const T* v0, const Grid<d> gv1, const T* v1, const Grid<d> gv2, const T* v2) {
+		Typedef_VectorD(d);
+		Vector<int, d> cell = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		VectorD pos = grid.Position(cell);
+		Vector<T, d> grad = inverse_flow_map_grad[grid.Index(cell)];
+		Vector<T, d> vel = IntpLinearPadding0::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos);
+		result_data[grid.Index(cell)] = grad.dot(vel);
+	}
+    ```
+
