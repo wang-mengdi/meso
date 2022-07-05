@@ -28,15 +28,6 @@ namespace Meso {
 						if (MathFunc::Sign(phi0) != MathFunc::Sign(phi1)) return 0;
 						diff = std::max(diff, (phi0 - phi1) * MathFunc::Sign(phi0));
 					}
-					VectorDi nb_cell_left = Grid<d>::Neighbor_Node(cell, axis, 0);
-					VectorDi nb_cell_right = Grid<d>::Neighbor_Node(cell, axis, 1);
-					if (levelset.phi.grid.Valid(nb_cell_left) && levelset.phi.grid.Valid(nb_cell_right))
-					{
-						real phi_left = levelset.phi(nb_cell_left);
-						real phi_right = levelset.phi(nb_cell_right);
-						if (phi0 * MathFunc::Sign(phi0) < phi_left * MathFunc::Sign(phi0) && phi0 * MathFunc::Sign(phi0) < phi_right * MathFunc::Sign(phi0))
-							diff = 0;
-					}
 					sum += diff * diff;
 				}
 				sum = sqrt(sum / (levelset.phi.grid.dx * levelset.phi.grid.dx));
