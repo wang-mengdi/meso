@@ -12,7 +12,7 @@ The correspondence of velocity and vorticity is as follows:
 $$
   -\nabla\cdot\nabla\bm{u}=\nabla\times\bm{w}
 $$
-In order to solve for $\bm{u}$, we need to solve $\phi$ first.
+In order to solve for $\bm{u}$, we need to solve for the stream function $\phi$ first.
 $$
     -\Delta \bm{\phi}=\bm{w}
 $$

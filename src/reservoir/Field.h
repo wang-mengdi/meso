@@ -166,7 +166,6 @@ struct fmt::formatter<Meso::Field<T, 3, side>> {
 
 	void Append_String(const Meso::Field<T, 3>& F, std::string& out) {
 		out = "";
-		//out += to_string(F.grid.counts[0]);
 		for (int i = 0; i < F.grid.Counts()[0]; i++) {
 			for (int j = 0; j < F.grid.Counts()[1]; j++) {
 				for (int k = 0; k < F.grid.Counts()[2]; k++) {
