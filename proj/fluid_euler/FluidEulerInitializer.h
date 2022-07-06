@@ -136,6 +136,9 @@ namespace Meso {
 			bc_val << 0, 0, 0, 0, 0, 0;
 
 			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+			Info("fixed is {}",fixed);
+			Info("volume is {}", vol);
+			Info("face_fixed is {}", face_fixed);
 
 			VectorD vortex_p1, vortex_p2;
 			// two vortices are 0.81 apart
@@ -153,6 +156,7 @@ namespace Meso {
 					real pr2 = pow((pos[0] - vortex_p2[0]), 2) + pow((pos[1] - vortex_p2[1]), 2);
 					wz_host(cell) = (real)1 / (real)0.3 * ((real)2 - pr1 / (real)0.09) * exp((real)0.5 * ((real)1 - pr1 / (real)0.09));
 					wz_host(cell) += (real)1 / (real)0.3 * ((real)2 - pr2 / (real)0.09) * exp((real)0.5 * ((real)1 - pr2 / (real)0.09));
+					wz_host(cell) /= (real)100;
 				}
 			);
 
@@ -169,6 +173,7 @@ namespace Meso {
 			auto [iter, error] = MGPCG.Solve(sol.Data(), wz.Data());
 
 			Field<real, d> sol_host = sol;
+
 
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
@@ -187,6 +192,7 @@ namespace Meso {
 					}
 				}
 			);
+
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
 		}
 	};

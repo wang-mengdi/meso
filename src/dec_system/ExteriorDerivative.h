@@ -21,8 +21,8 @@ namespace Meso {
 
 	// for blockDim = (8, 8)
 	// iterate through cell
-	// face_x(i,j)=cell(i+1,j)-cell(i,j)
-	// face_y(i,j)=cell(i,j+1)-cell(i,j)
+	// face_x(i+1,j)=cell(i+1,j)-cell(i,j)
+	// face_y(i,j+1)=cell(i,j+1)-cell(i,j)
 	// seems that it behaves like cell(i,j)=0 for outside the boundary
 	template<class T>
 	__global__ void D_CoCell_Kernel2_Padding0(const GridIndexer<2> grid, T* face_x, T* face_y, const T* cell)
@@ -58,6 +58,71 @@ namespace Meso {
 		if (idy == 0 && face_ind_y0 != -1) MathFunc::Atomic_Add(face_y + face_ind_y0, cell_data);//y- face
 		if (idy == 7 && face_ind_y1 != -1) MathFunc::Atomic_Add(face_y + face_ind_y1, neg_cell_data);//y+ face
 	}
+
+	template<int d>
+	constexpr int __host__ __device__ Neighbor_Face_Index_cycle(const GridIndexer<d> grid, Vector<int, d> cell, int axis, int side) {
+		//side==0: -
+		//side==1: +
+		Typedef_VectorD(2);
+		cell[axis] += side;
+		VectorDi face_count = grid.Counts();
+		// face_count[axis]++; whether here needs ++?
+		cell[0] = cell[0] % face_count[0];
+		cell[1] = cell[1] % face_count[1];
+		return grid.Valid_Face(axis, cell) ? grid.Face_Index(axis, cell) : -1;
+	}
+
+	// for blockDim = (8, 8)
+	// iterate through cell
+	// face_x(i,j)=cell(i+1,j)-cell(i,j)
+	// face_y(i,j)=cell(i,j+1)-cell(i,j)
+	// if (i,j) is outside the boundary
+	// cell(i,j) = cell(i mod N, j mod N) for outside the boundary
+	template<class T>
+	__global__ void D_CoCell_Kernel2_Padding_cycle(const GridIndexer<2> grid, T* face_x, T* face_y, const T* cell)
+	{
+		Typedef_VectorD(2);
+		VectorDi coord = GPUFunc::Thread_Coord<2>(blockIdx, threadIdx);
+		const int idx = threadIdx.x;
+		const int idy = threadIdx.y;
+
+
+		VectorDi face_count = grid.Counts();
+		VectorDi coord_moded;
+		coord_moded[0] = coord_moded[0] % face_count[0];
+		coord_moded[1] = coord_moded[1] % face_count[1];
+
+		//part 1: load data into shared memory
+		// 8x8 cell data load
+		// cell coord: bx*8+idx, by*8+idy
+		__shared__ T shared_cell_data[64];
+		shared_cell_data[idy * 8 + idx] = grid.Valid(coord) ? cell[grid.Index(coord)] : cell[grid.Index(coord_moded)];
+		__syncthreads();
+
+		const T cell_data = shared_cell_data[idy * 8 + idx];
+		const T neg_cell_data = -cell_data;
+
+		int face_ind_x0 = Neighbor_Face_Index(grid, coord, 0, 0);
+		int face_ind_x1 = Neighbor_Face_Index(grid, coord, 0, 1);
+		int face_ind_y0 = Neighbor_Face_Index(grid, coord, 1, 0);
+		int face_ind_y1 = Neighbor_Face_Index(grid, coord, 1, 1);
+
+		int face_ind_x1_moded = Neighbor_Face_Index(grid, coord_moded, 0, 1);
+		int face_ind_y1_moded = Neighbor_Face_Index(grid, coord_moded, 0, 1);
+		//NOTE: we believe we can somehow skip some -1 check here
+		//part 2: fill in-block faces
+		if (idx != 7 && face_ind_x1 != -1) face_x[face_ind_x1] = shared_cell_data[idy * 8 + (idx + 1)] - cell_data;//x+ face
+		if (idy != 7 && face_ind_y1 != -1) face_y[face_ind_y1] = shared_cell_data[(idy + 1) * 8 + idx] - cell_data;//y+ face
+
+		//part 3: accumulate on-boundary faces
+		if (idx == 0 && face_ind_x0 != -1) MathFunc::Atomic_Add(face_x + face_ind_x0, cell_data);//x- face
+		if (idx == 7 && face_ind_x1 != -1) MathFunc::Atomic_Add(face_x + face_ind_x1, neg_cell_data);//x+ face
+		if (idx == 7 && face_ind_x1 == -1 && face_ind_x0 != -1) MathFunc::Atomic_Add(face_x + face_ind_x1_moded, neg_cell_data); //meet x boundary
+		if (idy == 0 && face_ind_y0 != -1) MathFunc::Atomic_Add(face_y + face_ind_y0, cell_data);//y- face
+		if (idy == 7 && face_ind_y1 != -1) MathFunc::Atomic_Add(face_y + face_ind_y1, neg_cell_data);//y+ face
+		if (idy == 7 && face_ind_y1 == -1 && face_ind_y0 != -1) MathFunc::Atomic_Add(face_y + face_ind_y1_moded, neg_cell_data); //meet y boundary
+	}
+
 
 	// for blockDim = (4, 4, 4)
 	// iterate through cell
