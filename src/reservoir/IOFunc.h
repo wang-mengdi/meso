@@ -148,7 +148,7 @@ namespace Meso {
 			posArray->SetNumberOfComponents(d);
 			vtkNew<vtkDoubleArray> velArray;
 			velArray->SetName("Velocity");
-			velArray->SetNumberOfComponents(d);
+			velArray->SetNumberOfComponents(3);
 
 			for (int i = 0; i < pos.size(); i++) {
 				Vector3 pos3 = MathFunc::V<3>(pos[i]);
