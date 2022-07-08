@@ -94,13 +94,13 @@ namespace Meso {
 			const int particles_num = particles_pos.size();
 			for (int p = 0; p < particles_num; p++)
 				particles_vel[p] = IntpLinear::Face_Vector(velocity_host, particles_pos[p]);
-			Clamp_Particles_Pos();
 		}
 
 		void Particles_Operation(const real dt){
 			const int particles_num = particles_pos.size();
 			for (int p = 0; p < particles_num; p++)
 				particles_pos[p] += particles_vel[p] * dt;
+			Clamp_Particles_Pos();
 		}
 
 		void Particles_To_Grid(){
@@ -173,7 +173,6 @@ namespace Meso {
 			Particles_Operation(metadata.dt);
 			Particles_To_Grid();
 			Grid_Operation();
-			Reinit_Particles();
 		}
 	};
 }
