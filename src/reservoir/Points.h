@@ -84,5 +84,27 @@ namespace Meso {
 
 		int Size(void) const;
 		void Resize(const int _size);
+
+		void Shallow_Copy(const Points& points) {
+			size = points.size;
+			att_map = points.att_map;
+			//Fan: need to update the shared ptr of attribute
+		}
+
+		//parallel iterator
+		template<class CFunc>
+		void Exec_Points(CFunc f) const {
+#pragma omp parallel for
+			for (int p = 0; p < size; p++) {
+				f(p);
+			}
+		}
+
+		template<class CFunc>
+		void Iterate_Points(CFunc f) const {
+			for (int p = 0; p < size; p++) {
+				f(p);
+			}
+		}
 	};
 }
