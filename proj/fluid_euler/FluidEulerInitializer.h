@@ -132,13 +132,11 @@ namespace Meso {
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << 0, 0, 0, 0, 0, 0;
+			bc_width << -1, -1, -1, -1, -1, -1;
 			bc_val << 0, 0, 0, 0, 0, 0;
 
 			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
-			Info("fixed is {}",fixed);
-			Info("volume is {}", vol);
-			Info("face_fixed is {}", face_fixed);
+			
 
 			VectorD vortex_p1, vortex_p2;
 			// two vortices are 0.81 apart
@@ -156,12 +154,12 @@ namespace Meso {
 					real pr2 = pow((pos[0] - vortex_p2[0]), 2) + pow((pos[1] - vortex_p2[1]), 2);
 					wz_host(cell) = (real)1 / (real)0.3 * ((real)2 - pr1 / (real)0.09) * exp((real)0.5 * ((real)1 - pr1 / (real)0.09));
 					wz_host(cell) += (real)1 / (real)0.3 * ((real)2 - pr2 / (real)0.09) * exp((real)0.5 * ((real)1 - pr2 / (real)0.09));
-					wz_host(cell) /= (real)100;
 				}
 			);
 
 			FieldDv<real, d> wz;
 			wz = wz_host;
+			Info("wz is {}", wz);
 
 			FieldDv<real, d> sol(grid.Counts(), (real)0);
 			FaceField<real, d> alpha(grid.Counts(), (real)1);
@@ -173,8 +171,10 @@ namespace Meso {
 			auto [iter, error] = MGPCG.Solve(sol.Data(), wz.Data());
 
 			Field<real, d> sol_host = sol;
+			Info("iter is {}, error is {}", iter,error);
 
-
+			Info("sol is {}", sol);
+			Info("grid.dx is {}", grid.dx);
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
 					const VectorD pos = grid.Face_Center(axis, face);
@@ -194,6 +194,7 @@ namespace Meso {
 			);
 
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
+			//Info("initial_vel is {}", initial_vel);
 		}
 	};
 }
