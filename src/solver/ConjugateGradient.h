@@ -16,8 +16,6 @@ namespace Meso {
 		real relative_tolerance = 1e-5;
 		bool verbose = true;
 
-		ArrayDv<T> b, x;
-
 		//inner variables
 		ArrayDv<T> p, Ap, z;
 
@@ -46,8 +44,6 @@ namespace Meso {
 			);
 
 			int dof = linear_mapping->XDoF();
-			b.resize(dof);
-			x.resize(dof);
 			p.resize(dof);
 			Ap.resize(dof);
 			z.resize(dof);

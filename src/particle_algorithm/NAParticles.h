@@ -9,16 +9,13 @@
 #include "Hashtable.h"
 
 namespace Meso {
-	template<int d>
+	template<int d, class NeighborSearcherType>
 	class NAParticles : public Points {
 		Typedef_VectorD(d);
 	public:
-		std::shared_ptr<NeighborSearcher<d>> nbs_searcher;
+		NeighborSearcherType nbs_searcher;
 
-		NAParticles() {
-			//Init_Attribute_x();
-			nbs_searcher = std::make_shared<NeighborKDTree<d>>();
-		}
+		NAParticles() {	}
 
 		Setup_Attribute(x, VectorD, VectorD::Zero());
 		
@@ -28,7 +25,7 @@ namespace Meso {
 	//public:
 
 		void Update_Searcher(void) {
-			nbs_searcher->Update_Points(xRef());
+			nbs_searcher.Update_Points(xRef());
 		}
 	};
 }
