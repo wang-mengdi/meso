@@ -9,6 +9,10 @@
 #include "ImplicitManifold.h"
 #include "Json.h"
 #include "GridEulerFunc.h"
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
 
 namespace Meso {
 	template<int d>
@@ -156,7 +160,7 @@ namespace Meso {
 					wz_host(cell) += (real)1 / (real)0.3 * ((real)2 - pr2 / (real)0.09) * exp((real)0.5 * ((real)1 - pr2 / (real)0.09));
 				}
 			);
-
+			
 			FieldDv<real, d> wz;
 			wz = wz_host;
 			Info("wz is {}", wz);
@@ -169,9 +173,57 @@ namespace Meso {
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
 
 			auto [iter, error] = MGPCG.Solve(sol.Data(), wz.Data());
+			Info("iter is {}, error is {}", iter, error);
 
+			Grid<d> sol_grid = sol.grid;
+			sol.Iterate_Nodes(
+				[&](const VectorDi cell) {
+					std::cout << "cell is " << cell[0] <<" " << cell[1];
+					for (int i = 0; i < 4; i++) {
+						VectorDi nei_cell = sol_grid.Neighbor_Node(cell, i);
+						if (sol_grid.Valid(nei_cell)) {
+							int nei_index = sol_grid.Index(nei_cell);
+							std::cout << " neighbor " << i << ", fixed is " << fixed.Data()[nei_index] << ", vol is " << vol.Data(0)[nei_index] << " " << vol.Data(1)[nei_index];
+						}
+					}
+					std::cout << std::endl;
+				}
+			);
 			Field<real, d> sol_host = sol;
-			Info("iter is {}, error is {}", iter,error);
+
+			// read sol_complex from complex_sol.txt
+			FieldDv<real, d> sol_complex(grid);
+			
+			std::ifstream in("complex_sol.txt");
+			std::string line;
+			std::getline(in, line);
+			in.close();
+
+			std::stringstream inStream(line);
+			std::string each;
+
+			for (int i = 0; i != 16; i++) {
+				for (int j = 0; j != 16; j++) {
+					real temp;
+					VectorDi cell;
+					cell[0] = i;
+					cell[1] = j;
+					std::getline(inStream, each, ',');
+					std::stringstream tmpStream(each);
+					tmpStream >> temp;
+					sol_complex.Data()[sol_complex.grid.Index(cell)] = temp;
+				}
+			}
+
+			Info("complex_sol is {}", sol_complex);
+			//Info("Start iterate nodes");
+
+			FieldDv<real, d> sol_complex_copy = sol_complex;
+			//auto [iter_comp, error_comp] = MGPCG.Solve(sol_complex_copy.Data(), wz.Data());
+			//Info("iter_comp is {}, error_comp is {}", iter_comp, error_comp);
+			poisson.Apply(sol_complex_copy.Data(), sol_complex.Data());
+			sol_complex_copy -= wz;
+			Info("Residual is {}", sol_complex_copy);
 
 			Info("sol is {}", sol);
 			Info("grid.dx is {}", grid.dx);
