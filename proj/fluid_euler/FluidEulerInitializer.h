@@ -158,12 +158,12 @@ namespace Meso {
 					real pr2 = pow((pos[0] - vortex_p2[0]), 2) + pow((pos[1] - vortex_p2[1]), 2);
 					wz_host(cell) = (real)1 / (real)0.3 * ((real)2 - pr1 / (real)0.09) * exp((real)0.5 * ((real)1 - pr1 / (real)0.09));
 					wz_host(cell) += (real)1 / (real)0.3 * ((real)2 - pr2 / (real)0.09) * exp((real)0.5 * ((real)1 - pr2 / (real)0.09));
+					wz_host(cell) *= -grid.dx * grid.dx;
 				}
 			);
-			
 			FieldDv<real, d> wz;
 			wz = wz_host;
-			Info("wz is {}", wz);
+			//Info("wz is {}", wz);
 
 			FieldDv<real, d> sol(grid.Counts(), (real)0);
 			FaceField<real, d> alpha(grid.Counts(), (real)1);
@@ -175,7 +175,7 @@ namespace Meso {
 			auto [iter, error] = MGPCG.Solve(sol.Data(), wz.Data());
 			Info("iter is {}, error is {}", iter, error);
 
-			Grid<d> sol_grid = sol.grid;
+			/*Grid<d> sol_grid = sol.grid;
 			sol.Iterate_Nodes(
 				[&](const VectorDi cell) {
 					std::cout << "cell is " << cell[0] <<" " << cell[1];
@@ -188,11 +188,11 @@ namespace Meso {
 					}
 					std::cout << std::endl;
 				}
-			);
+			);*/
 			Field<real, d> sol_host = sol;
 
 			// read sol_complex from complex_sol.txt
-			FieldDv<real, d> sol_complex(grid);
+			/*FieldDv<real, d> sol_complex(grid);
 			
 			std::ifstream in("complex_sol.txt");
 			std::string line;
@@ -226,12 +226,12 @@ namespace Meso {
 			Info("Residual is {}", sol_complex_copy);
 
 			Info("sol is {}", sol);
-			Info("grid.dx is {}", grid.dx);
+			Info("grid.dx is {}", grid.dx);*/
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
 					const VectorD pos = grid.Face_Center(axis, face);
 
-					if (face[axis] == 0 || face[axis] == grid.Counts()[axis] - 1) { return; }
+					if (face[axis] == 0 || face[axis] == grid.Counts()[axis]) { return; }
 
 					const VectorDi cell_left = face - VectorDi::Unit(axis);
 					const VectorDi cell_right = face;
