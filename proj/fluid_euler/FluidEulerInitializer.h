@@ -136,7 +136,7 @@ namespace Meso {
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << -1, -1, -1, -1, -1, -1;
+			bc_width << 1, 1, 1, 1, 1, 1;
 			bc_val << 0, 0, 0, 0, 0, 0;
 
 			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);

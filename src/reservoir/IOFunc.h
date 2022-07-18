@@ -133,6 +133,28 @@ namespace Meso {
 			writer->Write();
 		}
 
+		template<class T, int d, DataHolder side>
+			void Write_VTS(const Field<T, d, side>& F, std::string file_name) {
+			Assert(!F.Empty(), "VTKFunc::Output_VTS error: empty Field");
+			Typedef_VectorD(d);
+
+			// setup VTK
+			vtkNew<vtkXMLStructuredGridWriter> writer;
+			vtkNew<vtkStructuredGrid> structured_grid;
+			VTS_Init_Grid(*structured_grid, F.grid);
+			VTS_Add_Field(*structured_grid, F, "scalar");
+
+#if (VTK_MAJOR_VERSION >=6)
+			writer->SetInputData(structured_grid);
+#else
+			writer->SetInput(structured_grid);
+#endif
+
+			writer->SetFileName(file_name.c_str());
+			writer->SetDataModeToBinary();
+			writer->Write();
+		}
+
 		template<int d>
 		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const Array<Vector<real, d>>& vel, std::string file_name) {
 			//output particles
