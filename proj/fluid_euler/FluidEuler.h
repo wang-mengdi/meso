@@ -78,8 +78,9 @@ namespace Meso {
 		virtual void Output_Vorticity(DriverMetaData& metadata) {
 			if constexpr (d == 2) {
 				//calculate vorticity
+				FaceField < real, d> velocity_host = velocity;
 				Field<real, d> vorticity;
-				Grid<d> grid = velocity.grid;
+				Grid<d> grid = velocity_host.grid;
 				vorticity.Init(grid);
 				vorticity.Calc_Nodes([&] (const VectorDi cell) {
 					for (int axis = 0; axis < 2; axis++)
@@ -91,8 +92,8 @@ namespace Meso {
 						VectorDi face_1 = cell + VectorDi::Unit(axis);
 						VectorDi face_2 = cell - VectorDi::Unit(axis);
 						VectorDi face_3 = cell - VectorDi::Unit(axis) + VectorDi::Unit(1 - axis);
-						val[axis] = velocity.Get(1 - axis, face_0) + velocity.Get(1 - axis, face_1);
-						val[axis] -= velocity.Get(1 - axis, face_2) + velocity.Get(1 - axis, face_3);
+						val[axis] = velocity_host.Get(1 - axis, face_0) + velocity_host.Get(1 - axis, face_1);
+						val[axis] -= velocity_host.Get(1 - axis, face_2) + velocity_host.Get(1 - axis, face_3);
 						val[axis] *= 0.25 / grid.dx;
 					}
 					return val[0] - val[1];
