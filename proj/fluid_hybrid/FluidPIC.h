@@ -83,10 +83,40 @@ namespace Meso {
 			return dx * cfl / max_vel;
 		}
 
+		virtual void Output_Vorticity(DriverMetaData& metadata) {
+			if constexpr (d == 2) {
+				//calculate vorticity
+				Field<real, d> vorticity;
+				Grid<d> grid = velocity_host.grid;
+				vorticity.Init(grid);
+				vorticity.Calc_Nodes([&](const VectorDi cell) {
+					for (int axis = 0; axis < 2; axis++)
+						if (cell[axis] == 0 || cell[axis] == grid.Counts()[axis] - 1)
+							return (real)0;
+					real val[2];
+					for (int axis = 0; axis < 2; axis++) {
+						VectorDi face_0 = cell + VectorDi::Ones();
+						VectorDi face_1 = cell + VectorDi::Unit(axis);
+						VectorDi face_2 = cell - VectorDi::Unit(axis);
+						VectorDi face_3 = cell - VectorDi::Unit(axis) + VectorDi::Unit(1 - axis);
+						val[axis] = velocity_host.Get(1 - axis, face_0) + velocity_host.Get(1 - axis, face_1);
+						val[axis] -= velocity_host.Get(1 - axis, face_2) + velocity_host.Get(1 - axis, face_3);
+						val[axis] *= 0.25 / grid.dx;
+					}
+					return val[0] - val[1];
+					});
+				//output vorticity
+				std::string vorticity_name = fmt::format("vor{:04d}.vts", metadata.current_frame);
+				bf::path vorticity_path = metadata.base_path / bf::path(vorticity_name);
+				VTKFunc::Write_VTS(vorticity, vorticity_path.string());
+			}
+		}
+
 		virtual void Output(DriverMetaData& metadata) {
 			std::string grid_name = fmt::format("grid{:04d}.vts", metadata.current_frame);
 			bf::path grid_path = metadata.base_path / bf::path(grid_name);
 			VTKFunc::Write_VTS(velocity_host, grid_path.string());
+			Output_Vorticity(metadata);
 			std::string particles_name = fmt::format("particles{:04d}.vtu", metadata.current_frame);
 			bf::path particles_path = metadata.base_path / bf::path(particles_name);
 			VTKFunc::Write_VTU_Particles<d>(particles_pos, particles_vel, particles_path.string());
@@ -95,7 +125,7 @@ namespace Meso {
 		void Grid_To_Particles(){
 			const int particles_num = particles_pos.size();
 			for (int p = 0; p < particles_num; p++)
-				particles_vel[p] = IntpLinear::Face_Vector(velocity_host, particles_pos[p]);
+				particles_vel[p] = IntpLinearClamp::Face_Vector(velocity_host, particles_pos[p]);
 		}
 
 		void Particles_Operation(const real dt){
@@ -119,6 +149,11 @@ namespace Meso {
 					VectorDi node; VectorD frac;
 					face_grid.Get_Fraction(particles_pos[p], node, frac);
 					VectorDi face_counts = face_grid.Counts();
+					//clamp
+					for (int axis = 0; axis < d; axis++) {
+						if (node[axis] < 0) node[axis] = 0, frac[axis] = 0;
+						if (node[axis] > face_counts[axis] - 2) node[axis] = face_counts[axis] - 2, frac[axis] = 1;
+					}
 					if constexpr (d == 2) {
 						real w[2][2] = { {1.0 - frac[0],frac[0]},{1.0 - frac[1],frac[1]} };
 						for (int s = 0; s < 4; s++)
