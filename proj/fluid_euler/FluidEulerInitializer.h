@@ -127,7 +127,8 @@ namespace Meso {
 		// taylor vortex
 		void Case_3(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
-			real dx = 1.0 / scale;
+			const real pi = 3.1415926;
+			real dx = 2.0 * pi / scale;
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 			MaskedPoissonMapping<real, d> poisson;
@@ -136,7 +137,7 @@ namespace Meso {
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << 1, 1, 1, 1, 1, 1;
+			bc_width << -1, -1, -1, -1, -1, -1;
 			bc_val << 0, 0, 0, 0, 0, 0;
 
 			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
