@@ -67,6 +67,7 @@ namespace Meso {
 		__host__ __device__ inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 		const T Get(const VectorDi coord)const { return (*data)[grid.Index(coord)]; }
 		template<class T1> void operator *= (const T1 a) { ArrayFunc::Multiply_Scalar(Data(), a); }
+		void operator += (const Field<T, d, side>& f1) { ArrayFunc::Add(Data(), f1.Data()); }
 		void operator -= (const Field<T, d, side>& f1) { ArrayFunc::Minus(Data(), f1.Data()); }
 		void operator /= (const Field<T, d, side>& f1) { ArrayFunc::Divide(Data(), f1.Data()); }
 
