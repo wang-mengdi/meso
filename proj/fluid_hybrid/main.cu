@@ -1,8 +1,6 @@
 #include "Json.h"
 #include "FluidPIC.h"
 #include "FluidPICInitializer.h"
-#include "FluidPICImpulse.h"
-#include "FluidPICImpulseInitializer.h"
 #include "Driver.h"
 using namespace Meso;
 
@@ -10,14 +8,6 @@ template<int d>
 void Run_FluidPIC(json& j) {
 	FluidPIC<d> fluid;
 	FluidPICInitializer<d> scene;
-	Driver driver;
-	driver.Run(j, scene, fluid);
-}
-
-template<int d>
-void Run_FluidPICImpulse(json& j) {
-	FluidPICImpulse<d> fluid;
-	FluidPICImpulseInitializer<d> scene;
 	Driver driver;
 	driver.Run(j, scene, fluid);
 }
@@ -45,11 +35,6 @@ int main(int argc, char** argv) {
 		if (simulator == "pic") {
 			if (dim == 2) { Run_FluidPIC<2>(j); }
 			else if (dim == 3) { Run_FluidPIC<3>(j); }
-		}
-
-		if (simulator == "picimpulse") {
-			if (dim == 2) { Run_FluidPICImpulse<2>(j); }
-			else if (dim == 3) { Run_FluidPICImpulse<3>(j); }
 		}
 	}
 

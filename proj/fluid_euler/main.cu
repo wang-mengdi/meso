@@ -3,8 +3,6 @@
 #include "Json.h"
 #include "FluidEuler.h"
 #include "FluidEulerInitializer.h"
-#include "FluidImpulse.h"
-#include "FluidImpulseInitializer.h"
 #include "FluidFreeSurface.h"
 #include "FluidFreeSurfaceInitializer.h"
 #include "Driver.h"
@@ -18,13 +16,6 @@ void Run_FluidEuler(json &j) {
 	driver.Run(j, scene, fluid);
 }
 
-template<int d>
-void Run_FluidImpulse(json& j) {
-	FluidImpulse<d> fluid;
-	FluidImpulseInitializer<d> scene;
-	Driver driver;
-	driver.Run(j, scene, fluid);
-}
 
 template<int d>
 void Run_FluidFreeSurface(json& j) {
@@ -57,10 +48,6 @@ int main(int argc, char **argv) {
 		if (simulator == "euler") {
 			if (dim == 2) { Run_FluidEuler<2>(j); }
 			else if (dim == 3) { Run_FluidEuler<3>(j); }
-		}
-		else if (simulator == "impulse") {
-			if (dim == 2) { Run_FluidImpulse<2>(j); }
-			else if (dim == 3) { Run_FluidImpulse<3>(j); }
 		}
 		else if (simulator == "freesurface") {
 			if (dim == 2) { Run_FluidFreeSurface<2>(j); }
