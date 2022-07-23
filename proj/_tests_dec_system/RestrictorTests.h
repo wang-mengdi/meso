@@ -56,7 +56,8 @@ void Test_Restrictor_Intp(const Vector<int, d> counts) {
 	);
 	
 	RestrictorIntp<T, d> restrictor;
-	restrictor.Init(coarser_grid, finer_grid);
+	FieldDv<bool, d> coarse_fixed(coarser_grid, false), fine_fixed(finer_grid, false);
+	restrictor.Init(coarse_fixed, fine_fixed);
 	FieldDv<T, d> finer_dev = finer_host;
 	FieldDv<T, d> coarser_dev = coarser_host;
 	restrictor.Apply(coarser_dev.Data(), finer_dev.Data());

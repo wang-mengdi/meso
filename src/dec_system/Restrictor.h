@@ -45,44 +45,46 @@ namespace Meso {
 	class RestrictorIntp : public LinearMapping<T> {
 	public:
 		using Base=LinearMapping<T>;
-		GridIndexer<d> coarser_grid, finer_grid;
+		const FieldDv<bool, d>* coarse_fixed;
+		const FieldDv<bool, d>* fine_fixed;
 		ArrayDv<T> intp_data_old;
 		ArrayDv<T> intp_data_new;
 
 		RestrictorIntp() {}
-		RestrictorIntp(const GridIndexer<d> coarse, const GridIndexer<d> fine) {
-			Init(coarse, fine);
+		RestrictorIntp(const FieldDv<bool, d>& coarse_fixed, const FieldDv<bool, d>& fine_fixed) {
+			Init(coarse_fixed, fine_fixed);
 		}
 
-		void Init(const GridIndexer<d> _coarser, const GridIndexer<d> _finer) {
-			Assert(_coarser.Is_Unpadded(), "RestrictorIntp: _coarser {} invalid, must be unpadded", _coarser);
-			Assert(_finer.Is_Unpadded(), "RestrictorIntp: _finer {} invalid, must be unpadded", _finer);
-			coarser_grid = _coarser, finer_grid = _finer;
+		void Init(const FieldDv<bool, d>& _coarse_fixed, const FieldDv<bool, d>& _fine_fixed) {
+			Assert(_coarse_fixed.grid.Is_Unpadded(), "RestrictorIntp: _coarser {} invalid, must be unpadded", _coarse_fixed.grid);
+			Assert(_fine_fixed.grid.Is_Unpadded(), "RestrictorIntp: _finer {} invalid, must be unpadded", _fine_fixed.grid);
+			coarse_fixed = &_coarse_fixed, fine_fixed = &_fine_fixed;
 			intp_data_old.resize(XDoF());
 			intp_data_new.resize(XDoF());
 		}
 
 		//number of cols
 		virtual int XDoF() const {
-			return finer_grid.Counts().prod();
+			return fine_fixed->grid.Counts().prod();
 		}
 
 		//number of rows
 		virtual int YDoF() const {
-			return coarser_grid.Counts().prod();
+			return coarse_fixed->grid.Counts().prod();
 		}
 
 		//input p, get Ap
-		virtual void Apply(ArrayDv<T>& coarser_data, const ArrayDv<T>& finer_data) {
-			Base::Memory_Check(coarser_data, finer_data, "Restrictor::Apply error: not enough space");
+		virtual void Apply(ArrayDv<T>& coarse_data, const ArrayDv<T>& fine_data) {
+			Base::Memory_Check(coarse_data, fine_data, "Restrictor::Apply error: not enough space");
+			
 			T* intp_ptr_old = ArrayFunc::Data(intp_data_old);
 			T* intp_ptr_new = ArrayFunc::Data(intp_data_new);
-			const T* original_ptr = ArrayFunc::Data(finer_data);
+			const T* original_ptr = ArrayFunc::Data(fine_data);
 			for (int axis = 0; axis < d; axis++) {
-				finer_grid.Exec_Kernel(&Restrictor_Intp_Axis_Kernel<T, d>, axis, finer_grid, intp_ptr_new, axis == 0 ? original_ptr : intp_ptr_old);
+				fine_fixed->Exec_Kernel(&Restrictor_Intp_Axis_Kernel<T, d>, axis, fine_fixed->grid, intp_ptr_new, axis == 0 ? original_ptr : intp_ptr_old);
 				std::swap(intp_ptr_old, intp_ptr_new);
 			}
-			coarser_grid.Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarser_grid, ArrayFunc::Data(coarser_data), finer_grid, intp_ptr_old);
+			coarse_fixed->Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarse_fixed->grid, ArrayFunc::Data(coarse_data), fine_fixed->grid, intp_ptr_old);
 			checkCudaErrors(cudaGetLastError());
 		}
 	};
