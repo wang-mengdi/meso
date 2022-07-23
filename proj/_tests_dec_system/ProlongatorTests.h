@@ -31,7 +31,9 @@ void Test_Prolongator_Intp(const Vector<int, d> fine_counts) {
 
 	FieldDv<T, d> coarse_dev = coarse_host;
 	FieldDv<T, d> fine_dev(fine_grid);
-	ProlongatorIntp<T, d> P; P.Init(fine_grid, coarse_grid);
+	FieldDv<bool, d> coarse_fixed(coarse_dev.grid, false);
+	FieldDv<bool, d> fine_fixed(fine_dev.grid, false);
+	ProlongatorIntp<T, d> P; P.Init(fine_fixed, coarse_fixed);
 	P.Apply(fine_dev.Data(), coarse_dev.Data());
 
 	Field<T, d> fine_cpu(fine_grid);
