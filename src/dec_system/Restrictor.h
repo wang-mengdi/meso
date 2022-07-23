@@ -76,15 +76,16 @@ namespace Meso {
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& coarse_data, const ArrayDv<T>& fine_data) {
 			Base::Memory_Check(coarse_data, fine_data, "Restrictor::Apply error: not enough space");
-			
+			intp_data_old = fine_data;
+			ArrayFunc::Set_Masked(intp_data_old, fine_fixed->Data(), 0);
 			T* intp_ptr_old = ArrayFunc::Data(intp_data_old);
 			T* intp_ptr_new = ArrayFunc::Data(intp_data_new);
-			const T* original_ptr = ArrayFunc::Data(fine_data);
 			for (int axis = 0; axis < d; axis++) {
-				fine_fixed->Exec_Kernel(&Restrictor_Intp_Axis_Kernel<T, d>, axis, fine_fixed->grid, intp_ptr_new, axis == 0 ? original_ptr : intp_ptr_old);
+				fine_fixed->Exec_Kernel(&Restrictor_Intp_Axis_Kernel<T, d>, axis, fine_fixed->grid, intp_ptr_new, intp_ptr_old);
 				std::swap(intp_ptr_old, intp_ptr_new);
 			}
 			coarse_fixed->Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarse_fixed->grid, ArrayFunc::Data(coarse_data), fine_fixed->grid, intp_ptr_old);
+			ArrayFunc::Set_Masked(coarse_data, coarse_fixed->Data(), 0);
 			checkCudaErrors(cudaGetLastError());
 		}
 	};
