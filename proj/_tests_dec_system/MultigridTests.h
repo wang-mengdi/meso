@@ -80,35 +80,44 @@ namespace Meso {
 	template<class T, int d>
 	void Test_MGPCG_Dirichlet(const Vector<int, d> counts, bool output_x) {
 		Typedef_VectorD(d);
-		Grid<d> grid(counts, (real)100.0/counts[0]);
-
+		real domain_size = 1.0;
+		Grid<d> grid(counts, domain_size / counts[0], -VectorD::Ones() * domain_size * 0.5);
 		//set A
 		MaskedPoissonMapping<T, d> poisson(grid);
 		Field<bool, d> fixed(grid);
-		fixed.Iterate_Nodes([&](const VectorDi cell) {
-			for (int axis = 0; axis < d; axis++)
-				if (cell[axis] == 0 || cell[axis] == grid.Counts()[axis] - 1)
-					return true;
+		fixed.Calc_Nodes([&](const VectorDi cell) {
+			if (grid.Is_Boundary_Cell(cell))
+				return true;
 			return false;
 			});
 		FaceField<T, d> vol(grid, 1);
 		poisson.Init(fixed, vol);
 
 		//set b
-		Field<T, d> b_host(grid, T(2 * d));
-
+		Field<T, d> b_host(grid, T(-2 * d * grid.dx * grid.dx));
 		//move boundary value to rhs
-		Field<T, d> delta(grid);
-		delta.Calc_Nodes([&](const VectorDi cell) {
-			for (int axis = 0; axis < d; axis++)
-				if (cell[axis] == 0 || cell[axis] == grid.Counts()[axis] - 1) {
-					VectorD pos = grid.Position(cell);
-					real norm = pos.norm();
-					return norm * norm;
-				}
-			return (real)0;
+		grid.Iterate_Nodes([&](const VectorDi cell) {
+			if(grid.Is_Boundary_Cell(cell)){
+				VectorD pos = grid.Position(cell);
+				real norm = pos.norm();
+				real val = norm * norm;
+				b_host(cell) = val;
+				return;
+			}
 			});
-		b_host += delta;
+		grid.Iterate_Nodes([&](const VectorDi cell) {
+			if(grid.Is_Boundary_Cell(cell)) {
+					real val = b_host(cell);
+					for (int axis = 0; axis < d; axis++)
+					{
+						VectorDi left_cell = cell - VectorDi::Unit(axis);
+						if (grid.Valid(left_cell) && !grid.Is_Boundary_Cell(left_cell))
+								b_host(left_cell) += val;
+						VectorDi right_cell = cell + VectorDi::Unit(axis);
+						if (grid.Valid(right_cell) && !grid.Is_Boundary_Cell(right_cell))
+								b_host(right_cell) += val;
+					}
+				}});
 		
 		//solve
 		FieldDv<T, d> b_dev = b_host;
@@ -116,7 +125,7 @@ namespace Meso {
 		ConjugateGradient<T> MGPCG;
 		VCycleMultigridIntp<T, d> precond;
 		precond.Init_Poisson(poisson, 2, 2);
-		MGPCG.Init(&poisson, &precond, false, -1, 1e-6);
+		MGPCG.Init(&poisson, &precond, false, -1, 1e-5);
 		Timer timer;
 		auto [iters, relative_error] = MGPCG.Solve(x_dev.Data(), b_dev.Data());
 		Pass("MGPCG_Dirichlet test passed in {}s for counts={}, with {} iters and relative_error={}", timer.Lap_Time(), counts, iters, relative_error);
@@ -137,7 +146,7 @@ namespace Meso {
 		//set A
 		MaskedPoissonMapping<T, d> poisson(grid);
 		Field<bool, d> fixed(grid);
-		fixed.Iterate_Nodes([&](const VectorDi cell) {
+		fixed.Calc_Nodes([&](const VectorDi cell) {
 			for (int axis = 0; axis < d; axis++)
 				if ((cell[axis] == 0 || cell[axis] == grid.Counts()[axis] - 1) && (cell[1] != 0))
 					return true;
@@ -165,7 +174,7 @@ namespace Meso {
 		ConjugateGradient<T> MGPCG;
 		VCycleMultigridIntp<T, d> precond;
 		precond.Init_Poisson(poisson, 2, 2);
-		MGPCG.Init(&poisson, &precond, false, -1, 1e-6);
+		MGPCG.Init(&poisson, &precond, false, -1, 1e-5);
 		Timer timer;
 		auto [iters, relative_error] = MGPCG.Solve(x_dev.Data(), b_dev.Data());
 		Pass("MGPCG_Dirichlet_Neumann test passed in {}s for counts={}, with {} iters and relative_error={}", timer.Lap_Time(), counts, iters, relative_error);

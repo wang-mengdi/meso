@@ -245,7 +245,12 @@ namespace Meso {
 			for (int i = 0; i < d; i++)frac[i] = coord_with_frac[i] - node[i];
 		}
 
-
+		__host__ __device__ bool Is_Boundary_Cell(const VectorDi node)const {
+			for (int axis = 0; axis < d; axis++)
+				if (node[axis] == 0 || node[axis] == Dimension(axis) - 1)
+					return true;
+			return false;
+		}
 
 //========================================Second part: geometry operation=================================================================
 		//// Navigate on adjacent nodes
