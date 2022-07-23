@@ -36,33 +36,41 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		using Base=LinearMapping<T>;
-		GridIndexer<d> fine_grid, coarse_grid;
+		//GridIndexer<d> fine_grid, coarse_grid;
+		const FieldDv<bool, d>* fine_fixed;
+		const FieldDv<bool, d>* coarse_fixed;
+		ArrayDv<T> temp_data;
 
 		ProlongatorIntp() {}
-		ProlongatorIntp(const GridIndexer<d> _fine, const GridIndexer<d> _coarse) { Init(_fine, _coarse); }
+		ProlongatorIntp(const FieldDv<bool, d>& _fine_fixed, const FieldDv<bool, d>& _coarse_fixed) { Init(_fine_fixed, _coarse_fixed); }
 
-		void Init(const GridIndexer<d> _fine, const GridIndexer<d> _coarse) {
-			Assert(_fine.Is_Unpadded(), "ProlongatorIntp: _fine {} invalid, must be unpadded", _fine);
-			Assert(_coarse.Is_Unpadded(), "ProlongatorIntp: _coarse {} invalid, must be unpadded", _coarse);
-			fine_grid = _fine;
-			coarse_grid = _coarse;
+		void Init(const FieldDv<bool, d>& _fine_fixed, const FieldDv<bool, d>& _coarse_fixed) {
+			Assert(_fine_fixed.grid.Is_Unpadded(), "ProlongatorIntp: _fine {} invalid, must be unpadded", _fine_fixed.grid);
+			Assert(_coarse_fixed.grid.Is_Unpadded(), "ProlongatorIntp: _coarse {} invalid, must be unpadded", _coarse_fixed.grid);
+			//fine_grid = _fine;
+			//coarse_grid = _coarse;
+			fine_fixed = &_fine_fixed;
+			coarse_fixed = &_coarse_fixed;
 		}
 		//number of cols
 		virtual int XDoF() const {
-			return coarse_grid.Counts().prod();
+			return coarse_fixed->grid.Counts().prod();
 		}
 
 		//number of rows
 		virtual int YDoF() const {
-			return fine_grid.Counts().prod();
+			return fine_fixed->grid.Counts().prod();
 		}
 
 		//input p, get Ap
-		virtual void Apply(ArrayDv<T>& fine_data, const ArrayDv<T>& coarse_data) {
-			Base::Memory_Check(fine_data, coarse_data, "Prolongator::Apply error: not enough memory");
-			T* fine_ptr = ArrayFunc::Data(fine_data);
-			const T* coarse_ptr = ArrayFunc::Data(coarse_data);
-			fine_grid.Exec_Kernel(&Prolongator_Intp_Kernel<T, d>, fine_grid, fine_ptr, coarse_grid, coarse_ptr);
+		virtual void Apply(ArrayDv<T>& fine, const ArrayDv<T>& coarse) {
+			Base::Memory_Check(fine, coarse, "Prolongator::Apply error: not enough memory");
+			temp_data = coarse;
+			ArrayFunc::Set_Masked(temp_data, coarse_fixed->Data(), (T)0);
+			T* fine_ptr = ArrayFunc::Data(fine);
+			const T* coarse_ptr = ArrayFunc::Data(temp_data);
+			fine_fixed->Exec_Kernel(&Prolongator_Intp_Kernel<T, d>, fine_fixed->grid, fine_ptr, coarse_fixed->grid, coarse_ptr);
+			ArrayFunc::Set_Masked(fine, fine_fixed->Data(), 0);
 			checkCudaErrors(cudaGetLastError());
 		}
 	};

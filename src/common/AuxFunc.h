@@ -341,6 +341,17 @@ namespace Meso {
 		void Minus(Array1& a, const Array2& b) {
 			thrust::transform(a.begin(), a.end(), b.begin(), a.begin(), _1 - _2);
 		}
+		template<class Array1, class Array2, class T>
+		void Set_Masked(Array1& a, const Array2& b, const T val) {
+			thrust::transform_if(
+				a.begin(),//first
+				a.end(),//last
+				b.begin(),//stencil
+				a.begin(),//result
+				[=]__host__ __device__(const T v1)->T {return val; },//op
+				thrust::identity<bool>()//pred
+			);
+		}
 		//a=b, note it's reverse order of thrust::copy itself
 		template<class Array1, class Array2>
 		void Copy(Array1& a, const Array2& b) {
