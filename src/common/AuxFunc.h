@@ -284,9 +284,7 @@ namespace Meso {
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (double)0);
 		}
 
-		__device__ __host__ C Vector2c_dot(const Vector2C& a, const Vector2C& b) {
-			return a[0] * b[0] + a[1] * b[1];
-		}
+		__device__ __host__ C Vector2c_dot(const Vector2C& a, const Vector2C& b);
 
 		template<class Array1> __host__ __device__
 			C Conj_Dot(const Array1& a, const Array1& b) {

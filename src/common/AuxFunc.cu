@@ -162,4 +162,10 @@ namespace Meso {
 		}
 
 	}
+
+	namespace ArrayFunc {
+		__device__ __host__ C Vector2c_dot(const Vector2C& a, const Vector2C& b) {
+			return a[0] * b[0] + a[1] * b[1];
+		}
+	}
 }
