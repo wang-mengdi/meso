@@ -16,17 +16,42 @@ namespace Meso {
 		std::string To_String_Simple(const bool& a);
 
 		template<class T,int d> std::string To_String_Simple(const Vector<T,d> & a) {
-			std::string out="[ ";
-			for (int i = 0; i < d; i++) {
-				out += std::to_string(a[i]);
-				if (i != d - 1) { out += " "; }
+			std::string out = "[ ";
+			if constexpr (std::is_same<T, C>::value == true) {
+				for (int i = 0; i < d; i++) {
+					C tmp_a(a[i]);
+					out += "[";
+					out += std::to_string(tmp_a.real());
+					out += ", ";
+					out += std::to_string(tmp_a.imag());
+					out += "i]";
+					if (i != d - 1) { out += " "; }
+				}
+				return out;
+			}
+			else {
+				for (int i = 0; i < d; i++) {
+					out += std::to_string(a[i]);
+					if (i != d - 1) { out += " "; }
+				}
 			}
 			out += ']';
 			return out;
 		}
 
 		template<class T> std::string To_String_Simple(const T& a) {
-			return std::to_string(a);
+			if constexpr (std::is_same<T, C>::value == true) {
+				std::string out = "[";
+				C tmp_a(a);
+				out += std::to_string(tmp_a.real());
+				out += ", ";
+				out += std::to_string(tmp_a.imag());
+				out += "i]";
+				return out;
+			}
+			else {
+				return std::to_string(a);
+			}
 		}
 
 		Array<std::string> Split_String(const std::string& s, const std::string& delimiters = " \t\n\v\f\r");
@@ -258,6 +283,42 @@ namespace Meso {
 			Assert(a.size() == b.size(), "[ArrayFunc::Dot] try to dot length {} against {}", a.size(), b.size());
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (double)0);
 		}
+
+		__device__ __host__ C Vector2c_dot(const Vector2C& a, const Vector2C& b) {
+			return a[0] * b[0] + a[1] * b[1];
+		}
+
+		template<class Array1> __host__ __device__
+			C Conj_Dot(const Array1& a, const Array1& b) {
+			//printf("hit conj dot!\n");
+			//Assert(a.size() == b.size(), "[ArrayFunc::Conj_Dot] try to dot length {} against {}", a.size(), b.size());
+			//printf("hit after assert!\n");
+			//printf("a size: %d b size: %d\n", a.size(), b.size());
+			struct a_dot_conj_b : public thrust::binary_function<C, C, C>
+			{
+				__host__ __device__
+					C operator()(C a, C b)
+				{
+					return  a * thrust::conj(b);
+				};
+			};
+			//printf("hit conj dot!\n");
+			C ans = thrust::inner_product(a.begin(), a.end(), b.begin(), C(0.0, 0.0), thrust::plus<C>(), a_dot_conj_b());
+			//printf("ans: (%f,%f)\n",ans.real(), ans.imag());
+			return ans;
+
+		}
+
+		__host__ __device__ inline Vector4 C2V(const Vector<C, 2>& v)
+		{
+			return Vector4(v[0].real(), v[0].imag(), v[1].real(), v[1].imag());
+		}
+
+		__host__ __device__ inline Vector<C, 2> V2C(const Vector4& v)
+		{
+			Vector<C, 2> c(C(v[0], v[1]), C(v[2], v[3])); return c;
+		}
+
 		template<class T, DataHolder side>
 		double Norm(const Array<T,side>& a) {
 			double squared_norm = Dot(a, a);

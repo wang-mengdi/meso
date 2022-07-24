@@ -9,6 +9,7 @@
 #include "ImplicitManifold.h"
 #include "Json.h"
 #include "GridEulerFunc.h"
+#include "FluidClebsch.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -33,6 +34,7 @@ namespace Meso {
 			case 1:Case_1(j, fluid); break;
 			case 2:Case_2(j, fluid); break;
 			case 3:Case_3(j, fluid); break;
+			case 4:Case_4(j, fluid); break;
 			default:Assert(false, "test {} not exist", test); break;
 			}
 		}
@@ -249,5 +251,130 @@ namespace Meso {
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
 			//Info("initial_vel is {}", initial_vel);
 		}
+
+		// trefoil knot
+		void Case_4(json& j, FluidEuler<d>& fluid) {
+			FluidClebsch<d> fluid_clebsch;
+			Field<Vector2C, d> initial_wave_func;
+			int scale = Json::Value(j, "scale", 32);
+			const real pi = acos(-1.0);
+			real dx = (real)2.0 * pi / scale;
+			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
+
+			Eigen::Matrix<int, 3, 2> bc_width;
+			Eigen::Matrix<real, 3, 2> bc_val;
+			bc_width << -1, -1, -1, -1, -1, -1;
+			bc_val << 0, 0, 0, 0, 0, 0;
+
+			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+
+			Field<Vector2C, d> initial_complex_poly;
+			VectorD center = MathFunc::V<d>(pi, pi, 0.6 * pi);
+			VectorD radius = MathFunc::V<d>(1.2, 1.2, 1.6);
+			initial_complex_poly.Init(grid);
+			Initialize_Trefoil_Knot_Complex_Poly(grid, initial_complex_poly, center, radius);
+			Info("initial_complex_poly is {}", initial_complex_poly);
+
+			real h_bar = Json::Value(j, "h_bar", 0.01);
+
+			// transform initial complex poly value into psi
+			//Transform_Complex_Poly_To_Psi(h_bar, grid, initial_complex_poly, initial_wave_func);
+			initial_wave_func = initial_complex_poly;
+
+			fluid_clebsch.Init(h_bar, fixed, initial_wave_func, vol);
+			//Vector2C a = { C(1, 0), C(0.5, 0.5) };
+			//Vector2C b = { C(1, 0), C(0, 2.0) };
+			//ArrayFunc::Conj_Dot(a, b);
+			initial_vel = fluid_clebsch.velocity;
+			fluid.Init(fixed, vol, face_fixed, initial_vel);
+			Info("initial_vel is {}", initial_vel);
+		}
+
+		void Initialize_Trefoil_Knot_Complex_Poly(const Grid<d> grid, Field<Vector2C, d>& initial_complex_poly, const VectorD& center, const VectorD& radius) {
+			grid.Exec_Nodes(
+				[&](const Vector<int, d> cell) {
+					const VectorD pos = grid.Position(cell);
+					VectorD XYZ = pos - center; for (int i = 0; i < d; i++) { XYZ[i] *= radius[i]; }
+					real R = XYZ.norm();
+
+					real fR = exp(-pow(R, 8) / pow(9, 4));
+					C alpha = C(XYZ[0], XYZ[1]) * 2. * fR / (1 + R * R);
+					//C beta = C(2.*(XYZ[2]-1)*fR, (1+R*R))/(1+R*R);
+					C beta = C(2. * XYZ[2] * fR, (1 + R * R - 2 * fR)) / (1 + R * R);
+					C P = alpha * alpha * alpha * alpha * alpha;
+					C Q = alpha * alpha * alpha + beta * beta;
+					//P: psi1; Q: psi2
+					Vector<C, 2> psi;
+					psi[0] = P;
+					psi[1] = Q;
+
+					initial_complex_poly(cell) = ArrayFunc::V2C(ArrayFunc::C2V(psi).normalized());
+				}
+			);
+		}
+
+		//void Transform_Complex_Poly_To_Psi(real h_bar, const Grid<d> grid, Field<Vector4, d>& initial_complex_poly, Field<Vector2C, d>& initial_wave_func) {
+		//	initial_wave_func.Init(grid);
+
+		//	Eigen::Matrix<int, 3, 2> bc_width;
+		//	Eigen::Matrix<real, 3, 2> bc_val;
+		//	bc_width << -1, -1, -1, -1, -1, -1;
+		//	bc_val << 0, 0, 0, 0, 0, 0;
+
+		//	std::shared_ptr<Array<Vector4, DEVICE>> data1 = std::make_shared<Array<Vector4, DEVICE>>(grid.Memory_Size());
+		//	std::shared_ptr<Array<Vector4, DEVICE>> data2 = std::make_shared<Array<Vector4, DEVICE>>(grid.Memory_Size());
+		//	ArrayFunc::Fill(*data1, Vector4(0));
+		//	ArrayFunc::Fill(*data2, Vector4(0));
+		//	ArrayFunc::Dot(*data1, *data2);
+		//	MaskedPoissonMapping<Vector4, d> poisson;
+			//VCycleMultigridIntp<Vector4, d> MG_precond;
+			//ConjugateGradient<Vector4> MGPCG;
+			//Field<Vector4, d> P_Q_Laplace(grid);
+			//FaceField<real, d> alpha(grid.Counts(), (real)1);
+			//// question: Can I directly use this function when data in field is Vector2C
+			//// if not : if I change Vector2C to Vector4, will it work?
+			//poisson.Init(fixed, alpha);
+			//poisson.Apply(P_Q_Laplace.Data(), initial_complex_poly.Data());
+
+			//// compute rhs of poisson equation which is used to compute q
+			//Field<real, d> q_rhs_host(grid);
+			//grid.Exec_Nodes(
+			//	[&](const Vector<int, d> cell) {
+			//		Vector<C, 2> psi_tmp_1 = V2C(P_Q_Laplace(cell));
+			//		Vector<C, 2> psi_tmp_2 = V2C(initial_complex_poly(cell));
+			//		C q_rhs_tmp = ArrayFunc::Conj_Dot(psi_tmp_1, psi_tmp_2);
+			//		q_rhs_host(cell) = q_rhs_tmp.real() * h_bar;
+			//	}
+			//);
+
+			//// solve q
+			//FieldDv<real, d> q_rhs;
+			//q_rhs = q_rhs_host;
+			//// question: Do I need this?  q_rhs *= dx * dx; 
+
+			//FieldDv<real, d> q(grid.Counts(), (real)0);
+
+			//poisson.Init(fixed, alpha);
+			//MG_precond.Init_Poisson(poisson, 2, 2);
+			//MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
+
+			//auto [iter, error] = MGPCG.Solve(q.Data(), q_rhs.Data());
+			//Info("iter is {}, error is {}", iter, error);
+
+			//// using q and complex poly value to calculate psi
+			//grid.Exec_Nodes(
+			//	[&](const Vector<int, d> cell) {
+			//		const VectorD pos = grid.Position(cell);
+			//		Vector2C psi = initial_complex_poly(cell);
+			//		for (int i = 0; i < 2; i++) psi[i] *= C(thrust::exp(-C(0., 1.) * q(cell) / h_bar));
+			//		initial_wave_func(cell) = psi;
+			//	}
+			//);
+		//}
+
+
+
+
 	};
 }

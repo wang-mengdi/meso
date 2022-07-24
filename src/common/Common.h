@@ -89,6 +89,7 @@ using Vector3c=Eigen::Matrix<C,2,1>;            \
 using Vector4c=Eigen::Matrix<C,3,1>;            \
 using VectorXc=Eigen::Matrix<C,4,1>;
 
+
 //Eigen::Dynamic
 const int Dynamic = -1;
 using uchar = unsigned char;
@@ -103,7 +104,7 @@ using VectorDi=Vector<int,d>;
 using MatrixD=Matrix<real,d,d>;
 #define Typedef_VectorEi(d) \
 using VectorEi=Vector<int,d>;
-
+using Vector2C = Vector<C, 2>;
 // CUDA programming
 enum DataHolder { HOST = 0, DEVICE };
 
