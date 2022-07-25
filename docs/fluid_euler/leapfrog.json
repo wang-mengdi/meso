@@ -1,0 +1,15 @@
+{
+  "dimension": 2,
+  "driver": {
+    "cfl": 1.0,
+    "first_frame": 0,
+    "fps": 25,
+    "last_frame": 10,
+    "min_step_frame_fraction": 0.0,
+    "output_base_dir": "leapfrog"
+  },
+  "scene": {
+    "scale": 8,
+    "test": 5
+  }
+}

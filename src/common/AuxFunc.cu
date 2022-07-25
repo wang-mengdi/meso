@@ -163,9 +163,18 @@ namespace Meso {
 
 	}
 
-	namespace ArrayFunc {
-		__device__ __host__ C Vector2c_dot(const Vector2C& a, const Vector2C& b) {
-			return a[0] * b[0] + a[1] * b[1];
-		}
-	}
+	//namespace ArrayFunc {
+	//	__device__ __host__ C Vector2C_Dot(const Vector2C& a, const Vector2C& b) {
+	//		return a[0] * b[0] + a[1] * b[1];
+	//	}
+	//	__host__ __device__ inline Vector4 Vector2C_2Vector4(const Vector<C, 2>& v)
+	//	{
+	//		return Vector4(v[0].real(), v[0].imag(), v[1].real(), v[1].imag());
+	//	}
+
+	//	__host__ __device__ inline Vector<C, 2> Vector4_2Vector2C(const Vector4& v)
+	//	{
+	//		Vector<C, 2> c(C(v[0], v[1]), C(v[2], v[3])); return c;
+	//	}
+	//}
 }

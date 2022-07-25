@@ -28,7 +28,10 @@ namespace Meso {
 	//		//targetPtr[i] = origin[i];
 	//	}
 	//}
-
+	
+	__device__ __host__ C Vector2C_Dot(const Vector2C& a, const Vector2C& b) {
+		return a[0] * b[0] + a[1] * b[1];
+	}
 
 
 	__global__ void W2V_Mapping_Kernel2_Padding0(const Grid<2> grid, real* face_x, real* face_y, const Vector2C* cell, const real h_bar_over_dx)
@@ -47,14 +50,14 @@ namespace Meso {
 			const Vector2C& nb_cell_data = cell[grid.Index(coord + VectorDi::Unit(0))];
 			//face_x[face_ind_x] = h_bar_over_dx * thrust::arg(cell_data_conj.dot(nb_cell_data));
 			//const C re_product = ArrayFunc::Conj_Dot(nb_cell_data, cell_data);
-			const C re_product = ArrayFunc::Vector2c_dot(nb_cell_data, cell_data_conj);
+			const C re_product = Vector2C_Dot(nb_cell_data, cell_data_conj);
 			face_x[face_ind_x] = h_bar_over_dx * thrust::arg(re_product);
 		}
 		if (face_ind_y != -1 && grid.Valid(coord + VectorDi::Unit(1))) {
 			const Vector2C& nb_cell_data = cell[grid.Index(coord + VectorDi::Unit(1))];
 			//const C re_product = ArrayFunc::Conj_Dot(nb_cell_data, cell_data);
 			//const C re_product = thrust::inner_product(nb_cell_data.begin(), nb_cell_data.end(), cell_data_conj.begin(), C(0.0f, 0.0f));
-			const C re_product = ArrayFunc::Vector2c_dot(nb_cell_data, cell_data_conj);
+			const C re_product = Vector2C_Dot(nb_cell_data, cell_data_conj);
 			face_y[face_ind_y] = h_bar_over_dx * thrust::arg(re_product);			//Vector2i face_coord_y = grid.Face_Coord(1, face_ind_y);
 			//printf("cell_data_conj:\n(%f,%f), (%f,%f)\nnb_cell_data:\n(%f,%f), (%f,%f)\n\nface_coord_y:[%d,%d]\nface_y[face_ind_y]:\n%f\n",
 			//	cell_data_conj[0].real(), cell_data_conj[0].imag(), cell_data_conj[1].real(), cell_data_conj[1].imag(),
@@ -94,7 +97,7 @@ namespace Meso {
 			//c2_copy(nb_cell_data, nb_cell_data_d);
 			//const C re_product = ArrayFunc::Conj_Dot(nb_cell_data, cell_data);
 			//const C re_product = thrust::inner_product(nb_cell_data_d.begin(), nb_cell_data_d.end(), cell_data_conj_d.begin(), C(0.0f, 0.0f));
-			const C re_product = ArrayFunc::Vector2c_dot(nb_cell_data, cell_data_conj);
+			const C re_product = Vector2C_Dot(nb_cell_data, cell_data_conj);
 			face_x[face_ind_x] = h_bar_over_dx * thrust::arg(re_product);
 			//Vector3i face_coord_x = grid.Face_Coord(0, face_ind_x);
 			//printf("cell_data_conj: (%f,%f), (%f,%f) nb_cell_data: (%f,%f), (%f,%f)  face_coord_x:[%d,%d,%d] face_x[face_ind_x]:\n%f\n",
@@ -110,7 +113,7 @@ namespace Meso {
 			//c2_copy(nb_cell_data, nb_cell_data_d);
 			//const C re_product = ArrayFunc::Conj_Dot(nb_cell_data, cell_data);
 			//const C re_product = thrust::inner_product(nb_cell_data_d.begin(), nb_cell_data_d.end(), cell_data_conj_d.begin(), C(0.0f, 0.0f));
-			const C re_product = ArrayFunc::Vector2c_dot(nb_cell_data, cell_data_conj);
+			const C re_product = Vector2C_Dot(nb_cell_data, cell_data_conj);
 			face_y[face_ind_y] = h_bar_over_dx * thrust::arg(re_product);
 			//Vector3i face_coord_y = grid.Face_Coord(1, face_ind_y);
 			//printf("cell_data_conj: (%f,%f), (%f,%f) nb_cell_data: (%f,%f), (%f,%f)  face_coord_y:[%d,%d,%d] face_y[face_ind_y]:\n%f\n",
@@ -125,7 +128,7 @@ namespace Meso {
 			//c2_copy(nb_cell_data, nb_cell_data_d);
 			//const C re_product = ArrayFunc::Conj_Dot(nb_cell_data, cell_data);
 			//const C re_product = thrust::inner_product(nb_cell_data_d.begin(), nb_cell_data_d.end(), cell_data_conj_d.begin(), C(0.0f, 0.0f));
-			const C re_product = ArrayFunc::Vector2c_dot(nb_cell_data, cell_data_conj);
+			const C re_product = Vector2C_Dot(nb_cell_data, cell_data_conj);
 			face_z[face_ind_z] = h_bar_over_dx * thrust::arg(re_product);
 			//Info("coord is {}, index is , value is {}", coord + VectorDi::Unit(2), face_ind_z, face_y[face_ind_z]);
 
@@ -201,7 +204,7 @@ namespace Meso {
 			h_bar = h_bar_;
 			wave_function.Deep_Copy(initial_wave_function);
 			Exterior_Derivative_W2V(velocity, wave_function);
-			Info("velocity {}", velocity);
+			//Info("velocity {}", velocity);
 			//Info("Fixed {}", fixed);
 			//Info("Vol {}", vol);
 			psi_D.Init(fixed, initial_wave_function);

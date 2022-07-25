@@ -35,6 +35,7 @@ namespace Meso {
 			case 2:Case_2(j, fluid); break;
 			case 3:Case_3(j, fluid); break;
 			case 4:Case_4(j, fluid); break;
+			case 5:Case_5(j, fluid); break;
 			default:Assert(false, "test {} not exist", test); break;
 			}
 		}
@@ -274,7 +275,7 @@ namespace Meso {
 			VectorD radius = MathFunc::V<d>(1.2, 1.2, 1.6);
 			initial_complex_poly.Init(grid);
 			Initialize_Trefoil_Knot_Complex_Poly(grid, initial_complex_poly, center, radius);
-			Info("initial_complex_poly is {}", initial_complex_poly);
+			//Info("initial_complex_poly is {}", initial_complex_poly);
 
 			real h_bar = Json::Value(j, "h_bar", 0.01);
 
@@ -283,12 +284,9 @@ namespace Meso {
 			initial_wave_func = initial_complex_poly;
 
 			fluid_clebsch.Init(h_bar, fixed, initial_wave_func, vol);
-			//Vector2C a = { C(1, 0), C(0.5, 0.5) };
-			//Vector2C b = { C(1, 0), C(0, 2.0) };
-			//ArrayFunc::Conj_Dot(a, b);
 			initial_vel = fluid_clebsch.velocity;
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
-			Info("initial_vel is {}", initial_vel);
+			//Info("initial_vel is {}", initial_vel);
 		}
 
 		void Initialize_Trefoil_Knot_Complex_Poly(const Grid<d> grid, Field<Vector2C, d>& initial_complex_poly, const VectorD& center, const VectorD& radius) {
@@ -309,11 +307,11 @@ namespace Meso {
 					psi[0] = P;
 					psi[1] = Q;
 
-					initial_complex_poly(cell) = ArrayFunc::V2C(ArrayFunc::C2V(psi).normalized());
+					initial_complex_poly(cell) = ArrayFunc::Vector4_2Vector2C(ArrayFunc::Vector2C_2Vector4(psi).normalized());
 				}
 			);
 		}
-
+		
 		//void Transform_Complex_Poly_To_Psi(real h_bar, const Grid<d> grid, Field<Vector4, d>& initial_complex_poly, Field<Vector2C, d>& initial_wave_func) {
 		//	initial_wave_func.Init(grid);
 
@@ -341,8 +339,8 @@ namespace Meso {
 			//Field<real, d> q_rhs_host(grid);
 			//grid.Exec_Nodes(
 			//	[&](const Vector<int, d> cell) {
-			//		Vector<C, 2> psi_tmp_1 = V2C(P_Q_Laplace(cell));
-			//		Vector<C, 2> psi_tmp_2 = V2C(initial_complex_poly(cell));
+			//		Vector<C, 2> psi_tmp_1 = Vector4_2Vector2C(P_Q_Laplace(cell));
+			//		Vector<C, 2> psi_tmp_2 = Vector4_2Vector2C(initial_complex_poly(cell));
 			//		C q_rhs_tmp = ArrayFunc::Conj_Dot(psi_tmp_1, psi_tmp_2);
 			//		q_rhs_host(cell) = q_rhs_tmp.real() * h_bar;
 			//	}
@@ -373,8 +371,82 @@ namespace Meso {
 			//);
 		//}
 
+		// leapfrog
+		void Case_5(json& j, FluidEuler<d>& fluid) {
+			FluidClebsch<d> fluid_clebsch;
+			Field<Vector2C, d> initial_wave_func;
+			int scale = Json::Value(j, "scale", 32);
 
+			real length = 5.;
+			real dx = (real)length / scale;
+			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
+			Eigen::Matrix<int, 3, 2> bc_width;
+			Eigen::Matrix<real, 3, 2> bc_val;
+			bc_width << 1, 1, 1, 1, 1, 1;
+			bc_val << 0, 0, 0, 0, 0, 0;
+
+			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+
+			initial_wave_func.Init(grid);
+			real background_speed=(real)-.0;//2;
+			VectorD bdry_v=VectorD::Unit(0)*(real)-.0;//2;
+			//cell_counts[0]*=2;
+
+			////initialize leapfrogging velocity
+			const real h_bar = 0.5;
+			Initialize_Leapfrog_Psi(grid, initial_wave_func, bdry_v, length);
+
+				////backgroung velocity
+				//for(int axis=0;axis<d;axis++){int face_num=fluid->mac_grid.Number_Of_Faces(axis);
+				//	#pragma omp parallel for
+				//	for(int i=0;i<face_num;i++){VectorDi face=fluid->mac_grid.Face_Coord(axis,i);
+				//		if(!fluid->mac_grid.Is_Axial_Boundary_Face(axis,face))continue;
+				//		#pragma omp critical
+				//		{fluid->bc.Set_Psi_N(axis,face,bdry_v[axis]);}}}
+
+				////initialize solid boundary phi
+				//solid_boundary_primitives.push_back(std::make_shared<Plane<d> >(Plane<d>(VectorD::Unit(0),fluid->mac_grid.grid.domain_min)));		////left source
+				//solid_boundary_primitives.push_back(std::make_shared<Plane<d> >(Plane<d>(VectorD::Unit(0),fluid->mac_grid.grid.domain_max)));		////right source
+				//solid_boundary_primitives.push_back(std::make_shared<Plane<d> >(Plane<d>(VectorD::Unit(1),fluid->mac_grid.grid.domain_min)));		////bottom wall
+				//solid_boundary_primitives.push_back(std::make_shared<Plane<d> >(Plane<d>(-VectorD::Unit(1),fluid->mac_grid.grid.domain_max)));		////top wall
+				//fluid->Solid_Boundary_Phi=std::bind(&ImpulseFluidEulerSmokeDriver<d>::Solid_Boundary_Phi,this,std::placeholders::_1);
+
+			fluid_clebsch.Init(h_bar, fixed, initial_wave_func, vol);
+			initial_vel = fluid_clebsch.velocity;
+			fluid.Init(fixed, vol, face_fixed, initial_vel);
+		}
+
+		template<int d> inline Vector2C Vel_To_Psi_C(const VectorD& vel, const VectorD& pos) {
+			Vector2C psi; psi[0] = C( 1.,0. ); psi[1] = C( .1, 0. );
+			real norm = sqrt(thrust::norm(psi[0]) + thrust::norm(psi[1]));
+			psi[0] /= norm; psi[1] /= norm;
+			real phase = vel.dot(pos);
+			// for (int i = 0; i < 2; i++) { psi[i] *= exp(1i * phase); } 这里为啥是1i
+			for (int i = 0; i < 2; i++) { psi[i] *= exp(i * phase); }
+			return psi;
+		}
+
+		void Initialize_Leapfrog_Psi(const Grid<d> grid, Field<Vector2C, d>& initial_complex_poly, const VectorD& bdry_v, const real length) {
+			grid.Exec_Nodes(
+				[&](const Vector<int, d> cell) {
+					const VectorD pos = grid.Position(cell);
+					Vector2C psi = Vel_To_Psi_C<d>(bdry_v, pos);
+					Vector<VectorD, 2> c = { MathFunc::V<d>((real)length * .5,(real)length / 2,(real)length / 2), MathFunc::V<d>((real)length * .5,(real)length / 2,(real)length / 2) };
+					Vector<real, 2> r = { 1.8,1. };
+					int n = (int)c.size();
+					for (int i = 0; i < n; i++) {
+						real rx = (pos[0] - c[i][0]) / r[i];
+						real r2 = (pos - c[i]).squaredNorm() / pow(r[i], 2);
+						real D = exp(-pow(r2 / (real)9, (real)4));
+						C q(2. * rx * D / (r2 + 1), (r2 + 1. - 2. * D) / (r2 + 1));
+						psi[0] *= q;
+					}
+					initial_complex_poly(cell) = ArrayFunc::Vector4_2Vector2C(ArrayFunc::Vector2C_2Vector4(psi).normalized());
+				}
+			);
+		}
 
 	};
 }
