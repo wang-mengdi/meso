@@ -307,7 +307,7 @@ namespace Meso {
 					psi[0] = P;
 					psi[1] = Q;
 
-					initial_complex_poly(cell) = ArrayFunc::Vector4_2Vector2C(ArrayFunc::Vector2C_2Vector4(psi).normalized());
+					initial_complex_poly(cell) = MathFunc::Vector4_To_Vector2C(MathFunc::Vector2C_To_Vector4(psi).normalized());
 				}
 			);
 		}
@@ -423,7 +423,7 @@ namespace Meso {
 			real norm = sqrt(thrust::norm(psi[0]) + thrust::norm(psi[1]));
 			psi[0] /= norm; psi[1] /= norm;
 			real phase = vel.dot(pos);
-			// for (int i = 0; i < 2; i++) { psi[i] *= exp(1i * phase); } ÕâÀïÎªÉ¶ÊÇ1i
+			// for (int i = 0; i < 2; i++) { psi[i] *= exp(1i * phase); } ï¿½ï¿½ï¿½ï¿½ÎªÉ¶ï¿½ï¿½1i
 			for (int i = 0; i < 2; i++) { psi[i] *= exp(i * phase); }
 			return psi;
 		}
@@ -443,7 +443,7 @@ namespace Meso {
 						C q(2. * rx * D / (r2 + 1), (r2 + 1. - 2. * D) / (r2 + 1));
 						psi[0] *= q;
 					}
-					initial_complex_poly(cell) = ArrayFunc::Vector4_2Vector2C(ArrayFunc::Vector2C_2Vector4(psi).normalized());
+					initial_complex_poly(cell) = MathFunc::Vector4_To_Vector2C(MathFunc::Vector2C_To_Vector4(psi).normalized());
 				}
 			);
 		}

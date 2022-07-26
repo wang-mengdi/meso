@@ -188,6 +188,10 @@ namespace Meso {
 		real Min_Eigenvalue(const Matrix2& v);
 		real Min_Eigenvalue(const Matrix3& v);
 
+		__device__ __host__ C Vector2C_Dot(const Vector2C& a, const Vector2C& b);
+		__host__ __device__ Vector4 Vector2C_To_Vector4(const Vector<C, 2>& v);
+		__host__ __device__ Vector<C, 2> Vector4_To_Vector2C(const Vector4& v);
+
 		//absolute(a - b) <= (atol + rtol * absolute(b))
 		template<typename DerivedA, typename DerivedB>
 		bool All_Close(const Eigen::DenseBase<DerivedA>& a,
@@ -284,8 +288,6 @@ namespace Meso {
 			return thrust::inner_product(a.begin(), a.end(), b.begin(), (double)0);
 		}
 
-		// __device__ __host__ C Vector2C_Dot(const Vector2C& a, const Vector2C& b);
-
 		template<class Array1> __host__ __device__
 			C Conj_Dot(const Array1& a, const Array1& b) {
 			//printf("hit conj dot!\n");
@@ -305,20 +307,6 @@ namespace Meso {
 			//printf("ans: (%f,%f)\n",ans.real(), ans.imag());
 			return ans;
 
-		}
-
-		//__host__ __device__ inline Vector4 Vector2C_2Vector4(const Vector<C, 2>& v);
-
-		//__host__ __device__ inline Vector<C, 2> Vector4_2Vector2C(const Vector4& v);
-
-		__host__ __device__ inline Vector4 Vector2C_2Vector4(const Vector<C, 2>& v)
-		{
-			return Vector4(v[0].real(), v[0].imag(), v[1].real(), v[1].imag());
-		}
-
-		__host__ __device__ inline Vector<C, 2> Vector4_2Vector2C(const Vector4& v)
-		{
-			Vector<C, 2> c(C(v[0], v[1]), C(v[2], v[3])); return c;
 		}
 		template<class T, DataHolder side>
 		double Norm(const Array<T,side>& a) {
