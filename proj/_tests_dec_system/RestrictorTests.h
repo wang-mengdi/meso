@@ -34,7 +34,7 @@ void Test_Restrictor_Intp(const Vector<int, d> counts) {
 					for (int j = -1; j < 3; j++) {
 						VectorDi finer_coord = coarser_coord * 2 + Vector2i(i, j);
 						real w = Weight_By_Offset<T>(i) * Weight_By_Offset<T>(j);
-						if (finer_grid.Valid(finer_coord)) result += w * finer_host(finer_coord);
+						if (finer_grid.Valid(finer_coord)) result += w * finer_host(finer_coord) * 4;
 						else result += 0;
 					}
 				}
@@ -45,7 +45,7 @@ void Test_Restrictor_Intp(const Vector<int, d> counts) {
 						for (int k = -1; k < 3; k++) {
 							VectorDi finer_coord = coarser_coord * 2 + Vector3i(i, j, k);
 							real w = Weight_By_Offset<T>(i) * Weight_By_Offset<T>(j) * Weight_By_Offset<T>(k);
-							if (finer_grid.Valid(finer_coord)) result += w * finer_host(finer_coord);
+							if (finer_grid.Valid(finer_coord)) result += w * finer_host(finer_coord) * 4;
 							else result += 0;
 						}
 					}

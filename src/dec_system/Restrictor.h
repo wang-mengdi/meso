@@ -36,7 +36,7 @@ namespace Meso {
 		VectorDi finer_coord = coarser_coord * 2;
 		int coarser_idx = coarser_grid.Index(coarser_coord);
 		if (finer_grid.Valid(finer_coord)) {
-			coarser_data[coarser_idx] = finer_data[finer_grid.Index(finer_coord)];
+			coarser_data[coarser_idx] = finer_data[finer_grid.Index(finer_coord)] * 4;
 		}
 		else coarser_data[coarser_idx] = 0;
 	}
@@ -101,7 +101,7 @@ namespace Meso {
 			VectorDi fine_coord = coarse_coord * 2 + MathFunc::Vi<d>(dx, dy, dz);
 			if (fine_grid.Valid(fine_coord)) sum += fine_data[fine_grid.Index(fine_coord)];
 		}
-		coarse_data[coarse_grid.Index(coarse_coord)] = sum / bc_num;
+		coarse_data[coarse_grid.Index(coarse_coord)] = sum / bc_num * 4;
 	}
 
 	template<class T, int d>
