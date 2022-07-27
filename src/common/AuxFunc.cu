@@ -124,19 +124,7 @@ namespace Meso {
 		{
 			Eigen::SelfAdjointEigenSolver<Matrix3> eig(v); return Abs_Min(eig.eigenvalues());
 		}
-
-		__device__ __host__ C Vector2C_Dot(const Vector2C& a, const Vector2C& b) {
-			return a[0] * b[0] + a[1] * b[1];
-		}
-		__host__ __device__ Vector4 Vector2C_To_Vector4(const Vector<C, 2>& v)
-		{
-			return Vector4(v[0].real(), v[0].imag(), v[1].real(), v[1].imag());
-		}
-
-		__host__ __device__ Vector<C, 2> Vector4_To_Vector2C(const Vector4& v)
-		{
-			Vector<C, 2> c(C(v[0], v[1]), C(v[2], v[3])); return c;
-		}
+		
 	}
 
 	namespace StringFunc {

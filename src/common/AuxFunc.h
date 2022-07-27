@@ -188,10 +188,6 @@ namespace Meso {
 		real Min_Eigenvalue(const Matrix2& v);
 		real Min_Eigenvalue(const Matrix3& v);
 
-		__device__ __host__ C Vector2C_Dot(const Vector2C& a, const Vector2C& b);
-		__host__ __device__ Vector4 Vector2C_To_Vector4(const Vector<C, 2>& v);
-		__host__ __device__ Vector<C, 2> Vector4_To_Vector2C(const Vector4& v);
-
 		//absolute(a - b) <= (atol + rtol * absolute(b))
 		template<typename DerivedA, typename DerivedB>
 		bool All_Close(const Eigen::DenseBase<DerivedA>& a,
