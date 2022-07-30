@@ -14,7 +14,18 @@
 namespace Meso {
 
 	template<class T, int d, class Intp>
-	__global__ void Semi_Lagrangian_Cell_Kernel(const real dt, const Grid<d> grid, T* result_data, const T* origin_data,
+	__global__ void RK1_Cell_Kernel(const real dt, const Grid<d> grid, T* result_data, const T* origin_data,
+		const Grid<d> gv0, const T* v0, const Grid<d> gv1, const T* v1, const Grid<d> gv2, const T* v2) {
+		Typedef_VectorD(d);
+		Vector<int, d> cell = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		VectorD pos0 = grid.Position(cell);
+		Vector<T, d> vel0 = Intp::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos0);
+		VectorD back_pos = pos0 - vel0 * dt;
+		result_data[grid.Index(cell)] = Intp::Value(grid, origin_data, back_pos);
+	}
+
+	template<class T, int d, class Intp>
+	__global__ void RK2_Cell_Kernel(const real dt, const Grid<d> grid, T* result_data, const T* origin_data,
 		const Grid<d> gv0, const T* v0, const Grid<d> gv1, const T* v1, const Grid<d> gv2, const T* v2) {
 		Typedef_VectorD(d);
 		Vector<int, d> cell = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
@@ -27,7 +38,7 @@ namespace Meso {
 	}
 
 	template<class T, int d, class Intp>
-	T Semi_Lagrangian_Cell_Host(const real dt, const Field<T, d>& origin_field, const FaceField<T, d>& velocity, const Vector<int, d> cell) {
+	T RK2_Cell_Host(const real dt, const Field<T, d>& origin_field, const FaceField<T, d>& velocity, const Vector<int, d> cell) {
 		Typedef_VectorD(d);
 		VectorD pos0 = origin_field.grid.Position(cell);
 		Vector<T, d> vel0 = Intp::Face_Vector(velocity, pos0);
@@ -37,83 +48,74 @@ namespace Meso {
 		return Intp::Value(origin_field, back_pos);
 	}
 
-	template<class T, int d>
-	__global__ void Inverse_Flow_Map_Cell(const real dt, const Grid<d> grid, Vector<T,d>* inverse_flow_map,
+	template<class T, int d, class Intp>
+	__global__ void RK3_Cell_Kernel(const real dt, const Grid<d> grid, T* result_data, const T* origin_data,
 		const Grid<d> gv0, const T* v0, const Grid<d> gv1, const T* v1, const Grid<d> gv2, const T* v2) {
 		Typedef_VectorD(d);
 		Vector<int, d> cell = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		real c1 = 1.0 / 6.0 * dt, c2 = 4.0 / 6.0 * dt, c3 = 1.0 / 6.0 * dt;
 		VectorD pos0 = grid.Position(cell);
-		Vector<T, d> vel0 = IntpLinearPadding0::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos0);
-		VectorD pos1 = pos0 - vel0 * 0.5 * dt;
-		Vector<T, d> vel1 = IntpLinearPadding0::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos1);
-		VectorD back_pos = pos0 - vel1 * dt;
-		inverse_flow_map[grid.Index(cell)] = back_pos;
+		Vector<T, d> vel1 = Intp::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos0);
+		VectorD pos1 = pos0 - vel1 * 0.5 * dt;
+		Vector<T, d> vel2 = Intp::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos1);
+		VectorD pos2 = pos0 + vel1 * dt - vel2 * 2.0 * dt;
+		Vector<T, d> vel3 = Intp::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos2);
+		VectorD back_pos = pos0 - c1 * vel1 - c2 * vel2 - c3 * vel3;
+		result_data[grid.Index(cell)] = Intp::Value(grid, origin_data, back_pos);
 	}
 
-	template<class Intp = IntpLinearPadding0>
-	class SemiLagrangian {
+	template<class T, int d, class Intp>
+	__global__ void RK4_Cell_Kernel(const real dt, const Grid<d> grid, T* result_data, const T* origin_data,
+		const Grid<d> gv0, const T* v0, const Grid<d> gv1, const T* v1, const Grid<d> gv2, const T* v2) {
+		Typedef_VectorD(d);
+		Vector<int, d> cell = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		real c1 = 1.0 / 6.0 * dt, c2 = 1.0 / 3.0 * dt, c3 = 1.0 / 3.0 * dt, c4 = 1.0 / 6.0 * dt;
+		VectorD pos0 = grid.Position(cell);
+		Vector<T, d> vel1 = Intp::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos0);
+		VectorD pos1 = pos0 - vel1 * 0.5 * dt;
+		Vector<T, d> vel2 = Intp::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos1);
+		VectorD pos2 = pos0 - vel2 * 0.5 * dt;
+		Vector<T, d> vel3 = Intp::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos2);
+		VectorD pos3 = pos0 - vel3 * dt;
+		Vector<T, d> vel4 = Intp::Face_Vector(gv0, v0, gv1, v1, gv2, v2, pos3);
+		VectorD back_pos = pos0 - c1 * vel1 - c2 * vel2 - c3 * vel3 - c4 * vel4;
+		result_data[grid.Index(cell)] = Intp::Value(grid, origin_data, back_pos);
+	}
+
+	template<class Intp = IntpLinearPadding0, int order = 2>
+	class Advection {
 	public:
 		template<class T, int d, DataHolder side>
 		static void Advect(const real dt, Field<T, d, side>& advected_field, const Field<T, d, side>& origin_field, const FaceField<T, d, side>& velocity) {
-			Assert(!std::is_same<Intp, IntpLinear>::value, "SemiLagrangian can't use IntpLinear as interpolator");
+			Assert(!std::is_same<Intp, IntpLinear>::value, "Advection can't use IntpLinear as interpolator");
 			advected_field.Init(origin_field.grid);
 			if constexpr (side == DEVICE) {
 				const auto& vgrid = velocity.grid;
 				Grid<d> vg0 = vgrid.Face_Grid(0), vg1 = vgrid.Face_Grid(1), vg2 = vgrid.Face_Grid(2);
 				const T* v0 = velocity.Data_Ptr(0), * v1 = velocity.Data_Ptr(1), * v2 = velocity.Data_Ptr(2);
-				advected_field.grid.Exec_Kernel(
-					&Semi_Lagrangian_Cell_Kernel<T, d, Intp>,
-					dt,
-					advected_field.grid,
-					advected_field.Data_Ptr(),
-					origin_field.Data_Ptr(),
-					vg0, v0,
-					vg1, v1,
-					vg2, v2
-				);
+				if constexpr (order == 2)
+					advected_field.grid.Exec_Kernel(
+						&RK1_Cell_Kernel<T, d, Intp>, dt, advected_field.grid, advected_field.Data_Ptr(),
+						origin_field.Data_Ptr(), vg0, v0, vg1, v1, vg2, v2);
+				else if constexpr (order == 2)
+					advected_field.grid.Exec_Kernel(
+						&RK2_Cell_Kernel<T, d, Intp>, dt, advected_field.grid, advected_field.Data_Ptr(),
+						origin_field.Data_Ptr(), vg0, v0, vg1, v1, vg2, v2);
+				else if constexpr (order == 3)
+					advected_field.grid.Exec_Kernel(
+						&RK3_Cell_Kernel<T, d, Intp>, dt, advected_field.grid, advected_field.Data_Ptr(),
+						origin_field.Data_Ptr(), vg0, v0, vg1, v1, vg2, v2);
+				else if constexpr (order == 4)
+					advected_field.grid.Exec_Kernel(
+						&RK4_Cell_Kernel<T, d, Intp>, dt, advected_field.grid, advected_field.Data_Ptr(),
+						origin_field.Data_Ptr(), vg0, v0, vg1, v1, vg2, v2);
+				else
+					Error("Invalid order for Advection.");
 			}
 			else {
-				advected_field.Calc_Nodes(
-					std::bind(&Semi_Lagrangian_Cell_Host<T, d, Intp>, dt, origin_field, velocity, std::placeholders::_1)
-				);
 				Error("Advection::Advect not implemented for HOST");
 			}
 		}
-
-		template<class T, int d, DataHolder side>
-		static void Inverse_Flow_Map(const real dt, Field<Vector<real, d>, d, side>& inverse_flow_map, const FaceField<T, d, side>& velocity) {
-			Assert(!std::is_same<Intp, IntpLinear>::value, "SemiLagrangian can't use IntpLinear as interpolator");
-			if constexpr (side == DEVICE) {
-				const auto& vgrid = velocity.grid;
-				Grid<d> vg0 = vgrid.Face_Grid(0), vg1 = vgrid.Face_Grid(1), vg2 = vgrid.Face_Grid(2);
-				const T* v0 = velocity.Data_Ptr(0), * v1 = velocity.Data_Ptr(1), * v2 = velocity.Data_Ptr(2);
-				inverse_flow_map.grid.Exec_Kernel(
-					&Inverse_Flow_Map_Cell<T, d>,
-					dt,
-					inverse_flow_map.grid,
-					inverse_flow_map.Data_Ptr(),
-					vg0, v0,
-					vg1, v1,
-					vg2, v2
-				);
-			}
-			else {
-				Error("Advection::Inverse_Flow_Map not implemented for HOST");
-			}
-		}
-
-		////advected_val may be the same as velocity
-		//template<class T, DataHolder side>
-		//static void Advect(const real dt, FaceField<T, d, side>& advected_val, const FaceField<T, d, side>& velocity, const BoundaryCondition<FaceField<T, d, side>>& bc) {
-		//	FaceField<T, d, side> advection_result(advected_val.grid);
-		//	for (int axis = 0; axis < d; axis++) {
-		//		const auto face_grid = advected_val.grid.Face_Grid(axis);
-		//		Field<T, d, side> face_origin(face_grid, advected_val.face_data[axis]);
-		//		Field<T, d, side> face_result(face_grid, advection_result.face_data[axis]);
-		//		Advect(dt, face_result, face_origin, velocity);
-		//	}
-		//	bc.Copy_UnMasked(advected_val, advection_result);
-		//}
 
 		//original_value and velocity can be the same
 		//advected_result must be different

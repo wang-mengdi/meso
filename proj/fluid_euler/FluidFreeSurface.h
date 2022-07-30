@@ -243,12 +243,12 @@ namespace Meso {
 
 			//Advection of levelset
 			temp_phi_dev = levelset.phi;
-			SemiLagrangian<IntpLinearClamp>::Advect(dt, temp_field_dev, temp_phi_dev, velocity);
+			Advection<IntpLinearClamp, 2>::Advect(dt, temp_field_dev, temp_phi_dev, velocity);
 			levelset.phi = temp_field_dev;
 			levelset.Fast_Marching(-1);//will calculate whole field
 
 			//Advection of velocity
-			SemiLagrangian<IntpLinearPadding0>::Advect(dt, temp_velocity_dev, velocity, velocity);
+			Advection<IntpLinearPadding0, 2>::Advect(dt, temp_velocity_dev, velocity, velocity);
 			velocity = temp_velocity_dev;
 			
 			//Add body forces
