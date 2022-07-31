@@ -93,7 +93,7 @@ namespace Meso {
 				const auto& vgrid = velocity.grid;
 				Grid<d> vg0 = vgrid.Face_Grid(0), vg1 = vgrid.Face_Grid(1), vg2 = vgrid.Face_Grid(2);
 				const T* v0 = velocity.Data_Ptr(0), * v1 = velocity.Data_Ptr(1), * v2 = velocity.Data_Ptr(2);
-				if constexpr (order == 2)
+				if constexpr (order == 1)
 					advected_field.grid.Exec_Kernel(
 						&RK1_Cell_Kernel<T, d, Intp>, dt, advected_field.grid, advected_field.Data_Ptr(),
 						origin_field.Data_Ptr(), vg0, v0, vg1, v1, vg2, v2);
