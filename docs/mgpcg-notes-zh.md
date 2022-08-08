@@ -206,5 +206,20 @@ $$
 \end{align}
 $$
 
+## 三、纯Neumann边界条件的处理
+
+纯Neumann边界条件下Ax=b中的矩阵A不满秩，因此存在解的零空间，导致解不唯一。需要对CG和Preconditioner进行修改以应该此问题。
+
+### CG
+
+<img src="./assets/mgpcg-modified-cg.png" width =50% alt="mgpcg-v-cycle" align=center/>
+
+CG的修改为图中红色的部分。它在每一步中将中间结果投影出零空间，从而保证最终结果的唯一性。在CG代码中，提供了is_pure_neumann开关来决定是否使用红色部分。
+
+### Preconditioner
+
+矩阵A不正定会导致VCycle中最粗一层的direct solver求解失败，因此需要将direct solver替换为多次迭代的smoother。
+
 ## 文档作者
-王梦迪
+
+王梦迪，孙宇辰
