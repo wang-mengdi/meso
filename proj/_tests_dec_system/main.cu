@@ -16,28 +16,6 @@
 using namespace Meso;
 
 int main(){
-    //real a_cpp[] = { 1,2,3,4,5 };
-    //bool b_cpp[] = { true,true,true,false,false };
-    //Array<real> a_arr_host(a_cpp, a_cpp + 5);
-    //Array<bool> b_arr_host(b_cpp, b_cpp + 5);
-    //ArrayDv<real> a = a_arr_host;
-    //ArrayDv<bool> b = b_arr_host;
-
-    //ArrayFunc::Set_Masked(a, b, 10);
-    ////thrust::transform_if(
-    ////    a_arr.begin(),//first
-    ////    a_arr.end(),//last
-    ////    b_arr.begin(),//stencil
-    ////    a_arr.begin(),//result
-    ////    _1 * 0 + (real)3,//op
-    ////    thrust::identity<bool>()//pred
-    ////);
-    //Info("a: {}", a);
-    //
-    //return 0;
-
-
-
     Test_Exterior_Derivative_Cell<float, 2, ExteriorDerivativePadding0>(Vector2i(140, 530));
     Test_Exterior_Derivative_Cell<double, 2, ExteriorDerivativePadding0>(Vector2i(64, 37));
     Test_Exterior_Derivative_Cell<float, 3, ExteriorDerivativePadding0>(Vector3i(32, 47, 64));
@@ -79,7 +57,7 @@ int main(){
 
     ////A visual test
     //Test_GridGSSmoother<double, 2>(Vector2i(64, 64));
-
+    
     Test_MGPCG<float>(Vector2i(512, 520));//512,513 padded
     Test_MGPCG<double>(Vector2i(512, 520));
     Test_MGPCG<float>(Vector3i(256, 256, 256));
@@ -94,5 +72,10 @@ int main(){
     Test_MGPCG_Dirichlet_Neumann<double>(Vector2i(512, 512), true);
     Test_MGPCG_Dirichlet_Neumann<double>(Vector3i(128, 128, 128), false);
     Test_MGPCG_Dirichlet_Neumann<double>(Vector3i(256, 256, 256), false);
+
+    Test_MGPCG_Neumann<double>(Vector2i(256, 256), true);
+    Test_MGPCG_Neumann<double>(Vector2i(512, 512), true);
+    Test_MGPCG_Neumann<double>(Vector3i(128, 128, 128), false);
+    Test_MGPCG_Neumann<double>(Vector3i(256, 256, 256), false);
     return 0;
 }

@@ -30,7 +30,6 @@ namespace Meso {
 		Array<LinearMappingPtr> prolongators;//prolongator[i] is applied between layer i and i+1
 		Array<LinearMappingPtr> presmoothers;
 		Array<LinearMappingPtr> postsmoothers;
-		LinearMappingPtr direct_solver;
 
 		Array<ArrayDv<T>> xs;
 		Array<ArrayDv<T>> bs;
@@ -55,10 +54,11 @@ namespace Meso {
 
 			checkCudaErrors(cudaGetLastError());
 			cudaDeviceSynchronize();
-			//direct solve
-			direct_solver->Apply(xs[L], bs[L]);
-			checkCudaErrors(cudaGetLastError());
 
+			presmoothers[L]->Apply(xs[L], bs[L]);
+			mappings[L]->Residual(rs[L], xs[L], bs[L]);
+			postsmoothers[L]->Apply(bs[L], rs[L]);
+			ArrayFunc::Add(xs[L], bs[L]);
 			//Assert(ArrayFunc::Is_Finite<T, DEVICE>(xs[L]), "Multigrid error: at coarsest level solved xs[{}]={}", L, xs[L]);
 
 			//upstroke (coarse->fine)
@@ -105,8 +105,8 @@ namespace Meso {
 
 
 			//presmoothers and postsmoothers
-			presmoothers.resize(L);
-			postsmoothers.resize(L);
+			presmoothers.resize(L + 1);
+			postsmoothers.resize(L + 1);
 
 			//auxillary arrays
 			xs.resize(L + 1);
@@ -121,7 +121,7 @@ namespace Meso {
 		}
 
 		template<int d>
-		void Update_Poisson_Coarse_Layers(const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0) {
+		void Update_Poisson_Coarse_Layers(const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0, const int coarsest_iter = (d ==2) ? 10 : 100) {
 			using PoissonPtr = std::shared_ptr<MaskedPoissonMapping<T, d>>;
 
 			for (int i = 1; i <= L; i++) {
@@ -135,8 +135,8 @@ namespace Meso {
 
 
 			//presmoothers and postsmoothers
-			presmoothers.resize(L);
-			postsmoothers.resize(L);
+			presmoothers.resize(L + 1);
+			postsmoothers.resize(L + 1);
 			for (int i = 0; i < L; i++) {
 				PoissonPtr poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
 
@@ -147,15 +147,19 @@ namespace Meso {
 				//presmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, pre_iter, 0);
 				//postsmoothers[i] = std::make_shared<GridGSSmoother<T, d>>(*poisson, post_iter, 1);
 			}
-
-			//direct_solver
-			PoissonPtr coarsest_poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[L]);
-			direct_solver = std::make_shared<CholeskySparseSolver<T>>(SparseMatrix_From_PoissonLike(coarsest_poisson->Grid(), *coarsest_poisson, coarsest_add_epsilon));
+			//smoother  in the coarsest level
+			PoissonPtr poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[L]);
+			ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
+			presmoothers[L] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[L]), poisson_diag, coarsest_iter, (T)(2.0 / 3.0));
+			postsmoothers[L] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[L]), poisson_diag, coarsest_iter, (T)(2.0 / 3.0));
+			
+			//presmoothers[L] = std::make_shared<GridGSSmoother<T, d>>(*poisson, coarsest_iter, 0);
+			//postsmoothers[L] = std::make_shared<GridGSSmoother<T, d>>(*poisson, coarsest_iter, 1);
 		}
 
 		//Update poisson system to an already allocated system
 		template<int d>
-		void Update_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0) {
+		void Update_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0, const int coarsest_iter = (d == 2) ? 10 : 100) {
 			mappings[0] = std::make_shared<MaskedPoissonMapping<T, d>>(poisson);
 			Update_Poisson_Coarse_Layers<d>(pre_iter, post_iter, coarsest_add_epsilon);
 		}
@@ -163,7 +167,7 @@ namespace Meso {
 		//Will add epsilon*I to the system of the coarsest level
 		//To make a Poisson system truly positive definite
 		template<int d>
-		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0) {
+		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int pre_iter = 2, const int post_iter = 2, const T coarsest_add_epsilon = 0, const int coarsest_iter = (d == 2) ? 10 : 100) {
 			Allocate_Poisson(poisson.Grid());
 			Update_Poisson<d>(poisson, pre_iter, post_iter, coarsest_add_epsilon);
 		}

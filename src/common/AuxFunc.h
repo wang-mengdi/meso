@@ -338,8 +338,8 @@ namespace Meso {
 					thrust::plus<T>()
 				);
 		}
-		template<class T> 
-		T Mean(const Array<T>& v) { 
+		template<class T, DataHolder side = HOST>
+		T Mean(const Array<T, side>& v) { 
 			return 1. / (real)v.size() *
 				thrust::reduce(
 					v.begin(),

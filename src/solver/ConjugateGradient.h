@@ -15,7 +15,7 @@ namespace Meso {
 		int max_iter = 0;
 		real relative_tolerance = 1e-5;
 		bool verbose = true;
-
+		bool is_pure_neumann = false;
 		//inner variables
 		ArrayDv<T> p, Ap, z;
 
@@ -67,6 +67,16 @@ namespace Meso {
 
 			auto& r = b;
 
+			//treatment for pure neumann 
+			if (is_pure_neumann)
+			{
+				T r_mean = ArrayFunc::Mean<T, DEVICE>(r);
+				ArrayDv<T> mu;
+				mu.resize(linear_mapping->XDoF());
+				thrust::fill(mu.begin(), mu.end(), r_mean);
+				ArrayFunc::Minus(r, mu);
+			}
+
 			//rhs_norm2=r*r
 			double rhs_norm2 = ArrayFunc::Dot(r, r);
 			if (verbose) Info("ConjugateGradient initial norm of rhs: {}", sqrt(rhs_norm2));
@@ -112,6 +122,16 @@ namespace Meso {
 
 				//r_{k+1} = r_k - alpha_k * Ap_k
 				ArrayFunc::Axpy(-alpha, Ap, r);
+
+				//treatment for pure neumann 
+				if (is_pure_neumann)
+				{
+					T r_mean = ArrayFunc::Mean<T, DEVICE>(r);
+					ArrayDv<T> mu;
+					mu.resize(linear_mapping->XDoF());
+					thrust::fill(mu.begin(), mu.end(), r_mean);
+					ArrayFunc::Minus(r, mu);
+				}
 
 				residual_norm2 = ArrayFunc::Dot(r, r);
 				if (verbose) Info("ConjugateGradient iter {} norm {} against threshold {}", i, sqrt(residual_norm2), sqrt(threshold_norm2));
