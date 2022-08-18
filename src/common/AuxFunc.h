@@ -304,8 +304,8 @@ namespace Meso {
 			return ans;
 
 		}
-		template<class T, DataHolder side>
-		double Norm(const Array<T,side>& a) {
+		template<class Array1>
+		double Norm(const Array1& a) {
 			double squared_norm = Dot(a, a);
 			return sqrt(squared_norm);
 		}

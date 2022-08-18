@@ -39,7 +39,12 @@ namespace Meso{
 				meta_data.iter_count++;
 			}
 			meta_data.data_output.close();
-			Info("Optimizer converges after {} iters", meta_data.iter_count-1);
+			if (meta_data.iter_count== meta_data.max_iter_num) {
+				Warn("Optimizer doesn't converge after {} iters!", meta_data.iter_count);
+			}
+			else {
+				Info("Optimizer converges after {} iters", meta_data.iter_count - 1);
+			}
 		}
 
 		template<class Initializer, class TOptimizer>
