@@ -58,6 +58,8 @@ namespace Meso{
 			std::ofstream dump_output(dump_file.string());
 			dump_output << std::setw(4) << j;
 			dump_output.close();
+			bf::path output_data_path = bf::path(meta_data.output_base_dir) / bf::path("output_data.csv");
+			meta_data.data_output.open(output_data_path.string());
 			Advance(optimizer, meta_data);
 		}
 	};

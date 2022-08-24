@@ -64,8 +64,6 @@ namespace Meso {
 			iter_count = Json::Value(j, "first_iter", 0);
 			output_base_dir = Json::Value(j, "output_base_dir", std::string("output"));
 			base_path = bf::path(output_base_dir);
-			bf::path output_data_path = base_path / "output_data.csv";
-			data_output.open(output_data_path.string());
 		}
 	};
 }
