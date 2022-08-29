@@ -2,6 +2,7 @@
 #include "Common.h"
 #include "Json.h"
 #include <fstream>
+#include "Timer.h"
 
 namespace Meso {
 	class MetaData
@@ -57,7 +58,7 @@ namespace Meso {
 		real tol;
 		int iter_count;
 		int max_iter_num;
-
+		Timer timer;
 		void Init(json& j) {
 			tol = Json::Value(j, "tol", (real) 1e-7);
 			max_iter_num = Json::Value(j, "max_iter_num", 1000);

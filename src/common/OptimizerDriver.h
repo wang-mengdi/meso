@@ -31,11 +31,12 @@ namespace Meso{
 
 			Output(optimizer, meta_data);
 			meta_data.iter_count++;
-
+			meta_data.timer.Begin_Loop();
 			while (!optimizer.Is_Converged(meta_data) && meta_data.iter_count<meta_data.max_iter_num) {
 				optimizer.Optimize(meta_data);
 				Print_Iteration_Info(iter_timer,meta_data);
 				Output(optimizer, meta_data);
+				meta_data.timer.Output_Profile();
 				meta_data.iter_count++;
 			}
 			meta_data.data_output.close();
