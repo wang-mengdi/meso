@@ -1,5 +1,5 @@
 add_requires("eigen >=3.4.0")
-add_requires("fmt >=8.1.1")
+add_requires("fmt =8.1.1")
 add_requires("nlohmann_json >=3.10.5")
 add_requires("boost >=1.78.0")
 add_requires("cuda", {system=true, configs={utils={"cublas","cusparse","cusolver"}}})
