@@ -201,10 +201,10 @@ namespace Meso {
 				<= (atol + rtol * b.derived().array().abs())).all();
 		}
 
-		template<typename T1, typename T2> bool Close(T1 a, T2 b, const typename T1 rtol
-			= Eigen::NumTraits<typename T1>::dummy_precision(),
-			const typename T1 atol
-			= Eigen::NumTraits<typename T1>::epsilon()) {
+		template<typename T1, typename T2> bool Close(T1 a, T2 b, const T1 rtol
+			= Eigen::NumTraits<typename T1::RealScalar>::dummy_precision(),
+			const T1 atol
+			= Eigen::NumTraits<typename T1::RealScalar>::epsilon()) {
 			return abs(a - b) <= atol + rtol * abs(b);
 		}
 	}
