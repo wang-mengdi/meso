@@ -120,9 +120,7 @@ template<class T> using ArrayDvPtr = std::shared_ptr<ArrayDv<T> >;//device array
 ////Array with fixed size
 template<class T, int n> using ArrayF = std::array<T, n>;
 template<class T, int n, int m> using Array2DF = std::array<std::array<T, n>, m>;
-constexpr int Pow(int x, int p) { return p == 1 ? x : x * Pow(x, p - 1); }
-template<class T, int d> using ArrayF2P = ArrayF<T, Pow(2, d) >;
-template<class T, int d> using ArrayF3P = ArrayF<T, Pow(3, d) >;
+
 ////Other containers
 template<class T> using List = std::list<T>;
 template<class T, class CMP = std::less<T> > using Heap = std::priority_queue<T, std::vector<T>, CMP>;
