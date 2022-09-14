@@ -12,6 +12,15 @@
 
 using namespace Meso;
 
+class MyTestClass {
+public:
+    int foo() { return 1; }
+    void bar(void) {
+        int foo = this->foo();
+        printf("test foo: %d\n", foo);
+    }
+};
+
 void Print_Grid_Index2(Vector2i counts) {
     Grid<2> grid(counts, 1.0 / 7, Vector2::Zero(), CORNER);
     Field<int, 2> F(grid);
@@ -25,7 +34,9 @@ void Print_Grid_Index2(Vector2i counts) {
 }
 
 int main() {
-    Sphere<3> sphere(Vector3::Zero(), 1.0);
+    MyTestClass mt;
+    mt.bar();
+
 
     ////Part 1: test reservoir
 
