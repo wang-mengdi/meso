@@ -12,6 +12,7 @@
 
 using namespace Meso;
 
+
 void Print_Grid_Index2(Vector2i counts) {
     Grid<2> grid(counts, 1.0 / 7, Vector2::Zero(), CORNER);
     Field<int, 2> F(grid);
@@ -25,8 +26,6 @@ void Print_Grid_Index2(Vector2i counts) {
 }
 
 int main() {
-    Sphere<3> sphere(Vector3::Zero(), 1.0);
-
     ////Part 1: test reservoir
 
     //a visual test, not included in general tests
