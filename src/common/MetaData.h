@@ -58,12 +58,14 @@ namespace Meso {
 		real tol;
 		int iter_count;
 		int max_iter_num;
+		bool verbose;
 		Timer timer;
 		void Init(json& j) {
 			tol = Json::Value(j, "tol", (real) 1e-7);
 			max_iter_num = Json::Value(j, "max_iter_num", 1000);
 			iter_count = Json::Value(j, "first_iter", 0);
 			output_base_dir = Json::Value(j, "output_base_dir", std::string("output"));
+			verbose = Json::Value(j, "verbose", true);
 			base_path = bf::path(output_base_dir);
 		}
 	};

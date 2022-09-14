@@ -202,9 +202,9 @@ namespace Meso {
 		}
 
 		template<typename T1, typename T2> bool Close(T1 a, T2 b, const T1 rtol
-			= Eigen::NumTraits<typename T1::RealScalar>::dummy_precision(),
+			= Eigen::NumTraits<T1>::dummy_precision(),
 			const T1 atol
-			= Eigen::NumTraits<typename T1::RealScalar>::epsilon()) {
+			= Eigen::NumTraits<T1>::epsilon()) {
 			return abs(a - b) <= atol + rtol * abs(b);
 		}
 	}

@@ -81,7 +81,7 @@ namespace Meso {
 		}
 
 		template<class Initializer, class TSimulator>
-		void Run(json& j, Initializer& scene, TSimulator& simulator) {
+		void Initialize_And_Run(json& j, Initializer& scene, TSimulator& simulator) {
 			Info("Driver::Run parse json: \n{}", j.dump(2));
 			DriverMetaData meta_data;
 			meta_data.Init(j.at("driver"));

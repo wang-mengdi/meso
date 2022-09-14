@@ -32,11 +32,11 @@ namespace Meso{
 			Output(optimizer, meta_data);
 			meta_data.iter_count++;
 			meta_data.timer.Begin_Loop();
-			while (!optimizer.Is_Converged(meta_data) && meta_data.iter_count<meta_data.max_iter_num) {
+			while (!optimizer.Is_Converged(meta_data) && meta_data.iter_count < meta_data.max_iter_num) {
 				optimizer.Optimize(meta_data);
-				Print_Iteration_Info(iter_timer,meta_data);
+				if (meta_data.verbose) { Print_Iteration_Info(iter_timer, meta_data); }
 				Output(optimizer, meta_data);
-				meta_data.timer.Output_Profile();
+				if (meta_data.verbose) { meta_data.timer.Output_Profile(); }
 				meta_data.iter_count++;
 			}
 			meta_data.data_output.close();
@@ -49,7 +49,13 @@ namespace Meso{
 		}
 
 		template<class Initializer, class TOptimizer>
-		void Run(json& j, Initializer& scene, TOptimizer& optimizer) {
+		void Initialize_And_Run(json& j, Initializer& scene, TOptimizer& optimizer) {
+			OptimizerDriverMetaData meta_data=Initialize(j, scene, optimizer);
+			Advance(optimizer, meta_data);
+		}
+
+		template<class Initializer, class TOptimizer>
+		OptimizerDriverMetaData Initialize(json& j, Initializer& scene, TOptimizer& optimizer) {
 			Info("OptimizerDriver::Run parse json: \n{}", j.dump(2));
 			OptimizerDriverMetaData meta_data;
 			meta_data.Init(j.at("optimizer"));
@@ -61,7 +67,7 @@ namespace Meso{
 			dump_output.close();
 			bf::path output_data_path = bf::path(meta_data.output_base_dir) / bf::path("output_data.csv");
 			meta_data.data_output.open(output_data_path.string());
-			Advance(optimizer, meta_data);
+			return meta_data;
 		}
 	};
 }
