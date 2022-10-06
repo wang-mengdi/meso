@@ -30,7 +30,7 @@ namespace Meso {
 		template<int d> void Cell_Stiffness_Matrix(const real youngs, const real poisson, MatrixX& K_e);								//Use a table to caculate the stiffness matrix
 
 		//Gaussian integration
-		template<int d> void Initialize_Gaussian_Integration_Points(ArrayF2P<Vector<real, d>, d>& points, ArrayF2P<real, d>& weights); // Gauss product rule p = 2, 3rd order accuracy
+		template<int d> void Initialize_Gaussian_Integration_Points(Matrix<real,1<<d,d>& points, Vector<real, 1<<d>& weights); // Gauss product rule p = 2, 3rd order accuracy
 
 		////////////////////////////////////////////////////////////////////////
 		//Operations on the global stiffness matrix

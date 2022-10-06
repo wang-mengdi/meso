@@ -68,7 +68,7 @@ namespace Meso {
 		auto loop_end = std::chrono::system_clock::now();
 		std::chrono::duration<double, std::ratio<1> > loop_elapse = loop_end - loop_start;//in seconds
 		double loop_time_sec = loop_elapse.count() / PhysicalUnits::s;
-		str += fmt::format("total: {:.3f}", loop_time_sec);
+		str += fmt::format("total: {:.3f}s", loop_time_sec);
 		out << str << "\n";
 	}
 
