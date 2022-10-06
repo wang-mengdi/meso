@@ -16,6 +16,10 @@
 using namespace Meso;
 
 int main(){
+    Test_MGPCG_Dirichlet_Neumann<float>(Vector3i(256, 256, 256), true);
+    return 0;
+
+
     Test_Exterior_Derivative_Cell<float, 2, ExteriorDerivativePadding0>(Vector2i(140, 530));
     Test_Exterior_Derivative_Cell<double, 2, ExteriorDerivativePadding0>(Vector2i(64, 37));
     Test_Exterior_Derivative_Cell<float, 3, ExteriorDerivativePadding0>(Vector3i(32, 47, 64));
@@ -75,7 +79,6 @@ int main(){
 
     Test_MGPCG_Neumann<double>(Vector2i(256, 256), true);
     Test_MGPCG_Neumann<double>(Vector2i(512, 512), true);
-    //Test_MGPCG_Neumann<double>(Vector3i(128, 128, 128), false);
-    Test_MGPCG_Neumann<float>(Vector3i(512, 512, 512), false);
+    Test_MGPCG_Neumann<double>(Vector3i(256, 256, 256), false);
     return 0;
 }

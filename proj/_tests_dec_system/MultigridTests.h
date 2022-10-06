@@ -141,20 +141,25 @@ namespace Meso {
 	template<class T, int d>
 	void Test_MGPCG_Dirichlet_Neumann(const Vector<int, d> counts, bool output_x) {
 		Typedef_VectorD(d);
-		Grid<d> grid(counts, (real)1.0 / counts[0]);
+		Grid<d> grid(counts, (real)CommonConstants::pi / counts[0]);
+
+		auto f = [&](const VectorDi& cell) {
+			VectorD pos = grid.Position(cell);
+			return exp(pos[0]) * sin(pos[1]);
+		};
 
 		//set A
 		MaskedPoissonMapping<T, d> poisson(grid);
 		Field<bool, d> fixed(grid);
 		fixed.Calc_Nodes([&](const VectorDi cell) {
 			for (int axis = 0; axis < d; axis++)
-				if ((cell[axis] == 0 || cell[axis] == grid.Counts()[axis] - 1) && (cell[1] != 0))
+				if ((cell[axis] == 0 || cell[axis] == grid.Counts()[axis] - 1))
 					return true;
 			return false;
 			});
 		FaceField<T, d> vol(grid);
 		vol.Calc_Faces([&](const int axis, const VectorDi face) {
-			if (axis == 1 && face[1] == 0)
+			if (axis == 0 && face[0] <= 1)
 				return 0;
 			return 1;
 			});
@@ -162,10 +167,15 @@ namespace Meso {
 
 		//set b
 		Field<T, d> b_host(grid);
-		b_host.Calc_Nodes([&](const VectorDi cell) {
-			if (cell[1] == 0)
-				return 1;
-			return 0;
+		b_host.Calc_Nodes([&](const VectorDi cell)->T {
+			if (fixed(cell)) {
+				return f(cell);
+			}
+			else if (cell[0] == 1) {
+				VectorDi nb_cell = cell; nb_cell[0] = 0;
+				return -(f(cell) - f(nb_cell)) / (grid.dx * grid.dx);
+			}
+			else return 0;
 			});
 
 		//solve
@@ -186,6 +196,56 @@ namespace Meso {
 			VTKFunc::Write_VTS(x_host, x_name);
 		}
 	}
+
+
+	//template<class T, int d>
+	//void Test_MGPCG_Dirichlet_Neumann(const Vector<int, d> counts, bool output_x) {
+	//	Typedef_VectorD(d);
+	//	Grid<d> grid(counts, (real)1.0 / counts[0]);
+
+	//	//set A
+	//	MaskedPoissonMapping<T, d> poisson(grid);
+	//	Field<bool, d> fixed(grid);
+	//	fixed.Calc_Nodes([&](const VectorDi cell) {
+	//		for (int axis = 0; axis < d; axis++)
+	//			if ((cell[axis] == 0 || cell[axis] == grid.Counts()[axis] - 1) && (cell[1] != 0))
+	//				return true;
+	//		return false;
+	//		});
+	//	FaceField<T, d> vol(grid);
+	//	vol.Calc_Faces([&](const int axis, const VectorDi face) {
+	//		if (axis == 1 && face[1] == 0)
+	//			return 0;
+	//		return 1;
+	//		});
+	//	poisson.Init(fixed, vol);
+
+	//	//set b
+	//	Field<T, d> b_host(grid);
+	//	b_host.Calc_Nodes([&](const VectorDi cell) {
+	//		if (cell[1] == 0)
+	//			return 1;
+	//		return 0;
+	//		});
+
+	//	//solve
+	//	FieldDv<T, d> b_dev = b_host;
+	//	FieldDv<T, d> x_dev(grid, 0);
+	//	ConjugateGradient<T> MGPCG;
+	//	VCycleMultigridIntp<T, d> precond;
+	//	precond.Init_Poisson(poisson, 2, 2);
+	//	MGPCG.Init(&poisson, &precond, false, -1, 1e-5);
+	//	Timer timer;
+	//	auto [iters, relative_error] = MGPCG.Solve(x_dev.Data(), b_dev.Data());
+	//	Pass("MGPCG_Dirichlet_Neumann test passed in {}s for counts={}, with {} iters and relative_error={}", timer.Lap_Time(), counts, iters, relative_error);
+
+	//	//output x
+	//	if (output_x) {
+	//		Field<T, d> x_host = x_dev;
+	//		std::string x_name = "x.vts";
+	//		VTKFunc::Write_VTS(x_host, x_name);
+	//	}
+	//}
 
 	template<class T, int d>
 	void Test_MGPCG_Neumann(const Vector<int, d> counts, bool output_x) {
