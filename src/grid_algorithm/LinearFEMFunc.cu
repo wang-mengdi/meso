@@ -131,12 +131,12 @@ namespace Meso {
 		template<int d> void Cell_Stiffness_Matrix(const real youngs, const real poisson, const real dx, MatrixX& K_e)
 		{
 			int n = d * (int)pow(2, d); K_e.resize(n, n); K_e.fill((real)0);
-			ArrayF2P<Vector<real, d>, d> points; ArrayF2P<real, d> weights; 
+			Matrix<real,1<<d,d> points; Vector<real,1<<d> weights; 
 			Initialize_Gaussian_Integration_Points<d>(points, weights);
 			MatrixX E; Strain_Stress_Matrix_Linear<d>(youngs, poisson, E);
 			real J_det = pow(dx / (real)2, (real)d);
-			for (auto i = 0; i < points.size(); i++) {
-				MatrixX B; Cell_Strain_Displacement_Matrix<d>(points[i], dx, B);
+			for (auto i = 0; i < points.rows(); i++) {
+				MatrixX B; Cell_Strain_Displacement_Matrix<d>(points.row(i), dx, B);
 				MatrixX K0; K0 = B.transpose() * E * B * J_det * weights[i];
 				K_e += K0;
 			}
@@ -270,15 +270,15 @@ namespace Meso {
 
 		////////////////////////////////////////////////////////////////////////
 		//Gaussian integration
-		template<> void Initialize_Gaussian_Integration_Points<2>(ArrayF2P<Vector2, 2>& points, ArrayF2P<real, 2>& weights) //2^2=4 sample points
+		template<> void Initialize_Gaussian_Integration_Points<2>(Matrix<real, 4, 2>& points, Vector<real,4>& weights) //2^2=4 sample points
 		{
-			real c = (real)1 / sqrt((real)3); points[0] = Vector2(-c, -c); points[1] = Vector2(c, -c); points[2] = Vector2(-c, c); points[3] = Vector2(c, c); ArrayFunc::Fill(weights, (real)1);
+			real c = (real)1 / sqrt((real)3); points.row(0) = Vector2(-c, -c); points.row(1) = Vector2(c, -c); points.row(2) = Vector2(-c, c); points.row(3) = Vector2(c, c); weights.fill(1);
 		}
 
-		template<> void Initialize_Gaussian_Integration_Points<3>(ArrayF2P<Vector3, 3>& points, ArrayF2P<real, 3>& weights) //2^3=8 sample points
+		template<> void Initialize_Gaussian_Integration_Points<3>(Matrix<real, 8, 3>& points, Vector<real, 8>& weights) //2^3=8 sample points
 		{
-			real c = (real)1 / sqrt((real)3); points[0] = Vector3(-c, -c, -c); points[1] = Vector3(c, -c, -c); points[2] = Vector3(c, c, -c); points[3] = Vector3(-c, c, -c);
-			points[4] = Vector3(-c, -c, c); points[5] = Vector3(c, -c, c); points[6] = Vector3(c, c, c); points[7] = Vector3(-c, c, c); ArrayFunc::Fill(weights, (real)1);
+			real c = (real)1 / sqrt((real)3); points.row(0) = Vector3(-c, -c, -c); points.row(1) = Vector3(c, -c, -c); points.row(2) = Vector3(c, c, -c); points.row(3) = Vector3(-c, c, -c);
+			points.row(4) = Vector3(-c, -c, c); points.row(5) = Vector3(c, -c, c); points.row(6) = Vector3(c, c, c); points.row(7) = Vector3(-c, c, c); weights.fill(1);
 		}
 
 		////////////////////////////////////////////////////////////////////////
@@ -289,8 +289,8 @@ namespace Meso {
 			for (int Ke_i = 0; Ke_i < node_n; Ke_i++) {
 				int K_i = node_indices[Ke_i]; 
 				for (int Ke_j = 0; Ke_j < node_n; Ke_j++) { 
-					int K_j = node_indices[Ke_j]; 
-					SparseFunc::Add_Block<d>(K, K_i, K_j, K_e, Ke_i, Ke_j); 
+					int K_j = node_indices[Ke_j];
+					SparseFunc::Add_Block<real,d,d>(K, K_i, K_j, K_e, Ke_i, Ke_j); 
 				}
 			}
 		}

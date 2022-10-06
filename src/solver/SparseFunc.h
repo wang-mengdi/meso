@@ -16,9 +16,9 @@ namespace Meso {
 			for (int i = 0; i < dim1; i++)for (int j = 0; j < dim2; j++) { K.coeffRef(K_i * dim1 + i, K_j * dim2 + j) += K_b.coeff(Kb_i * dim1 + i, Kb_j * dim2 + j); }
 		}
 
-		template<int dim, class T_MAT> void Copy_Block(SparseMatrix<real>& K, const int K_i, const int K_j, const T_MAT& K_b, const int Kb_i = 0, const int Kb_j = 0)
+		template<int dim1, int dim2, class T_MAT> void Copy_Block(SparseMatrix<real>& K, const int K_i, const int K_j, const T_MAT& K_b, const int Kb_i = 0, const int Kb_j = 0)
 		{
-			for (int i = 0; i < dim; i++)for (int j = 0; j < dim; j++) { K.coeffRef(K_i * dim + i, K_j * dim + j) = K_b.coeff(Kb_i * dim + i, Kb_j * dim + j); }
+			for (int i = 0; i < dim1; i++)for (int j = 0; j < dim2; j++) { K.coeffRef(K_i * dim1 + i, K_j * dim2 + j) = K_b.coeff(Kb_i * dim1 + i, Kb_j * dim2 + j); }
 		}
 
 		template<int dim> void Set_Block(SparseMatrix<real>& K, const int K_i, const int K_j, const real value)
