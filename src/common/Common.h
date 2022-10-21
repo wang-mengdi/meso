@@ -47,6 +47,7 @@ using Vector2=Eigen::Vector2##t;        \
 using Vector3=Eigen::Vector3##t;        \
 using Vector4=Eigen::Vector4##t;        \
 using VectorX=Eigen::VectorX##t;        \
+using Matrix1=Eigen::Matrix<real,1,1>;  \
 using Matrix2=Eigen::Matrix2##t;        \
 using Matrix3=Eigen::Matrix3##t;        \
 using Matrix4=Eigen::Matrix4##t;        \
