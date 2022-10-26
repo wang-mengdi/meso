@@ -28,7 +28,7 @@ namespace Meso {
 		}
 
 		//NOTE: it will take dof in Init() function and malloc accordingly
-		void Init(LinearMapping<T>* _linear_mapping, LinearMapping<T>* _preconditioner = nullptr, bool _verbose = false, const int _max_iter = -1, const real _relative_tolerance = std::numeric_limits<real>::epsilon()) {
+		void Init(LinearMapping<T>* _linear_mapping, LinearMapping<T>* _preconditioner = nullptr, bool _verbose = false, const int _max_iter = -1, const real _relative_tolerance = std::numeric_limits<T>::epsilon()) {
 			linear_mapping = _linear_mapping;
 			preconditioner = _preconditioner;
 			Assert(linear_mapping != nullptr, "[ConjugateGradient] linear_mapping not initialized");

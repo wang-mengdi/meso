@@ -3,6 +3,7 @@
 #include "Json.h"
 #include <fstream>
 #include "Timer.h"
+#include <queue>
 
 namespace Meso {
 	class MetaData
@@ -25,10 +26,23 @@ namespace Meso {
 		int first_frame;
 		int last_frame;
 		
+		int output_queue_size = 10;
+
+		//queue of threads for output
+		std::queue<std::shared_ptr<std::thread>> output_threads;
+
 		//fill for every time step
 		int current_frame;
 		real current_time;
 		real dt;
+
+		~DriverMetaData() {
+			while (!output_threads.empty()) {
+				auto join_ptr = output_threads.front();
+				output_threads.pop();
+				join_ptr->join();
+			}
+		}
 
 		real Time_At_Frame(int frame) {
 			return frame * time_per_frame;
@@ -46,9 +60,20 @@ namespace Meso {
 			first_frame = Json::Value(j, "first_frame", 0);
 			last_frame = Json::Value(j, "last_frame", fps * 10);
 			
+			output_queue_size = Json::Value(j, "queue_size", 10);
+
 			current_frame = first_frame;
 			current_time = Time_At_Frame(current_frame);
 			dt = 1.0 / fps;
+		}
+
+		void Append_Output_Thread(std::shared_ptr<std::thread> thread_ptr) {
+			while (output_threads.size() > output_queue_size) {
+				auto join_ptr = output_threads.front(); 
+				output_threads.pop();
+				join_ptr->join();
+			}
+			output_threads.push(thread_ptr);
 		}
 	};
 

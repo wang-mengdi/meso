@@ -184,7 +184,7 @@ namespace Meso {
 		ConjugateGradient<T> MGPCG;
 		VCycleMultigridIntp<T, d> precond;
 		precond.Init_Poisson(poisson, 2, 2);
-		MGPCG.Init(&poisson, &precond, false, -1, 1e-5);
+		MGPCG.Init(&poisson, &precond, true, -1);
 		Timer timer;
 		auto [iters, relative_error] = MGPCG.Solve(x_dev.Data(), b_dev.Data());
 		Pass("MGPCG_Dirichlet_Neumann test passed in {}s for counts={}, with {} iters and relative_error={}", timer.Lap_Time(), counts, iters, relative_error);
