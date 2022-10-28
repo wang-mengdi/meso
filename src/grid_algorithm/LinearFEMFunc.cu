@@ -290,7 +290,7 @@ namespace Meso {
 				int K_i = node_indices[Ke_i]; 
 				for (int Ke_j = 0; Ke_j < node_n; Ke_j++) { 
 					int K_j = node_indices[Ke_j];
-					SparseFunc::Add_Block<real,d,d>(K, K_i, K_j, K_e, Ke_i, Ke_j); 
+					SparseFunc::Add_Block<d,MatrixX,d>(K, K_i, K_j, K_e, Ke_i, Ke_j);
 				}
 			}
 		}

@@ -10,13 +10,19 @@
 
 namespace Meso {
 	namespace SparseFunc {
+		//when the block is added by the entire other matrix
+		template<class T, int dim1, int dim2> void Add_Block(SparseMatrix<T>& K, const int K_i, const int K_j, const Matrix<T, dim1, dim2>& K_b)
+		{
+			for (int i = 0; i < dim1; i++)for (int j = 0; j < dim2; j++) { K.coeffRef(K_i * dim1 + i, K_j * dim2 + j) += K_b.coeff(i, j); }
+		}
+
 		////block matrix operations
-		template<class T, int dim1, int dim2> void Add_Block(SparseMatrix<real>& K, const int K_i, const int K_j, const Matrix<T, dim1, dim2>& K_b, const int Kb_i = 0, const int Kb_j = 0)
+		template<int dim1, class T_MAT, int dim2=dim1> void Add_Block(SparseMatrix<real>& K, const int K_i, const int K_j, const T_MAT& K_b, const int Kb_i = 0, const int Kb_j = 0)
 		{
 			for (int i = 0; i < dim1; i++)for (int j = 0; j < dim2; j++) { K.coeffRef(K_i * dim1 + i, K_j * dim2 + j) += K_b.coeff(Kb_i * dim1 + i, Kb_j * dim2 + j); }
 		}
 
-		template<int dim1, int dim2, class T_MAT> void Copy_Block(SparseMatrix<real>& K, const int K_i, const int K_j, const T_MAT& K_b, const int Kb_i = 0, const int Kb_j = 0)
+		template<int dim1, class T_MAT, int dim2=dim1> void Copy_Block(SparseMatrix<real>& K, const int K_i, const int K_j, const T_MAT& K_b, const int Kb_i = 0, const int Kb_j = 0)
 		{
 			for (int i = 0; i < dim1; i++)for (int j = 0; j < dim2; j++) { K.coeffRef(K_i * dim1 + i, K_j * dim2 + j) = K_b.coeff(Kb_i * dim1 + i, Kb_j * dim2 + j); }
 		}
