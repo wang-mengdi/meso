@@ -13,7 +13,7 @@ void Run_FluidEuler(json &j) {
 	FluidEuler<d> fluid;
 	FluidEulerInitializer<d> scene;
 	Driver driver;
-	driver.Run(j, scene, fluid);
+	driver.Initialize_And_Run(j, scene, fluid);
 }
 
 
@@ -22,7 +22,7 @@ void Run_FluidFreeSurface(json& j) {
 	FluidFreeSurface<real, d> fluid;
 	FluidFreeSurfaceInitializer<real, d> scene;
 	Driver driver;
-	driver.Run(j, scene, fluid);
+	driver.Initialize_And_Run(j, scene, fluid);
 }
 
 int main(int argc, char **argv) {

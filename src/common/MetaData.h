@@ -4,7 +4,7 @@
 #include <fstream>
 #include "Timer.h"
 #include <queue>
-
+#include <thread>
 namespace Meso {
 	class MetaData
 	{

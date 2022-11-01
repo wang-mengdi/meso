@@ -17,11 +17,13 @@ namespace Meso {
 			return ArrayFunc::Max_Abs<T>(F.Data());
 		}
 
+
 		template<class T, int d, DataHolder side>
 		T Linf_Norm(FaceField<T, d, side>& F) {
 			T axis_max = (T)0;
 			for (int axis = 0; axis < d; axis++) {
-				axis_max = Linf_Norm(F.Face_Reference(axis));
+				Field<T, d, side>  field = F.Face_Reference(axis);
+				axis_max = Linf_Norm(field);
 			}
 			return axis_max;
 		}

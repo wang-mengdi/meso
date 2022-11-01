@@ -18,7 +18,7 @@ void Run(json &j) {
 	MELP<d> fluid;
 	MELPInitializer<d> scene;
 	Driver driver;
-	driver.Run(j, scene, fluid);
+	driver.Initialize_And_Run(j, scene, fluid);
 }
 
 template<int d>
