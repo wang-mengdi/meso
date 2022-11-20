@@ -22,7 +22,11 @@ namespace Meso {
 			res.resize(b.size());
 			//b-Ax
 			Apply(res, x);
-			ArrayFunc::Binary_Transform(res, b, [=]__device__(T a, T b) { return b - a; }, res);
+			//ArrayFunc::Binary_Transform(res, b, [=]__device__(T a, T b) { return b - a; }, res);
+			T* res_ptr = thrust::raw_pointer_cast(res.data());
+			const T* b_ptr = thrust::raw_pointer_cast(b.data());
+			auto f = [=]__device__(T & a, const T & b) { a = b - a; };
+			GPUFunc::Cwise_Mapping_Wrapper(res_ptr, b_ptr, f, res.size());
 		}
 
 		//check if Ap and p has enough space
