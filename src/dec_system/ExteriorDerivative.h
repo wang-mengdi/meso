@@ -285,14 +285,13 @@ namespace Meso {
 		static void Apply(FaceFieldDv<T, d>& F, const FieldDv<T, d>& C)
 		{
 			Assert(!C.Empty(), "Exterior_Derivative C->F error: C is empty");
-			F.Init(C.grid, MathFunc::Zero<T>());
+			for (int axis = 0; axis < d; axis++)
+				cudaMemset(F.Data_Ptr(axis), 0, sizeof(T) * F.grid.Face_Grid(axis).Memory_Size());
 			//dim3 blocknum, blocksize;
 			//auto [block]C.grid.Get_Kernel_Dims(blocknum, blocksize);
 			const T* cell = C.Data_Ptr();
 			if constexpr (d == 2) C.grid.Exec_Kernel(&D_CoCell_Kernel2_Padding0<T>, C.grid, F.Data_Ptr(0), F.Data_Ptr(1), cell);
 			else if constexpr (d == 3) C.grid.Exec_Kernel(&D_CoCell_Kernel3_Padding0<T>, C.grid, F.Data_Ptr(0), F.Data_Ptr(1), F.Data_Ptr(2), cell);
-			//if constexpr (d == 2) D_CoCell_Kernel2_Padding0 << <blocknum, blocksize >> > (C.grid, F.Data_Ptr(0), F.Data_Ptr(1), cell);
-			//else if constexpr (d == 3) D_CoCell_Kernel3_Padding0 << <blocknum, blocksize >> > (C.grid, F.Data_Ptr(0), F.Data_Ptr(1), F.Data_Ptr(2), cell);
 		}
 
 		//input: F is a 2-form on face(3d) or 1-form on edge (2d)
@@ -300,12 +299,11 @@ namespace Meso {
 		template<class T, int d>
 		static void Apply(FieldDv<T, d>& C, const FaceFieldDv<T, d>& F) {
 			Assert(!F.Empty(), "Exterior_Derivative F->C error: F is empty");
-			C.Init(F.grid);
 			//dim3 blocknum, blocksize;
 			auto [blocknum, blocksize] = F.grid.Get_Kernel_Dims();
 			T* cell = C.Data_Ptr();
-			if constexpr (d == 2) D_Face_Kernel2_Padding0 << <blocknum, blocksize >> > (F.grid, cell, F.Data_Ptr(0), F.Data_Ptr(1));
-			else if constexpr (d == 3) D_Face_Kernel3_Padding0 << <blocknum, blocksize >> > (F.grid, cell, F.Data_Ptr(0), F.Data_Ptr(1), F.Data_Ptr(2));
+			if constexpr (d == 2) C.grid.Exec_Kernel(D_Face_Kernel2_Padding0<T>, F.grid, cell, F.Data_Ptr(0), F.Data_Ptr(1));
+			else if constexpr (d == 3)C.grid.Exec_Kernel(D_Face_Kernel3_Padding0<T>, F.grid, cell, F.Data_Ptr(0), F.Data_Ptr(1), F.Data_Ptr(2));
 		}
 	};
 }

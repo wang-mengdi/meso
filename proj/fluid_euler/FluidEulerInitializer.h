@@ -10,6 +10,7 @@
 #include "Json.h"
 #include "GridEulerFunc.h"
 #include "WaveFunc.h"
+#include "Random.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -93,11 +94,11 @@ namespace Meso {
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << 0, 0, 0, 0, 0, 0;
-			bc_val << 1, 1, 0, 0, 0, 0;
+			bc_width << 0, -1, 0, 0, 0, 0;
+			bc_val << 1, 0, 0, 0, 0, 0;
 
 			////sphere
-			VectorD center = grid.Center(); 
+			VectorD center = grid.Center();
 			center[0] = center[0] / 2;
 			real r = (real)0.1;
 			Sphere<d> sphere(center, r);
@@ -109,18 +110,21 @@ namespace Meso {
 					const VectorD pos = grid.Position(cell);
 					if (sphere.Inside(pos)) {
 						fixed(cell) = true;
+						for (int axis = 0; axis < d; axis++)
+						{
+							VectorDi left_face = cell;
+							VectorDi right_face = cell + VectorDi::Unit(axis);
+							vol(axis, left_face) = 0; vol(axis, right_face) = 0;
+							initial_vel(axis, left_face) = 0; initial_vel(axis, right_face) = 0;
+						}
 					}
 				}
 			);
 
 			grid.Exec_Faces(
 				[&](const int axis, const VectorDi face) {
-					const VectorD pos = grid.Face_Center(axis, face);
-					if (sphere.Inside(pos)) {
-						face_fixed(axis, face) = true;
-						initial_vel(axis, face) = 0.0;
-						vol(axis, face) = 0;
-					}
+					if (axis == 0 && face[0] == 0)
+						initial_vel(axis, face) += Random::Uniform(-0.01, 0.01);
 				}
 			);
 			fluid.Init(fixed, vol, face_fixed, initial_vel);
