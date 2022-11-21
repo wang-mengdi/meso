@@ -76,16 +76,26 @@ namespace Meso {
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& coarse_data, const ArrayDv<T>& fine_data) {
 			Base::Memory_Check(coarse_data, fine_data, "Restrictor::Apply error: not enough space");
-			intp_data_old = fine_data;
-			ArrayFunc::Set_Masked(intp_data_old, fine_fixed->Data(), 0);
+			
 			T* intp_ptr_old = ArrayFunc::Data(intp_data_old);
 			T* intp_ptr_new = ArrayFunc::Data(intp_data_new);
+			const T* fine_data_ptr = ArrayFunc::Data(fine_data);
+			const bool* fine_fixed_ptr = fine_fixed->Data_Ptr();
+			
+			cudaMemcpy(intp_ptr_old, fine_data_ptr, sizeof(T) * fine_data.size(), cudaMemcpyDeviceToDevice);
+
+			auto set_fixed = [=]__device__(T & a, const  bool& fixed) { if (fixed)a = 0; };
+			GPUFunc::Cwise_Mapping_Wrapper(intp_ptr_old, fine_fixed_ptr, set_fixed, fine_data.size());
+
 			for (int axis = 0; axis < d; axis++) {
 				fine_fixed->Exec_Kernel(&Restrictor_Intp_Axis_Kernel<T, d>, axis, fine_fixed->grid, intp_ptr_new, intp_ptr_old);
 				std::swap(intp_ptr_old, intp_ptr_new);
 			}
 			coarse_fixed->Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarse_fixed->grid, ArrayFunc::Data(coarse_data), fine_fixed->grid, intp_ptr_old);
-			ArrayFunc::Set_Masked(coarse_data, coarse_fixed->Data(), 0);
+		
+			T* coarse_data_ptr = ArrayFunc::Data(coarse_data);
+			const bool* coarse_fixed_ptr = coarse_fixed->Data_Ptr();
+			GPUFunc::Cwise_Mapping_Wrapper(coarse_data_ptr, coarse_fixed_ptr, set_fixed, coarse_data.size());
 			checkCudaErrors(cudaGetLastError());
 		}
 	};

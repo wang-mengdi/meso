@@ -58,7 +58,7 @@ namespace Meso {
 			//https://flat2010.github.io/2018/10/26/%E5%85%B1%E8%BD%AD%E6%A2%AF%E5%BA%A6%E6%B3%95%E9%80%9A%E4%BF%97%E8%AE%B2%E4%B9%89/
 			//https://zhuanlan.zhihu.com/p/98642663
 			//See: docs/mgpcg-notes-zh.md
-
+			
 			//Use 0 as initial guess
 			//x0=0
 			x.resize(linear_mapping->XDoF());
@@ -66,16 +66,6 @@ namespace Meso {
 			//initial residual is b
 
 			auto& r = b;
-
-			//treatment for pure neumann 
-			if (is_pure_neumann)
-			{
-				T r_mean = ArrayFunc::Mean<T, DEVICE>(r);
-				ArrayDv<T> mu;
-				mu.resize(linear_mapping->XDoF());
-				thrust::fill(mu.begin(), mu.end(), r_mean);
-				ArrayFunc::Minus(r, mu);
-			}
 
 			//rhs_norm2=r*r
 			double rhs_norm2 = ArrayFunc::Dot(r, r);
@@ -107,33 +97,20 @@ namespace Meso {
 			for (i = 0; i < max_iter; i++) {
 				//Ap_k=A*p_k
 				linear_mapping->Apply(Ap, p);
-
 				//alpha_k=gamma_k/(p_k^T*A*p_k)
 				double fp = ArrayFunc::Dot(p, Ap);//fp_k=p_k^T*A*p_k
 				double alpha = gamma / fp;
-
 				Assert(std::isnormal(alpha), "ConjugateGradient: alpha={} at iter {}", alpha, i);
-
 				//Info("iter {} alpha {}", i, alpha);
 
 				//x_{k+1} = x_k + alpha_k * p_k
 				//Axpy means y=y+a*x
 				ArrayFunc::Axpy(alpha, p, x);
-
 				//r_{k+1} = r_k - alpha_k * Ap_k
 				ArrayFunc::Axpy(-alpha, Ap, r);
 
-				//treatment for pure neumann 
-				if (is_pure_neumann)
-				{
-					T r_mean = ArrayFunc::Mean<T, DEVICE>(r);
-					ArrayDv<T> mu;
-					mu.resize(linear_mapping->XDoF());
-					thrust::fill(mu.begin(), mu.end(), r_mean);
-					ArrayFunc::Minus(r, mu);
-				}
-
 				residual_norm2 = ArrayFunc::Dot(r, r);
+
 				if (verbose) Info("ConjugateGradient iter {} norm {} against threshold {}", i, sqrt(residual_norm2), sqrt(threshold_norm2));
 				if (residual_norm2 < threshold_norm2) break;
 
@@ -144,7 +121,7 @@ namespace Meso {
 				//gamma_{k+1} = dot(r_{k+1}, z_{k+1})
 				double gamma_old = gamma;
 				gamma = ArrayFunc::Dot(z, r);
-
+		
 				//beta_{k+1} = gamma_{k+1} / gamma_k
 				double beta = gamma / gamma_old;
 
