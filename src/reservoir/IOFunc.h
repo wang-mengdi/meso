@@ -85,6 +85,34 @@ namespace Meso {
 			VTS_Add_Field(vtk_grid, vf_host, name);
 		}
 
+		template<class T, int d, DataHolder side>
+		void VTS_Add_Colocated_Vector(vtkStructuredGrid& vtk_grid, const ArrayF<Field<T, d, side>, d>& F, const std::string name) {
+			//vtk_grid must be already allocated and initialized with points
+			Typedef_VectorD(d);
+			const auto grid = F[0].grid;
+
+			ArrayF<Field<T, d>, d> F_host;
+			if constexpr (side == HOST)
+				for (int axis = 0; axis < d; axis++)
+					F_host[axis].Shallow_Copy(F[axis]);
+			else
+				for (int axis = 0; axis < d; axis++)
+					F_host[axis].Deep_Copy(F[axis]);
+
+			Field<Vector3, d> vf_host(grid);
+			vf_host.Calc_Nodes(
+				[&](const VectorDi& cell) {
+					int index = grid.Index(cell);
+					VectorD vec;
+					for (int axis = 0; axis < d; axis++)
+						vec[axis] = F_host[axis](cell);
+					return MathFunc::V<3>(vec);
+				}
+			);
+
+			VTS_Add_Field(vtk_grid, vf_host, name);
+		}
+
 		template<int d>
 		void VTS_Init_Grid(vtkStructuredGrid& vtk_grid, const Grid<d> grid) {
 			Typedef_VectorD(d);
@@ -134,7 +162,7 @@ namespace Meso {
 		}
 
 		template<class T, int d, DataHolder side>
-			void Write_VTS(const Field<T, d, side>& F, std::string file_name) {
+		void Write_VTS(const Field<T, d, side>& F, std::string file_name) {
 			Assert(!F.Empty(), "VTKFunc::Output_VTS error: empty Field");
 			Typedef_VectorD(d);
 
@@ -143,6 +171,28 @@ namespace Meso {
 			vtkNew<vtkStructuredGrid> structured_grid;
 			VTS_Init_Grid(*structured_grid, F.grid);
 			VTS_Add_Field(*structured_grid, F, "scalar");
+
+#if (VTK_MAJOR_VERSION >=6)
+			writer->SetInputData(structured_grid);
+#else
+			writer->SetInput(structured_grid);
+#endif
+
+			writer->SetFileName(file_name.c_str());
+			writer->SetDataModeToBinary();
+			writer->Write();
+		}
+		
+		template<class T, int d, DataHolder side>
+		void Write_VTS(const ArrayF<Field<T, d, side>, d>& F, std::string file_name) {
+			Assert(!F[0].Empty(), "VTKFunc::Output_VTS error: empty Colocated Vector Field");
+			Typedef_VectorD(d);
+
+			// setup VTK
+			vtkNew<vtkXMLStructuredGridWriter> writer;
+			vtkNew<vtkStructuredGrid> structured_grid;
+			VTS_Init_Grid(*structured_grid, F[0].grid);
+			VTS_Add_Colocated_Vector(*structured_grid, F, "velocity");
 
 #if (VTK_MAJOR_VERSION >=6)
 			writer->SetInputData(structured_grid);

@@ -51,6 +51,7 @@ namespace Meso {
 			//coarse_grid = _coarse;
 			fine_fixed = &_fine_fixed;
 			coarse_fixed = &_coarse_fixed;
+			temp_data.resize(XDoF());
 		}
 		//number of cols
 		virtual int XDoF() const {
@@ -65,12 +66,23 @@ namespace Meso {
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& fine, const ArrayDv<T>& coarse) {
 			Base::Memory_Check(fine, coarse, "Prolongator::Apply error: not enough memory");
-			temp_data = coarse;
-			ArrayFunc::Set_Masked(temp_data, coarse_fixed->Data(), (T)0);
+			//temp_data = coarse;
+
+			T* temp_data_ptr = ArrayFunc::Data(temp_data);
 			T* fine_ptr = ArrayFunc::Data(fine);
-			const T* coarse_ptr = ArrayFunc::Data(temp_data);
+			const T* coarse_ptr = ArrayFunc::Data(coarse);
+			const bool* coarse_fixed_ptr = coarse_fixed->Data_Ptr();
+			const bool* fine_fixed_ptr = fine_fixed->Data_Ptr();
+
+			cudaMemcpy(temp_data_ptr, coarse_ptr, sizeof(T) * coarse.size(), cudaMemcpyDeviceToDevice);
+			
+			auto set_fixed = [=]__device__(T & a, const  bool& fixed) { if (fixed)a = 0; };
+			GPUFunc::Cwise_Mapping_Wrapper(temp_data_ptr, coarse_fixed_ptr, set_fixed, temp_data.size());
+
 			fine_fixed->Exec_Kernel(&Prolongator_Intp_Kernel<T, d>, fine_fixed->grid, fine_ptr, coarse_fixed->grid, coarse_ptr);
-			ArrayFunc::Set_Masked(fine, fine_fixed->Data(), 0);
+			
+			GPUFunc::Cwise_Mapping_Wrapper(fine_ptr, fine_fixed_ptr, set_fixed, fine.size());
+			
 			checkCudaErrors(cudaGetLastError());
 		}
 	};

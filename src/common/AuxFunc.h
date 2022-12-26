@@ -504,6 +504,48 @@ namespace Meso {
 				return Vector3i(blockIdx.x * 4 + threadIdx.x, blockIdx.y * 4 + threadIdx.y, blockIdx.z * 4 + threadIdx.z);
 			}
 		}
+
+		template<typename A, typename F>
+		__global__ void Cwise_Mapping(A v1, F f, int N)
+		{
+			int i = blockIdx.x * blockDim.x + threadIdx.x;
+			if (i >= N) return;
+			f(v1[i]);
+		}
+
+		template<typename A, typename F>
+		void Cwise_Mapping_Wrapper(A v1, F f, int N)
+		{
+			Cwise_Mapping << <((N + 63) >> 6), 64 >> > (v1, f, N);
+		}
+
+		template<typename A, typename B, typename F>
+		__global__ void Cwise_Mapping(A v1, B v2, F f, int N)
+		{
+			int i = blockIdx.x * blockDim.x + threadIdx.x;
+			if (i >= N) return;
+			f(v1[i], v2[i]);
+		}
+
+		template<typename A, typename B, typename F>
+		void Cwise_Mapping_Wrapper(A v1, B v2, F f, int N)
+		{
+			Cwise_Mapping << <((N + 63) >> 6), 64 >> > (v1, v2, f, N);
+		}
+
+		template<typename A, typename B, typename C, typename F>
+		__global__ void Cwise_Mapping(A v1, B v2, C v3, F f, int N)
+		{
+			int i = blockIdx.x * blockDim.x + threadIdx.x;
+			if (i >= N) return;
+			f(v1[i], v2[i], v3[i]);
+		}
+
+		template<typename A, typename B, typename C, typename F>
+		void Cwise_Mapping_Wrapper(A v1, B v2, C v3, F f, int N)
+		{
+			Cwise_Mapping << <((N + 63) >> 6), 64 >> > (v1, v2, v3, f, N);
+		}
 	}
 
 }

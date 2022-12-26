@@ -27,7 +27,10 @@ namespace Meso {
 			omega = _omega;
 			dof = mapping->XDoF();
 			one_over_diag.resize(dof);
-			ArrayFunc::Unary_Transform(_diag, 1.0 / thrust::placeholders::_1, one_over_diag);
+			const T* diag_ptr = thrust::raw_pointer_cast(_diag.data());
+			T* one_over_diag_ptr = thrust::raw_pointer_cast(one_over_diag.data());
+			auto divide = [=]__device__(T & a, const T & b) { a = 1.0 / b; };
+			GPUFunc::Cwise_Mapping_Wrapper(one_over_diag_ptr, diag_ptr, divide, dof);
 			x_temp.resize(dof);
 		}
 		virtual int XDoF()const { return dof; }
@@ -35,20 +38,28 @@ namespace Meso {
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
 			Base::Memory_Check(x, b, "DampedJacobiSmoother::Apply error: not enough memory space");
 			if (iter_num == 0) {
-				ArrayFunc::Fill(x, (T)0);
+				T* x_ptr = thrust::raw_pointer_cast(x.data());
+				cudaMemset(x_ptr, 0, sizeof(T) * dof);
 				return;
 			}
-			ArrayFunc::Fill(x_temp, (T)0);
+			{
+				T* x_temp_ptr = thrust::raw_pointer_cast(x_temp.data());
+				cudaMemset(x_temp_ptr, 0, sizeof(T) * dof);
+			}
 			for (int i = 0; i < iter_num; i++) {
 				//b-Ax
 				mapping->Residual(x, x_temp, b);
 				//(b-Ax)/.diag
-				ArrayFunc::Multiply(x, one_over_diag);
+				T* x_ptr = thrust::raw_pointer_cast(x.data());
+				T* one_over_diag_ptr = thrust::raw_pointer_cast(one_over_diag.data());
+				auto mul = [=]__device__(T & a, T & b) { a *= b; };
+				GPUFunc::Cwise_Mapping_Wrapper(x_ptr, one_over_diag_ptr, mul, dof);
 				//x+=(b-Ax)/.diag*.omega
 				real _omega = omega;
-				ArrayFunc::Binary_Transform(x, x_temp, [=]__device__(T a, T b) { return b + a * _omega; }, x);
-
-				if (i + 1 < iter_num)ArrayFunc::Copy(x_temp, x);
+				T* x_temp_ptr = thrust::raw_pointer_cast(x_temp.data());
+				auto weighted_add = [=]__device__(T & a, T & b) { a = b + a * _omega; };
+				GPUFunc::Cwise_Mapping_Wrapper(x_ptr, x_temp_ptr, weighted_add, dof);
+				if (i + 1 < iter_num)cudaMemcpy(x_temp_ptr, x_ptr, sizeof(T) * dof, cudaMemcpyDeviceToDevice);
 			}
 			checkCudaErrors(cudaGetLastError());
 		}
