@@ -207,6 +207,10 @@ namespace Meso {
 			= Eigen::NumTraits<T1>::epsilon()) {
 			return abs(a - b) <= atol + rtol * abs(b);
 		}
+
+		inline real DegreeToRadian(real degree) { return degree / (real)180 * CommonConstants::pi; }
+
+		inline real RadianToDegree(real radian) { return radian / CommonConstants::pi * (real)180; }
 	}
 
 	namespace ArrayFunc {

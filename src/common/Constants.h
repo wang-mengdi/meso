@@ -9,6 +9,7 @@
 namespace Meso {
 	namespace CommonConstants{
 		const real pi = (real)3.14159265358979;
+		const real g = (real)9.81;
 	}
 
 	namespace PhysicalUnits {
