@@ -34,10 +34,6 @@ namespace Meso {
 			return b * b * a;
 		}
 
-		real Deg2Rad(real deg) {
-			return deg * CommonConstants::pi / 180;
-		}
-
 		template<> __host__ __device__ Vector1 V<1>(const real x, const real y, const real z) { return Vector1(x); }
 		template<> __host__ __device__ Vector2 V<2>(const real x, const real y, const real z) { return Vector2(x, y); }
 		template<> __host__ __device__ Vector3 V<3>(const real x, const real y, const real z) { return Vector3(x, y, z); }

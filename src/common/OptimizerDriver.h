@@ -32,13 +32,17 @@ namespace Meso{
 			Output(optimizer, meta_data);
 			meta_data.iter_count++;
 			meta_data.timer.Begin_Loop();
-			while (!optimizer.Is_Converged(meta_data) && meta_data.iter_count < meta_data.max_iter_num) {
+			while (!optimizer.Is_Converged(meta_data) && meta_data.iter_count <= meta_data.max_iter_num) {
 				optimizer.Optimize(meta_data);
 				if (meta_data.verbose) { Print_Iteration_Info(iter_timer, meta_data); }
 				Output(optimizer, meta_data);
 				if (meta_data.verbose) { meta_data.timer.Output_Profile(); }
 				meta_data.iter_count++;
 			}
+			bf::path timing_file = bf::path(meta_data.output_base_dir) / bf::path("timing.txt");
+			std::ofstream timing_output(timing_file.string());
+			meta_data.timer.Output_Profile(timing_output);
+			timing_output.close();
 			meta_data.data_output.close();
 			if (meta_data.iter_count== meta_data.max_iter_num) {
 				Error("Optimizer doesn't converge after {} iters!", meta_data.iter_count);

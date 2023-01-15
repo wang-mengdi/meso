@@ -86,7 +86,10 @@ namespace Meso {
 		real Power3(const real a);//a^3
 		real Power4(const real a);//a^4
 		real Power5(const real a);//a^5
-		real Deg2Rad(real deg);
+
+		inline real DegreeToRadian(real degree) { return degree / (real)180 * CommonConstants::pi; }
+
+		inline real RadianToDegree(real radian) { return radian / CommonConstants::pi * (real)180; }
 
 		////create vectors with compatible dimensions
 		template<int d> __host__ __device__ Vector<real, d> V(const real x = (real)0, const real y = (real)0, const real z = (real)0);
@@ -207,10 +210,6 @@ namespace Meso {
 			= Eigen::NumTraits<T1>::epsilon()) {
 			return abs(a - b) <= atol + rtol * abs(b);
 		}
-
-		inline real DegreeToRadian(real degree) { return degree / (real)180 * CommonConstants::pi; }
-
-		inline real RadianToDegree(real radian) { return radian / CommonConstants::pi * (real)180; }
 	}
 
 	namespace ArrayFunc {
