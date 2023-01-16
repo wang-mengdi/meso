@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
-// Poisson Linear Mapping with Fixed Mask
-// Copyright (c) (2022-), Zangyueyang Xian, Mengdi Wang
+// Poisson Linear Mapping with celltype and vol
+// Copyright (c) (2022-), Zangyueyang Xian, Mengdi Wang, Yuchen Sun
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
@@ -10,6 +10,7 @@
 #include "ExteriorDerivative.h"
 #include "AuxFunc.h"
 #include "BoundaryCondition.h"
+#include "CellType.h"
 using namespace thrust::placeholders;
 
 namespace Meso {
@@ -23,11 +24,9 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		int dof;
+		FieldDv<CellType, d> cell_type;
 		FaceFieldDv<T, d> vol;
-		//BoundaryConditionDirect<FieldDv<bool, d>> cell_bc;
-		FieldDv<bool, d> fixed;
-
-		//FieldDv<T, d> temp_cell;
+		
 		FaceFieldDv<T, d> temp_face;
 		
 		MaskedPoissonMapping() {}
@@ -36,29 +35,21 @@ namespace Meso {
 		void Allocate_Memory(const Grid<d> grid) {
 			Assert(grid.Is_Unpadded(), "MaskedPoissonMapping: invalid grid {}, padding not allowed", grid);
 			dof = grid.Memory_Size();
+			cell_type.Init(grid);
 			vol.Init(grid);
-			fixed.Init(grid);
-			//temp_cell.Init(grid);
 			temp_face.Init(grid);
 		}
+
 		void Init(const Grid<d> grid) {
 			Allocate_Memory(grid);
 		}
-		void Init(const Field<bool, d>& _fixed, const FaceField<T, d>& _vol) {
-			Assert(_fixed.grid.Indexer() == _vol.grid.Indexer(), "MaskedPoissonMapping::Init error: _fixed grid {} unequal to _vol grid {}", _fixed.grid, _vol.grid);
-			Allocate_Memory(_fixed.grid);
+
+		void Init(const Field<CellType, d>& _cell_type, const FaceField<T, d>& _vol) {
+			Assert(_cell_type.grid.Indexer() == _vol.grid.Indexer(), "MaskedPoissonMapping::Init error: _cell_type grid {} unequal to _vol grid {}", _cell_type.grid, _vol.grid);
+			Allocate_Memory(_cell_type.grid);
+			cell_type.Deep_Copy(_cell_type);
 			vol.Deep_Copy(_vol);
-			//cell_bc.Init(_fixed);
-			fixed.Deep_Copy(_fixed);
 		}
-		//template<class IFFunc, class CFunc>
-		//void Init(const Grid<d>& grid, IFFunc vol_func, CFunc is_unknown_func) {
-		//	Allocate_Memory(grid);
-		//	vol.Calc_Faces(vol_func);
-		//	fixed.Calc_Nodes(
-		//		[=](const VectorDi& cell)->bool {return !is_unknown_func(cell); }
-		//	);
-		//}
 
 		const Grid<d>& Grid(void) const {
 			return vol.grid;
@@ -72,18 +63,18 @@ namespace Meso {
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
 			Base::Memory_Check(Ap, p, "PoissonMapping::Apply error: not enough space");
 
-			auto fix = [=] __device__(T & tv, bool tfixed) { if (tfixed) tv = (T)0; };
+			auto fix = [=] __device__(T & tv, CellType type) { if (type == AIR || type == SOLID) tv = (T)0; };
 			auto multi = [=] __device__(T & tv, T tvol) { tv *= tvol; };
 			auto neg = [=]__device__(T & tv) { tv = -tv; };
-			auto cond_set = [=]__device__(T & tv1, T tv2, bool tfixed) { if (tfixed) tv1 = tv2; };
+			auto cond_set = [=]__device__(T & tv1, T tv2, CellType type) { if (type == AIR || type == SOLID) tv1 = tv2; };
 
 			Meso::Grid<d> grid = Grid();
 			T* Ap_ptr = thrust::raw_pointer_cast(Ap.data());
 			const T* p_ptr = thrust::raw_pointer_cast(p.data());
 
-			//temp_cell=p, set to 0 if fixed
+			//temp_cell=p, set to 0 for dirichlet and neumann cell
 			cudaMemcpy(Ap_ptr, p_ptr, sizeof(T)* dof, cudaMemcpyDeviceToDevice);
-			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, fixed.Data_Ptr(), fix, dof);
+			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, cell_type.Data_Ptr(), fix, dof);
 
 			//temp_face = grad(temp_cell) *. vol
 			//d(p) ----- 1-form
@@ -104,8 +95,8 @@ namespace Meso {
 			//neg div
 			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, neg, dof);
 			
-			//transfer fixed data to Ap
-			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, p_ptr, fixed.Data_Ptr(), cond_set, dof);
+			//transfer dirichlet and neumann cell data to Ap
+			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, p_ptr, cell_type.Data_Ptr(), cond_set, dof);
 		}
 	};
 

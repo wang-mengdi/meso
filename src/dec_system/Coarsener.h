@@ -8,22 +8,28 @@
 #include "Field.h"
 #include "Interpolation.h"
 #include "PoissonMapping.h"
+#include "CellType.h"
 
 namespace Meso {
 	template<int d>
-	__global__ void Coarsen_Fixed_Kernel(const GridIndexer<d> grid_coarser, bool* coarser_fixed, const Grid<d> grid_finer, const bool* finer_fixed) {
+	__global__ void Coarsen_Cell_Type_Kernel(const GridIndexer<d> grid_coarser, CellType* coarser_cell_type, const Grid<d> grid_finer, const CellType* finer_cell_type) {
 		Typedef_VectorD(d);
 		static const int dx[8] = { 0,1,0,1,0,1,0,1 };
 		static const int dy[8] = { 0,0,1,1,0,0,1,1 };
 		static const int dz[8] = { 0,0,0,0,1,1,1,1 };
 		VectorDi coarser_coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
-		bool fixed = false;//default value of fixed
+		CellType cell_type = SOLID; //lowest priority for SOLID
 		for (int s = 0; s < (1 << d); s++) {
 			VectorDi finer_coord = coarser_coord * 2 + MathFunc::Vi<d>(dx[s], dy[s], dz[s]);
-			//if (grid_finer.Valid(finer_coord)) fixed &= finer_fixed[grid_finer.Index(finer_coord)];
-			fixed |= grid_finer.Valid(finer_coord) ? finer_fixed[grid_finer.Index(finer_coord)] : true;
+			if (grid_finer.Valid(finer_coord))
+			{
+				if (finer_cell_type[grid_finer.Index(finer_coord)] == AIR)
+					cell_type = AIR;
+				else if (finer_cell_type[grid_finer.Index(finer_coord)] == FLUID && cell_type != AIR)
+					cell_type = FLUID;
+			}
 		}
-		coarser_fixed[grid_coarser.Index(coarser_coord)] = fixed;
+		coarser_cell_type[grid_coarser.Index(coarser_coord)] = cell_type;
 	}
 
 	template<class T, int d>
@@ -34,7 +40,6 @@ namespace Meso {
 		VectorD finer_frac = VectorD::Ones() * 0.5;
 		finer_frac[axis] = 0;
 		coarser_data[coarser_grid.Index(coarser_face)] = IntpLinearPadding0::Value(finer_grid, finer_data, finer_face, finer_frac);
-		//coarser_data[coarser_grid.Index(coarser_face)] = Interpolation::Linear_Intp_Padding0(finer_grid, finer_data, finer_face, finer_frac);
 	}
 
 	template<int d>
@@ -49,9 +54,9 @@ namespace Meso {
 			const auto& fine_grid = fine_poisson.Grid();
 						
 			//fill fixed
-			bool* coarse_fixed = coarse_poisson.fixed.Data_Ptr();
-			const bool* fine_fixed = fine_poisson.fixed.Data_Ptr();
-			coarse_grid.Exec_Kernel(&Coarsen_Fixed_Kernel<d>, coarse_grid, coarse_fixed, fine_grid, fine_fixed);
+			bool* coarse_cell_type = coarse_poisson.cell_type.Data_Ptr();
+			const bool* fine_cell_type = fine_poisson.cell_type.Data_Ptr();
+			coarse_grid.Exec_Kernel(&Coarsen_Cell_Type_Kernel<d>, coarse_grid, coarse_cell_type, fine_grid, fine_cell_type);
 
 			//fill vol
 			for (int axis = 0; axis < d; axis++) {

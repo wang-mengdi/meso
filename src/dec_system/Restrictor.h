@@ -7,6 +7,7 @@
 #include "LinearMapping.h"
 #include "Grid.h"
 #include "AuxFunc.h"
+#include "CellType.h"
 
 namespace Meso {
 
@@ -45,32 +46,32 @@ namespace Meso {
 	class RestrictorIntp : public LinearMapping<T> {
 	public:
 		using Base=LinearMapping<T>;
-		const FieldDv<bool, d>* coarse_fixed;
-		const FieldDv<bool, d>* fine_fixed;
+		const FieldDv<CellType, d>* coarse_cell_type;
+		const FieldDv<CellType, d>* fine_cell_type;
 		ArrayDv<T> intp_data_old;
 		ArrayDv<T> intp_data_new;
 
 		RestrictorIntp() {}
-		RestrictorIntp(const FieldDv<bool, d>& coarse_fixed, const FieldDv<bool, d>& fine_fixed) {
-			Init(coarse_fixed, fine_fixed);
+		RestrictorIntp(const FieldDv<CellType, d>& coarse_cell_type, const FieldDv<CellType, d>& fine_cell_type) {
+			Init(coarse_cell_type, fine_cell_type);
 		}
 
-		void Init(const FieldDv<bool, d>& _coarse_fixed, const FieldDv<bool, d>& _fine_fixed) {
-			Assert(_coarse_fixed.grid.Is_Unpadded(), "RestrictorIntp: _coarser {} invalid, must be unpadded", _coarse_fixed.grid);
-			Assert(_fine_fixed.grid.Is_Unpadded(), "RestrictorIntp: _finer {} invalid, must be unpadded", _fine_fixed.grid);
-			coarse_fixed = &_coarse_fixed, fine_fixed = &_fine_fixed;
+		void Init(const FieldDv<CellType, d>& _coarse_cell_type, const FieldDv<CellType, d>& _fine_cell_type) {
+			Assert(_coarse_cell_type.grid.Is_Unpadded(), "RestrictorIntp: _coarser {} invalid, must be unpadded", _coarse_cell_type.grid);
+			Assert(_fine_cell_type.grid.Is_Unpadded(), "RestrictorIntp: _finer {} invalid, must be unpadded", _fine_cell_type.grid);
+			coarse_cell_type = &_coarse_cell_type, fine_cell_type = &_fine_type;
 			intp_data_old.resize(XDoF());
 			intp_data_new.resize(XDoF());
 		}
 
 		//number of cols
 		virtual int XDoF() const {
-			return fine_fixed->grid.Counts().prod();
+			return fine_cell_type->grid.Counts().prod();
 		}
 
 		//number of rows
 		virtual int YDoF() const {
-			return coarse_fixed->grid.Counts().prod();
+			return coarse_cell_type->grid.Counts().prod();
 		}
 
 		//input p, get Ap
@@ -80,22 +81,22 @@ namespace Meso {
 			T* intp_ptr_old = ArrayFunc::Data(intp_data_old);
 			T* intp_ptr_new = ArrayFunc::Data(intp_data_new);
 			const T* fine_data_ptr = ArrayFunc::Data(fine_data);
-			const bool* fine_fixed_ptr = fine_fixed->Data_Ptr();
+			const bool* fine_cell_type_ptr = fine_cell_type->Data_Ptr();
 			
 			cudaMemcpy(intp_ptr_old, fine_data_ptr, sizeof(T) * fine_data.size(), cudaMemcpyDeviceToDevice);
 
-			auto set_fixed = [=]__device__(T & a, const  bool& fixed) { if (fixed)a = 0; };
-			GPUFunc::Cwise_Mapping_Wrapper(intp_ptr_old, fine_fixed_ptr, set_fixed, fine_data.size());
+			auto set_fixed = [=]__device__(T & a, const  CellType& type) { if (type == AIR || type == SOLID)a = 0; };
+			GPUFunc::Cwise_Mapping_Wrapper(intp_ptr_old, fine_cell_type_ptr, set_fixed, fine_data.size());
 
 			for (int axis = 0; axis < d; axis++) {
-				fine_fixed->Exec_Kernel(&Restrictor_Intp_Axis_Kernel<T, d>, axis, fine_fixed->grid, intp_ptr_new, intp_ptr_old);
+				fine_cell_type->Exec_Kernel(&Restrictor_Intp_Axis_Kernel<T, d>, axis, fine_cell_type->grid, intp_ptr_new, intp_ptr_old);
 				std::swap(intp_ptr_old, intp_ptr_new);
 			}
-			coarse_fixed->Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarse_fixed->grid, ArrayFunc::Data(coarse_data), fine_fixed->grid, intp_ptr_old);
+			coarse_cell_type->Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarse_cell_type->grid, ArrayFunc::Data(coarse_data), fine_cell_type->grid, intp_ptr_old);
 		
 			T* coarse_data_ptr = ArrayFunc::Data(coarse_data);
-			const bool* coarse_fixed_ptr = coarse_fixed->Data_Ptr();
-			GPUFunc::Cwise_Mapping_Wrapper(coarse_data_ptr, coarse_fixed_ptr, set_fixed, coarse_data.size());
+			const bool* coarse_cell_type_ptr = coarse_cell_type->Data_Ptr();
+			GPUFunc::Cwise_Mapping_Wrapper(coarse_data_ptr, coarse_cell_type_ptr, set_fixed, coarse_data.size());
 			checkCudaErrors(cudaGetLastError());
 		}
 	};
