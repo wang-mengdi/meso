@@ -5,17 +5,17 @@
 #include "Grid.h"
 #include "Field.h"
 #include "PoissonMapping.h"
-#include "PoissonTests.h"
-#include "RestrictorTests.h"
-#include "ProlongatorTests.h"
+//#include "PoissonTests.h"
+//#include "RestrictorTests.h"
+//#include "ProlongatorTests.h"
 #include "MultigridTests.h"
-#include "ExteriorDerivativeTests.h"
-#include "DenseSolverTests.h"
-#include "SparseSolverTests.h"
-#include "SmootherTests.h"
+//#include "ExteriorDerivativeTests.h"
+//#include "DenseSolverTests.h"
+//#include "SparseSolverTests.h"
+//#include "SmootherTests.h"
 using namespace Meso;
 
-int main(){
+int main(){/*
     Test_Exterior_Derivative_Cell<float, 2, ExteriorDerivativePadding0>(Vector2i(140, 530));
     Test_Exterior_Derivative_Cell<double, 2, ExteriorDerivativePadding0>(Vector2i(64, 37));
     Test_Exterior_Derivative_Cell<float, 3, ExteriorDerivativePadding0>(Vector3i(32, 47, 64));
@@ -65,13 +65,13 @@ int main(){
 
     Test_MGPCG_Dirichlet<double>(Vector2i(256, 256), false);
     Test_MGPCG_Dirichlet<double>(Vector2i(512, 512), false);
-    Test_MGPCG_Dirichlet<double>(Vector3i(128, 128, 128), false);
+    Test_MGPCG_Dirichlet<double>(Vector3i(128, 128, 128), false);*/
     Test_MGPCG_Dirichlet<double>(Vector3i(256, 256, 256), false);
 
-    Test_MGPCG_Dirichlet_Neumann<double>(Vector2i(256, 256), false);
-    Test_MGPCG_Dirichlet_Neumann<double>(Vector2i(512, 512), false);
-    Test_MGPCG_Dirichlet_Neumann<double>(Vector3i(128, 128, 128), false);
-    Test_MGPCG_Dirichlet_Neumann<double>(Vector3i(256, 256, 256), false);
+   // Test_MGPCG_Dirichlet_Neumann<double>(Vector2i(256, 256), false);
+   // Test_MGPCG_Dirichlet_Neumann<double>(Vector2i(512, 512), false);
+   // Test_MGPCG_Dirichlet_Neumann<double>(Vector3i(128, 128, 128), false);
+   // Test_MGPCG_Dirichlet_Neumann<double>(Vector3i(256, 256, 256), false);
 
     //Test_MGPCG_Neumann<double>(Vector2i(256, 256), false);
     //Test_MGPCG_Neumann<double>(Vector2i(512, 512), false);

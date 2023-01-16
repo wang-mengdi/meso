@@ -54,8 +54,8 @@ namespace Meso {
 			const auto& fine_grid = fine_poisson.Grid();
 						
 			//fill fixed
-			bool* coarse_cell_type = coarse_poisson.cell_type.Data_Ptr();
-			const bool* fine_cell_type = fine_poisson.cell_type.Data_Ptr();
+			CellType* coarse_cell_type = coarse_poisson.cell_type.Data_Ptr();
+			const CellType* fine_cell_type = fine_poisson.cell_type.Data_Ptr();
 			coarse_grid.Exec_Kernel(&Coarsen_Cell_Type_Kernel<d>, coarse_grid, coarse_cell_type, fine_grid, fine_cell_type);
 
 			//fill vol

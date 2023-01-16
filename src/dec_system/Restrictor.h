@@ -59,7 +59,7 @@ namespace Meso {
 		void Init(const FieldDv<CellType, d>& _coarse_cell_type, const FieldDv<CellType, d>& _fine_cell_type) {
 			Assert(_coarse_cell_type.grid.Is_Unpadded(), "RestrictorIntp: _coarser {} invalid, must be unpadded", _coarse_cell_type.grid);
 			Assert(_fine_cell_type.grid.Is_Unpadded(), "RestrictorIntp: _finer {} invalid, must be unpadded", _fine_cell_type.grid);
-			coarse_cell_type = &_coarse_cell_type, fine_cell_type = &_fine_type;
+			coarse_cell_type = &_coarse_cell_type, fine_cell_type = &_fine_cell_type;
 			intp_data_old.resize(XDoF());
 			intp_data_new.resize(XDoF());
 		}
@@ -81,7 +81,7 @@ namespace Meso {
 			T* intp_ptr_old = ArrayFunc::Data(intp_data_old);
 			T* intp_ptr_new = ArrayFunc::Data(intp_data_new);
 			const T* fine_data_ptr = ArrayFunc::Data(fine_data);
-			const bool* fine_cell_type_ptr = fine_cell_type->Data_Ptr();
+			const CellType* fine_cell_type_ptr = fine_cell_type->Data_Ptr();
 			
 			cudaMemcpy(intp_ptr_old, fine_data_ptr, sizeof(T) * fine_data.size(), cudaMemcpyDeviceToDevice);
 
@@ -95,7 +95,7 @@ namespace Meso {
 			coarse_cell_type->Exec_Kernel(&Restrictor_Intp_Coarser_Kernel<T, d>, coarse_cell_type->grid, ArrayFunc::Data(coarse_data), fine_cell_type->grid, intp_ptr_old);
 		
 			T* coarse_data_ptr = ArrayFunc::Data(coarse_data);
-			const bool* coarse_cell_type_ptr = coarse_cell_type->Data_Ptr();
+			const CellType* coarse_cell_type_ptr = coarse_cell_type->Data_Ptr();
 			GPUFunc::Cwise_Mapping_Wrapper(coarse_data_ptr, coarse_cell_type_ptr, set_fixed, coarse_data.size());
 			checkCudaErrors(cudaGetLastError());
 		}

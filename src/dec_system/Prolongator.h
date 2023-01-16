@@ -37,51 +37,48 @@ namespace Meso {
 	public:
 		using Base=LinearMapping<T>;
 		//GridIndexer<d> fine_grid, coarse_grid;
-		const FieldDv<bool, d>* fine_fixed;
-		const FieldDv<bool, d>* coarse_fixed;
+		const FieldDv<CellType, d>* fine_cell_type;
+		const FieldDv<CellType, d>* coarse_cell_type;
 		ArrayDv<T> temp_data;
 
 		ProlongatorIntp() {}
-		ProlongatorIntp(const FieldDv<bool, d>& _fine_fixed, const FieldDv<bool, d>& _coarse_fixed) { Init(_fine_fixed, _coarse_fixed); }
+		ProlongatorIntp(const FieldDv<CellType, d>& _fine_cell_type, const FieldDv<CellType, d>& _coarse_cell_type) { Init(_fine_cell_type, _coarse_cell_type); }
 
-		void Init(const FieldDv<bool, d>& _fine_fixed, const FieldDv<bool, d>& _coarse_fixed) {
-			Assert(_fine_fixed.grid.Is_Unpadded(), "ProlongatorIntp: _fine {} invalid, must be unpadded", _fine_fixed.grid);
-			Assert(_coarse_fixed.grid.Is_Unpadded(), "ProlongatorIntp: _coarse {} invalid, must be unpadded", _coarse_fixed.grid);
-			//fine_grid = _fine;
-			//coarse_grid = _coarse;
-			fine_fixed = &_fine_fixed;
-			coarse_fixed = &_coarse_fixed;
+		void Init(const FieldDv<CellType, d>& _fine_cell_type, const FieldDv<CellType, d>& _coarse_cell_type) {
+			Assert(_fine_cell_type.grid.Is_Unpadded(), "ProlongatorIntp: _fine {} invalid, must be unpadded", _fine_cell_type.grid);
+			Assert(_coarse_cell_type.grid.Is_Unpadded(), "ProlongatorIntp: _coarse {} invalid, must be unpadded", _coarse_cell_type.grid);
+			fine_cell_type = &_fine_cell_type;
+			coarse_cell_type = &_coarse_cell_type;
 			temp_data.resize(XDoF());
 		}
 		//number of cols
 		virtual int XDoF() const {
-			return coarse_fixed->grid.Counts().prod();
+			return coarse_cell_type->grid.Counts().prod();
 		}
 
 		//number of rows
 		virtual int YDoF() const {
-			return fine_fixed->grid.Counts().prod();
+			return fine_cell_type->grid.Counts().prod();
 		}
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& fine, const ArrayDv<T>& coarse) {
 			Base::Memory_Check(fine, coarse, "Prolongator::Apply error: not enough memory");
-			//temp_data = coarse;
 
 			T* temp_data_ptr = ArrayFunc::Data(temp_data);
 			T* fine_ptr = ArrayFunc::Data(fine);
 			const T* coarse_ptr = ArrayFunc::Data(coarse);
-			const bool* coarse_fixed_ptr = coarse_fixed->Data_Ptr();
-			const bool* fine_fixed_ptr = fine_fixed->Data_Ptr();
+			const CellType* coarse_cell_type_ptr = coarse_cell_type->Data_Ptr();
+			const CellType* fine_cell_type_ptr = fine_cell_type->Data_Ptr();
 
 			cudaMemcpy(temp_data_ptr, coarse_ptr, sizeof(T) * coarse.size(), cudaMemcpyDeviceToDevice);
 			
-			auto set_fixed = [=]__device__(T & a, const  bool& fixed) { if (fixed)a = 0; };
-			GPUFunc::Cwise_Mapping_Wrapper(temp_data_ptr, coarse_fixed_ptr, set_fixed, temp_data.size());
+			auto set_fixed = [=]__device__(T & a, const  CellType& type) { if (type == AIR || type == SOLID) a = 0; };
+			GPUFunc::Cwise_Mapping_Wrapper(temp_data_ptr, coarse_cell_type_ptr, set_fixed, temp_data.size());
 
-			fine_fixed->Exec_Kernel(&Prolongator_Intp_Kernel<T, d>, fine_fixed->grid, fine_ptr, coarse_fixed->grid, coarse_ptr);
+			fine_cell_type->Exec_Kernel(&Prolongator_Intp_Kernel<T, d>, fine_cell_type->grid, fine_ptr, coarse_cell_type->grid, coarse_ptr);
 			
-			GPUFunc::Cwise_Mapping_Wrapper(fine_ptr, fine_fixed_ptr, set_fixed, fine.size());
+			GPUFunc::Cwise_Mapping_Wrapper(fine_ptr, fine_cell_type_ptr, set_fixed, fine.size());
 			
 			checkCudaErrors(cudaGetLastError());
 		}

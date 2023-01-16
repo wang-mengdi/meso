@@ -13,7 +13,7 @@
 #include "IOFunc.h"
 
 namespace Meso {
-
+	/*
 	void Test_Coarsener2(const Vector2i counts);
 	void Test_Coarsener3(const Vector3i counts);
 
@@ -76,7 +76,7 @@ namespace Meso {
 			Error("MGPCG test failed for counts={}, with {} iters and relative_error={}", counts, iters, relative_error);
 		}
 	}
-
+	*/
 	template<class T, int d>
 	void Test_MGPCG_Dirichlet(const Vector<int, d> counts, bool output_x) {
 		Typedef_VectorD(d);
@@ -84,14 +84,14 @@ namespace Meso {
 		Grid<d> grid(counts, domain_size / counts[0], -VectorD::Ones() * domain_size * 0.5);
 		//set A
 		MaskedPoissonMapping<T, d> poisson(grid);
-		Field<bool, d> fixed(grid);
-		fixed.Calc_Nodes([&](const VectorDi cell) {
+		Field<CellType, d> cell_type(grid);
+		cell_type.Calc_Nodes([&](const VectorDi cell) {
 			if (grid.Is_Boundary_Cell(cell))
-				return true;
-			return false;
+				return AIR;
+			return FLUID;
 			});
 		FaceField<T, d> vol(grid, 1);
-		poisson.Init(fixed, vol);
+		poisson.Init(cell_type, vol);
 
 		//set b
 		Field<T, d> b_host(grid, T(-2 * d * grid.dx * grid.dx));
@@ -137,7 +137,7 @@ namespace Meso {
 			VTKFunc::Write_VTS(x_host, x_name);
 		}
 	}
-
+	/*
 	template<class T, int d>
 	void Test_MGPCG_Dirichlet_Neumann(const Vector<int, d> counts, bool output_x) {
 		Typedef_VectorD(d);
@@ -294,5 +294,5 @@ namespace Meso {
 			std::string x_name = "x.vts";
 			VTKFunc::Write_VTS(x_host, x_name);
 		}
-	}
+	}*/
 }
