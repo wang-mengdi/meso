@@ -143,9 +143,9 @@ namespace Meso {
 				PoissonPtr poisson_fine = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i - 1]);
 				PoissonPtr poisson_coarse = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
 				Coarsener<d>::Apply(*poisson_coarse, *poisson_fine);
-				prolongators[i - 1] = std::make_shared<Prolongator>(poisson_fine->fixed, poisson_coarse->fixed);
+				prolongators[i - 1] = std::make_shared<Prolongator>(poisson_fine->cell_type, poisson_coarse->cell_type);
 				//i is fine and i+1 is coarse
-				restrictors[i - 1] = std::make_shared<Restrictor>(poisson_coarse->fixed, poisson_fine->fixed);
+				restrictors[i - 1] = std::make_shared<Restrictor>(poisson_coarse->cell_type, poisson_fine->cell_type);
 			}
 
 
