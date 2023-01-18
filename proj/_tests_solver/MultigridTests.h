@@ -246,21 +246,21 @@ namespace Meso {
 	//		VTKFunc::Write_VTS(x_host, x_name);
 	//	}
 	//}
-
+	*/
 	template<class T, int d>
 	void Test_MGPCG_Neumann(const Vector<int, d> counts, bool output_x) {
 		Typedef_VectorD(d);
 		Grid<d> grid(counts, (real)1.0 / counts[0]);
 		//set A
 		MaskedPoissonMapping<T, d> poisson(grid);
-		Field<bool, d> fixed(grid, false);
+		Field<CellType, d> cell_type(grid, FLUID);
 		FaceField<T, d> vol(grid);
 		vol.Calc_Faces([&](const int axis, const VectorDi face) {
 			if (face[axis] == 0 || face[axis] == grid.Counts()[axis])
 				return 0;
 			return 1;
 			});
-		poisson.Init(fixed, vol);
+		poisson.Init(cell_type, vol);
 
 		//set b
 		Field<T, d> b_host(grid);
@@ -279,11 +279,10 @@ namespace Meso {
 		//solve
 		FieldDv<T, d> b_dev = b_host;
 		FieldDv<T, d> x_dev(grid, 0);
-		ConjugateGradient<T> MGPCG;
+		ConjugateGradient<T, d> MGPCG;
 		VCycleMultigridIntp<T, d> precond;
-		precond.Init_Poisson(poisson, 2, 2);
-		MGPCG.Init(&poisson, &precond, false, -1, 1e-5);
-		MGPCG.is_pure_neumann = true;
+		precond.Init_Poisson(poisson);
+		MGPCG.Init(&poisson, &precond, false, -1, 1e-5, true);
 		Timer timer;
 		auto [iters, relative_error] = MGPCG.Solve(x_dev.Data(), b_dev.Data());
 		Pass("MGPCG_Neumann test passed in {}s for counts={}, with {} iters and relative_error={}", timer.Lap_Time(), counts, iters, relative_error);
@@ -294,5 +293,5 @@ namespace Meso {
 			std::string x_name = "x.vts";
 			VTKFunc::Write_VTS(x_host, x_name);
 		}
-	}*/
+	}
 }

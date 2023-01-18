@@ -16,8 +16,9 @@ namespace Meso {
 		real relative_tolerance = 1e-5;
 		bool verbose = true;
 		bool pure_neumann = false;
+		int dof;
 		//inner variables
-		ArrayDv<T> p, Ap, z;
+		ArrayDv<T> p, Ap, z, mu;
 
 
 		cublasHandle_t cublasHandle = nullptr;
@@ -44,10 +45,12 @@ namespace Meso {
 				"[ConjugateGradient] preconditioner size must be equal to matrix size"
 			);
 
-			int dof = poisson_ptr->XDoF();
+			dof = poisson_ptr->XDoF();
 			p.resize(dof);
 			Ap.resize(dof);
 			z.resize(dof);
+			if (pure_neumann)
+				mu.resize(dof);
 
 			if (cublasHandle) cublasDestroy(cublasHandle);
 			cublasCreate(&cublasHandle);
@@ -62,7 +65,7 @@ namespace Meso {
 			
 			//Use 0 as initial guess
 			//x0=0
-			x.resize(poisson_ptr->XDoF());
+			x.resize(dof);
 			thrust::fill(x.begin(), x.end(), 0);
 			//initial residual is b
 
@@ -82,6 +85,8 @@ namespace Meso {
 			double threshold_norm2 = relative_tolerance * relative_tolerance * rhs_norm2;
 			threshold_norm2 = std::max(threshold_norm2, std::numeric_limits<double>::min());
 
+			if (pure_neumann)
+				Minus_Average(r, poisson_ptr->cell_type, mu, dof);
 
 			////z0=Minv*r0
 			if (preconditioner) preconditioner->Apply(z, r);
@@ -115,6 +120,9 @@ namespace Meso {
 				if (verbose) Info("ConjugateGradient iter {} norm {} against threshold {}", i, sqrt(residual_norm2), sqrt(threshold_norm2));
 				if (residual_norm2 < threshold_norm2) break;
 
+				if (pure_neumann)
+					Minus_Average(r, poisson_ptr->cell_type, mu, dof);
+
 				//z_{k+1} = Minv * r_{k+1}
 				if (preconditioner) preconditioner->Apply(z, r);
 				else ArrayFunc::Copy(z, r);
@@ -134,6 +142,18 @@ namespace Meso {
 			//return (iters,relative_error)
 			return std::make_tuple(i, (real)sqrt(residual_norm2 / rhs_norm2));
 		}
-	};
 
+		void Minus_Average(ArrayDv<T>& _r, const FieldDv<CellType, d>& _cell_type, ArrayDv<T>& _mu, const int _dof)
+		{
+			
+			T sum = ArrayFunc::Sum<T, DEVICE>(_r);
+			int fluid_cnt = ArrayFunc::Count<CellType, DEVICE>(*(_cell_type.data), FLUID);
+			T val = sum / fluid_cnt;
+			auto cond_set = [val]__device__(T & tv1, const CellType type) { if (type == FLUID) tv1 = val; else tv1 = 0; };
+			T* mu_ptr = thrust::raw_pointer_cast(_mu.data());
+			const CellType* cell_type_ptr = _cell_type.Data_Ptr();
+			GPUFunc::Cwise_Mapping_Wrapper(mu_ptr, cell_type_ptr, cond_set, _dof);
+			//ArrayFunc::Minus(_r, _mu);
+		}
+	};
 }
