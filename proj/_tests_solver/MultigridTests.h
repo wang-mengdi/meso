@@ -84,11 +84,11 @@ namespace Meso {
 		Grid<d> grid(counts, domain_size / counts[0], -VectorD::Ones() * domain_size * 0.5);
 		//set A
 		MaskedPoissonMapping<T, d> poisson(grid);
-		Field<CellType, d> cell_type(grid);
+		Field<unsigned char, d> cell_type(grid);
 		cell_type.Calc_Nodes([&](const VectorDi cell) {
 			if (grid.Is_Boundary_Cell(cell))
-				return AIR;
-			return FLUID;
+				return 1;
+			return 0;
 			});
 		FaceField<T, d> vol(grid, 1);
 		poisson.Init(cell_type, vol);
@@ -253,7 +253,7 @@ namespace Meso {
 		Grid<d> grid(counts, (real)1.0 / counts[0]);
 		//set A
 		MaskedPoissonMapping<T, d> poisson(grid);
-		Field<CellType, d> cell_type(grid, FLUID);
+		Field<unsigned char, d> cell_type(grid, 0);
 		FaceField<T, d> vol(grid);
 		vol.Calc_Faces([&](const int axis, const VectorDi face) {
 			if (face[axis] == 0 || face[axis] == grid.Counts()[axis])

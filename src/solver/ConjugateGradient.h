@@ -143,17 +143,17 @@ namespace Meso {
 			return std::make_tuple(i, (real)sqrt(residual_norm2 / rhs_norm2));
 		}
 
-		void Minus_Average(ArrayDv<T>& _r, const FieldDv<CellType, d>& _cell_type, ArrayDv<T>& _mu, const int _dof)
+		void Minus_Average(ArrayDv<T>& _r, const FieldDv<unsigned char, d>& _cell_type, ArrayDv<T>& _mu, const int _dof)
 		{
 			
 			T sum = ArrayFunc::Sum<T, DEVICE>(_r);
-			int fluid_cnt = ArrayFunc::Count<CellType, DEVICE>(*(_cell_type.data), FLUID);
+			int fluid_cnt = ArrayFunc::Count<unsigned char, DEVICE>(*(_cell_type.data), 0);
 			T val = sum / fluid_cnt;
-			auto cond_set = [val]__device__(T & tv1, const CellType type) { if (type == FLUID) tv1 = val; else tv1 = 0; };
+			auto cond_set = [val]__device__(T & tv1, const unsigned char type) { if (type == 0) tv1 = val; else tv1 = 0; };
 			T* mu_ptr = thrust::raw_pointer_cast(_mu.data());
-			const CellType* cell_type_ptr = _cell_type.Data_Ptr();
+			const unsigned char* cell_type_ptr = _cell_type.Data_Ptr();
 			GPUFunc::Cwise_Mapping_Wrapper(mu_ptr, cell_type_ptr, cond_set, _dof);
-			//ArrayFunc::Minus(_r, _mu);
+			ArrayFunc::Minus(_r, _mu);
 		}
 	};
 }

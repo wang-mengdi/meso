@@ -10,7 +10,6 @@
 #include "ExteriorDerivative.h"
 #include "AuxFunc.h"
 #include "BoundaryCondition.h"
-#include "CellType.h"
 using namespace thrust::placeholders;
 
 namespace Meso {
@@ -24,9 +23,11 @@ namespace Meso {
 		Typedef_VectorD(d);
 	public:
 		int dof;
-		FieldDv<CellType, d> cell_type;
+		FieldDv<unsigned char, d> cell_type;
 		FaceFieldDv<T, d> vol;
-		
+		ArrayDv<bool> is_boundary_tile;
+		ArrayDv<int> boundary_tiles;
+
 		FaceFieldDv<T, d> temp_face;
 		
 		MaskedPoissonMapping() {}
@@ -44,11 +45,12 @@ namespace Meso {
 			Allocate_Memory(grid);
 		}
 
-		void Init(const Field<CellType, d>& _cell_type, const FaceField<T, d>& _vol) {
+		void Init(const Field<unsigned char, d>& _cell_type, const FaceField<T, d>& _vol) {
 			Assert(_cell_type.grid.Indexer() == _vol.grid.Indexer(), "MaskedPoissonMapping::Init error: _cell_type grid {} unequal to _vol grid {}", _cell_type.grid, _vol.grid);
 			Allocate_Memory(_cell_type.grid);
 			cell_type.Deep_Copy(_cell_type);
 			vol.Deep_Copy(_vol);
+			
 		}
 
 		const Grid<d>& Grid(void) const {
@@ -63,10 +65,10 @@ namespace Meso {
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
 			Base::Memory_Check(Ap, p, "PoissonMapping::Apply error: not enough space");
 
-			auto fix = [=] __device__(T & tv, CellType type) { if (type == AIR || type == SOLID) tv = (T)0; };
+			auto fix = [=] __device__(T & tv,  unsigned char type) { if (type == 1 || type == 2) tv = (T)0; };
 			auto multi = [=] __device__(T & tv, T tvol) { tv *= tvol; };
 			auto neg = [=]__device__(T & tv) { tv = -tv; };
-			auto cond_set = [=]__device__(T & tv1, T tv2, CellType type) { if (type == AIR || type == SOLID) tv1 = tv2; };
+			auto cond_set = [=]__device__(T & tv1, T tv2, unsigned char type) { if (type == 1 || type == 2) tv1 = tv2; };
 
 			Meso::Grid<d> grid = Grid();
 			T* Ap_ptr = thrust::raw_pointer_cast(Ap.data());
@@ -98,6 +100,8 @@ namespace Meso {
 			//transfer dirichlet and neumann cell data to Ap
 			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, p_ptr, cell_type.Data_Ptr(), cond_set, dof);
 		}
+
+
 	};
 
 }

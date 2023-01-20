@@ -37,14 +37,14 @@ namespace Meso {
 	public:
 		using Base=LinearMapping<T>;
 		//GridIndexer<d> fine_grid, coarse_grid;
-		const FieldDv<CellType, d>* fine_cell_type;
-		const FieldDv<CellType, d>* coarse_cell_type;
+		const FieldDv<unsigned char, d>* fine_cell_type;
+		const FieldDv<unsigned char, d>* coarse_cell_type;
 		ArrayDv<T> temp_data;
 
 		ProlongatorIntp() {}
-		ProlongatorIntp(const FieldDv<CellType, d>& _fine_cell_type, const FieldDv<CellType, d>& _coarse_cell_type) { Init(_fine_cell_type, _coarse_cell_type); }
+		ProlongatorIntp(const FieldDv<unsigned char, d>& _fine_cell_type, const FieldDv<unsigned char, d>& _coarse_cell_type) { Init(_fine_cell_type, _coarse_cell_type); }
 
-		void Init(const FieldDv<CellType, d>& _fine_cell_type, const FieldDv<CellType, d>& _coarse_cell_type) {
+		void Init(const FieldDv<unsigned char, d>& _fine_cell_type, const FieldDv<unsigned char, d>& _coarse_cell_type) {
 			Assert(_fine_cell_type.grid.Is_Unpadded(), "ProlongatorIntp: _fine {} invalid, must be unpadded", _fine_cell_type.grid);
 			Assert(_coarse_cell_type.grid.Is_Unpadded(), "ProlongatorIntp: _coarse {} invalid, must be unpadded", _coarse_cell_type.grid);
 			fine_cell_type = &_fine_cell_type;
@@ -68,12 +68,12 @@ namespace Meso {
 			T* temp_data_ptr = ArrayFunc::Data(temp_data);
 			T* fine_ptr = ArrayFunc::Data(fine);
 			const T* coarse_ptr = ArrayFunc::Data(coarse);
-			const CellType* coarse_cell_type_ptr = coarse_cell_type->Data_Ptr();
-			const CellType* fine_cell_type_ptr = fine_cell_type->Data_Ptr();
+			const unsigned char* coarse_cell_type_ptr = coarse_cell_type->Data_Ptr();
+			const unsigned char* fine_cell_type_ptr = fine_cell_type->Data_Ptr();
 
 			cudaMemcpy(temp_data_ptr, coarse_ptr, sizeof(T) * coarse.size(), cudaMemcpyDeviceToDevice);
 			
-			auto set_fixed = [=]__device__(T & a, const  CellType& type) { if (type == AIR || type == SOLID) a = 0; };
+			auto set_fixed = [=]__device__(T & a, const  unsigned char& type) { if (type == 1 || type == 2) a = 0; };
 			GPUFunc::Cwise_Mapping_Wrapper(temp_data_ptr, coarse_cell_type_ptr, set_fixed, temp_data.size());
 
 			fine_cell_type->Exec_Kernel(&Prolongator_Intp_Kernel<T, d>, fine_cell_type->grid, fine_ptr, coarse_cell_type->grid, coarse_ptr);

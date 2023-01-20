@@ -11,7 +11,6 @@
 #include "Restrictor.h"
 #include "Prolongator.h"
 #include "DampedJacobiSmoother.h"
-#include "GridGSSmoother.h"
 #include "LUDirectSolver.h"
 #include "SparseDirectSolver.h"
 #include "Timer.h"
