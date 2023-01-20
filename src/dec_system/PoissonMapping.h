@@ -11,8 +11,77 @@
 #include "AuxFunc.h"
 #include "BoundaryCondition.h"
 using namespace thrust::placeholders;
-
 namespace Meso {
+	template<int d>
+	__global__ void Refresh_Boundary(const unsigned char _cur_dis, const Grid<d> _grid, unsigned char* _cell_type_ptr)
+	{
+		Typedef_VectorD(d);
+		VectorDi coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		int idx = _grid.Index(coord);
+		unsigned char type = _cell_type_ptr[idx] & 0b11;
+		if (type != 0)
+			return;
+		if (_cur_dis == 0)
+			for (int axis = 0; axis < d; axis++)
+				for (int side = -1; side <= 1; side += 2)
+				{
+					VectorDi  nb_coord = coord + VectorDi::Unit(axis) * side;
+					if (_grid.Valid(nb_coord))
+					{
+						int nb_idx = _grid.Index(nb_coord);
+						unsigned char nb_type = _cell_type_ptr[nb_idx] & 0b11;
+						if (nb_type == 1 || nb_type == 2)
+						{
+							_cell_type_ptr[idx] = 3;
+							return;
+						}
+					}
+				}
+		else
+			for (int axis = 0; axis < d; axis++)
+				for (int side = -1; side <= 1; side += 2)
+				{
+					VectorDi  nb_coord = coord + VectorDi::Unit(axis) * side;
+					if (_grid.Valid(nb_coord))
+					{
+						int nb_idx = _grid.Index(nb_coord);
+						unsigned nb_flag = _cell_type_ptr[nb_idx];
+						unsigned char nb_type = nb_flag & 0b11;
+						if (nb_type == 3)
+						{
+							unsigned char nb_dis = nb_flag >> 2;
+							if (nb_dis == _cur_dis - 1)
+							{
+								_cell_type_ptr[idx] = (_cur_dis << 2) + 0b11;
+								return;
+							}
+						}
+					}
+				}
+	}
+
+	template<int d>
+	__global__ void Clear_Dis(const Grid<d> _grid, unsigned char* _cell_type_ptr)
+	{
+		Typedef_VectorD(d);
+		VectorDi coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		int idx = _grid.Index(coord);
+		_cell_type_ptr[idx] = _cell_type_ptr[idx] & 0b11;
+	}
+
+	template<int d>
+	__global__ void Mark_Boundary_Tile(const Grid<d> _grid, const unsigned char* _cell_type, int* _is_boundary_tile)
+	{
+		Typedef_VectorD(d);
+		VectorDi coord = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		int idx = _grid.Index(coord);
+		if (_cell_type[idx] == 3)
+		{
+			int block_idx = idx >> 6;
+			_is_boundary_tile[block_idx] = 1;
+		}
+	}
+
 	//Negative Poisson mapping -lap(p), except some masked points
 	//Masked cells will be viewed as 0 in poisson mapping
 	//Which means adjacent faces of masked cells will have volume 0
@@ -25,7 +94,7 @@ namespace Meso {
 		int dof;
 		FieldDv<unsigned char, d> cell_type;
 		FaceFieldDv<T, d> vol;
-		ArrayDv<bool> is_boundary_tile;
+		ArrayDv<int> is_boundary_tile;
 		ArrayDv<int> boundary_tiles;
 
 		FaceFieldDv<T, d> temp_face;
@@ -38,6 +107,7 @@ namespace Meso {
 			dof = grid.Memory_Size();
 			cell_type.Init(grid);
 			vol.Init(grid);
+			is_boundary_tile.resize(grid.Memory_Size() / 64);
 			temp_face.Init(grid);
 		}
 
@@ -50,7 +120,22 @@ namespace Meso {
 			Allocate_Memory(_cell_type.grid);
 			cell_type.Deep_Copy(_cell_type);
 			vol.Deep_Copy(_vol);
-			
+
+		}
+
+		void Search_Boundary(const int _boundary_width = 3)
+		{
+			Meso::Grid<d> grid(cell_type.grid);
+			for (int i = 0; i < _boundary_width; i++)
+				grid.Exec_Kernel(Refresh_Boundary<d>, i, grid, cell_type.Data_Ptr());
+			grid.Exec_Kernel(Clear_Dis<d>, grid, cell_type.Data_Ptr());
+			ArrayFunc::Fill(is_boundary_tile, 0);
+			grid.Exec_Kernel(Mark_Boundary_Tile<d>, grid, cell_type.Data_Ptr(), ArrayFunc::Data(is_boundary_tile));
+			int num_boundary_tile = ArrayFunc::Sum<int>(is_boundary_tile);
+			boundary_tiles.resize(num_boundary_tile);
+			thrust::copy_if(thrust::make_counting_iterator<int>(0), thrust::make_counting_iterator<int>(grid.Memory_Size() / 64), 
+				is_boundary_tile.begin(), boundary_tiles.begin(), thrust::identity<int>());
+			Assert(boundary_tiles.size(), "boundary_tiles empty");
 		}
 
 		const Grid<d>& Grid(void) const {

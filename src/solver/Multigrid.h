@@ -19,12 +19,13 @@ namespace Meso {
 
 	//NOTE: you can use Init_Poisson() to create the system;
 	//or first Allocate_Poisson(), then Update_Poisson().
-	template<class T, class Restrictor, class Prolongator>
+	template<class T, int d, class Restrictor, class Prolongator>
 	class VCycleMultigrid :public LinearMapping<T> {
 		using LinearMappingPtr = std::shared_ptr<LinearMapping<T>>;
+		using MaskedPoissonMappingPtr = std::shared_ptr<MaskedPoissonMapping<T, d>>;
 	public:
 		int L, dof = 0;
-		Array<LinearMappingPtr> mappings;
+		Array<MaskedPoissonMappingPtr> mappings;
 		Array<LinearMappingPtr> restrictors;//restrictor[i] is applied between layer i and i+1
 		Array<LinearMappingPtr> prolongators;//prolongator[i] is applied between layer i and i+1
 		Array<LinearMappingPtr> presmoothers;
@@ -137,28 +138,29 @@ namespace Meso {
 
 		template<int d>
 		void Update_Poisson_Coarse_Layers(const int level_iter = 2, const int boundary_iter = 20, const int bottom_iter = 20) {
-			using PoissonPtr = std::shared_ptr<MaskedPoissonMapping<T, d>>;
 
 			for (int i = 1; i <= L; i++) {
-				PoissonPtr poisson_fine = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i - 1]);
-				PoissonPtr poisson_coarse = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
+				MaskedPoissonMappingPtr poisson_fine = mappings[i - 1];
+				MaskedPoissonMappingPtr poisson_coarse = mappings[i];
 				Coarsener<d>::Apply(*poisson_coarse, *poisson_fine);
 				prolongators[i - 1] = std::make_shared<Prolongator>(poisson_fine->cell_type, poisson_coarse->cell_type);
 				//i is fine and i+1 is coarse
 				restrictors[i - 1] = std::make_shared<Restrictor>(poisson_coarse->cell_type, poisson_fine->cell_type);
 			}
 
+			for (int i = 0; i < L; i++)
+				mappings[i]->Search_Boundary();
 
 			//presmoothers and postsmoothers
 			for (int i = 0; i < L; i++) {
-				PoissonPtr poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[i]);
+				MaskedPoissonMappingPtr poisson = mappings[i];
 				ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
 				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, level_iter, (T)(2.0 / 3.0));
 				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, level_iter, (T)(2.0 / 3.0));
 			}
 
 			//bottomsmoother
-			PoissonPtr poisson = std::dynamic_pointer_cast<MaskedPoissonMapping<T, d>>(mappings[L]);
+			MaskedPoissonMappingPtr poisson = mappings[L];
 			ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
 			bottomsmoother = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[L]), poisson_diag, bottom_iter, (T)(2.0 / 3.0));
 		}
@@ -179,6 +181,6 @@ namespace Meso {
 		}
 	};
 
-	template<class T, int d> using VCycleMultigridIntp = VCycleMultigrid<T, RestrictorIntp<T, d>, ProlongatorIntp<T, d>>;
-	template<class T, int d> using VCycleMultigridSum = VCycleMultigrid<T, RestrictorSum<T, d>, ProlongatorSum<T, d>>;
+	template<class T, int d> using VCycleMultigridIntp = VCycleMultigrid<T, d,  RestrictorIntp<T, d>, ProlongatorIntp<T, d>>;
+	template<class T, int d> using VCycleMultigridSum = VCycleMultigrid<T, d, RestrictorSum<T, d>, ProlongatorSum<T, d>>;
 }

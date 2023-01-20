@@ -7,17 +7,18 @@
 #include "DampedJacobiSmoother.h"
 #include "PoissonFunc.h"
 #include "Random.h"
+#include "IOFunc.h"
 
 namespace Meso {
 	template<class T, int d>
 	MaskedPoissonMapping<T, d> Random_Poisson_Mapping(const Grid<d> grid, real max_vol = 1) {
 		Typedef_VectorD(d);
 		FaceField<T, d> vol(grid);
-		Field<bool, d> fixed(grid);
+		Field<unsigned char, d> cell_type(grid);
 		MaskedPoissonMapping<T, d> mapping;
 		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = Random::Uniform(0, max_vol); });
-		fixed.Iterate_Nodes([&](const VectorDi cell) {	fixed(cell) = !(bool)Random::RandInt(0, 9);	});
-		mapping.Init(fixed, vol);
+		cell_type.Iterate_Nodes([&](const VectorDi cell) {	cell_type(cell) = (unsigned char)Random::RandInt(0, 2);	});
+		mapping.Init(cell_type, vol);
 		return mapping;
 	}
 
@@ -26,11 +27,11 @@ namespace Meso {
 	MaskedPoissonMapping<T, d> Random_Poisson01_Mapping(const Grid<d> grid) {
 		Typedef_VectorD(d);
 		FaceField<T, d> vol(grid);
-		Field<bool, d> fixed(grid);
+		Field<unsigned char, d> cell_type(grid);
 		MaskedPoissonMapping<T, d> mapping;
 		vol.Iterate_Faces([&](const int axis, const VectorDi face) {vol(axis, face) = 1; });
-		fixed.Iterate_Cells([&](const VectorDi cell) {	fixed(cell) = !(bool)Random::RandInt(0, 9);	});
-		mapping.Init(grid, vol, fixed);
+		cell_type.Iterate_Nodes([&](const VectorDi cell) {	cell_type(cell) = (unsigned char)Random::RandInt(0, 1);	});
+		mapping.Init(cell_type, vol);
 		return mapping;
 	}
 
@@ -40,19 +41,19 @@ namespace Meso {
 		typedef Eigen::Matrix<T, Eigen::Dynamic, 1> EigenVec;
 		Grid<d> grid(counts);
 		FaceField<T, d> vol(grid);
-		Field<bool, d> fixed(grid);
+		Field<unsigned char, d> cell_type(grid);
 		MaskedPoissonMapping<T, d> mapping;
 		vol.Iterate_Faces(
 			[&](const int axis, const VectorDi face) {
 				vol(axis, face) = Random::Uniform(0, 1);
 			}
 		);
-		fixed.Iterate_Nodes(
+		cell_type.Iterate_Nodes(
 			[&](const VectorDi cell) {
-				fixed(cell) = !(bool)Random::RandInt(0, 9);
+				cell_type(cell) = (unsigned char)Random::RandInt(0, 2);
 			}
 		);
-		mapping.Init(fixed, vol);
+		mapping.Init(cell_type, vol);
 		ArrayDv<T> diag_dev(mapping.YDoF());
 		PoissonLike_Diagonal(diag_dev, mapping);
 		Array<T> diag_host = diag_dev;
@@ -61,17 +62,17 @@ namespace Meso {
 		grid.Exec_Nodes(
 			[&](const VectorDi cell) {
 				int idx = grid.Index(cell);
-				if (fixed(cell)) {
-					vec_diag_grdt[idx] = 1;
-				}
-				else {
-					vec_diag_grdt[idx] = 0;
-					for (int axis = 0; axis < d; axis++) {
-						VectorDi face0 = cell, face1 = cell + VectorDi::Unit(axis);
-						vec_diag_grdt[idx] += vol(axis, face0);
-						vec_diag_grdt[idx] += vol(axis, face1);
-					}
-				}
+		if (cell_type(cell) == 1 || cell_type(cell) == 2) {
+			vec_diag_grdt[idx] = 1;
+		}
+		else {
+			vec_diag_grdt[idx] = 0;
+			for (int axis = 0; axis < d; axis++) {
+				VectorDi face0 = cell, face1 = cell + VectorDi::Unit(axis);
+				vec_diag_grdt[idx] += vol(axis, face0);
+				vec_diag_grdt[idx] += vol(axis, face1);
+			}
+		}
 			}
 		);
 		EigenVec vec_diag_host(mapping.YDoF());
@@ -99,6 +100,44 @@ namespace Meso {
 			ArrayFunc::Minus(res, rhs);
 			real l2_error = ArrayFunc::Norm(res);
 			Info("iter {} l2_error {}", i, l2_error);
+		}
+	}
+
+	template<class T, int d>
+	void Test_Search_Boundary(const Vector<int, d> _counts, bool _output)
+	{
+		Typedef_VectorD(d);
+		real domain_size = 1.0;
+		Grid<d> grid(_counts, domain_size / _counts[0], -VectorD::Ones() * domain_size * 0.5);
+		Field<unsigned char, d> cell_type(grid);
+		grid.Iterate_Nodes([&](const VectorDi cell) {
+			for (int axis = 0; axis < d; axis++)
+			{
+				if (cell[axis] == 0)
+				{
+					cell_type(cell) = 1;
+					return;
+				}
+				else if (cell[axis] == grid.Counts()[axis] - 1)
+				{
+					cell_type(cell) = 2;
+					return;
+				}
+			}
+			cell_type(cell) = 0;
+			});
+		FaceField<real, d> vol(grid);
+		MaskedPoissonMapping<T, d> poisson;
+		poisson.Init(cell_type, vol);
+		poisson.Search_Boundary();
+		if (_output)
+		{
+			Field<unsigned char, d> cell_type_host = poisson.cell_type;
+			std::string cell_type_name = "cell_type.vts";
+			VTKFunc::Write_VTS(cell_type_host, cell_type_name);
+			Array<int> boundary_tiles_host = poisson.boundary_tiles;
+			for (auto a : boundary_tiles_host)
+				Info("{}", a);
 		}
 	}
 }
