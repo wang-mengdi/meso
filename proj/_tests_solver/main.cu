@@ -75,6 +75,6 @@ int main(){/*
     //Test_MGPCG_Neumann<double>(Vector2i(256, 256), false);
     //Test_MGPCG_Neumann<double>(Vector2i(512, 512), false);
     //Test_MGPCG_Neumann<double>(Vector3i(256, 256, 256), false);
-    Test_Search_Boundary<real, 3>(Vector3i(32, 32, 32), true);
+    Test_Boundary_Apply_With_Apply<double>(Vector2i(256, 256));
     return 0;
 }

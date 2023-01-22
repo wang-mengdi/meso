@@ -140,4 +140,36 @@ namespace Meso {
 				Info("{}", a);
 		}
 	}
+
+	template<class T, int d>
+	void Test_Boundary_Apply_With_Apply(const Vector<int, d> _counts)
+	{
+		Typedef_VectorD(d);
+		real domain_size = 1.0;
+		Grid<d> grid(_counts, domain_size / _counts[0], -VectorD::Ones() * domain_size * 0.5);
+		MaskedPoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid);
+		poisson.Search_Boundary();
+		Info("boundary tiles: {}", poisson.boundary_tiles.size());
+		int n = grid.Memory_Size();
+		Array<T> p_host(n);
+		for (int i = 0; i < n; i++)
+			p_host[i] = Random::Uniform(0, 1);
+		ArrayDv<T> p_dev = p_host;
+		ArrayDv<T> Ap_dev(n);
+		ArrayDv<T> Ap_boundary_dev(n);
+		poisson.Apply(Ap_dev, p_dev);
+		poisson.Boundary_Apply(Ap_boundary_dev, p_dev);
+		Array<T> Ap_host = Ap_dev;
+		Array<T> Ap_boundary_host = Ap_boundary_dev;
+		Field<unsigned char, d> cell_type_host = poisson.cell_type;
+		grid.Iterate_Nodes([&](const VectorDi cell) {
+			int cell_id = grid.Index(cell);
+		if (cell_type_host(cell) == 3)
+		{
+			if (fabs(Ap_host[cell_id] - Ap_boundary_host[cell_id]) > 1e-10)
+				Assert(false, "Poisson Boundary_Apply is not consistent with Apply");
+		}
+			});
+			
+	}
 }

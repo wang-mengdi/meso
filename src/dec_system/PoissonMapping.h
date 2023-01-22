@@ -82,6 +82,37 @@ namespace Meso {
 		}
 	}
 
+	template<class T, int d>
+	__global__ void Boundary_Apply_Kernel(const Grid<d> _grid, const int* _boundary_tiles, unsigned char* _cell_type, const T** _vol, const T* _p, T* _Ap)
+	{
+		Typedef_VectorD(d);
+		int block_id = _boundary_tiles[blockIdx.x];
+		int cell_id = block_id * blockDim.x + threadIdx.x;
+		if (_cell_type[cell_id] != 3)
+			return;
+		VectorDi cell = _grid.Coord(cell_id);
+		T cell_p = _p[cell_id];
+		T cell_Ap = 0;
+		for (int axis = 0; axis < d; axis++)
+			for (int side = -1; side <= 1; side += 2)
+			{
+				VectorDi nb_cell = cell + VectorDi::Unit(axis) * side;
+				int nb_cell_id = _grid.Index(nb_cell);
+				T nb_cell_p;
+				if (!_grid.Valid(nb_cell) || _cell_type[nb_cell_id] == 1 || _cell_type[nb_cell_id] == 2)
+					nb_cell_p = 0;
+				else
+					nb_cell_p = _p[nb_cell_id];
+				T face_vol;
+				if (side == -1)
+					face_vol = _vol[axis][_grid.Face_Index(axis, cell)];
+				else
+					face_vol = _vol[axis][_grid.Face_Index(axis, nb_cell)];
+				cell_Ap += face_vol * (cell_p - nb_cell_p);
+			}
+		_Ap[cell_id] = cell_Ap;
+	}
+
 	//Negative Poisson mapping -lap(p), except some masked points
 	//Masked cells will be viewed as 0 in poisson mapping
 	//Which means adjacent faces of masked cells will have volume 0
@@ -186,7 +217,14 @@ namespace Meso {
 			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, p_ptr, cell_type.Data_Ptr(), cond_set, dof);
 		}
 
-
+		void Boundary_Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p)
+		{
+			ArrayDv<const T*> vol_ptr(d);
+			for (int axis = 0; axis < d; axis++)
+				vol_ptr[axis] = vol.Data_Ptr(axis);
+			Boundary_Apply_Kernel<T, d> << < boundary_tiles.size(), 64 >> > (vol.grid, ArrayFunc::Data(boundary_tiles),
+				cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr), ArrayFunc::Data(p), ArrayFunc::Data(Ap));
+		}
 	};
 
 }
