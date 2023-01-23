@@ -224,6 +224,7 @@ namespace Meso {
 				vol_ptr[axis] = vol.Data_Ptr(axis);
 			Boundary_Apply_Kernel<T, d> << < boundary_tiles.size(), 64 >> > (vol.grid, ArrayFunc::Data(boundary_tiles),
 				cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr), ArrayFunc::Data(p), ArrayFunc::Data(Ap));
+			checkCudaErrors(cudaGetLastError());
 		}
 	};
 

@@ -54,6 +54,7 @@ namespace Meso {
 			auto add = [=]__device__(T & a, T & b) { a += b; };
 
 			for (int i = 0; i < L; i++) {
+				cudaMemset(ArrayFunc::Data(xs[i]), 0, sizeof(T)* xs[i].size());
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
@@ -68,27 +69,12 @@ namespace Meso {
 			//upstroke (coarse->fine)
 			for (int i = L - 1; i >= 0; i--) {
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
-				{
-					T* xsi_ptr = thrust::raw_pointer_cast(xs[i].data());
-					T* rsi_ptr = thrust::raw_pointer_cast(rs[i].data());
-					GPUFunc::Cwise_Mapping_Wrapper(xsi_ptr, rsi_ptr, add, xs[i].size());
-				}
-				mappings[i]->Residual(rs[i], xs[i], bs[i]);
-				//Assert(ArrayFunc::Is_Finite<T, DEVICE>(rs[i]), "Multigrid error: at upstroke level {} rs[i]={}", i, rs[i]);
-				//use bs to temporarily store the data
-				postsmoothers[i]->Apply(bs[i], rs[i]);
-				{
-					T* xsi_ptr = thrust::raw_pointer_cast(xs[i].data());
-					T* bsi_ptr = thrust::raw_pointer_cast(bs[i].data());
-					GPUFunc::Cwise_Mapping_Wrapper(xsi_ptr, bsi_ptr, add, xs[i].size());
-				}
+				GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(xs[i]), ArrayFunc::Data(rs[i]), add, xs[i].size());
+				postsmoothers[i]->Apply(xs[i], bs[i]);
 			}
 
-			{
-				T* x0_ptr = thrust::raw_pointer_cast(x0.data());
-				T* xs0_ptr = thrust::raw_pointer_cast(xs[0].data());
-				cudaMemcpy(x0_ptr, xs0_ptr, sizeof(T) * x0.size(), cudaMemcpyDeviceToDevice);
-			}
+			cudaMemcpy(ArrayFunc::Data(x0), ArrayFunc::Data(xs[0]), sizeof(T)* x0.size(), cudaMemcpyDeviceToDevice);
+
 			checkCudaErrors(cudaGetLastError());
 		}
 
@@ -155,14 +141,14 @@ namespace Meso {
 			for (int i = 0; i < L; i++) {
 				MaskedPoissonMappingPtr poisson = mappings[i];
 				ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
-				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, level_iter, (T)(2.0 / 3.0));
-				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[i]), poisson_diag, level_iter, (T)(2.0 / 3.0));
+				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, (T)(2.0 / 3.0));
+				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, (T)(2.0 / 3.0));
 			}
 
 			//bottomsmoother
 			MaskedPoissonMappingPtr poisson = mappings[L];
 			ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
-			bottomsmoother = std::make_shared<DampedJacobiSmoother<T>>(*(mappings[L]), poisson_diag, bottom_iter, (T)(2.0 / 3.0));
+			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_diag, bottom_iter, (T)(2.0 / 3.0));
 		}
 
 		//Update poisson system to an already allocated system

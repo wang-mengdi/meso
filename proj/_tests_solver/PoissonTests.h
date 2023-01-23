@@ -93,7 +93,7 @@ namespace Meso {
 		MaskedPoissonMapping<T, d> mapping = Random_Poisson_Mapping<T>(grid);
 		ArrayDv<T> rhs = Random::Random_Array<T>(n, (T)0.0, (T)1.0);
 		for (int i = 0; i < 100; i++) {
-			DampedJacobiSmoother<T> smoother(mapping, i);
+			DampedJacobiSmoother<T, d> smoother(mapping, i);
 			ArrayDv<T> x(n), res(n);
 			smoother.Apply(x, rhs);
 			mapping.Apply(res, x);
