@@ -40,16 +40,11 @@ namespace Meso {
 			for (int i = 0; i < iter_num; i++) {
 				//b-Ax
 				poisson->Residual(x_temp, x, b);
-				//(b-Ax)/.diag
-				T* x_temp_ptr = ArrayFunc::Data(x_temp);
-				T* one_over_diag_ptr = ArrayFunc::Data(one_over_diag);
-				auto mul = [=]__device__(T & a, T & b) { a *= b; };
-				GPUFunc::Cwise_Mapping_Wrapper(x_temp_ptr, one_over_diag_ptr, mul, dof);
 				//x+=(b-Ax)/.diag*.omega
-				real _omega = omega;
-				T* x_ptr = ArrayFunc::Data(x);
-				auto weighted_add = [=]__device__(T & a, T & b) { a += b * _omega; };
-				GPUFunc::Cwise_Mapping_Wrapper(x_ptr, x_temp_ptr, weighted_add, dof);
+				T _omega = omega;
+				auto func = [_omega]__device__(T & a, const T & b, const T & c) { a += b * c * _omega; };
+				GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(x), ArrayFunc::Data(x_temp), 
+					ArrayFunc::Data(one_over_diag), func, dof);
 			}
 			checkCudaErrors(cudaGetLastError());
 		}
