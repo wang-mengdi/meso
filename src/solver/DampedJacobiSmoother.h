@@ -51,12 +51,12 @@ namespace Meso {
 		virtual int YDoF()const { return dof; }
 		virtual void Apply(ArrayDv<T>& x, const ArrayDv<T>& b) {
 			for (int i = 0; i < iter_num; i++) {
-				//b-Ax
-				poisson->Residual(x_temp, x, b);
+				//Ax
+				poisson->Apply(x_temp, x);
 				//x+=(b-Ax)/.diag*.omega
 				T _omega = omega;
-				auto func = [_omega]__device__(T & a, const T & b, const T & c) { a += b * c * _omega; };
-				GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(x), ArrayFunc::Data(x_temp), 
+				auto func = [_omega]__device__(T & a, const T & b, const T & Ax, const T & diag) { a += (b - Ax) * diag * _omega; };
+				GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(x), ArrayFunc::Data(b), ArrayFunc::Data(x_temp), 
 					ArrayFunc::Data(one_over_diag), func, dof);
 			}
 			checkCudaErrors(cudaGetLastError());

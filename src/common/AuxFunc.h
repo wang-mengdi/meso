@@ -554,6 +554,20 @@ namespace Meso {
 		{
 			Cwise_Mapping << <((N + 63) >> 6), 64 >> > (v1, v2, v3, f, N);
 		}
+
+		template<typename A, typename B, typename C, typename D, typename F>
+		__global__ void Cwise_Mapping(A v1, B v2, C v3, D v4, F f, int N)
+		{
+			int i = blockIdx.x * blockDim.x + threadIdx.x;
+			if (i >= N) return;
+			f(v1[i], v2[i], v3[i], v4[i]);
+		}
+
+		template<typename A, typename B, typename C, typename D, typename F>
+		void Cwise_Mapping_Wrapper(A v1, B v2, C v3, D v4, F f, int N)
+		{
+			Cwise_Mapping << <((N + 63) >> 6), 64 >> > (v1, v2, v3, v4, f, N);
+		}
 	}
 
 }
