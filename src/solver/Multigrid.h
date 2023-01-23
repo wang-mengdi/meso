@@ -45,15 +45,14 @@ namespace Meso {
 		virtual void Apply(ArrayDv<T>& x0, const ArrayDv<T>& b0) {
 			//V-cycle
 			//downstroke (fine->coarse)
-			{
-				T* bs0_ptr = thrust::raw_pointer_cast(bs[0].data());
-				const T* b0_ptr = thrust::raw_pointer_cast(b0.data());
-				cudaMemcpy(bs0_ptr, b0_ptr, sizeof(T) * b0.size(), cudaMemcpyDeviceToDevice);
-			}
 
 			auto add = [=]__device__(T & a, T & b) { a += b; };
 
-			for (int i = 0; i < L; i++) {
+			cudaMemset(ArrayFunc::Data(x0), 0, sizeof(T)* x0.size());
+			presmoothers[0]->Apply(x0, b0);
+			mappings[0]->Residual(rs[0], x0, b0);
+			restrictors[0]->Apply(bs[1], rs[0]);
+			for (int i = 1; i < L; i++) {
 				cudaMemset(ArrayFunc::Data(xs[i]), 0, sizeof(T)* xs[i].size());
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
@@ -63,17 +62,19 @@ namespace Meso {
 			// bottom
 			checkCudaErrors(cudaGetLastError());
 			cudaDeviceSynchronize();
+			cudaMemset(ArrayFunc::Data(xs[L]), 0, sizeof(T)* xs[L].size());
 			bottomsmoother->Apply(xs[L], bs[L]);
 			checkCudaErrors(cudaGetLastError());
 
 			//upstroke (coarse->fine)
-			for (int i = L - 1; i >= 0; i--) {
+			for (int i = L - 1; i >= 1; i--) {
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
 				GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(xs[i]), ArrayFunc::Data(rs[i]), add, xs[i].size());
 				postsmoothers[i]->Apply(xs[i], bs[i]);
 			}
-
-			cudaMemcpy(ArrayFunc::Data(x0), ArrayFunc::Data(xs[0]), sizeof(T)* x0.size(), cudaMemcpyDeviceToDevice);
+			prolongators[0]->Apply(rs[0], xs[1]);
+			GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(x0), ArrayFunc::Data(rs[0]), add, x0.size());
+			postsmoothers[0]->Apply(x0, b0);
 
 			checkCudaErrors(cudaGetLastError());
 		}
@@ -116,9 +117,13 @@ namespace Meso {
 			rs.resize(L + 1);//seem rs only need L
 			for (int i = 0; i <= L; i++) {
 				int n = grids[i].Counts().prod();
-				xs[i].resize(n);
-				bs[i].resize(n);
-				rs[i].resize(n);
+				if (i != 0)
+				{
+					xs[i].resize(n);
+					bs[i].resize(n);
+				}
+				if (i != L)
+					rs[i].resize(n);
 			}
 		}
 
