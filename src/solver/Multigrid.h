@@ -23,14 +23,15 @@ namespace Meso {
 	class VCycleMultigrid :public LinearMapping<T> {
 		using LinearMappingPtr = std::shared_ptr<LinearMapping<T>>;
 		using MaskedPoissonMappingPtr = std::shared_ptr<MaskedPoissonMapping<T, d>>;
+		using DampedJacobiSmootherPtr = std::shared_ptr<DampedJacobiSmoother<T, d>>;
 	public:
 		int L, dof = 0;
 		Array<MaskedPoissonMappingPtr> mappings;
 		Array<LinearMappingPtr> restrictors;//restrictor[i] is applied between layer i and i+1
 		Array<LinearMappingPtr> prolongators;//prolongator[i] is applied between layer i and i+1
-		Array<LinearMappingPtr> presmoothers;
-		Array<LinearMappingPtr> postsmoothers;
-		LinearMappingPtr bottomsmoother;
+		Array<DampedJacobiSmootherPtr> presmoothers;
+		Array<DampedJacobiSmootherPtr> postsmoothers;
+		DampedJacobiSmootherPtr bottomsmoother;
 
 		Array<ArrayDv<T>> xs;
 		Array<ArrayDv<T>> bs;
@@ -49,11 +50,13 @@ namespace Meso {
 			auto add = [=]__device__(T & a, T & b) { a += b; };
 
 			cudaMemset(ArrayFunc::Data(x0), 0, sizeof(T)* x0.size());
+			presmoothers[0]->Boundary_Apply(x0, b0);
 			presmoothers[0]->Apply(x0, b0);
 			mappings[0]->Residual(rs[0], x0, b0);
 			restrictors[0]->Apply(bs[1], rs[0]);
 			for (int i = 1; i < L; i++) {
 				cudaMemset(ArrayFunc::Data(xs[i]), 0, sizeof(T)* xs[i].size());
+				presmoothers[i]->Boundary_Apply(xs[i], bs[i]);
 				presmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
@@ -71,11 +74,12 @@ namespace Meso {
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
 				GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(xs[i]), ArrayFunc::Data(rs[i]), add, xs[i].size());
 				postsmoothers[i]->Apply(xs[i], bs[i]);
+				postsmoothers[i]->Boundary_Apply(xs[i], bs[i]);
 			}
 			prolongators[0]->Apply(rs[0], xs[1]);
 			GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(x0), ArrayFunc::Data(rs[0]), add, x0.size());
 			postsmoothers[0]->Apply(x0, b0);
-
+			postsmoothers[0]->Boundary_Apply(x0, b0);
 			checkCudaErrors(cudaGetLastError());
 		}
 
@@ -146,14 +150,14 @@ namespace Meso {
 			for (int i = 0; i < L; i++) {
 				MaskedPoissonMappingPtr poisson = mappings[i];
 				ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
-				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, (T)(2.0 / 3.0));
-				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, (T)(2.0 / 3.0));
+				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
+				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
 			}
 
 			//bottomsmoother
 			MaskedPoissonMappingPtr poisson = mappings[L];
 			ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
-			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_diag, bottom_iter, (T)(2.0 / 3.0));
+			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_diag, bottom_iter, 0, (T)(2.0 / 3.0));
 		}
 
 		//Update poisson system to an already allocated system

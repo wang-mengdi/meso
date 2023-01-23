@@ -36,6 +36,11 @@ namespace Meso {
 							return;
 						}
 					}
+					else
+					{
+						_cell_type_ptr[idx] = 3;
+						return;
+					}
 				}
 		else
 			for (int axis = 0; axis < d; axis++)
