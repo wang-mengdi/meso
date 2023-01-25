@@ -75,6 +75,7 @@ int main(){/*
     //Test_MGPCG_Neumann<double>(Vector2i(256, 256), false);
     //Test_MGPCG_Neumann<double>(Vector2i(512, 512), false);
     //Test_MGPCG_Neumann<double>(Vector3i(256, 256, 256), false);
-    Test_Poisson_Apply_Kernel2<double>(Vector2i(32, 32));
+
+    Test_Poisson_Apply_Kernel3<double>(Vector3i(32, 32, 32));
     return 0;
 }

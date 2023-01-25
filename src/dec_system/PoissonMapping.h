@@ -235,6 +235,166 @@ namespace Meso {
 		_Ap[global_id] = result;
 	}
 
+	template<class T>
+	__global__ void Poisson_Apply_Kernel3(const Grid<3> _grid, const unsigned char* _cell_type, const T** _vol,
+		const T* _p, T* _Ap)
+	{
+		Typedef_VectorD(3);
+		// calculate index
+		VectorDi coord = GPUFunc::Thread_Coord<3>(blockIdx, threadIdx);
+		const int idx = threadIdx.x;
+		const int idy = threadIdx.y;
+		const int idz = threadIdx.z;
+		const int global_id = _grid.Index(coord);
+		const int grid_counts_x = _grid.Counts()[0];
+		const int grid_counts_y = _grid.Counts()[1];
+		const int grid_counts_z = _grid.Counts()[2];
+
+		// define shared memory
+		__shared__ unsigned char shared_cell_type[6][6][6];
+		__shared__ T shared_p[6][6][6];
+		__shared__ T shared_vol_x[5][4][4];
+		__shared__ T shared_vol_y[4][5][4];
+		__shared__ T shared_vol_z[4][4][5];
+		
+		// load data to shared memory
+		unsigned char type = _cell_type[global_id];
+		shared_cell_type[idx + 1][idy + 1][idz + 1] = type;
+		if (idx == 0)
+		{
+			if (coord[0] == 0)
+				shared_cell_type[0][idy + 1][idz + 1] = 1;
+			else
+				shared_cell_type[0][idy + 1][idz + 1] = _cell_type[_grid.Index(coord - VectorDi::Unit(0))];
+		}
+		if (idx == 3)
+		{
+			if (coord[0] == grid_counts_x - 1)
+				shared_cell_type[5][idy + 1][idz + 1] = 1;
+			else
+				shared_cell_type[5][idy + 1][idz + 1] = _cell_type[_grid.Index(coord + VectorDi::Unit(0))];
+		}
+		if (idy == 0)
+		{
+			if (coord[1] == 0)
+				shared_cell_type[idx + 1][0][idz + 1] = 1;
+			else
+				shared_cell_type[idx + 1][0][idz + 1] = _cell_type[_grid.Index(coord - VectorDi::Unit(1))];
+		}
+		if (idy == 3)
+		{
+			if (coord[1] == grid_counts_y - 1)
+				shared_cell_type[idx + 1][5][idz + 1] = 1;
+			else
+				shared_cell_type[idx + 1][5][idz + 1] = _cell_type[_grid.Index(coord + VectorDi::Unit(1))];
+		}
+		if (idz == 0)
+		{
+			if (coord[2] == 0)
+				shared_cell_type[idx + 1][idy + 1][0] = 1;
+			else
+				shared_cell_type[idx + 1][idy + 1][0] = _cell_type[_grid.Index(coord - VectorDi::Unit(2))];
+		}
+		if (idz == 3)
+		{
+			if (coord[2] == grid_counts_z - 1)
+				shared_cell_type[idx + 1][idy + 1][5] = 1;
+			else
+				shared_cell_type[idx + 1][idy + 1][5] = _cell_type[_grid.Index(coord + VectorDi::Unit(2))];
+		}
+		
+		T cell_p = _p[global_id];
+		shared_p[idx + 1][idy + 1][idz + 1] = cell_p;
+		if (idx == 0)
+		{
+			if (coord[0] == 0)
+				shared_p[0][idy + 1][idz + 1] = 0;
+			else
+				shared_p[0][idy + 1][idz + 1] = _p[_grid.Index(coord - VectorDi::Unit(0))];
+		}
+		if (idx == 3)
+		{
+			if (coord[0] == grid_counts_x - 1)
+				shared_p[5][idy + 1][idz + 1] = 0;
+			else
+				shared_p[5][idy + 1][idz + 1] = _p[_grid.Index(coord + VectorDi::Unit(0))];
+		}
+		if (idy == 0)
+		{
+			if (coord[1] == 0)
+				shared_p[idx + 1][0][idz + 1] = 0;
+			else
+				shared_p[idx + 1][0][idz + 1] = _p[_grid.Index(coord - VectorDi::Unit(1))];
+		}
+		if (idy == 3)
+		{
+			if (coord[1] == grid_counts_y - 1)
+				shared_p[idx + 1][5][idz + 1] = 0;
+			else
+				shared_p[idx + 1][5][idz + 1] = _p[_grid.Index(coord + VectorDi::Unit(1))];
+		}
+		if (idz == 0)
+		{
+			if (coord[2] == 0)
+				shared_p[idx + 1][idy + 1][0] = 0;
+			else
+				shared_p[idx + 1][idy + 1][0] = _p[_grid.Index(coord - VectorDi::Unit(2))];
+		}
+		if (idz == 3)
+		{
+			if (coord[2] == grid_counts_z - 1)
+				shared_p[idx + 1][idy + 1][5] = 0;
+			else
+				shared_p[idx + 1][idy + 1][5] = _p[_grid.Index(coord + VectorDi::Unit(2))];
+		}
+		
+		shared_vol_x[idx][idy][idz] = _vol[0][_grid.Face_Index(0, coord)];
+		if (idx == 3)
+			shared_vol_x[4][idy][idz] = _vol[0][_grid.Face_Index(0, coord + VectorDi::Unit(0))];
+
+		shared_vol_y[idx][idy][idz] = _vol[1][_grid.Face_Index(1, coord)];
+		if (idy == 3)
+			shared_vol_y[idx][4][idz] = _vol[1][_grid.Face_Index(1, coord + VectorDi::Unit(1))];
+		
+		shared_vol_z[idx][idy][idz] = _vol[2][_grid.Face_Index(2, coord)];
+		if (idz == 3)
+			shared_vol_z[idx][idy][4] = _vol[2][_grid.Face_Index(2, coord + VectorDi::Unit(2))];
+
+		__syncthreads();
+		
+		T result = 0;
+		if (type == 1 || type == 2)
+			result = cell_p;
+		else
+		{
+			if (shared_cell_type[idx][idy + 1][idz + 1] == 1 || shared_cell_type[idx][idy + 1][idz + 1] == 2)
+				result += cell_p * shared_vol_x[idx][idy][idz];
+			else
+				result += (cell_p - shared_p[idx][idy + 1][idz + 1]) * shared_vol_x[idx][idy][idz];
+			if (shared_cell_type[idx + 2][idy + 1][idz + 1] == 1 || shared_cell_type[idx + 2][idy + 1][idz + 1] == 2)
+				result += cell_p * shared_vol_x[idx + 1][idy][idz];
+			else
+				result += (cell_p - shared_p[idx + 2][idy + 1][idz + 1]) * shared_vol_x[idx + 1][idy][idz];
+			if (shared_cell_type[idx + 1][idy][idz + 1] == 1 || shared_cell_type[idx + 1][idy][idz + 1] == 2)
+				result += cell_p * shared_vol_y[idx][idy][idz];
+			else
+				result += (cell_p - shared_p[idx + 1][idy][idz + 1]) * shared_vol_y[idx][idy][idz];
+			if (shared_cell_type[idx + 1][idy + 2][idz + 1] == 1 || shared_cell_type[idx + 1][idy + 2][idz + 1] == 2)
+				result += cell_p * shared_vol_y[idx][idy + 1][idz];
+			else
+				result += (cell_p - shared_p[idx + 1][idy + 2][idz + 1]) * shared_vol_y[idx][idy + 1][idz];
+			if (shared_cell_type[idx + 1][idy + 1][idz] == 1 || shared_cell_type[idx + 1][idy + 1][idz] == 2)
+				result += cell_p * shared_vol_z[idx][idy][idz];
+			else
+				result += (cell_p - shared_p[idx + 1][idy + 1][idz]) * shared_vol_z[idx][idy][idz];
+			if (shared_cell_type[idx + 1][idy + 1][idz + 2] == 1 || shared_cell_type[idx + 1][idy + 1][idz + 2] == 2)
+				result += cell_p * shared_vol_z[idx][idy][idz + 1];
+			else
+				result += (cell_p - shared_p[idx + 1][idy + 1][idz + 2]) * shared_vol_z[idx][idy][idz + 1];
+		}
+		_Ap[global_id] = result;
+	}
+
 	//Negative Poisson mapping -lap(p), except some masked points
 	//Masked cells will be viewed as 0 in poisson mapping
 	//Which means adjacent faces of masked cells will have volume 0
@@ -339,15 +499,16 @@ namespace Meso {
 			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, p_ptr, cell_type.Data_Ptr(), cond_set, dof);
 		}
 
-		void Apply_Kernel2(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
-			if constexpr (d == 2)
+		void Apply_Kernel3(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+			if constexpr (d == 3)
 			{
 				ArrayDv<const T*> vol_ptr(d);
 				for (int axis = 0; axis < d; axis++)
 					vol_ptr[axis] = vol.Data_Ptr(axis);
-				vol.grid.Exec_Kernel(Poisson_Apply_Kernel2<T>, vol.grid, cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr),
+				vol.grid.Exec_Kernel(Poisson_Apply_Kernel3<T>, vol.grid, cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr),
 					ArrayFunc::Data(p), ArrayFunc::Data(Ap));
 			}
+			checkCudaErrors(cudaGetLastError());
 		}
 
 		void Boundary_Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p)
