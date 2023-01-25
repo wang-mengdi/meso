@@ -168,7 +168,6 @@ namespace Meso {
 			else
 				shared_cell_type[idx + 1][9] = _cell_type[_grid.Index(coord + VectorDi::Unit(1))];
 		}
-		__syncthreads();
 
 		T cell_p = _p[global_id];
 		shared_p[idx + 1][idy + 1] = cell_p;
@@ -201,33 +200,6 @@ namespace Meso {
 				shared_p[idx + 1][9] = _p[_grid.Index(coord + VectorDi::Unit(1))];
 		}
 
-		if (type == 1 || type == 2)
-			shared_p[idx + 1][idy + 1] = 0;
-		if (idx == 0)
-		{
-			unsigned nb_type = shared_cell_type[idx][idy + 1];
-			if (nb_type == 1 || nb_type == 2)
-				shared_p[idx][idy + 1] = 0;
-		}
-		if (idx == 7)
-		{
-			unsigned nb_type = shared_cell_type[idx + 2][idy + 1];
-			if (nb_type == 1 || nb_type == 2)
-				shared_p[idx + 2][idy + 1] = 0;
-		}
-		if (idy == 0)
-		{
-			unsigned nb_type = shared_cell_type[idx + 1][idy];
-			if (nb_type == 1 || nb_type == 2)
-				shared_p[idx + 1][idy] = 0;
-		}
-		if (idy == 7)
-		{
-			unsigned nb_type = shared_cell_type[idx + 1][idy + 2];
-			if (nb_type == 1 || nb_type == 2)
-				shared_p[idx + 1][idy + 2] = 0;
-		}
-
 		shared_vol_x[idx][idy] = _vol[0][_grid.Face_Index(0, coord)];
 		if (idx == 7)
 			shared_vol_x[8][idy] = _vol[0][_grid.Face_Index(0, coord + VectorDi::Unit(0))];
@@ -243,10 +215,22 @@ namespace Meso {
 			result = cell_p;
 		else
 		{
-			result += (cell_p - shared_p[idx][idy + 1]) * shared_vol_x[idx][idy];
-			result += (cell_p - shared_p[idx + 2][idy + 1]) * shared_vol_x[idx + 1][idy];
-			result += (cell_p - shared_p[idx + 1][idy]) * shared_vol_y[idx][idy];
-			result += (cell_p - shared_p[idx + 1][idy + 2]) * shared_vol_y[idx][idy + 1];
+			if (shared_cell_type[idx][idy + 1] == 1 || shared_cell_type[idx][idy + 1] == 2)
+				result += cell_p * shared_vol_x[idx][idy];
+			else
+				result += (cell_p - shared_p[idx][idy + 1]) * shared_vol_x[idx][idy];
+			if (shared_cell_type[idx + 2][idy + 1] == 1 || shared_cell_type[idx + 2][idy + 1] == 2)
+				result += cell_p * shared_vol_x[idx + 1][idy];
+			else
+				result += (cell_p - shared_p[idx + 2][idy + 1]) * shared_vol_x[idx + 1][idy];
+			if (shared_cell_type[idx + 1][idy] == 1 || shared_cell_type[idx + 1][idy] == 2)
+				result += cell_p * shared_vol_y[idx][idy];
+			else
+				result += (cell_p - shared_p[idx + 1][idy]) * shared_vol_y[idx][idy];
+			if (shared_cell_type[idx + 1][idy + 2] == 1 || shared_cell_type[idx + 1][idy + 2] == 2)
+				result += cell_p * shared_vol_y[idx][idy + 1];
+			else
+				result += (cell_p - shared_p[idx + 1][idy + 2]) * shared_vol_y[idx][idy + 1];
 		}
 		_Ap[global_id] = result;
 	}
