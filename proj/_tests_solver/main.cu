@@ -74,7 +74,7 @@ int main(){/*
 
     //Test_MGPCG_Neumann<double>(Vector2i(256, 256), false);
     //Test_MGPCG_Neumann<double>(Vector2i(512, 512), false);
-    //Test_MGPCG_Neumann<double>(Vector3i(256, 256, 256), false);
+    Test_MGPCG_Neumann<double>(Vector3i(256, 256, 256), false);
 
     return 0;
 }

@@ -88,7 +88,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	__global__ void Poisson_Boundary_Apply_Kernel(const Grid<d> _grid, const int* _boundary_tiles, unsigned char* _cell_type, const T** _vol, const T* _p, T* _Ap)
+	__global__ void Poisson_Boundary_Apply_Kernel(const Grid<d> _grid, const int* _boundary_tiles, unsigned char* _cell_type, T** _vol, const T* _p, T* _Ap)
 	{
 		Typedef_VectorD(d);
 		int block_id = _boundary_tiles[blockIdx.x];
@@ -119,7 +119,7 @@ namespace Meso {
 	}
 
 	template<class T>
-	__global__ void Poisson_Apply_Kernel2(const Grid<2> _grid, const unsigned char* _cell_type, const T** _vol,
+	__global__ void Poisson_Apply_Kernel2(const Grid<2> _grid, const unsigned char* _cell_type, T** _vol,
 		const T* _p, T* _Ap)
 	{
 		Typedef_VectorD(2);
@@ -236,7 +236,7 @@ namespace Meso {
 	}
 
 	template<class T>
-	__global__ void Poisson_Apply_Kernel3(const Grid<3> _grid, const unsigned char* _cell_type, const T** _vol,
+	__global__ void Poisson_Apply_Kernel3(const Grid<3> _grid, const unsigned char* _cell_type, T** _vol,
 		const T* _p, T* _Ap)
 	{
 		Typedef_VectorD(3);
@@ -457,14 +457,11 @@ namespace Meso {
 
 		//input p, get Ap
 		virtual void Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
-			ArrayDv<const T*> vol_ptr(d);
-			for (int axis = 0; axis < d; axis++)
-				vol_ptr[axis] = vol.Data_Ptr(axis);
 			if constexpr (d == 2)
-				vol.grid.Exec_Kernel(Poisson_Apply_Kernel2<T>, vol.grid, cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr),
+				vol.grid.Exec_Kernel(Poisson_Apply_Kernel2<T>, vol.grid, cell_type.Data_Ptr(), ArrayFunc::Data(vol.face_data_ptr),
 					ArrayFunc::Data(p), ArrayFunc::Data(Ap));
 			else
-				vol.grid.Exec_Kernel(Poisson_Apply_Kernel3<T>, vol.grid, cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr),
+				vol.grid.Exec_Kernel(Poisson_Apply_Kernel3<T>, vol.grid, cell_type.Data_Ptr(), ArrayFunc::Data(vol.face_data_ptr),
 					ArrayFunc::Data(p), ArrayFunc::Data(Ap));
 			cudaDeviceSynchronize();
 			checkCudaErrors(cudaGetLastError());
@@ -472,11 +469,8 @@ namespace Meso {
 
 		void Boundary_Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p)
 		{
-			ArrayDv<const T*> vol_ptr(d);
-			for (int axis = 0; axis < d; axis++)
-				vol_ptr[axis] = vol.Data_Ptr(axis);
 			Poisson_Boundary_Apply_Kernel<T, d> << < boundary_tiles.size(), 64 >> > (vol.grid, ArrayFunc::Data(boundary_tiles),
-				cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr), ArrayFunc::Data(p), ArrayFunc::Data(Ap));
+				cell_type.Data_Ptr(), ArrayFunc::Data(vol.face_data_ptr), ArrayFunc::Data(p), ArrayFunc::Data(Ap));
 			cudaDeviceSynchronize();
 			checkCudaErrors(cudaGetLastError());
 		}
