@@ -172,4 +172,33 @@ namespace Meso {
 			});
 			
 	}
+
+	template<class T>
+	void Test_Poisson_Apply_Kernel2(const Vector<int, 2> _counts)
+	{
+		Typedef_VectorD(2);
+		real domain_size = 1.0;
+		Grid<2> grid(_counts, domain_size / _counts[0], -VectorD::Ones() * domain_size * 0.5);
+		MaskedPoissonMapping<T, 2> poisson = Random_Poisson_Mapping<T, 2>(grid);
+		int n = grid.Memory_Size();
+		Array<T> p_host(n);
+		for (int i = 0; i < n; i++)
+			p_host[i] = Random::Uniform(0, 1);
+		ArrayDv<T> p_dev = p_host;
+		ArrayDv<T> Ap_dev(n);
+		ArrayDv<T> Ap_kernel2_dev(n);
+		poisson.Apply(Ap_dev, p_dev);
+		poisson.Apply_Kernel2(Ap_kernel2_dev, p_dev);
+		Array<T> Ap_host = Ap_dev;
+		Array<T> Ap_kernel2_host = Ap_kernel2_dev;
+		grid.Iterate_Nodes([&](const VectorDi cell) {
+			int cell_id = grid.Index(cell);
+		if (fabs(Ap_host[cell_id] - Ap_kernel2_host[cell_id]) > 1e-10)
+		{
+			Info("{}", fabs(Ap_host[cell_id] - Ap_kernel2_host[cell_id]));
+			Assert(false, "Poisson Apply_Kernel2 is not consistent with Apply");
+		}
+			});
+
+	}
 }

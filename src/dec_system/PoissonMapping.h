@@ -88,7 +88,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	__global__ void Boundary_Apply_Kernel(const Grid<d> _grid, const int* _boundary_tiles, unsigned char* _cell_type, const T** _vol, const T* _p, T* _Ap)
+	__global__ void Poisson_Boundary_Apply_Kernel(const Grid<d> _grid, const int* _boundary_tiles, unsigned char* _cell_type, const T** _vol, const T* _p, T* _Ap)
 	{
 		Typedef_VectorD(d);
 		int block_id = _boundary_tiles[blockIdx.x];
@@ -116,6 +116,139 @@ namespace Meso {
 				cell_Ap += face_vol * (cell_p - nb_cell_p);
 			}
 		_Ap[cell_id] = cell_Ap;
+	}
+
+	template<class T>
+	__global__ void Poisson_Apply_Kernel2(const Grid<2> _grid, const unsigned char* _cell_type, const T** _vol,
+		const T* _p, T* _Ap)
+	{
+		Typedef_VectorD(2);
+		// calculate index
+		VectorDi coord = GPUFunc::Thread_Coord<2>(blockIdx, threadIdx);
+		const int idx = threadIdx.x;
+		const int idy = threadIdx.y;
+		const int global_id = _grid.Index(coord);
+		const int grid_counts_x = _grid.Counts()[0];
+		const int grid_counts_y = _grid.Counts()[1];
+
+		// define shared memory
+		__shared__ unsigned char shared_cell_type[10][10];
+		__shared__ T shared_p[10][10];
+		__shared__ T shared_vol_x[9][8];
+		__shared__ T shared_vol_y[8][9];
+
+		// load data to shared memory
+		unsigned char type = _cell_type[global_id];
+		shared_cell_type[idx + 1][idy + 1] = type;
+		if (idx == 0)
+		{
+			if (coord[0] == 0)
+				shared_cell_type[0][idy + 1] = 1;
+			else
+				shared_cell_type[0][idy + 1] = _cell_type[_grid.Index(coord-VectorDi::Unit(0))];
+		}
+		if (idx == 7)
+		{
+			if (coord[0] == grid_counts_x - 1)
+				shared_cell_type[9][idy + 1] = 1;
+			else
+				shared_cell_type[9][idy + 1] = _cell_type[_grid.Index(coord + VectorDi::Unit(0))];
+		}
+		if (idy == 0)
+		{
+			if (coord[1] == 0)
+				shared_cell_type[idx + 1][0] = 1;
+			else
+				shared_cell_type[idx + 1][0] = _cell_type[_grid.Index(coord - VectorDi::Unit(1))];
+		}
+		if (idy == 7)
+		{
+			if (coord[1] == grid_counts_y - 1)
+				shared_cell_type[idx + 1][9] = 1;
+			else
+				shared_cell_type[idx + 1][9] = _cell_type[_grid.Index(coord + VectorDi::Unit(1))];
+		}
+		__syncthreads();
+
+		T cell_p = _p[global_id];
+		shared_p[idx + 1][idy + 1] = cell_p;
+		if (idx == 0)
+		{
+			if (coord[0] == 0)
+				shared_p[0][idy + 1] = 0;
+			else
+				shared_p[0][idy + 1] = _p[_grid.Index(coord - VectorDi::Unit(0))];
+		}
+		if (idx == 7)
+		{
+			if (coord[0] == grid_counts_x - 1)
+				shared_p[9][idy + 1] = 0;
+			else
+				shared_p[9][idy + 1] = _p[_grid.Index(coord + VectorDi::Unit(0))];
+		}
+		if (idy == 0)
+		{
+			if (coord[1] == 0)
+				shared_p[idx + 1][0] = 0;
+			else
+				shared_p[idx + 1][0] = _p[_grid.Index(coord - VectorDi::Unit(1))];
+		}
+		if (idy == 7)
+		{
+			if (coord[1] == grid_counts_y - 1)
+				shared_p[idx + 1][9] = 0;
+			else
+				shared_p[idx + 1][9] = _p[_grid.Index(coord + VectorDi::Unit(1))];
+		}
+
+		if (type == 1 || type == 2)
+			shared_p[idx + 1][idy + 1] = 0;
+		if (idx == 0)
+		{
+			unsigned nb_type = shared_cell_type[idx][idy + 1];
+			if (nb_type == 1 || nb_type == 2)
+				shared_p[idx][idy + 1] = 0;
+		}
+		if (idx == 7)
+		{
+			unsigned nb_type = shared_cell_type[idx + 2][idy + 1];
+			if (nb_type == 1 || nb_type == 2)
+				shared_p[idx + 2][idy + 1] = 0;
+		}
+		if (idy == 0)
+		{
+			unsigned nb_type = shared_cell_type[idx + 1][idy];
+			if (nb_type == 1 || nb_type == 2)
+				shared_p[idx + 1][idy] = 0;
+		}
+		if (idy == 7)
+		{
+			unsigned nb_type = shared_cell_type[idx + 1][idy + 2];
+			if (nb_type == 1 || nb_type == 2)
+				shared_p[idx + 1][idy + 2] = 0;
+		}
+
+		shared_vol_x[idx][idy] = _vol[0][_grid.Face_Index(0, coord)];
+		if (idx == 7)
+			shared_vol_x[8][idy] = _vol[0][_grid.Face_Index(0, coord + VectorDi::Unit(0))];
+
+		shared_vol_y[idx][idy] = _vol[1][_grid.Face_Index(1, coord)];
+		if (idy == 7)
+			shared_vol_y[idx][8] = _vol[1][_grid.Face_Index(1, coord + VectorDi::Unit(1))];
+
+		__syncthreads();
+
+		T result = 0;
+		if (type == 1 || type == 2)
+			result = cell_p;
+		else
+		{
+			result += (cell_p - shared_p[idx][idy + 1]) * shared_vol_x[idx][idy];
+			result += (cell_p - shared_p[idx + 2][idy + 1]) * shared_vol_x[idx + 1][idy];
+			result += (cell_p - shared_p[idx + 1][idy]) * shared_vol_y[idx][idy];
+			result += (cell_p - shared_p[idx + 1][idy + 2]) * shared_vol_y[idx][idy + 1];
+		}
+		_Ap[global_id] = result;
 	}
 
 	//Negative Poisson mapping -lap(p), except some masked points
@@ -222,12 +355,23 @@ namespace Meso {
 			GPUFunc::Cwise_Mapping_Wrapper(Ap_ptr, p_ptr, cell_type.Data_Ptr(), cond_set, dof);
 		}
 
+		void Apply_Kernel2(ArrayDv<T>& Ap, const ArrayDv<T>& p) {
+			if constexpr (d == 2)
+			{
+				ArrayDv<const T*> vol_ptr(d);
+				for (int axis = 0; axis < d; axis++)
+					vol_ptr[axis] = vol.Data_Ptr(axis);
+				vol.grid.Exec_Kernel(Poisson_Apply_Kernel2<T>, vol.grid, cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr),
+					ArrayFunc::Data(p), ArrayFunc::Data(Ap));
+			}
+		}
+
 		void Boundary_Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p)
 		{
 			ArrayDv<const T*> vol_ptr(d);
 			for (int axis = 0; axis < d; axis++)
 				vol_ptr[axis] = vol.Data_Ptr(axis);
-			Boundary_Apply_Kernel<T, d> << < boundary_tiles.size(), 64 >> > (vol.grid, ArrayFunc::Data(boundary_tiles),
+			Poisson_Boundary_Apply_Kernel<T, d> << < boundary_tiles.size(), 64 >> > (vol.grid, ArrayFunc::Data(boundary_tiles),
 				cell_type.Data_Ptr(), ArrayFunc::Data(vol_ptr), ArrayFunc::Data(p), ArrayFunc::Data(Ap));
 			checkCudaErrors(cudaGetLastError());
 		}
