@@ -65,7 +65,7 @@ int main(){/*
     Test_MGPCG_Dirichlet<double>(Vector2i(256, 256), false);
     Test_MGPCG_Dirichlet<double>(Vector2i(512, 512), false);
     Test_MGPCG_Dirichlet<double>(Vector3i(128, 128, 128), false);*/
-    //Test_MGPCG_Dirichlet<double>(Vector3i(256, 256, 256), false);
+    Test_MGPCG_Dirichlet<double>(Vector3i(256, 256, 256), false);
 
    // Test_MGPCG_Dirichlet_Neumann<double>(Vector2i(256, 256), false);
    // Test_MGPCG_Dirichlet_Neumann<double>(Vector2i(512, 512), false);
@@ -76,6 +76,5 @@ int main(){/*
     //Test_MGPCG_Neumann<double>(Vector2i(512, 512), false);
     //Test_MGPCG_Neumann<double>(Vector3i(256, 256, 256), false);
 
-    Test_Poisson_Apply_Kernel3<double>(Vector3i(32, 32, 32));
     return 0;
 }
