@@ -398,7 +398,7 @@ namespace Meso {
 	//Negative Poisson mapping -lap(p), except some masked points
 	//Masked cells will be viewed as 0 in poisson mapping
 	//Which means adjacent faces of masked cells will have volume 0
-	template<class T, int d, class ExteriorDerivative=ExteriorDerivativePadding0>
+	template<class T, int d>
 	class MaskedPoissonMapping : public LinearMapping<T> {
 		using Base=LinearMapping<T>;
 		//Ap=-lap(p)
