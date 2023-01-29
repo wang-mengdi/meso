@@ -133,7 +133,6 @@ namespace Meso {
 
 		template<int d>
 		void Update_Poisson_Coarse_Layers(const int level_iter = 2, const int boundary_iter = 20, const int bottom_iter = 20) {
-
 			for (int i = 1; i <= L; i++) {
 				MaskedPoissonMappingPtr poisson_fine = mappings[i - 1];
 				MaskedPoissonMappingPtr poisson_coarse = mappings[i];
@@ -151,9 +150,9 @@ namespace Meso {
 				MaskedPoissonMappingPtr poisson = mappings[i];
 				ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
 				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
-				postsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
+				postsmoothers[i] = presmoothers[i];
 			}
-
+			
 			//bottomsmoother
 			MaskedPoissonMappingPtr poisson = mappings[L];
 			ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
