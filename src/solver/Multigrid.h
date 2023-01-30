@@ -83,17 +83,46 @@ namespace Meso {
 			checkCudaErrors(cudaGetLastError());
 		}
 
-		//Allocate most part of the system
+		//Update poisson system to an already allocated system
 		template<int d>
-		void Allocate_Poisson(const Grid<d> _grid) {
-			Typedef_VectorD(d);
-			Assert(_grid.Is_Unpadded(), "Multigrid::Allocate_Poisson error: _grid {} padding not allowed", _grid);
+		void Update_Poisson(const MaskedPoissonMapping<T, d>& poisson) {
+			mappings[0] = std::make_shared<MaskedPoissonMapping<T, d>>(poisson);
+			for (int i = 1; i <= L; i++) {
+				MaskedPoissonMappingPtr poisson_fine = mappings[i - 1];
+				MaskedPoissonMappingPtr poisson_coarse = mappings[i];
+				Coarsener<d>::Apply(*poisson_coarse, *poisson_fine);
+				prolongators[i - 1] = std::make_shared<Prolongator>(poisson_fine->cell_type, poisson_coarse->cell_type);
+				//i is fine and i+1 is coarse
+				restrictors[i - 1] = std::make_shared<Restrictor>(poisson_coarse->cell_type, poisson_fine->cell_type);
+			}
 
-			VectorDi grid_size = _grid.Counts();
+			for (int i = 0; i < L; i++)
+				mappings[i]->Search_Boundary();
+
+			//presmoothers and postsmoothers
+			for (int i = 0; i < L; i++) {
+				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
+				PoissonLike_One_Over_Diagonal(presmoothers[i]->one_over_diag, *poisson_ptr);
+			}
+
+			//bottomsmoother
+			MaskedPoissonMappingPtr poisson_ptr = mappings[L];
+			PoissonLike_One_Over_Diagonal(bottomsmoother->one_over_diag, *poisson_ptr);
+		}
+
+		//Will add epsilon*I to the system of the coarsest level
+		//To make a Poisson system truly positive definite
+		template<int d>
+		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int level_iter = 2, const int boundary_iter = 20, const int bottom_iter = 20){
+			Typedef_VectorD(d);
+			Grid<d> grid = poisson.Grid();
+			Assert(grid.Is_Unpadded(), "Multigrid::Allocate_Poisson error: grid {} padding not allowed", grid);
+
+			VectorDi grid_size = grid.Counts();
 			int grid_min_size = grid_size.minCoeff();
 			L = (int)std::ceil(log2(grid_min_size)) - 3;
 			Array<Grid<d>> grids(L + 1);
-			grids[0] = _grid;
+			grids[0] = grid;
 			dof = grids[0].Counts().prod();
 			for (int i = 1; i <= L; i++) {
 				grid_size = MathFunc::Round_Up_To_Align<d>(grid_size / 2, Grid<d>::Block_Size());
@@ -129,10 +158,8 @@ namespace Meso {
 				if (i != L)
 					rs[i].resize(n);
 			}
-		}
 
-		template<int d>
-		void Update_Poisson_Coarse_Layers(const int level_iter = 2, const int boundary_iter = 20, const int bottom_iter = 20) {
+			mappings[0] = std::make_shared<MaskedPoissonMapping<T, d>>(poisson);
 			for (int i = 1; i <= L; i++) {
 				MaskedPoissonMappingPtr poisson_fine = mappings[i - 1];
 				MaskedPoissonMappingPtr poisson_coarse = mappings[i];
@@ -147,31 +174,16 @@ namespace Meso {
 
 			//presmoothers and postsmoothers
 			for (int i = 0; i < L; i++) {
-				MaskedPoissonMappingPtr poisson = mappings[i];
-				ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
-				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
+				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
+				ArrayDv<T> poisson_one_over_diag; PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
+				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_one_over_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
 				postsmoothers[i] = presmoothers[i];
 			}
-			
+
 			//bottomsmoother
-			MaskedPoissonMappingPtr poisson = mappings[L];
-			ArrayDv<T> poisson_diag; PoissonLike_Diagonal(poisson_diag, *poisson);
-			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_diag, bottom_iter, 0, (T)(2.0 / 3.0));
-		}
-
-		//Update poisson system to an already allocated system
-		template<int d>
-		void Update_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int level_iter = 2, const int boundary_iter = 20, const int bottom_iter = 20) {
-			mappings[0] = std::make_shared<MaskedPoissonMapping<T, d>>(poisson);
-			Update_Poisson_Coarse_Layers<d>(level_iter, boundary_iter, bottom_iter);
-		}
-
-		//Will add epsilon*I to the system of the coarsest level
-		//To make a Poisson system truly positive definite
-		template<int d>
-		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int level_iter = 2, const int boundary_iter = 20, const int bottom_iter = 20){
-			Allocate_Poisson(poisson.Grid());
-			Update_Poisson<d>(poisson, level_iter, boundary_iter, bottom_iter);
+			MaskedPoissonMappingPtr poisson_ptr = mappings[L];
+			ArrayDv<T> poisson_one_over_diag; PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
+			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_one_over_diag, bottom_iter, 0, (T)(2.0 / 3.0));
 		}
 	};
 

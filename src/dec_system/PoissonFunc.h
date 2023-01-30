@@ -36,7 +36,7 @@ namespace Meso {
 	};
 
 	template<class T, int d >
-	void PoissonLike_Diagonal(ArrayDv<T>& diag, MaskedPoissonMapping<T, d>& mapping) {
+	void PoissonLike_One_Over_Diagonal(ArrayDv<T>& diag, MaskedPoissonMapping<T, d>& mapping) {
 		const auto& grid = mapping.vol.grid;
 		size_t n = mapping.XDoF();
 		diag.resize(n);
@@ -61,6 +61,12 @@ namespace Meso {
 		//Ap*.=p, masking out white cells
 		ArrayFunc::Multiply(Ap_temp, p_temp);
 		ArrayFunc::Add(diag, Ap_temp);
+
+		p_temp = diag;
+		const T* diag_ptr = thrust::raw_pointer_cast(p_temp.data());
+		T* one_over_diag_ptr = thrust::raw_pointer_cast(diag.data());
+		auto divide = [=]__device__(T & a, const T & b) { a = 1.0 / b; };
+		GPUFunc::Cwise_Mapping_Wrapper(one_over_diag_ptr, diag_ptr, divide, n);
 	}
 
 	//a mask to distinguish the dense elements in a poisson system
