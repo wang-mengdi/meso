@@ -163,15 +163,13 @@ namespace Meso {
 				mappings[i]->Search_Boundary();
 			
 			for (int i = 0; i < L; i++) {
-				ArrayDv<T> poisson_one_over_diag(dof); 
-				PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *(mappings[i]));
-				levelsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_one_over_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
+				PoissonLike_One_Over_Diagonal(rs[i], *(mappings[i]));
+				levelsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), rs[i], level_iter, boundary_iter, (T)(2.0 / 3.0));
 			}
 
 			//bottomsmoother
-			ArrayDv<T> poisson_one_over_diag(dof); 
-			PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *(mappings[L]));
-			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_one_over_diag, bottom_iter, 0, (T)(2.0 / 3.0));
+			PoissonLike_One_Over_Diagonal(xs[L], *(mappings[L]));
+			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), xs[L], bottom_iter, 0, (T)(2.0 / 3.0));
 		}
 	};
 
