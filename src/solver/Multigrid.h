@@ -149,7 +149,7 @@ namespace Meso {
 					rs[i].resize(n);
 			}
 
-			mappings[0] = std::make_shared<MaskedPoissonMapping<T, d>>(poisson);
+			mappings[0]->Init(poisson.cell_type, poisson.vol);
 			for (int i = 1; i <= L; i++) {
 				MaskedPoissonMappingPtr poisson_fine = mappings[i - 1];
 				MaskedPoissonMappingPtr poisson_coarse = mappings[i];

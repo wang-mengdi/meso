@@ -125,6 +125,7 @@ namespace Meso {
 		ConjugateGradient<T, d> MGPCG;
 		VCycleMultigridIntp<T, d> precond;
 		precond.Init_Poisson(poisson);
+		precond.Update_Poisson(poisson);
 		MGPCG.Init(&poisson, &precond, false, -1, 1e-5);
 		Timer timer;
 		auto [iters, relative_error] = MGPCG.Solve(x_dev.Data(), b_dev.Data());
