@@ -154,7 +154,6 @@ namespace Meso {
 			const unsigned char* cell_type_ptr = _cell_type.Data_Ptr();
 			GPUFunc::Cwise_Mapping_Wrapper(mu_ptr, cell_type_ptr, cond_set, _dof);
 			ArrayFunc::Minus(_r, _mu);
-			checkCudaErrors(cudaGetLastError());
 		}
 	};
 }

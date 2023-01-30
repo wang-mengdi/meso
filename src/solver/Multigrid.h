@@ -62,11 +62,8 @@ namespace Meso {
 			}
 
 			// bottom
-			checkCudaErrors(cudaGetLastError());
-			cudaDeviceSynchronize();
 			cudaMemset(ArrayFunc::Data(xs[L]), 0, sizeof(T)* xs[L].size());
 			bottomsmoother->Apply(xs[L], bs[L]);
-			checkCudaErrors(cudaGetLastError());
 
 			//upstroke (coarse->fine)
 			for (int i = L - 1; i >= 1; i--) {
@@ -79,7 +76,6 @@ namespace Meso {
 			GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(x0), ArrayFunc::Data(rs[0]), add, x0.size());
 			levelsmoothers[0]->Apply(x0, b0);
 			levelsmoothers[0]->Boundary_Apply(x0, b0);
-			checkCudaErrors(cudaGetLastError());
 		}
 
 		//Update poisson system to an already allocated system
@@ -100,12 +96,12 @@ namespace Meso {
 
 			for (int i = 0; i < L; i++) {
 				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
-				New_PoissonLike_One_Over_Diagonal(levelsmoothers[i]->one_over_diag, *poisson_ptr);
+				PoissonLike_One_Over_Diagonal(levelsmoothers[i]->one_over_diag, *poisson_ptr);
 			}
 
 			//bottomsmoother
 			MaskedPoissonMappingPtr poisson_ptr = mappings[L];
-			New_PoissonLike_One_Over_Diagonal(bottomsmoother->one_over_diag, *poisson_ptr);
+			PoissonLike_One_Over_Diagonal(bottomsmoother->one_over_diag, *poisson_ptr);
 		}
 
 		//Will add epsilon*I to the system of the coarsest level
@@ -172,14 +168,14 @@ namespace Meso {
 			for (int i = 0; i < L; i++) {
 				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
 				ArrayDv<T> poisson_one_over_diag(dof); 
-				New_PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
+				PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
 				levelsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_one_over_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
 			}
 
 			//bottomsmoother
 			MaskedPoissonMappingPtr poisson_ptr = mappings[L];
 			ArrayDv<T> poisson_one_over_diag(dof); 
-			New_PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
+			PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
 			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_one_over_diag, bottom_iter, 0, (T)(2.0 / 3.0));
 		}
 	};

@@ -463,16 +463,12 @@ namespace Meso {
 			else
 				vol.grid.Exec_Kernel(Poisson_Apply_Kernel3<T>, vol.grid, cell_type.Data_Ptr(), ArrayFunc::Data(vol.face_data_ptr),
 					ArrayFunc::Data(p), ArrayFunc::Data(Ap));
-			cudaDeviceSynchronize();
-			checkCudaErrors(cudaGetLastError());
 		}
 
 		void Boundary_Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p)
 		{
 			Poisson_Boundary_Apply_Kernel<T, d> << < boundary_tiles.size(), 64 >> > (vol.grid, ArrayFunc::Data(boundary_tiles),
 				cell_type.Data_Ptr(), ArrayFunc::Data(vol.face_data_ptr), ArrayFunc::Data(p), ArrayFunc::Data(Ap));
-			cudaDeviceSynchronize();
-			checkCudaErrors(cudaGetLastError());
 		}
 	};
 

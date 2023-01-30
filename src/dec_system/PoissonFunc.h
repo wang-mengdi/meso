@@ -9,66 +9,6 @@
 #include "SparseMatrixMapping.h"
 
 namespace Meso {
-	//color==0: white
-	//color==1: black
-	template<int d>
-	class ChessboardMask {
-	public:
-		Typedef_VectorD(d);
-		GridIndexer<d> grid;
-		const int color;
-		ChessboardMask(const GridIndexer<d> _grid, const int _color) :grid(_grid), color(_color) {}
-		__host__ __device__ int operator () (const int idx) {
-			VectorDi coord = grid.Coord(idx);
-			//note that XNOR is NOT*XOR, and ^0x1 equals to NOT
-			//so ^color^0x1 means "==color"
-			if constexpr (d == 2) {
-				return (coord[0] ^ coord[1] ^ color ^ 0x1) & 0x1;
-			}
-			else if constexpr (d == 3) {
-				return (coord[0] ^ coord[1] ^ coord[2] ^ color ^ 0x1) & 0x1;
-			}
-			else {
-				Assert(false, "Meso::ChessboardMask undefined for d=={}", d);
-				return false;
-			}
-		}
-	};
-
-	template<class T, int d >
-	void PoissonLike_One_Over_Diagonal(ArrayDv<T>& diag, MaskedPoissonMapping<T, d>& mapping) {
-		const auto& grid = mapping.vol.grid;
-		size_t n = mapping.XDoF();
-		diag.resize(n);
-		thrust::fill(diag.begin(), diag.end(), 0);
-		ArrayDv<T> p_temp(n);
-		ArrayDv<T> Ap_temp(n);
-		thrust::counting_iterator<int> idxbegin(0);
-		thrust::counting_iterator<int> idxend = idxbegin + n;
-
-		////white mask
-		ChessboardMask<d> white_mask(grid, 0);
-		thrust::transform(idxbegin, idxend, p_temp.begin(), white_mask);
-		mapping.Apply(Ap_temp, p_temp);
-		//Ap*.=p, masking out black cells
-		ArrayFunc::Multiply(Ap_temp, p_temp);
-		ArrayFunc::Add(diag, Ap_temp);
-
-		////black mask
-		//change p_temp from white to black
-		ArrayFunc::Unary_Transform(p_temp, 1 - thrust::placeholders::_1, p_temp);
-		mapping.Apply(Ap_temp, p_temp);
-		//Ap*.=p, masking out white cells
-		ArrayFunc::Multiply(Ap_temp, p_temp);
-		ArrayFunc::Add(diag, Ap_temp);
-
-		p_temp = diag;
-		const T* diag_ptr = thrust::raw_pointer_cast(p_temp.data());
-		T* one_over_diag_ptr = thrust::raw_pointer_cast(diag.data());
-		auto divide = [=]__device__(T & a, const T & b) { a = 1.0 / b; };
-		GPUFunc::Cwise_Mapping_Wrapper(one_over_diag_ptr, diag_ptr, divide, n);
-	}
-
 	template<class T>
 	__global__ void PoissonLike_One_Over_Diagonal_Kernel2(const Grid<2> _grid, const unsigned char* _cell_type, 
 		T** _vol, T* _one_over_diag)
@@ -163,7 +103,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	void New_PoissonLike_One_Over_Diagonal(ArrayDv<T>& _one_over_diag, MaskedPoissonMapping<T, d>& _mapping)
+	void PoissonLike_One_Over_Diagonal(ArrayDv<T>& _one_over_diag, MaskedPoissonMapping<T, d>& _mapping)
 	{
 		Grid<d> grid = _mapping.Grid();
 		if constexpr (d == 2)
@@ -173,6 +113,7 @@ namespace Meso {
 			grid.Exec_Kernel(PoissonLike_One_Over_Diagonal_Kernel3<T>, grid, _mapping.cell_type.Data_Ptr(),
 				ArrayFunc::Data(_mapping.vol.face_data_ptr), ArrayFunc::Data(_one_over_diag));
 	}
+
 	//a mask to distinguish the dense elements in a poisson system
 	template<int d>
 	class PoissonLikeMask {
