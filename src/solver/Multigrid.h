@@ -81,7 +81,7 @@ namespace Meso {
 		//Update poisson system to an already allocated system
 		template<int d>
 		void Update_Poisson(const MaskedPoissonMapping<T, d>& poisson) {
-			mappings[0] = std::make_shared<MaskedPoissonMapping<T, d>>(poisson);
+			mappings[0]->Init(poisson.cell_type, poisson.vol);
 			for (int i = 1; i <= L; i++) {
 				MaskedPoissonMappingPtr poisson_fine = mappings[i - 1];
 				MaskedPoissonMappingPtr poisson_coarse = mappings[i];
@@ -94,14 +94,11 @@ namespace Meso {
 			for (int i = 0; i < L; i++)
 				mappings[i]->Search_Boundary();
 
-			for (int i = 0; i < L; i++) {
-				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
-				PoissonLike_One_Over_Diagonal(levelsmoothers[i]->one_over_diag, *poisson_ptr);
-			}
+			for (int i = 0; i < L; i++)
+				PoissonLike_One_Over_Diagonal(levelsmoothers[i]->one_over_diag, *(mappings[i]));
 
 			//bottomsmoother
-			MaskedPoissonMappingPtr poisson_ptr = mappings[L];
-			PoissonLike_One_Over_Diagonal(bottomsmoother->one_over_diag, *poisson_ptr);
+			PoissonLike_One_Over_Diagonal(bottomsmoother->one_over_diag, *(mappings[L]));
 		}
 
 		//Will add epsilon*I to the system of the coarsest level
@@ -164,18 +161,16 @@ namespace Meso {
 
 			for (int i = 0; i < L; i++)
 				mappings[i]->Search_Boundary();
-
+			
 			for (int i = 0; i < L; i++) {
-				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
 				ArrayDv<T> poisson_one_over_diag(dof); 
-				PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
+				PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *(mappings[i]));
 				levelsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_one_over_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
 			}
 
 			//bottomsmoother
-			MaskedPoissonMappingPtr poisson_ptr = mappings[L];
 			ArrayDv<T> poisson_one_over_diag(dof); 
-			PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
+			PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *(mappings[L]));
 			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_one_over_diag, bottom_iter, 0, (T)(2.0 / 3.0));
 		}
 	};

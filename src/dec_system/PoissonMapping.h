@@ -425,7 +425,8 @@ namespace Meso {
 			Allocate_Memory(grid);
 		}
 
-		void Init(const Field<unsigned char, d>& _cell_type, const FaceField<T, d>& _vol) {
+		template<DataHolder side>
+		void Init(const Field<unsigned char, d, side>& _cell_type, const FaceField<T, d, side>& _vol) {
 			Assert(_cell_type.grid.Indexer() == _vol.grid.Indexer(), "MaskedPoissonMapping::Init error: _cell_type grid {} unequal to _vol grid {}", _cell_type.grid, _vol.grid);
 			Allocate_Memory(_cell_type.grid);
 			cell_type.Deep_Copy(_cell_type);
