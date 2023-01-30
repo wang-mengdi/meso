@@ -172,4 +172,25 @@ namespace Meso {
 			});
 			
 	}
+
+	template<class T, int d>
+	void Test_New_Poisson_Like_One_Over_Diag(const Vector<int, d> _counts)
+	{
+		Typedef_VectorD(d);
+		real domain_size = 1.0;
+		Grid<d> grid(_counts, domain_size / _counts[0], -VectorD::Ones() * domain_size * 0.5);
+		MaskedPoissonMapping<T, d> poisson = Random_Poisson_Mapping<T, d>(grid);
+		int n = grid.Memory_Size();
+		ArrayDv<T> old_result(n);
+		ArrayDv<T> new_result(n);
+		PoissonLike_One_Over_Diagonal(old_result, poisson);
+		New_PoissonLike_One_Over_Diagonal(new_result, poisson);
+		ArrayDv<T> old_result_host = old_result;
+		ArrayDv<T> new_result_host = new_result;
+		for (int i = 0; i < n; i++)
+		{
+			T diff = fabs(old_result_host[i] - new_result_host[i]);
+			Assert(diff < 1e-10, "diff in New_PoissonLike_One_Over_Diagonal {}", diff);
+		}
+	}
 }

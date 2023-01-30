@@ -100,12 +100,12 @@ namespace Meso {
 
 			for (int i = 0; i < L; i++) {
 				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
-				PoissonLike_One_Over_Diagonal(levelsmoothers[i]->one_over_diag, *poisson_ptr);
+				New_PoissonLike_One_Over_Diagonal(levelsmoothers[i]->one_over_diag, *poisson_ptr);
 			}
 
 			//bottomsmoother
 			MaskedPoissonMappingPtr poisson_ptr = mappings[L];
-			PoissonLike_One_Over_Diagonal(bottomsmoother->one_over_diag, *poisson_ptr);
+			New_PoissonLike_One_Over_Diagonal(bottomsmoother->one_over_diag, *poisson_ptr);
 		}
 
 		//Will add epsilon*I to the system of the coarsest level
@@ -169,16 +169,17 @@ namespace Meso {
 			for (int i = 0; i < L; i++)
 				mappings[i]->Search_Boundary();
 
-			//presmoothers and postsmoothers
 			for (int i = 0; i < L; i++) {
 				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
-				ArrayDv<T> poisson_one_over_diag; PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
+				ArrayDv<T> poisson_one_over_diag(dof); 
+				New_PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
 				levelsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_one_over_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
 			}
 
 			//bottomsmoother
 			MaskedPoissonMappingPtr poisson_ptr = mappings[L];
-			ArrayDv<T> poisson_one_over_diag; PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
+			ArrayDv<T> poisson_one_over_diag(dof); 
+			New_PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
 			bottomsmoother = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[L]), poisson_one_over_diag, bottom_iter, 0, (T)(2.0 / 3.0));
 		}
 	};
