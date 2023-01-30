@@ -29,8 +29,7 @@ namespace Meso {
 		Array<MaskedPoissonMappingPtr> mappings;
 		Array<LinearMappingPtr> restrictors;//restrictor[i] is applied between layer i and i+1
 		Array<LinearMappingPtr> prolongators;//prolongator[i] is applied between layer i and i+1
-		Array<DampedJacobiSmootherPtr> presmoothers;
-		Array<DampedJacobiSmootherPtr> postsmoothers;
+		Array<DampedJacobiSmootherPtr> levelsmoothers;
 		DampedJacobiSmootherPtr bottomsmoother;
 
 		Array<ArrayDv<T>> xs;
@@ -50,14 +49,14 @@ namespace Meso {
 			auto add = [=]__device__(T & a, T & b) { a += b; };
 
 			cudaMemset(ArrayFunc::Data(x0), 0, sizeof(T)* x0.size());
-			presmoothers[0]->Boundary_Apply(x0, b0);
-			presmoothers[0]->Apply(x0, b0);
+			levelsmoothers[0]->Boundary_Apply(x0, b0);
+			levelsmoothers[0]->Apply(x0, b0);
 			mappings[0]->Residual(rs[0], x0, b0);
 			restrictors[0]->Apply(bs[1], rs[0]);
 			for (int i = 1; i < L; i++) {
 				cudaMemset(ArrayFunc::Data(xs[i]), 0, sizeof(T)* xs[i].size());
-				presmoothers[i]->Boundary_Apply(xs[i], bs[i]);
-				presmoothers[i]->Apply(xs[i], bs[i]);
+				levelsmoothers[i]->Boundary_Apply(xs[i], bs[i]);
+				levelsmoothers[i]->Apply(xs[i], bs[i]);
 				mappings[i]->Residual(rs[i], xs[i], bs[i]);
 				restrictors[i]->Apply(bs[i + 1], rs[i]);
 			}
@@ -73,13 +72,13 @@ namespace Meso {
 			for (int i = L - 1; i >= 1; i--) {
 				prolongators[i]->Apply(rs[i], xs[i + 1]);
 				GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(xs[i]), ArrayFunc::Data(rs[i]), add, xs[i].size());
-				postsmoothers[i]->Apply(xs[i], bs[i]);
-				postsmoothers[i]->Boundary_Apply(xs[i], bs[i]);
+				levelsmoothers[i]->Apply(xs[i], bs[i]);
+				levelsmoothers[i]->Boundary_Apply(xs[i], bs[i]);
 			}
 			prolongators[0]->Apply(rs[0], xs[1]);
 			GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(x0), ArrayFunc::Data(rs[0]), add, x0.size());
-			postsmoothers[0]->Apply(x0, b0);
-			postsmoothers[0]->Boundary_Apply(x0, b0);
+			levelsmoothers[0]->Apply(x0, b0);
+			levelsmoothers[0]->Boundary_Apply(x0, b0);
 			checkCudaErrors(cudaGetLastError());
 		}
 
@@ -99,10 +98,9 @@ namespace Meso {
 			for (int i = 0; i < L; i++)
 				mappings[i]->Search_Boundary();
 
-			//presmoothers and postsmoothers
 			for (int i = 0; i < L; i++) {
 				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
-				PoissonLike_One_Over_Diagonal(presmoothers[i]->one_over_diag, *poisson_ptr);
+				PoissonLike_One_Over_Diagonal(levelsmoothers[i]->one_over_diag, *poisson_ptr);
 			}
 
 			//bottomsmoother
@@ -141,8 +139,7 @@ namespace Meso {
 
 
 			//presmoothers and postsmoothers
-			presmoothers.resize(L);
-			postsmoothers.resize(L);
+			levelsmoothers.resize(L);
 
 			//auxillary arrays
 			xs.resize(L + 1);
@@ -176,8 +173,7 @@ namespace Meso {
 			for (int i = 0; i < L; i++) {
 				MaskedPoissonMappingPtr poisson_ptr = mappings[i];
 				ArrayDv<T> poisson_one_over_diag; PoissonLike_One_Over_Diagonal(poisson_one_over_diag, *poisson_ptr);
-				presmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_one_over_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
-				postsmoothers[i] = presmoothers[i];
+				levelsmoothers[i] = std::make_shared<DampedJacobiSmoother<T, d>>(*(mappings[i]), poisson_one_over_diag, level_iter, boundary_iter, (T)(2.0 / 3.0));
 			}
 
 			//bottomsmoother
