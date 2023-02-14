@@ -166,4 +166,14 @@ namespace Meso {
 		vertex_matrix = Eigen::Map<VertexMatrix<T, 2>>(vertices[0].data(), vertices.size(), 2);
 		element_matrix = Eigen::Map<ElementMatrix<2>>(elements[0].data(), elements.size(), 2);
 	}
+
+	template<class T, int d, DataHolder side>
+	void Non_Manifold_Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& element_matrix, const Field<CellType, d, side>& label) {
+		Assert(field.grid.Is_Unpadded(), "marching cubes field.grid {} padding not allowed", field.grid);
+		if constexpr (d == 2) {
+			if constexpr (side == HOST) Non_Manifold_Marching_Square<T>(vertex_matrix, element_matrix, label);
+			else Assert(false, "Marching_Squares not implemented for GPU");
+		}
+		else Assert(false, "Marching_Cubes not implemented for d={}", d);
+	}
 }
