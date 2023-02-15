@@ -54,18 +54,18 @@ namespace Meso {
 			}
 			return type - 85;
 		};
-		const auto Gen_Vertex = [&field, &grid, &vertices, &iso_value](Field<int, 2>& v_idx, const Vector2i node_i, const Vector2i node_j)->void
+		const auto Gen_Vertex = [&field, &grid, &vertices](Field<int, 2>& v_idx, const Vector2i node_i, const Vector2i node_j)->void
 		{
 			const CellType& v1 = field(node_i); const CellType& v2 = field(node_j);
-			if (v_idx(node_i) == -1 &&  v1 != v2)
+			if (v1 != v2)
 			{
-				//T alpha = (v1 - iso_value) / (v1 - v2);
 				T alpha = 0.5;
 				Vector2 pos = ((1 - alpha) * grid.Position(node_i) + alpha * grid.Position(node_j));
 				vertices.push_back(pos.template cast<T>()); v_idx(node_i) = (int)vertices.size() - 1;
 			};
 		};
 		// 2. main part
+		// order: right-top -> left-top -> left-btm -> right-btm
 		grid.Exec_Nodes(
 			[&](const Vector2i cell_index) {
 				// go through all cells and generate vertex on each four edges.
@@ -93,17 +93,17 @@ namespace Meso {
 				//const T center = 0.25 * (left_down + right_down + right_up + left_up);
 				const int left_vertex = v_idx_on_edge[1](cell_index);
 				const int right_vertex = v_idx_on_edge[1](cell_index + Vector2i::Unit(0));
-				const int top_vertex = v_idx_on_edge[0](cell_index);
-				const int bottom_vertex = v_idx_on_edge[1](cell_index + Vector2i::Unit(1));
+				const int top_vertex = v_idx_on_edge[0](cell_index + Vector2i::Unit(1));
+				const int bottom_vertex = v_idx_on_edge[0](cell_index);
 
 				switch (Edge_Type(right_up, left_up, left_down, right_down))
 				{
 				// 0 segment
 				case 0: break; case 15: break;
 				// 1 segment
-				case 1: elements.push_back(Vector2i(bottom_vertex, right_vertex); break;
-				case 4: elements.push_back(Vector2i(bottom_vertex, left_vertex); break;
-				case 5: elements.push_back(Vector2i(left_vertex, right_vertex); break;
+				case 1: elements.push_back(Vector2i(bottom_vertex, right_vertex)); break;
+				case 4: elements.push_back(Vector2i(bottom_vertex, left_vertex)); break;
+				case 5: elements.push_back(Vector2i(left_vertex, right_vertex)); break;
 
 				case 16: elements.push_back(Vector2i(left_vertex, top_vertex)); break;
 				case 20: elements.push_back(Vector2i(top_vertex, bottom_vertex)); break;
@@ -169,7 +169,7 @@ namespace Meso {
 
 	template<class T, int d, DataHolder side>
 	void Non_Manifold_Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& element_matrix, const Field<CellType, d, side>& label) {
-		Assert(field.grid.Is_Unpadded(), "marching cubes field.grid {} padding not allowed", field.grid);
+		Assert(label.grid.Is_Unpadded(), "marching cubes field.grid {} padding not allowed", label.grid);
 		if constexpr (d == 2) {
 			if constexpr (side == HOST) Non_Manifold_Marching_Square<T>(vertex_matrix, element_matrix, label);
 			else Assert(false, "Marching_Squares not implemented for GPU");
