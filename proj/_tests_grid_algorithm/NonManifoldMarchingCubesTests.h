@@ -27,7 +27,7 @@ namespace Meso {
 	}
 
 	template<class T>
-	void Test_Marching_Cubes1(int times, bool verbose) {
+	void Test_Non_Manifold_Marching_Cubes1(int times, bool verbose) {
 
 		// Marching Cubes
 		/*{
@@ -56,7 +56,7 @@ namespace Meso {
 					real value= 1000. * pos[1] * pos[1] - 300. * pos[0] * pos[0] * sin(100. * pos[0] * pos[0]);
 					field_host(node) = value;
 					if (value > 0) { label_host(node) = 0; }
-					else { label_host(node) = 1; }
+					else { field_host(node) = -value; label_host(node) = 1; }
 				}
 			);
 			Test_Non_Manifold_Marching_Cubes_Unit<T, HOST, 2>(label_host, field_host, times, verbose);
@@ -64,7 +64,7 @@ namespace Meso {
 	}
 
 	template<class T>
-	void Test_Marching_Cubes2(int times, bool verbose) {
+	void Test_Non_Manifold_Marching_Cubes2(int times, bool verbose) {
 
 		// Marching Cubes
 		/*{
@@ -90,15 +90,15 @@ namespace Meso {
 			grid.Exec_Nodes(
 				[&](const Vector2i node) {
 					Vector2 pos = grid.Position(node);
-					real dist1 = (pos - center1).norm();
-					real dist2= (pos - center2).norm();
-					real dist3= (pos - center3).norm();
-					real min_value = min(dist1, dist2, dist3);
-					field_host(node = min_value);
-					if (min_value == dist1) {
+					real dist1 = -(pos - center1).norm();
+					real dist2= -(pos - center2).norm();
+					real dist3= -(pos - center3).norm();
+					real max_value = std::max({ dist1, dist2, dist3 });
+					field_host(node) = max_value;
+					if (max_value == dist1) {
 						label_host(node) = 0;
 					}
-					else if (min_value == dist2) {
+					else if (max_value == dist2) {
 						label_host(node) = 1;
 					}
 					else {

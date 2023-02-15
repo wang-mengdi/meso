@@ -8,6 +8,7 @@
 #include "LevelsetAdvanceTest.h"
 #include "MarchingCubesTests.h"
 #include "LinearFEMGridFuncTest.h"
+#include "NonManifoldMarchingCubesTests.h"
 
 using namespace Meso;
 #define __THRUST_HAS_CUDART__
@@ -26,11 +27,14 @@ int main(){
 
 	//return 0;
 
-	Test_Marching_Cubes<float>(1, false); // verify by opening marching_cubes.obj
-	Test_Marching_Cubes<double>(1, false);
+	//Test_Marching_Cubes<float>(1, false); // verify by opening marching_cubes.obj
+	//Test_Marching_Cubes<double>(1, false);
 
-	Test_Fast_Marching<2>(128);
-	Test_Fast_Marching<3>(128);
+	Test_Non_Manifold_Marching_Cubes1<double>(1, true);
+	Test_Non_Manifold_Marching_Cubes2<double>(1, true);
+
+	//Test_Fast_Marching<2>(128);
+	//Test_Fast_Marching<3>(128);
 
 
 	// Test_Marching_Cubes<double>(1, false);
@@ -81,6 +85,6 @@ int main(){
 	//Test_FMM_Circle<3, PointIntpLinearPadding0, DEVICE>(0.02, Vector<real, 3>::Zero(), 1);
 
 	//test linear FEM Grid
-	Test_Linear_FEM_Grid<2>((real)1, 0.3);
-	Test_Linear_FEM_Grid<3>((real)1, 0.3);
+	//Test_Linear_FEM_Grid<2>((real)1, 0.3);
+	//Test_Linear_FEM_Grid<3>((real)1, 0.3);
 }
