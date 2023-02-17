@@ -205,6 +205,21 @@ namespace Meso {
 			writer->Write();
 		}
 
+		void Write_VTS(vtkStructuredGrid& vtk_grid, std::string file_name) {
+			// setup VTK
+			vtkNew<vtkXMLStructuredGridWriter> writer;
+
+#if (VTK_MAJOR_VERSION >=6)
+			writer->SetInputData(&vtk_grid);
+#else
+			writer->SetInput(&vtk_grid);
+#endif
+
+			writer->SetFileName(file_name.c_str());
+			writer->SetDataModeToBinary();
+			writer->Write();
+		}
+
 		template<int d>
 		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const Array<Vector<real, d>>& vel, std::string file_name) {
 			//output particles
