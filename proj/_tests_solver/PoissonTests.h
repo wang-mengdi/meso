@@ -36,7 +36,7 @@ namespace Meso {
 	}
 
 	template<class T, int d>
-	void Test_Poisson_Diagonal(Vector<int, d> counts) {
+	void Test_Poisson_One_Over_Diagonal(Vector<int, d> counts) {
 		Typedef_VectorD(d);
 		typedef Eigen::Matrix<T, Eigen::Dynamic, 1> EigenVec;
 		Grid<d> grid(counts);
@@ -54,34 +54,30 @@ namespace Meso {
 			}
 		);
 		mapping.Init(cell_type, vol);
-		ArrayDv<T> diag_dev(mapping.YDoF());
-		PoissonLike_Diagonal(diag_dev, mapping);
-		Array<T> diag_host = diag_dev;
+		ArrayDv<T> one_over_diag_dev(mapping.YDoF());
+		PoissonLike_One_Over_Diagonal(one_over_diag_dev, mapping);
 
-		EigenVec vec_diag_grdt(mapping.YDoF());
+		Array<T> one_over_diag_host(mapping.YDoF());
 		grid.Exec_Nodes(
 			[&](const VectorDi cell) {
 				int idx = grid.Index(cell);
 		if (cell_type(cell) == 1 || cell_type(cell) == 2) {
-			vec_diag_grdt[idx] = 1;
+			one_over_diag_host[idx] = 1;
 		}
 		else {
-			vec_diag_grdt[idx] = 0;
+			real val = 0;
 			for (int axis = 0; axis < d; axis++) {
 				VectorDi face0 = cell, face1 = cell + VectorDi::Unit(axis);
-				vec_diag_grdt[idx] += vol(axis, face0);
-				vec_diag_grdt[idx] += vol(axis, face1);
+				val += vol(axis, face0);
+				val += vol(axis, face1);
 			}
+			one_over_diag_host[idx] = 1.0 / val;
 		}
 			}
 		);
-		EigenVec vec_diag_host(mapping.YDoF());
-		for (int i = 0; i < mapping.YDoF(); i++) vec_diag_host[i] = diag_host[i];
-		if (vec_diag_grdt.isApprox(vec_diag_host)) Pass("Test_Poisson_Diagonal passed for counts={}", counts);
-		else Error("Test_Poisson_Diagonal failed for counts={}", counts);
-		//Info("vec_diag_grdt: {}", vec_diag_grdt);
-		//Info("vec_diag_host: {}", vec_diag_host);
-		//Info("error: {}", vec_diag_host - vec_diag_grdt);
+		Array<T> one_over_diag_dev_to_host = one_over_diag_dev;
+		if (ArrayFunc::Is_Approx<T>(one_over_diag_host, one_over_diag_dev_to_host)) Pass("Test_One_Over_Poisson_Diagonal passed for counts={}", counts);
+		else Error("Test_One_Over_Poisson_Diagonal failed for counts={}", counts);
 	}
 
 
