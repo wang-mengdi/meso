@@ -19,11 +19,11 @@ namespace Meso {
 	// Note: Marching Square is a 2-d version of marching cubes. All inputs and outputs should admit a dimision of 2.
 	//       This function is currently under construction.
 	// Functionality:
-	//		- Adapative: N
+	//		- Adapative: OK
 	//		- Ambiguous resolve: N
 	//		- Optimization: N
 	//		- Support both Device and Host: N
-	//		- Adapative interjunction: N
+	//		- Adapative interjunction: OK
 	template<class T>
 	void Non_Manifold_Marching_Square(
 		VertexMatrix<T, 2>& vertex_matrix,
