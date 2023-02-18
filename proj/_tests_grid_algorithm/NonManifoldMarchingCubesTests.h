@@ -8,6 +8,7 @@
 #include "Timer.h"
 #include "IOFunc.h"
 #include "ImplicitManifold.h"
+#include "Random.h"
 
 namespace Meso {
 
@@ -101,8 +102,8 @@ namespace Meso {
 				[&](const Vector2i node) {
 					Vector2 pos = grid.Position(node);
 					real dist1 = -(pos - center1).norm();
-					real dist2= -(pos - center2).norm();
-					real dist3= -(pos - center3).norm();
+					real dist2 = -(pos - center2).norm();
+					real dist3 = -(pos - center3).norm();
 					real max_value = std::max({ dist1, dist2, dist3 });
 					if (max_value == dist1) {
 						label_host(node) = 0;
@@ -116,6 +117,52 @@ namespace Meso {
 						label_host(node) = 2;
 						field_host(node) = -min(abs(plane13.Phi(pos)), abs(plane23.Phi(pos)));
 					}
+				}
+			);
+			Test_Non_Manifold_Marching_Cubes_Unit<T, HOST, 2>(label_host, field_host, 2, times, verbose);
+		}
+	}
+
+	template<class T>
+	void Test_Non_Manifold_Marching_CubesN(int times, bool verbose, int count) {
+
+		// Marching Square
+		{
+			Grid<2> grid(Vector2i(104, 104), 0.01, MathFunc::V<2>(0., 0.), CORNER);
+			Field<T, 2> field_host(grid, 0); 
+			Array<Vector2> points{}; std::unordered_map<int, PlaneShape<2>> planes{};
+			for (size_t i = 0; i < count; i++)	
+				points.push_back(Random::Random_VectorXd(2, 0.0, 1.0));
+			for (size_t i = 0; i < count; i++)
+				for (size_t j = 0; j < count; j++)
+				{
+					if (i == j)
+					{
+						continue;
+					}
+					planes[i * count + j] = PlaneShape<2>(0.5 * (points[i] + points[j]), points[i] - points[j]);
+				}
+
+			Field<CellType, 2> label_host(grid, 0);
+
+			grid.Exec_Nodes(
+				[&](const Vector2i node) {
+					Vector2 pos = grid.Position(node);
+					T min_distance_to_point = 100.;
+					T min_distance_to_plane = 100.;
+
+					for (size_t i = 0; i < points.size(); i++)
+						if ((pos - points[i]).norm() < min_distance_to_point)
+						{
+							min_distance_to_point = (pos - points[i]).norm();
+							label_host(node) = i;
+						}
+
+					for (size_t i = 0; i < count; i++)
+						if (i != label_host(node) && abs(planes[label_host(node) * count + i].Phi(pos)) < min_distance_to_plane) {
+							min_distance_to_plane = abs(planes[label_host(node) * count + i].Phi(pos));
+							field_host(node) = -abs(planes[label_host(node) * count + i].Phi(pos));
+						}
 				}
 			);
 			Test_Non_Manifold_Marching_Cubes_Unit<T, HOST, 2>(label_host, field_host, 2, times, verbose);

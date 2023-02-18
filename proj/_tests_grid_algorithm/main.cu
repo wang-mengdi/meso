@@ -31,7 +31,7 @@ int main(){
 	//Test_Marching_Cubes<double>(1, false);
 
 	//Test_Non_Manifold_Marching_Cubes1<double>(1, true);
-	Test_Non_Manifold_Marching_Cubes2<double>(1, true);
+	Test_Non_Manifold_Marching_CubesN<double>(1, true, 64);
 
 	//Test_Fast_Marching<2>(128);
 	//Test_Fast_Marching<3>(128);

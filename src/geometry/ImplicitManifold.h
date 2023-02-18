@@ -98,7 +98,7 @@ namespace Meso {
 		VectorD p;
 		VectorD n;
 		real b;
-
+		PlaneShape() = default;
 		PlaneShape(const VectorD _p, const VectorD _n = VectorD::Unit(1)) :p(_p), n(_n) { n.normalize(); b = n.dot(p); }
 		//SphereShape<d>& operator=(const SphereShape<d>& copy) { n = copy.n; p = copy.p; b = copy.b; return *this; }
 		//SphereShape(const SphereShape<d>& copy) { *this = copy; }

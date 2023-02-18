@@ -28,14 +28,14 @@ namespace Meso {
 	void Non_Manifold_Marching_Square(
 		VertexMatrix<T, 2>& vertex_matrix,
 		ElementMatrix<2>& element_matrix,
-		const Field<CellType, 2, HOST>& label_filed,
+		const Field<CellType, 2, HOST>& label_field,
 		const Field<T, 2, HOST>& value_field) 
 	{
-		Assert(label_filed.grid.Is_Unpadded(), "Non_Manifold_Marching_Square field.grid {} padding not allowed", label_filed.grid);
+		Assert(label_field.grid.Is_Unpadded(), "Non_Manifold_Marching_Square field.grid {} padding not allowed", label_field.grid);
 		Assert(value_field.grid.Is_Unpadded(), "Non_Manifold_Marching_Square field.grid {} padding not allowed", value_field.grid);
 
 		// 0. Init
-		const Grid<2>& grid = label_filed.grid;							// const reference to access coordinates of grid
+		const Grid<2>& grid = label_field.grid;							// const reference to access coordinates of grid
 		const Vector2i cell_counts = grid.Counts() - Vector2i::Ones();	// compute cells counts by grid counts
 		Array<Vector<T, 2>> vertices{}; Array<Vector2i> elements;		// vertices array is used to store generated vertices, similarly elements array is used to store lines
 
@@ -53,7 +53,7 @@ namespace Meso {
 
 		//  1. Define basic function
 		// `Hamming_Weight` is used to assist calculating set size in `Edge_Type`
-		const auto Hamming_Weight = [](unsigned char c) -> unsigned char
+		const auto Hamming_Weight = [](unsigned long long c) -> unsigned char
 		{
 			unsigned l = 0;
 			for (; c != 0; l += 1) c &= c - 1;
@@ -68,11 +68,11 @@ namespace Meso {
 			unsigned char type = 0;
 			for (size_t i = 0; i < 4; i++)
 			{
-				unsigned char c = 0;
+				unsigned long long c = 0; // able to take 64 types of 
 				for (size_t j = 0; j < i + 1; j++)
 				{
-					c |= (1 << v[j]);
-					if (c & 1 << v[i])
+					c |= (1ULL << v[j]);
+					if (c & 1ULL << v[i])
 						break;
 				}
 				type = type * 4 + Hamming_Weight(c);
@@ -82,15 +82,14 @@ namespace Meso {
 
 		// `Gen_Vertex` take an edge(two point vector) as input and then generates vertex on it.
 		// The generated vertex will be pushed into `vertices` and the `v_idx` will link the index with this edge.
-		const auto Gen_Vertex = [&label_filed, &value_field, &grid, &vertices](Field<int, 2>& v_idx, const Vector2i node_i, const Vector2i node_j)->void
+		const auto Gen_Vertex = [&label_field, &value_field, &grid, &vertices](Field<int, 2>& v_idx, const Vector2i node_i, const Vector2i node_j)->void
 		{
-			const CellType& t1 = label_filed(node_i); const CellType& t2 = label_filed(node_j);
+			const CellType& t1 = label_field(node_i); const CellType& t2 = label_field(node_j);
 			const T& v1 = value_field(node_i); const T& v2 = value_field(node_j);
 
 			if (t1 != t2)
 			{
 				T alpha = v1 * v2 < 0 ? (v1) / (v1 - v2) : (v1) / (v1 + v2);
-				fmt::print("v1 {} v2 {} alpha {}\n", v1, v2, alpha);
 				Vector2 pos = ((1 - alpha) * grid.Position(node_i) + alpha * grid.Position(node_j));
 				vertices.push_back(pos.template cast<T>()); v_idx(node_i) = (int)vertices.size() - 1;
 			};
@@ -101,10 +100,10 @@ namespace Meso {
 			[&](const Vector2i cell_index) {
 				// go through all cells and generate vertex on each four edges.
 				if ((cell_index - cell_counts).maxCoeff() == 0) return;
-				const CellType& left_down = label_filed(cell_index);
-				const CellType& right_down = label_filed(cell_index + Vector2i::Unit(0));
-				const CellType& right_up = label_filed(cell_index + Vector2i::Ones());
-				const CellType& left_up = label_filed(cell_index + Vector2i::Unit(1));
+				const CellType& left_down = label_field(cell_index);
+				const CellType& right_down = label_field(cell_index + Vector2i::Unit(0));
+				const CellType& right_up = label_field(cell_index + Vector2i::Ones());
+				const CellType& left_up = label_field(cell_index + Vector2i::Unit(1));
 
 				// Don't change the order!
 				Gen_Vertex(vertex_index_on_edge[0], cell_index, cell_index + Vector2i::Unit(0)); // bottom edge
@@ -114,14 +113,19 @@ namespace Meso {
 
 				// in default, generate a vertex in the middle of cell
 				// TODO: should be optimized later
-				Vector2 pos = 0.25 * grid.Position(cell_index) \
-						+ 0.25 * grid.Position(cell_index + Vector2i::Unit(0)) \
-						+ 0.25 * grid.Position(cell_index + Vector2i::Unit(1)) \
-						+ 0.25 * grid.Position(cell_index + Vector2i::Ones());
-				vertices.push_back(pos.template cast<T>()); 
-				const int center_vertex = (int)vertices.size() - 1;
+				T inv_v1 = 1. / (-1e-8 + value_field(cell_index));
+				T inv_v2 = 1. / (-1e-8 + value_field(cell_index + Vector2i::Unit(0)));
+				T inv_v3 = 1. / (-1e-8 + value_field(cell_index + Vector2i::Unit(1)));
+				T inv_v4 = 1. / (-1e-8 + value_field(cell_index + Vector2i::Ones()));
 
-				const T center = 0.25 * (left_down + right_down + right_up + left_up);
+				Vector2 pos = ((grid.Position(cell_index) * inv_v1) \
+					+ (grid.Position(cell_index + Vector2i::Unit(0)) * inv_v2) \
+					+ (grid.Position(cell_index + Vector2i::Unit(1)) * inv_v3) \
+					+ (grid.Position(cell_index + Vector2i::Ones())  * inv_v4)) / \
+					(inv_v1 + inv_v2 + inv_v3 + inv_v4);
+				vertices.push_back(pos.template cast<T>());
+
+				const int center_vertex = (int)vertices.size() - 1;
 				const int left_vertex = vertex_index_on_edge[1](cell_index);
 				const int right_vertex = vertex_index_on_edge[1](cell_index + Vector2i::Unit(0));
 				const int top_vertex = vertex_index_on_edge[0](cell_index + Vector2i::Unit(1));
@@ -145,7 +149,8 @@ namespace Meso {
 				// 2 segment
 				case 6: 
 				{
-					elements.push_back(Vector2i(left_vertex, right_vertex));
+					elements.push_back(Vector2i(left_vertex, center_vertex));
+					elements.push_back(Vector2i(center_vertex, right_vertex));
 					elements.push_back(Vector2i(center_vertex, bottom_vertex));
 					break;
 				}
@@ -163,14 +168,17 @@ namespace Meso {
 				}
 				case 22: 
 				{
-					elements.push_back(Vector2i(top_vertex, bottom_vertex));
+					elements.push_back(Vector2i(top_vertex, center_vertex));
+					elements.push_back(Vector2i(center_vertex, bottom_vertex));
 					elements.push_back(Vector2i(center_vertex, right_vertex));
 					break;
 				}
 				case 24: 
 				{
-					elements.push_back(Vector2i(top_vertex, bottom_vertex));
+					elements.push_back(Vector2i(top_vertex, center_vertex));
+					elements.push_back(Vector2i(center_vertex, bottom_vertex));
 					elements.push_back(Vector2i(center_vertex, left_vertex));
+
 					break;
 				}
 				case 25: 
@@ -181,18 +189,24 @@ namespace Meso {
 				}
 				case 26:
 				{
-					elements.push_back(Vector2i(left_vertex, right_vertex));
+					elements.push_back(Vector2i(left_vertex, center_vertex));
+					elements.push_back(Vector2i(center_vertex, right_vertex));
 					elements.push_back(Vector2i(top_vertex, center_vertex));
 					break;
 				}
 				case 27:
 				{
-					elements.push_back(Vector2i(left_vertex, right_vertex));
-					elements.push_back(Vector2i(top_vertex, bottom_vertex));
+					elements.push_back(Vector2i(left_vertex, center_vertex));
+					elements.push_back(Vector2i(center_vertex, right_vertex));
+					elements.push_back(Vector2i(top_vertex, center_vertex));
+					elements.push_back(Vector2i(center_vertex, bottom_vertex));
 					break;
 				}
 				default:
+				{
+					fmt::print("default: {} {} {} {} {}\n", right_up, left_up, left_down, right_down, Edge_Type(right_up, left_up, left_down, right_down));
 					break;
+				}
 				}
 			}
 		);
