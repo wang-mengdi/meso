@@ -204,7 +204,7 @@ namespace Meso {
 				}
 				default:
 				{
-					fmt::print("default: {} {} {} {} {}\n", right_up, left_up, left_down, right_down, Edge_Type(right_up, left_up, left_down, right_down));
+					//fmt::print("default: {} {} {} {} {}\n", right_up, left_up, left_down, right_down, Edge_Type(right_up, left_up, left_down, right_down));
 					break;
 				}
 				}
