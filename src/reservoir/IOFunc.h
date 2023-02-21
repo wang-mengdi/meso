@@ -9,6 +9,7 @@
 #include <vtkNew.h>
 #include <vtkXMLStructuredGridWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
+#include <vtkXMLPolyDataWriter.h>
 #include <vtkStructuredGrid.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkDataSet.h>
@@ -16,6 +17,8 @@
 #include <vtkCellData.h>
 #include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
+#include <vtkPolyData.h>
+#include <vtkLine.h>
 
 #include <igl/writeOBJ.h>
 #include <igl/readOBJ.h>
@@ -216,6 +219,44 @@ namespace Meso {
 #endif
 
 			writer->SetFileName(file_name.c_str());
+			writer->SetDataModeToBinary();
+			writer->Write();
+		}
+
+		template<class T, int d,int ed>
+		void VTP_Init_Mesh(vtkPolyData& vtp, const VertexMatrix<T, d>& vertices, const ElementMatrix<ed>& elements) {
+			Assert(vertices.rows()!=0, "VTKFunc::VTP_Init_Mesh error: empty vertices");
+			Typedef_VectorD(d);
+			vtkNew<vtkPoints> points;
+			for (int i = 0; i < vertices.rows();i++)
+			{
+				Vector3 vec=MathFunc::V<3>(VectorD(vertices.row(i)));
+				points->InsertNextPoint(vec[0], vec[1], vec[2]);
+			}
+			vtp.SetPoints(points);
+
+			if constexpr(d==2){
+				vtkNew<vtkCellArray> lines;
+				for (int i = 0; i < elements.rows(); i++) {
+					vtkNew<vtkLine> line;
+					line->GetPointIds()->SetId(0, elements.row(i)[0]);
+					line->GetPointIds()->SetId(1, elements.row(i)[1]);
+					lines->InsertNextCell(line);
+				}
+				vtp.SetLines(lines);
+			}
+		}
+
+		void Write_VTP(vtkPolyData& vtp, std::string file_name) {
+			// setup VTK
+			vtkNew<vtkXMLPolyDataWriter> writer;
+
+			writer->SetFileName(file_name.c_str());
+#if (VTK_MAJOR_VERSION >=6)
+			writer->SetInputData(&vtp);
+#else
+			writer->SetInput(&vtk_grid);
+#endif
 			writer->SetDataModeToBinary();
 			writer->Write();
 		}

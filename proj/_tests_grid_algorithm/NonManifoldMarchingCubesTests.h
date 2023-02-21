@@ -124,8 +124,8 @@ namespace Meso {
 	}
 
 	template<class T>
-	void Test_Non_Manifold_Marching_CubesN(int times, bool verbose, int count) {
-
+	void Test_Non_Manifold_Marching_Cubes3(int times, bool verbose, int count=64) {
+		//N point Voronoi tessellation
 		// Marching Square
 		{
 			Grid<2> grid(Vector2i(104, 104), 0.01, MathFunc::V<2>(0., 0.), CORNER);
@@ -165,7 +165,7 @@ namespace Meso {
 						}
 				}
 			);
-			Test_Non_Manifold_Marching_Cubes_Unit<T, HOST, 2>(label_host, field_host, 2, times, verbose);
+			Test_Non_Manifold_Marching_Cubes_Unit<T, HOST, 2>(label_host, field_host, 3, times, verbose);
 		}
 	}
 }
