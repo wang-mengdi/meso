@@ -41,3 +41,44 @@ void Test_Interpolation(const Vector<int, d> counts) {
 	}
 	Pass("Test_Interpolation passed for counts={}", counts);
 }
+
+template<class T, int d>
+void Test_Interpolation_Clamp(const Vector<int, d> counts) {
+	Typedef_VectorD(d);
+	VectorD domain_min = MathFunc::V<d>(0, 0, 0);
+	Grid<d> grid(counts, (real)1/(counts[0]-1), domain_min, CORNER);
+
+	Field<T, d> my_field(grid);
+	auto f = [&](const VectorD pos) {return (pos-grid.Center()).norm(); };
+	my_field.Calc_Nodes(
+		[&](const VectorDi node) {
+			return f(grid.Position(node));
+		}
+	);
+
+	VectorD domain_max = domain_min + grid.dx * (counts - VectorDi::Ones()).template cast<real>();
+	for (int axis=0;axis<d;axis++){
+		for (int i = 0; i < counts.prod() ; i++) {
+			VectorD mask = VectorD::Ones();
+			mask[axis] = 0;
+			VectorD border_min = domain_min - (real) 2 * grid.dx *VectorD::Unit(axis); //The border that is outside of the domain
+			VectorD border_max = domain_min + (domain_max - domain_min).cwiseProduct(mask);
+			VectorD pos = Random::Uniform_In_Box(border_min, border_max);
+			VectorDi coord; VectorD frac; grid.Get_Fraction(pos, coord, frac);
+			real from_intp = IntpLinearClamp::Value(my_field, pos);
+
+			Vector<real, d> pos1 = pos;
+			pos1[axis] += (domain_max[axis] - domain_min[axis] - (real)2*pos[axis]);
+			VectorDi coord1; VectorD frac1; grid.Get_Fraction(pos1, coord1, frac1);
+			real from_intp1 = IntpLinearClamp::Value(my_field, pos1);
+
+			if (fabs(from_intp - from_intp1) > MathFunc::Eps<T>()) {
+				Info("pos: {}, from_intp: {}, pos1: {}, from_intp1: {}", pos, from_intp, pos1, from_intp1);
+				Error("Test_Interpolation_Clamp: not symmetric upon clamp on axis={}", axis);
+				return;
+			}
+		}
+	}
+
+	Pass("Test_Interpolation_Clamp passed for counts={}", counts);
+}

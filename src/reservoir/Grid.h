@@ -242,7 +242,7 @@ namespace Meso {
 
 		__host__ __device__ void Get_Fraction(const VectorD pos, VectorDi& node, VectorD& frac)const {
 			VectorD coord_with_frac = (pos - pos_min) / dx;
-			node = coord_with_frac.template cast<int>();
+			node = coord_with_frac.array().floor().template cast<int>();
 			for (int i = 0; i < d; i++)frac[i] = coord_with_frac[i] - node[i];
 		}
 
@@ -299,6 +299,11 @@ namespace Meso {
 		//Explain the grid as a corner grid, extract the center grid
 		__host__ __device__ Grid<d> Cell_Grid(void)const {
 			return Grid<d>(Base::Counts() - VectorDi::Ones(), dx, pos_min, CENTER);
+		}
+
+		//Explain the grid as a center grid, extract the corner grid
+		__host__ __device__ Grid<d> Corner_Grid(void)const {
+			return Grid<d>(Base::Counts() + VectorDi::Ones(), dx, pos_min - MathFunc::V<d>(0.5, 0.5, 0.5) * dx, CORNER);
 		}
 
 		////Explain the grid as a MAC grid, extract faces
