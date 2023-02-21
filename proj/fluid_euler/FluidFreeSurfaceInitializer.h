@@ -16,7 +16,7 @@ namespace Meso {
 		Typedef_VectorD(d);
 
 		//define the boundary conditions of the eulerian system
-		Field<CellType, d> cell_type;
+		Field<unsigned char, d> cell_type;
 		FaceField<T, d> initial_vel;
 
 		void Apply(json& j, FluidFreeSurface<T, d>& fluid) {
@@ -36,10 +36,10 @@ namespace Meso {
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 2, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
-			cell_type.Init(grid, FLUID);
+			cell_type.Init(grid, 0);
 			Eigen::Matrix<int, 3, 2> bc_width;
 			bc_width << 1, 1, 1, 1, 1, 1;
-			GridEulerFunc::Set_Boundary_Cells(cell_type, bc_width, SOLID);
+			GridEulerFunc::Set_Boundary_Cells<unsigned char>(cell_type, bc_width, 2);
 			initial_vel.Init(grid, 0);
 
 			Plane<d> plane(grid.Center());
@@ -54,10 +54,10 @@ namespace Meso {
 			VectorDi grid_size = scale * VectorDi::Ones();
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
-			cell_type.Init(grid, FLUID);
+			cell_type.Init(grid,0);
 			Eigen::Matrix<int, 3, 2> bc_width;
 			bc_width << 1, 1, 1, 1, 1, 1;
-			GridEulerFunc::Set_Boundary_Cells(cell_type, bc_width, SOLID);
+			GridEulerFunc::Set_Boundary_Cells<unsigned char>(cell_type, bc_width, 2);
 			initial_vel.Init(grid, 0);
 
 			Ellipsoid<d> ellipsoid(grid.Center(), MathFunc::V<d>(side_len * 0.25, side_len * 0.125, side_len * 0.25));
@@ -72,10 +72,10 @@ namespace Meso {
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 2, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
-			cell_type.Init(grid, FLUID);
+			cell_type.Init(grid, 0);
 			Eigen::Matrix<int, 3, 2> bc_width;
 			bc_width << 1, 1, 1, 1, 1, 1;
-			GridEulerFunc::Set_Boundary_Cells(cell_type, bc_width, SOLID);
+			GridEulerFunc::Set_Boundary_Cells<unsigned char>(cell_type, bc_width, 2);
 			initial_vel.Init(grid, 0);
 
 			Sphere<d> sphere(grid.Center() + VectorD::Unit(1) * 0.25, side_len * 0.2);
@@ -90,10 +90,10 @@ namespace Meso {
 			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
-			cell_type.Init(grid, FLUID);
+			cell_type.Init(grid, 0);
 			Eigen::Matrix<int, 3, 2> bc_width;
 			bc_width << 1, 1, 1, 1, 1, 1;
-			GridEulerFunc::Set_Boundary_Cells(cell_type, bc_width, SOLID);
+			GridEulerFunc::Set_Boundary_Cells<unsigned char>(cell_type, bc_width, 2);
 			initial_vel.Init(grid, 0);
 
 			Sphere<d> sphere(grid.Center() + VectorD::Unit(1) * 0.25, side_len * 0.15);
@@ -110,10 +110,10 @@ namespace Meso {
 			VectorDi grid_size = scale * VectorDi::Ones();
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
-			cell_type.Init(grid, FLUID);
+			cell_type.Init(grid, 0);
 			Eigen::Matrix<int, 3, 2> bc_width;
 			bc_width << 1, 1, 1, 1, 1, 1;
-			GridEulerFunc::Set_Boundary_Cells(cell_type, bc_width, SOLID);
+			GridEulerFunc::Set_Boundary_Cells<unsigned char>(cell_type, bc_width, 2);
 			initial_vel.Init(grid, 0);
 
 			Box<d> box(grid.Node_Min(), MathFunc::Cwise_Multiply(grid.Node_Max(), MathFunc::V<d>(0.25, 0.5, 1.)));

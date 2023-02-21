@@ -20,14 +20,6 @@
 #include <vtkCellArray.h>
 
 namespace Meso {
-
-	enum CellType : int {
-		INVALID = -1,
-		FLUID,
-		AIR,
-		SOLID
-	};
-
 	template<class T, int d>
 	std::tuple<Vector<int, d>, Vector<int, d>, T, T> Face_Neighbor_Cells_And_Values(const Field<T, d>& F, const int axis, const Vector<int, d> face, const T outside_val) {
 		Typedef_VectorD(d);
@@ -50,24 +42,23 @@ namespace Meso {
 		VectorD gravity_acc;
 		FaceFieldDv<T, d> velocity;
 		//define the system behavior
-		Field<CellType, d> cell_type;
+		Field<unsigned char, d> cell_type;
 		BoundaryConditionDirect<FaceFieldDv<T, d>> velocity_bc;
 		LevelSet<d> levelset;
 		//utilities
 		MaskedPoissonMapping<T, d> poisson;
 		VCycleMultigridIntp<T, d> MG_precond;
-		ConjugateGradient<T> MGPCG;
+		ConjugateGradient<T, d> MGPCG;
 
 		//Temporary variables, don't need to be initialized
 		FaceFieldDv<T, d> temp_velocity_dev;
 		FieldDv<T, d> temp_phi_dev;
 		FieldDv<T, d> temp_field_dev;
 		FieldDv<T, d> pressure_dev;
-		Field<bool, d> fixed_host;
 		FaceField<T, d> vol_host;
 		Field<T, d> div_host;
 
-		void Init(json& j, const ImplicitManifold<d>& geom, Field<CellType, d> &_cell_type, FaceField<real, d>& initial_velocity) {
+		void Init(json& j, const ImplicitManifold<d>& geom, Field<unsigned char, d> &_cell_type, FaceField<real, d>& initial_velocity) {
 			air_density = Json::Value<real>(j, "air_density", 1e-3);
 			gravity_acc = MathFunc::V<d>(Json::Value<Vector3>(j, "gravity_acc", Vector3::Unit(1) * (-9.8)));
 			velocity = initial_velocity;
@@ -75,8 +66,8 @@ namespace Meso {
 			FaceField<bool, d> face_fixed(cell_type.grid);
 			face_fixed.Calc_Faces(
 				[&](const int axis, const VectorDi face) {
-					auto [cell0, cell1, val0, val1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, INVALID);
-					if (val0 == SOLID || val1 == SOLID) return true;
+					auto [cell0, cell1, val0, val1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, unsigned char(-1));
+					if (val0 == 2 || val1 == 2) return true;
 					return false;
 				}
 			);
@@ -84,57 +75,48 @@ namespace Meso {
 			levelset.Init(velocity.grid, geom);
 
 			poisson.Init(velocity.grid);
-			MG_precond.Allocate_Poisson(velocity.grid);
+			MG_precond.Init_Poisson(poisson, 2);
 			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
 		}
 
-		void Update_Poisson_System(Field<bool, d>& fixed, FaceField<T, d>& vol, Field<T, d>& div) {
+		void Update_Poisson_System() {
 			//Step 1: decide cell types
 			cell_type.Calc_Nodes(
 				[&](const VectorDi cell) {
-					if (cell_type(cell) == SOLID) {
-						return SOLID;
+					if (cell_type(cell) == 2) {
+						return 2;
 					}
-					else if (levelset.phi(cell) >= 0) return AIR;
-					else return FLUID;
+					else if (levelset.phi(cell) >= 0) return 1;
+					else return 0;
 				}
 			);
 
-			//Step 2: decide fixed from cell types
-			fixed.Init(cell_type.grid);
-			fixed.Calc_Nodes(
+			//Step 2: set div to 0 for air and solid cells
+			div_host.Init(cell_type.grid);
+			div_host.Exec_Nodes(
 				[&](const VectorDi cell) {
-					if (cell_type(cell) == FLUID) return false;
-					else return true;
-				}
-			);
-
-			//Step 3: set div to 0 for air and solid cells
-			div.Init(cell_type.grid);
-			div.Exec_Nodes(
-				[&](const VectorDi cell) {
-					if (cell_type(cell) != FLUID) div(cell) = 0;
+					if (cell_type(cell) != 0) div_host(cell) = 0;
 				}
 			);
 
 			//Step 4: set vol, and modify div additionally on the interface
-			vol.Init(cell_type.grid);
-			vol.Calc_Faces(
+			vol_host.Init(cell_type.grid);
+			vol_host.Calc_Faces(
 				[&](const int axis, const VectorDi face)->T {
-					auto [cell0, cell1, type0, type1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, INVALID);
+					auto [cell0, cell1, type0, type1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, unsigned char(-1));
 					
 					//order: invalid, fluid,air,solid
-					if (type0 > type1) {
+					if (type0 > type1 || type1 == unsigned char(-1)) {
 						std::swap(cell0, cell1);
 						std::swap(type0, type1);
 					}
 					
-					if (type0 == INVALID && type1 == INVALID) return 0;
-					if (type0 == INVALID && type1 == FLUID) return 1.0;
-					if (type0 == INVALID && type1 == AIR) return 1.0 / air_density;
-					if (type0 == INVALID && type1 == SOLID) return 0;
-					if (type0 == FLUID && type1 == FLUID) return 1.0;
-					if (type0 == FLUID && type1 == AIR) {//interface!
+					if (type0 == unsigned char(-1) && type1 == unsigned char(-1)) return 0;
+					if (type0 == unsigned char(-1) && type1 == 0) return 1.0;
+					if (type0 == unsigned char(-1) && type1 == 1) return 1.0 / air_density;
+					if (type0 == unsigned char(-1) && type1 == 2) return 0;
+					if (type0 == 0 && type1 == 0) return 1.0;
+					if (type0 == 0 && type1 == 1) {//interface!
 						//todo: modify div
 						real phi0 = levelset.phi(cell0), phi1 = levelset.phi(cell1);
 						T theta = phi0 / (phi0 - phi1);
@@ -142,7 +124,7 @@ namespace Meso {
 						real density = theta * den0 + (1.0 - theta) * den1;
 						return 1.0 / density;
 					}
-					if (type0 == FLUID && type1 == SOLID) return 0;
+					if (type0 == 0 && type1 == 2) return 0;
 					//type0,type1 in {AIR,SOLID}, the result is 0
 					return 0;
 				}
@@ -260,10 +242,10 @@ namespace Meso {
 			ExteriorDerivativePadding0::Apply(temp_field_dev, velocity);
 
 			div_host = temp_field_dev;
-			Update_Poisson_System(fixed_host, vol_host, div_host);
+			Update_Poisson_System();
 
-			poisson.Init(fixed_host, vol_host);
-			MG_precond.Update_Poisson(poisson, 2, 2);
+			poisson.Init(cell_type, vol_host);
+			MG_precond.Update_Poisson(poisson);
 			temp_field_dev = div_host;
 
 			pressure_dev.Init(temp_field_dev.grid);

@@ -9,7 +9,7 @@
         "output_base_dir": "taylor"
     },
     "scene": {
-        "scale": 32,
-        "test": 3
+        "scale": 256,
+        "test": "taylor"
     }
 }

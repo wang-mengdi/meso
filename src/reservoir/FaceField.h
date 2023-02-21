@@ -16,6 +16,7 @@ namespace Meso {
 		Grid<d> grid;
 		//std::array<Array<T, side>, d> face_data;
 		std::shared_ptr<Array<T, side>> face_data[3] = { nullptr,nullptr,nullptr };
+		Array<T*, side> face_data_ptr;
 		FaceField() {}
 		FaceField(const Grid<d>& _grid) { Init(_grid); }
 		FaceField(const Grid<d>& _grid, const T value) { Init(_grid);  Fill(value); }
@@ -25,11 +26,13 @@ namespace Meso {
 		void Init(const Grid<d>& _grid, const T value) { Init(_grid); Fill(value); }
 		void Init(const Grid<d>& _grid) {
 			grid = _grid;
+			face_data_ptr.resize(3);
 			for (int axis = 0; axis < d; axis++) {
 				Grid<d> face_grid = grid.Face_Grid(axis);
 				int n = face_grid.Memory_Size();
 				if (face_data[axis] == nullptr) face_data[axis] = std::make_shared<Array<T, side>>(n);
 				else face_data[axis]->resize(n);
+				face_data_ptr[axis] = ArrayFunc::Data(*face_data[axis]);
 				checkCudaErrors(cudaGetLastError());
 			}
 		}

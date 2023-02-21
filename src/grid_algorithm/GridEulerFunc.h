@@ -68,10 +68,10 @@ namespace Meso {
 		//all these passed fields are not initialized before
 		template<int d>
 		void Set_Boundary(const Grid<d> grid, const Eigen::Matrix<int, 3, 2> bc_width, const Eigen::Matrix<real, 3, 2> bc_val,
-			Field<bool, d>& cell_fixed, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& boundary_vel) {
+			Field<unsigned char, d>& cell_type, FaceField<real, d>& vol, FaceField<bool, d>& face_fixed, FaceField<real, d>& boundary_vel) {
 			
-			cell_fixed.Init(grid, false);
-			Set_Boundary_Cells(cell_fixed, bc_width, true);
+			cell_type.Init(grid, 0);
+			Set_Boundary_Cells<unsigned char>(cell_type, bc_width, 2);
 
 			vol.Init(grid);
 			face_fixed.Init(grid);
