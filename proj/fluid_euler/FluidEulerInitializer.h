@@ -23,116 +23,21 @@ namespace Meso {
 		Typedef_VectorD(d);
 
 		//define the boundary conditions of the eulerian system
-		Field<bool, d> fixed;
+		Field<unsigned char, d> cell_type;
 		FaceField<real, d> vol;
 		FaceField<bool, d> face_fixed;
 		FaceField<real, d> initial_vel;
 
 		void Apply(json& j, FluidEuler<d>& fluid) {
-			int test = Json::Value(j, "test", 0);
-			switch (test) {
-			case 0:Case_0(j, fluid); break;
-			case 1:Case_1(j, fluid); break;
-			case 2:Case_2(j, fluid); break;
-			case 3:Case_3(j, fluid); break;
-			case 4:Case_4(j, fluid); break;
-			case 5:Case_5(j, fluid); break;
-			default:Assert(false, "test {} not exist", test); break;
-			}
+			std::string test = Json::Value(j, "test", std::string("taylor"));
+			if (test == "taylor")Init_Taylor(j, fluid);
+			else if (test == "leapfrog")Init_Leapfrog(j, fluid);
+			//else if (test == "karman")Init_Karman(j, fluid);
+			else Assert(false, "test {} not exist", test);
 		}
-
-		//an empty field with inflow boundary condition v=1
-		void Case_0(json& j, FluidEuler<d>& fluid) {
-			int scale = Json::Value(j, "scale", 32);
-			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
-
-			Eigen::Matrix<int, 3, 2> bc_width;
-			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << 0, -1, 0, 0, 0, 0;
-			bc_val << 1, 1, 0, 0, 0, 0;
-
-			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
-			fluid.Init(fixed, vol, face_fixed, initial_vel);
-			ArrayFunc::Fill(fluid.velocity.Data(0), 1.0);
-		}
-
-		void Case_1(json& j, FluidEuler<d>& fluid) {
-			int scale = Json::Value(j, "scale", 32);
-			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
-
-			Eigen::Matrix<int, 3, 2> bc_width;
-			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << 1, 1, 1, 1, 1, 1;
-			bc_val << 0, 0, 0, 0, 0, 0;
-
-			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
-
-			grid.Exec_Faces(
-				[&](const int axis, const VectorDi face) {
-					if (axis == 0 && face[1] >= grid.Counts()[1] - 2) {
-						if (!face_fixed(axis, face)) {
-							face_fixed(axis, face) = true;
-							initial_vel(axis, face) = 1.0;
-						}
-					}
-				}
-			);
-
-			fluid.Init(fixed, vol, face_fixed, initial_vel);
-		}
-
-		// with a sheprical obstacle, initial velocity of 1
-		void Case_2(json& j, FluidEuler<d>& fluid) {
-			int scale = Json::Value(j, "scale", 32);
-			real dx = 1.0 / scale;
-			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
-
-			Eigen::Matrix<int, 3, 2> bc_width;
-			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << 0, -1, 0, 0, 0, 0;
-			bc_val << 1, 0, 0, 0, 0, 0;
-
-			////sphere
-			VectorD center = grid.Center();
-			center[0] = center[0] / 2;
-			real r = (real)0.1;
-			Sphere<d> sphere(center, r);
-
-			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
-
-			grid.Exec_Nodes(
-				[&](const VectorDi cell) {
-					const VectorD pos = grid.Position(cell);
-					if (sphere.Inside(pos)) {
-						fixed(cell) = true;
-						for (int axis = 0; axis < d; axis++)
-						{
-							VectorDi left_face = cell;
-							VectorDi right_face = cell + VectorDi::Unit(axis);
-							vol(axis, left_face) = 0; vol(axis, right_face) = 0;
-							initial_vel(axis, left_face) = 0; initial_vel(axis, right_face) = 0;
-						}
-					}
-				}
-			);
-
-			grid.Exec_Faces(
-				[&](const int axis, const VectorDi face) {
-					if (axis == 0 && face[0] == 0)
-						initial_vel(axis, face) += Random::Uniform(-0.01, 0.01);
-				}
-			);
-			fluid.Init(fixed, vol, face_fixed, initial_vel);
-		}
-
 
 		// taylor vortex
-		void Case_3(json& j, FluidEuler<d>& fluid) {
+		void Init_Taylor(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
 			const real pi = 3.1415926;
 			real dx = 2.0 * pi / scale;
@@ -140,14 +45,14 @@ namespace Meso {
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 			MaskedPoissonMapping<real, d> poisson;
 			VCycleMultigridIntp<real, d> MG_precond;
-			ConjugateGradient<real> MGPCG;
+			ConjugateGradient<real, d> MGPCG;
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
 			bc_width << -1, -1, -1, -1, -1, -1;
 			bc_val << 0, 0, 0, 0, 0, 0;
 
-			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, cell_type, vol, face_fixed, initial_vel);
 			
 
 			VectorD vortex_p1, vortex_p2;
@@ -175,10 +80,10 @@ namespace Meso {
 
 			FieldDv<real, d> sol(grid.Counts(), (real)0);
 			FaceField<real, d> alpha(grid.Counts(), (real)1);
-
-			poisson.Init(fixed, alpha);
-			MG_precond.Init_Poisson(poisson, 2, 2);
-			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6);
+			
+			poisson.Init(cell_type, alpha);
+			MG_precond.Init_Poisson(poisson, 2);
+			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-5);
 
 			auto [iter, error] = MGPCG.Solve(sol.Data(), wz.Data());
 			Info("iter is {}, error is {}", iter, error);
@@ -203,65 +108,12 @@ namespace Meso {
 				}
 			);
 
-			fluid.Init(fixed, vol, face_fixed, initial_vel);
+			fluid.Init(cell_type, vol, face_fixed, initial_vel);
 		}
 
-		// trefoil knot
-		void Case_4(json& j, FluidEuler<d>& fluid) {
-			Field<Vector2C, d> initial_wave_func;
-			int scale = Json::Value(j, "scale", 32);
-			const real pi = acos(-1.0);
-			real dx = (real)2.0 * pi / scale;
-			VectorDi grid_size = scale * MathFunc::Vi<d>(1, 1, 1);
-			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
 
-			Eigen::Matrix<int, 3, 2> bc_width;
-			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << -1, -1, -1, -1, -1, -1;
-			bc_val << 0, 0, 0, 0, 0, 0;
-
-			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
-
-			Field<Vector2C, d> initial_complex_poly;
-			VectorD center = MathFunc::V<d>(pi, pi, 0.6 * pi);
-			VectorD radius = MathFunc::V<d>(1.2, 1.2, 1.6);
-			initial_complex_poly.Init(grid);
-			grid.Exec_Nodes(
-				[&](const Vector<int, d> cell) {
-					const VectorD pos = grid.Position(cell);
-					VectorD XYZ = pos - center; for (int i = 0; i < d; i++) { XYZ[i] *= radius[i]; }
-					real R = XYZ.norm();
-
-					real fR = exp(-pow(R, 8) / pow(9, 4));
-					C alpha = C(XYZ[0], XYZ[1]) * 2. * fR / (1 + R * R);
-					//C beta = C(2.*(XYZ[2]-1)*fR, (1+R*R))/(1+R*R);
-					C beta = C(2. * XYZ[2] * fR, (1 + R * R - 2 * fR)) / (1 + R * R);
-					C P = alpha * alpha * alpha * alpha * alpha;
-					C Q = alpha * alpha * alpha + beta * beta;
-					//P: psi1; Q: psi2
-					Vector<C, 2> psi;
-					psi[0] = P;
-					psi[1] = Q;
-
-					initial_complex_poly(cell) = WaveFunc::Vector4_To_Vector2C(WaveFunc::Vector2C_To_Vector4(psi).normalized());
-				}
-			);
-
-			real h_bar = Json::Value(j, "h_bar", 0.01);
-
-			// transform initial complex poly value into psi
-			initial_wave_func = initial_complex_poly;
-
-			FaceFieldDv<real, d> initial_vel_dev = initial_vel;
-			FieldDv<Vector2C, d> initial_wave_func_dev = initial_wave_func;
-			WaveFunc::Exterior_Derivative_W2V(initial_vel_dev, initial_wave_func_dev, h_bar);
-			initial_vel = initial_vel_dev;
-			fluid.Init(fixed, vol, face_fixed, initial_vel);
-		}
-
-		// leapfrog
-		void Case_5(json& j, FluidEuler<d>& fluid) {
-			Field<Vector2C, d> initial_wave_func;
+		//covector leapfrog
+		void Init_Leapfrog(json& j, FluidEuler<d>& fluid) {
 			int scale = Json::Value(j, "scale", 32);
 
 			real pi = 3.1415926;
@@ -272,40 +124,69 @@ namespace Meso {
 
 			Eigen::Matrix<int, 3, 2> bc_width;
 			Eigen::Matrix<real, 3, 2> bc_val;
-			bc_width << -1, -1, -1, -1, -1, -1;
+			bc_width << 0, 0, 0, 0, 0, 0;
 			bc_val << 0, 0, 0, 0, 0, 0;
+			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, cell_type, vol, face_fixed, initial_vel);
 
-			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, fixed, vol, face_fixed, initial_vel);
+			if constexpr (d == 2) {
+				Vector2d center = grid.Center();
+				Field<real, d> wz_host(grid);
+				real a = 0.02;
+				grid.Exec_Nodes(
+					[&](const VectorDi cell) {
+						Vector<real, 2> pos = VectorD(cell(0), cell(1)) * grid.dx - VectorD::Ones() * pi;
+				Vector<real, 2> vort_pos0 = Vector<real, 2>(-0.75, -2);
+				Vector<real, 2> vort_pos1 = Vector<real, 2>(0.75, -2);
+				Vector<real, 2> vort_pos2 = Vector<real, 2>(-1.5, -2);
+				Vector<real, 2> vort_pos3 = Vector<real, 2>(1.5, -2);
+				real r_sqr0 = pow(pos[0] - vort_pos0[0], 2) + pow(pos[1] - vort_pos0[1], 2);
+				real r_sqr1 = pow(pos[0] - vort_pos1[0], 2) + pow(pos[1] - vort_pos1[1], 2);
+				real r_sqr2 = pow(pos[0] - vort_pos2[0], 2) + pow(pos[1] - vort_pos2[1], 2);
+				real r_sqr3 = pow(pos[0] - vort_pos3[0], 2) + pow(pos[1] - vort_pos3[1], 2);
+				real c0 = 1000 / (2 * pi) * exp(-0.5 * r_sqr0 / a / a);
+				real c1 = -1000 / (2 * pi) * exp(-0.5 * r_sqr1 / a / a);
+				real c2 = 1000 / (2 * pi) * exp(-0.5 * r_sqr2 / a / a);
+				real c3 = -1000 / (2 * pi) * exp(-0.5 * r_sqr3 / a / a);
+				wz_host(cell) = c0 + c1 + c2 + c3;
+				wz_host(cell) *= grid.dx * grid.dx;
+					});
+				FieldDv<real, d> wz;
+				wz = wz_host;
 
-			initial_wave_func.Init(grid);
-			real background_speed=(real)-.0;//2;
-			VectorD bdry_v=VectorD::Unit(0)*(real)-.0;//2;
+				FieldDv<real, d> sol(grid.Counts(), (real)0);
+				FaceField<real, d> alpha(grid.Counts(), (real)1);
 
-			////initialize leapfrogging velocity
-			const real h_bar = 0.5;
-			grid.Exec_Nodes(
-				[&](const Vector<int, d> cell) {
-					const VectorD pos = grid.Position(cell);
-					Vector2C psi = WaveFunc::Vel_To_Psi_C<d>(bdry_v, pos);
-					Vector<VectorD, 2> c = { MathFunc::V<d>((real)length * .5,(real)length / 2,(real)length / 2), MathFunc::V<d>((real)length * .5,(real)length / 2,(real)length / 2) };
-					Vector<real, 2> r = { 1.8,1. };
-					int n = (int)c.size();
-					for (int i = 0; i < n; i++) {
-						real rx = (pos[0] - c[i][0]) / r[i];
-						real r2 = (pos - c[i]).squaredNorm() / pow(r[i], 2);
-						real D = exp(-pow(r2 / (real)9, (real)4));
-						C q(2. * rx * D / (r2 + 1), (r2 + 1. - 2. * D) / (r2 + 1));
-						psi[0] *= q;
-					}
-					initial_wave_func(cell) = WaveFunc::Vector4_To_Vector2C(WaveFunc::Vector2C_To_Vector4(psi).normalized());
-				}
-			);
-			FaceFieldDv<real, d> initial_vel_dev = initial_vel;
-			FieldDv<Vector2C, d> initial_wave_func_dev = initial_wave_func;
-			WaveFunc::Exterior_Derivative_W2V(initial_vel_dev, initial_wave_func_dev, h_bar);
-			initial_vel = initial_vel_dev;
-			fluid.Init(fixed, vol, face_fixed, initial_vel);
+				MaskedPoissonMapping<real, d> poisson;
+				VCycleMultigridIntp<real, d> MG_precond;
+				ConjugateGradient<real, d> MGPCG;
+				poisson.Init(cell_type, alpha);
+				MG_precond.Init_Poisson(poisson, 2);
+				MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6, true);
+
+				auto [iter, error] = MGPCG.Solve(sol.Data(), wz.Data());
+				Info("iter is {}, error is {}", iter, error);
+
+				Field<real, d> sol_host = sol;
+				Field<real, d> sol_host_big;
+				Grid<d> big_grid(grid.Counts() + VectorDi::Ones());
+				sol_host_big.Init(big_grid, 0);
+				grid.Iterate_Nodes([&](const VectorDi cell)
+					{
+						sol_host_big(cell) = sol_host(cell);
+					});
+				grid.Iterate_Faces(
+					[&](const int axis, const VectorDi face) {
+						const VectorDi cell_left = face;
+				const VectorDi cell_right = face + VectorDi::Unit(1 - axis);
+				initial_vel(axis, face) = (sol_host_big(cell_right) - sol_host_big(cell_left)) / grid.dx;
+				if (axis == 1)
+					initial_vel(axis, face) *= -1;
+
+				if (face(axis) == 0 || face(axis) == grid.Counts()[axis])
+					initial_vel(axis, face) = 0;
+					});
+				fluid.Init(cell_type, vol, face_fixed, initial_vel, true);
+			}
 		}
-
 	};
 }

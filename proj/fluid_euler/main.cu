@@ -3,8 +3,8 @@
 #include "Json.h"
 #include "FluidEuler.h"
 #include "FluidEulerInitializer.h"
-#include "FluidFreeSurface.h"
-#include "FluidFreeSurfaceInitializer.h"
+//#include "FluidFreeSurface.h"
+//#include "FluidFreeSurfaceInitializer.h"
 #include "Driver.h"
 using namespace Meso;
 
@@ -17,13 +17,13 @@ void Run_FluidEuler(json &j) {
 }
 
 
-template<int d>
-void Run_FluidFreeSurface(json& j) {
-	FluidFreeSurface<real, d> fluid;
-	FluidFreeSurfaceInitializer<real, d> scene;
-	Driver driver;
-	driver.Initialize_And_Run(j, scene, fluid);
-}
+//template<int d>
+//void Run_FluidFreeSurface(json& j) {
+//	FluidFreeSurface<real, d> fluid;
+//	FluidFreeSurfaceInitializer<real, d> scene;
+//	Driver driver;
+//	driver.Initialize_And_Run(j, scene, fluid);
+//}
 
 int main(int argc, char **argv) {
 	try {
@@ -49,10 +49,10 @@ int main(int argc, char **argv) {
 			if (dim == 2) { Run_FluidEuler<2>(j); }
 			else if (dim == 3) { Run_FluidEuler<3>(j); }
 		}
-		else if (simulator == "freesurface") {
+		/*else if (simulator == "freesurface") {
 			if (dim == 2) { Run_FluidFreeSurface<2>(j); }
 			else if (dim == 3) { Run_FluidFreeSurface<3>(j); }
-		}
+		}*/
 
 	}
 	catch (nlohmann::json::exception& e)

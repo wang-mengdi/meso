@@ -6,6 +6,7 @@
 #pragma once
 #include "LinearMapping.h"
 #include "PoissonMapping.h"
+#include "PoissonFunc.h"
 #include "AuxFunc.h"
 #include "Coarsener.h"
 #include "Restrictor.h"
