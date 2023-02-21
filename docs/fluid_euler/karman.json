@@ -1,15 +1,15 @@
 {
     "dimension": 2,
     "driver": {
-        "cfl": 1.0,
+        "cfl": 10.0,
         "first_frame": 0,
-        "fps": 25,
-        "last_frame": 250,
+        "fps": 10,
+        "last_frame": 300,
         "min_step_frame_fraction": 0.0,
         "output_base_dir": "karman"
     },
     "scene": {
-        "scale": 32,
-        "test": 2
+        "scale": 256,
+        "test": "karman"
     }
 }

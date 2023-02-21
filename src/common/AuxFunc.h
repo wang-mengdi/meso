@@ -318,9 +318,18 @@ namespace Meso {
 			if (idx < 0) return 0;
 			else return arr[idx].norm();
 		}
-		template<class Array1>
-		decltype(auto) Sum(const Array1& v) {
-			using T = decltype(v[0]);
+
+		template<class T, DataHolder side = HOST>
+		int Count(const Array<T, side>& v, const T val) {
+			return thrust::count(
+				v.begin(),
+				v.end(),
+				val
+			);
+		}
+
+		template<class T, DataHolder side = HOST>
+		T Sum(const Array<T, side>& v) {
 			return thrust::reduce(
 					v.begin(),
 					v.end(),
@@ -544,6 +553,20 @@ namespace Meso {
 		void Cwise_Mapping_Wrapper(A v1, B v2, C v3, F f, int N)
 		{
 			Cwise_Mapping << <((N + 63) >> 6), 64 >> > (v1, v2, v3, f, N);
+		}
+
+		template<typename A, typename B, typename C, typename D, typename F>
+		__global__ void Cwise_Mapping(A v1, B v2, C v3, D v4, F f, int N)
+		{
+			int i = blockIdx.x * blockDim.x + threadIdx.x;
+			if (i >= N) return;
+			f(v1[i], v2[i], v3[i], v4[i]);
+		}
+
+		template<typename A, typename B, typename C, typename D, typename F>
+		void Cwise_Mapping_Wrapper(A v1, B v2, C v3, D v4, F f, int N)
+		{
+			Cwise_Mapping << <((N + 63) >> 6), 64 >> > (v1, v2, v3, v4, f, N);
 		}
 	}
 

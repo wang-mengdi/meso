@@ -9,58 +9,109 @@
 #include "SparseMatrixMapping.h"
 
 namespace Meso {
-	//color==0: white
-	//color==1: black
-	template<int d>
-	class ChessboardMask {
-	public:
-		Typedef_VectorD(d);
-		GridIndexer<d> grid;
-		const int color;
-		ChessboardMask(const GridIndexer<d> _grid, const int _color) :grid(_grid), color(_color) {}
-		__host__ __device__ int operator () (const int idx) {
-			VectorDi coord = grid.Coord(idx);
-			//note that XNOR is NOT*XOR, and ^0x1 equals to NOT
-			//so ^color^0x1 means "==color"
-			if constexpr (d == 2) {
-				return (coord[0] ^ coord[1] ^ color ^ 0x1) & 0x1;
-			}
-			else if constexpr (d == 3) {
-				return (coord[0] ^ coord[1] ^ coord[2] ^ color ^ 0x1) & 0x1;
-			}
-			else {
-				Assert(false, "Meso::ChessboardMask undefined for d=={}", d);
-				return false;
-			}
+	template<class T>
+	__global__ void PoissonLike_One_Over_Diagonal_Kernel2(const Grid<2> _grid, const unsigned char* _cell_type, 
+		T** _vol, T* _one_over_diag)
+	{
+		Typedef_VectorD(2);
+		// calculate index
+		VectorDi coord = GPUFunc::Thread_Coord<2>(blockIdx, threadIdx);
+		const int idx = threadIdx.x;
+		const int idy = threadIdx.y;
+		const int global_id = _grid.Index(coord);
+
+		// define shared memory
+		__shared__ T shared_vol_x[9][8];
+		__shared__ T shared_vol_y[8][9];
+
+		// load data
+		unsigned char type = _cell_type[global_id];
+
+		shared_vol_x[idx][idy] = _vol[0][_grid.Face_Index(0, coord)];
+		if (idx == 7)
+			shared_vol_x[8][idy] = _vol[0][_grid.Face_Index(0, coord + VectorDi::Unit(0))];
+
+		shared_vol_y[idx][idy] = _vol[1][_grid.Face_Index(1, coord)];
+		if (idy == 7)
+			shared_vol_y[idx][8] = _vol[1][_grid.Face_Index(1, coord + VectorDi::Unit(1))];
+
+		__syncthreads();
+
+		T result = 0;
+		if (type != 1 && type != 2)
+		{
+			result += shared_vol_x[idx][idy];
+			result += shared_vol_x[idx + 1][idy];
+			result += shared_vol_y[idx][idy];
+			result += shared_vol_y[idx][idy + 1];
+			result = 1.0 / result;
 		}
-	};
+		else
+			result = 1.0;
+		_one_over_diag[global_id] = result;
+	}
 
-	template<class T, int d >
-	void PoissonLike_Diagonal(ArrayDv<T>& diag, MaskedPoissonMapping<T, d>& mapping) {
-		const auto& grid = mapping.vol.grid;
-		size_t n = mapping.XDoF();
-		diag.resize(n);
-		thrust::fill(diag.begin(), diag.end(), 0);
-		ArrayDv<T> p_temp(n);
-		ArrayDv<T> Ap_temp(n);
-		thrust::counting_iterator<int> idxbegin(0);
-		thrust::counting_iterator<int> idxend = idxbegin + n;
 
-		////white mask
-		ChessboardMask<d> white_mask(grid, 0);
-		thrust::transform(idxbegin, idxend, p_temp.begin(), white_mask);
-		mapping.Apply(Ap_temp, p_temp);
-		//Ap*.=p, masking out black cells
-		ArrayFunc::Multiply(Ap_temp, p_temp);
-		ArrayFunc::Add(diag, Ap_temp);
+	template<class T>
+	__global__ void PoissonLike_One_Over_Diagonal_Kernel3(const Grid<3> _grid, const unsigned char* _cell_type,
+		T** _vol, T* _one_over_diag)
+	{
+		Typedef_VectorD(3);
+		// calculate index
+		VectorDi coord = GPUFunc::Thread_Coord<3>(blockIdx, threadIdx);
+		const int idx = threadIdx.x;
+		const int idy = threadIdx.y;
+		const int idz = threadIdx.z;
+		const int global_id = _grid.Index(coord);
 
-		////black mask
-		//change p_temp from white to black
-		ArrayFunc::Unary_Transform(p_temp, 1 - thrust::placeholders::_1, p_temp);
-		mapping.Apply(Ap_temp, p_temp);
-		//Ap*.=p, masking out white cells
-		ArrayFunc::Multiply(Ap_temp, p_temp);
-		ArrayFunc::Add(diag, Ap_temp);
+		// define shared memory
+		__shared__ T shared_vol_x[5][4][4];
+		__shared__ T shared_vol_y[4][5][4];
+		__shared__ T shared_vol_z[4][4][5];
+
+		// load data
+		unsigned char type = _cell_type[global_id];
+
+		shared_vol_x[idx][idy][idz] = _vol[0][_grid.Face_Index(0, coord)];
+		if (idx == 3)
+			shared_vol_x[4][idy][idz] = _vol[0][_grid.Face_Index(0, coord + VectorDi::Unit(0))];
+
+		shared_vol_y[idx][idy][idz] = _vol[1][_grid.Face_Index(1, coord)];
+		if (idy == 3)
+			shared_vol_y[idx][4][idz] = _vol[1][_grid.Face_Index(1, coord + VectorDi::Unit(1))];
+
+		shared_vol_z[idx][idy][idz] = _vol[2][_grid.Face_Index(2, coord)];
+		if (idz == 3)
+			shared_vol_z[idx][idy][4] = _vol[2][_grid.Face_Index(2, coord + VectorDi::Unit(2))];
+
+		__syncthreads();
+
+		T result = 0;
+		if (type != 1 && type != 2)
+		{
+			result += shared_vol_x[idx][idy][idz];
+			result += shared_vol_x[idx + 1][idy][idz];
+			result += shared_vol_y[idx][idy][idz];
+			result += shared_vol_y[idx][idy + 1][idz];
+			result += shared_vol_z[idx][idy][idz];
+			result += shared_vol_z[idx][idy][idz + 1];
+			result = 1.0 / result;
+		}
+		else
+			result = 1.0;
+		_one_over_diag[global_id] = result;
+	}
+
+	template<class T, int d>
+	void PoissonLike_One_Over_Diagonal(ArrayDv<T>& _one_over_diag, MaskedPoissonMapping<T, d>& _mapping)
+	{
+		Grid<d> grid = _mapping.Grid();
+		if constexpr (d == 2)
+			grid.Exec_Kernel(PoissonLike_One_Over_Diagonal_Kernel2<T>, grid, _mapping.cell_type.Data_Ptr(),
+				ArrayFunc::Data(_mapping.vol.face_data_ptr), ArrayFunc::Data(_one_over_diag));
+		else
+			grid.Exec_Kernel(PoissonLike_One_Over_Diagonal_Kernel3<T>, grid, _mapping.cell_type.Data_Ptr(),
+				ArrayFunc::Data(_mapping.vol.face_data_ptr), ArrayFunc::Data(_one_over_diag));
 	}
 
 	//a mask to distinguish the dense elements in a poisson system
