@@ -40,7 +40,7 @@ namespace Meso {
 	
 			poisson.Init(cell_type, vol);
 			MG_precond.Init_Poisson(poisson, 2);
-			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-5, is_pure_neumann);
+			MGPCG.Init(&poisson, &MG_precond, false, -1, 1e-6, is_pure_neumann);
 
 			Grid<d> vel_grid = velocity.grid;
 			velocity_host.Init(vel_grid);
@@ -53,7 +53,7 @@ namespace Meso {
 			return dx * cfl / max_vel;
 		}
 		virtual void Output(DriverMetaData& metadata) {
-			std::string vts_name = fmt::format("vts{:04d}.vts", metadata.current_frame);
+			std::string vts_name = fmt::format("vel{:04d}.vts", metadata.current_frame);
 			bf::path vtk_path = metadata.base_path / bf::path(vts_name);
 			VTKFunc::Write_VTS(velocity, vtk_path.string());
 

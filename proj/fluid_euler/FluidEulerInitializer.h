@@ -32,7 +32,7 @@ namespace Meso {
 			std::string test = Json::Value(j, "test", std::string("taylor"));
 			if (test == "taylor")Init_Taylor(j, fluid);
 			else if (test == "leapfrog")Init_Leapfrog(j, fluid);
-			//else if (test == "karman")Init_Karman(j, fluid);
+			else if (test == "karman")Init_Karman(j, fluid);
 			else Assert(false, "test {} not exist", test);
 		}
 
@@ -187,6 +187,54 @@ namespace Meso {
 					});
 				fluid.Init(cell_type, vol, face_fixed, initial_vel, true);
 			}
+		}
+
+		void Init_Karman(json& j, FluidEuler<d>& fluid)
+		{
+			real pi = 3.1415926;
+			real length = pi;
+			int scale = Json::Value(j, "scale", 32);
+			real dx = length / scale;
+			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
+			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
+			
+			////sphere
+			VectorD center;
+			center[0] = length / 4;
+			center[1] = length / 2 + 0.01;
+			real r = length / 15;
+			Sphere<d> sphere(center, r);
+
+			Eigen::Matrix<int, 3, 2> bc_width;
+			Eigen::Matrix<real, 3, 2> bc_val;
+			bc_width << 0, -1, 0, 0, 0, 0;
+			bc_val << 0.5, 0, 0, 0, 0, 0;
+			GridEulerFunc::Set_Boundary(grid, bc_width, bc_val, cell_type, vol, face_fixed, initial_vel);
+
+			grid.Iterate_Nodes([&](const VectorDi cell)
+				{
+					VectorD pos = grid.Position(cell);
+			if (sphere.Phi(pos) < 0)
+			{
+				cell_type(cell) = 2;
+				for (int axis = 0; axis < d; axis++)
+					for (int i = 0; i < 2; i++)
+					{
+						vol(axis, cell + VectorDi::Unit(axis) * i) = 0;
+						face_fixed(axis, cell + VectorDi::Unit(axis) * i) = true;
+					}
+			}
+				});
+
+			fluid.Init(cell_type, vol, face_fixed, initial_vel, false);
+
+			//initial projection
+			ExteriorDerivativePadding0::Apply(fluid.vel_div, fluid.velocity);
+			auto [iter, res] = fluid.MGPCG.Solve(fluid.pressure.Data(), fluid.vel_div.Data());
+			Info("Solve poisson with {} iters and residual {}", iter, res);
+			ExteriorDerivativePadding0::Apply(fluid.temp_velocity, fluid.pressure);
+			fluid.temp_velocity *= fluid.poisson.vol;
+			fluid.velocity += fluid.temp_velocity;
 		}
 	};
 }
