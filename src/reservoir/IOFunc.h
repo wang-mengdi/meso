@@ -26,7 +26,7 @@ namespace Meso {
 
 	namespace VTKFunc {
 		template<class T, int d, DataHolder side>
-		void VTS_Add_Field(vtkStructuredGrid& vtk_grid, const Field<T, d, side>& F, const std::string name) {
+		void VTS_Add_Field(vtkStructuredGrid& vtk_grid, const Field<T, d, side>& F, const std::string name, bool cell_data=true/*point_data otherwise*/) {
 			Typedef_VectorD(d);
 			const auto grid = F.grid;
 			int nx, ny, nz;
@@ -35,10 +35,11 @@ namespace Meso {
 			else nx = counts[0], ny = counts[1], nz = counts[2];
 
 			constexpr bool is_vec3 = std::is_same<T, Vector3>::value;
+			constexpr bool is_vec2 = std::is_same<T, Vector2>::value;
 
 			vtkNew<vtkDoubleArray> f_array;
 			f_array->SetName(name.c_str());
-			if (is_vec3) f_array->SetNumberOfComponents(3);
+			if (is_vec3||is_vec2) f_array->SetNumberOfComponents(3);
 			else f_array->SetNumberOfComponents(1);
 
 			Field<T, d> F_host;
@@ -49,7 +50,10 @@ namespace Meso {
 				for (int j = 0; j < ny; j++) {
 					for (int i = 0; i < nx; i++) {
 						VectorDi cell = MathFunc::Vi<d>(i, j, k);
-						if constexpr (std::is_same<T, Vector3>::value) {
+						if constexpr (is_vec2) {
+							Vector2 vec2 = F_host(cell);
+							f_array->InsertNextTuple3(vec2[0], vec2[1],0);
+						}else if constexpr (is_vec3) {
 							Vector3 vec3 = F_host(cell);
 							f_array->InsertNextTuple3(vec3[0], vec3[1], vec3[2]);
 						}
@@ -60,10 +64,15 @@ namespace Meso {
 					}
 				}
 			}
-
-			vtk_grid.GetPointData()->AddArray(f_array);
-			if (is_vec3) vtk_grid.GetPointData()->SetActiveVectors(name.c_str());
-			else vtk_grid.GetPointData()->SetActiveScalars(name.c_str());
+			
+			if(!cell_data){
+				vtkPointData* point_data = vtk_grid.GetPointData();
+				point_data->AddArray(f_array);
+			}
+			else {
+				vtkCellData* cell_data = vtk_grid.GetCellData();
+				cell_data->AddArray(f_array);
+			}
 		}
 
 		template<class T, int d, DataHolder side>
@@ -138,7 +147,6 @@ namespace Meso {
 					}
 				}
 			}
-
 			vtk_grid.SetPoints(nodes);
 		}
 
@@ -225,7 +233,9 @@ namespace Meso {
 
 		template<class T, int d,int ed>
 		void VTP_Init_Mesh(vtkPolyData& vtp, const VertexMatrix<T, d>& vertices, const ElementMatrix<ed>& elements) {
-			Assert(vertices.rows()!=0, "VTKFunc::VTP_Init_Mesh error: empty vertices");
+			if (vertices.rows() == 0) {
+				Warn("VTKFunc::VTP_Init_Mesh: no vertices to output");
+			}
 			Typedef_VectorD(d);
 			vtkNew<vtkPoints> points;
 			for (int i = 0; i < vertices.rows();i++)
