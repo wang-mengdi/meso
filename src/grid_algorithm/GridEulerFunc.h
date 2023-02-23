@@ -17,6 +17,11 @@ namespace Meso {
 			return ArrayFunc::Max_Abs<T>(F.Data());
 		}
 
+		template<class T, int d, DataHolder side>
+		T Linf_Norm(Field<Vector<T,d>, d, side>& F) {
+			F.Set_Padding_To(Vector<T,d>::Zero());
+			return ArrayFunc::Largest_Norm<Vector<T, d>>(F.Data());
+		}
 
 		template<class T, int d, DataHolder side>
 		T Linf_Norm(FaceField<T, d, side>& F) {

@@ -7,6 +7,7 @@
 #include "LevelSet.h"
 #include "Timer.h"
 #include "GridEulerFunc.h"
+#include "IOFunc.h"
 
 namespace Meso {
 	template<int d>
@@ -64,9 +65,34 @@ namespace Meso {
 
 		LevelSet<d> analytical_levelset;
 		analytical_levelset.Init(grid, shape);
-		levelset.phi -= analytical_levelset.phi;
+		Field<real, d> distance_error(grid);
+		distance_error = levelset.phi;
+		distance_error -= analytical_levelset.phi;
 
-		real max_distance_error = GridEulerFunc::Linf_Norm(levelset.phi);
+		real max_distance_error = GridEulerFunc::Linf_Norm(distance_error);
+
+		Field<VectorD, d> gradient_error(grid);
+		Field<VectorD, d> calculated_gradient(grid);
+		Field<VectorD, d> true_gradient(grid);
+		gradient_error.Calc_Nodes(
+			[&](const VectorDi cell)->VectorD {
+				VectorD pos = grid.Position(cell);
+				calculated_gradient(cell) = levelset.Gradient(pos).normalized();
+				true_gradient(cell) = shape.Normal(pos);
+				return true_gradient(cell) - calculated_gradient(cell);
+			}
+		);
+		real max_gradient_error = GridEulerFunc::Linf_Norm(gradient_error);
+		vtkNew<vtkStructuredGrid> vtk_grid;
+		VTKFunc::VTS_Init_Grid(*vtk_grid, grid.Corner_Grid());
+		VTKFunc::VTS_Add_Field(*vtk_grid, distance_error, "distance_error");
+		VTKFunc::VTS_Add_Field(*vtk_grid, fmm_error, "fmm_error");
+		VTKFunc::VTS_Add_Field(*vtk_grid, gradient_error, "gradient_error");
+		VTKFunc::VTS_Add_Field(*vtk_grid, true_gradient, "true_gradient");
+		VTKFunc::VTS_Add_Field(*vtk_grid, calculated_gradient, "calculated_gradient");
+		std::stringstream filename;
+		filename << "./fast_marching_"<<grid.Counts().transpose();
+		VTKFunc::Write_VTS(*vtk_grid, filename.str() + ".vts");
 
 		//real max_err = fmm_error.Max_Abs();
 
@@ -83,7 +109,7 @@ namespace Meso {
 		//);
 		//Info("max error {} at cell {}", max_err, max_err_cell);
 
-		Pass("Fast Marching test passed for counts={} in {}s with eikonal linf error={} and distance linf error={}", grid.Counts(), fmm_time, max_eikonal_error, max_distance_error);
+		Pass("Fast Marching test passed for counts={} in {}s with eikonal linf error={}, distance linf error={}, gradient linf error={}", grid.Counts(), fmm_time, max_eikonal_error, max_distance_error, max_gradient_error);
 
 		//real eps = 1;
 		//real eps = sqrt(std::numeric_limits<real>::epsilon());
