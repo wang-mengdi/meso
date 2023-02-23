@@ -79,7 +79,7 @@ namespace Meso {
 			thrust::transform_if(
 				idxfirst, idxlast,//first,last
 				data->begin(),//result
-				[=] __host__ __device__ (const int i) {return (T)0; },//op
+				[=] __host__ __device__ (const int i) {return val; },//op
 				[gridind] __host__ __device__ (const int idx) {return !gridind.Valid(gridind.Coord(idx)); }//pred
 			);
 		}
