@@ -80,7 +80,6 @@ namespace Meso {
 		}
 
 		//Update poisson system to an already allocated system
-		template<int d>
 		void Update_Poisson(const MaskedPoissonMapping<T, d>& poisson) {
 			mappings[0]->Init(poisson.cell_type, poisson.vol);
 			for (int i = 1; i <= L; i++) {
@@ -104,7 +103,6 @@ namespace Meso {
 
 		//Will add epsilon*I to the system of the coarsest level
 		//To make a Poisson system truly positive definite
-		template<int d>
 		void Init_Poisson(const MaskedPoissonMapping<T, d>& poisson, const int level_iter = 2, const int boundary_iter = 20, const int bottom_iter = 20){
 			Typedef_VectorD(d);
 			Grid<d> grid = poisson.Grid();

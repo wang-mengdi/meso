@@ -21,9 +21,9 @@
 
 namespace Meso {
 	template<class T, int d>
-	std::tuple<Vector<int, d>, Vector<int, d>, T, T> Face_Neighbor_Cells_And_Values(const Field<T, d>& F, const int axis, const Vector<int, d> face, const T outside_val) {
+	std::tuple<Vector<int, d>,Vector<int, d>,T, T> Face_Neighbor_Cells_And_Values(const Field<T, d>& F, const int axis, const Vector<int, d> face, const T outside_val) {
 		Typedef_VectorD(d);
-		VectorDi cell0 = face - VectorDi::Unit(axis), cell1 = face;
+		Vector<int, d> cell0 = face - VectorDi::Unit(axis), cell1= face;
 		T val0, val1;
 		if (F.grid.Valid(cell0)) val0 = F(cell0);
 		else val0 = outside_val;
@@ -42,7 +42,7 @@ namespace Meso {
 		VectorD gravity_acc;
 		FaceFieldDv<T, d> velocity;
 		//define the system behavior
-		Field<unsigned char, d> cell_type;
+		Field<uchar, d> cell_type;
 		BoundaryConditionDirect<FaceFieldDv<T, d>> velocity_bc;
 		LevelSet<d> levelset;
 		//utilities
@@ -58,7 +58,7 @@ namespace Meso {
 		FaceField<T, d> vol_host;
 		Field<T, d> div_host;
 
-		void Init(json& j, const ImplicitManifold<d>& geom, Field<unsigned char, d> &_cell_type, FaceField<real, d>& initial_velocity) {
+		void Init(json& j, const ImplicitManifold<d>& geom, Field<uchar, d> &_cell_type, FaceField<real, d>& initial_velocity) {
 			air_density = Json::Value<real>(j, "air_density", 1e-3);
 			gravity_acc = MathFunc::V<d>(Json::Value<Vector3>(j, "gravity_acc", Vector3::Unit(1) * (-9.8)));
 			velocity = initial_velocity;
@@ -66,7 +66,7 @@ namespace Meso {
 			FaceField<bool, d> face_fixed(cell_type.grid);
 			face_fixed.Calc_Faces(
 				[&](const int axis, const VectorDi face) {
-					auto [cell0, cell1, val0, val1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, unsigned char(-1));
+					auto [cell0, cell1, val0, val1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, uchar(-1));
 					if (val0 == 2 || val1 == 2) return true;
 					return false;
 				}
@@ -103,18 +103,18 @@ namespace Meso {
 			vol_host.Init(cell_type.grid);
 			vol_host.Calc_Faces(
 				[&](const int axis, const VectorDi face)->T {
-					auto [cell0, cell1, type0, type1] = Face_Neighbor_Cells_And_Values(cell_type, axis, face, unsigned char(-1));
+					auto [cell0,cell1,type0, type1]= Face_Neighbor_Cells_And_Values<uchar,d>(cell_type, axis, face, (uchar)(-1));
 					
 					//order: invalid, fluid,air,solid
-					if (type0 > type1 || type1 == unsigned char(-1)) {
+					if (type0 > type1 || type1 == (uchar)(-1)) {
 						std::swap(cell0, cell1);
 						std::swap(type0, type1);
 					}
 					
-					if (type0 == unsigned char(-1) && type1 == unsigned char(-1)) return 0;
-					if (type0 == unsigned char(-1) && type1 == 0) return 1.0;
-					if (type0 == unsigned char(-1) && type1 == 1) return 1.0 / air_density;
-					if (type0 == unsigned char(-1) && type1 == 2) return 0;
+					if (type0 == uchar(-1) && type1 == uchar(-1)) return 0;
+					if (type0 == uchar(-1) && type1 == 0) return 1.0;
+					if (type0 == uchar(-1) && type1 == 1) return 1.0 / air_density;
+					if (type0 == uchar(-1) && type1 == 2) return 0;
 					if (type0 == 0 && type1 == 0) return 1.0;
 					if (type0 == 0 && type1 == 1) {//interface!
 						//todo: modify div
