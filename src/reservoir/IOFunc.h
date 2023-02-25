@@ -94,7 +94,7 @@ namespace Meso {
 				}
 			);
 
-			VTS_Add_Field(vtk_grid, vf_host, name);
+			VTS_Add_Field(vtk_grid, vf_host, name, false);
 		}
 
 		template<class T, int d, DataHolder side>
@@ -122,7 +122,7 @@ namespace Meso {
 				}
 			);
 
-			VTS_Add_Field(vtk_grid, vf_host, name);
+			VTS_Add_Field(vtk_grid, vf_host, name, false);
 		}
 
 		template<int d>
@@ -181,7 +181,7 @@ namespace Meso {
 			vtkNew<vtkXMLStructuredGridWriter> writer;
 			vtkNew<vtkStructuredGrid> structured_grid;
 			VTS_Init_Grid(*structured_grid, F.grid);
-			VTS_Add_Field(*structured_grid, F, "scalar");
+			VTS_Add_Field(*structured_grid, F, "scalar", false);
 
 #if (VTK_MAJOR_VERSION >=6)
 			writer->SetInputData(structured_grid);
