@@ -216,20 +216,7 @@ namespace Meso {
 			writer->Write();
 		}
 
-		void Write_VTS(vtkStructuredGrid& vtk_grid, std::string file_name) {
-			// setup VTK
-			vtkNew<vtkXMLStructuredGridWriter> writer;
-
-#if (VTK_MAJOR_VERSION >=6)
-			writer->SetInputData(&vtk_grid);
-#else
-			writer->SetInput(&vtk_grid);
-#endif
-
-			writer->SetFileName(file_name.c_str());
-			writer->SetDataModeToBinary();
-			writer->Write();
-		}
+		void Write_VTS(vtkStructuredGrid& vtk_grid, std::string file_name);
 
 		template<class T, int d,int ed>
 		void VTP_Init_Mesh(vtkPolyData& vtp, const VertexMatrix<T, d>& vertices, const ElementMatrix<ed>& elements) {
@@ -257,19 +244,7 @@ namespace Meso {
 			}
 		}
 
-		void Write_VTP(vtkPolyData& vtp, std::string file_name) {
-			// setup VTK
-			vtkNew<vtkXMLPolyDataWriter> writer;
-
-			writer->SetFileName(file_name.c_str());
-#if (VTK_MAJOR_VERSION >=6)
-			writer->SetInputData(&vtp);
-#else
-			writer->SetInput(&vtk_grid);
-#endif
-			writer->SetDataModeToBinary();
-			writer->Write();
-		}
+		void Write_VTP(vtkPolyData& vtp, std::string file_name);
 
 		template<int d>
 		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const Array<Vector<real, d>>& vel, std::string file_name) {
