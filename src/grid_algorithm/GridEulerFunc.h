@@ -28,7 +28,8 @@ namespace Meso {
 			T axis_max = (T)0;
 			for (int axis = 0; axis < d; axis++) {
 				Field<T, d, side>  field = F.Face_Reference(axis);
-				axis_max = Linf_Norm(field);
+				T axis_norm = Linf_Norm(field);
+				axis_max = axis_norm > axis_max ? axis_norm : axis_max;
 			}
 			return axis_max;
 		}
