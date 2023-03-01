@@ -208,7 +208,7 @@ namespace Meso {
 		{
 			// 8x9 face_y data load
 			shared_face_data[idy * 8 + idx] = face_ind_y0 != -1 ? face_y[face_ind_y0] : 0;
-			if (idy == 7) shared_face_data[64 + idx] = face_ind_y0 != -1 ? face_y[face_ind_y1] : 0;
+			if (idy == 7) shared_face_data[64 + idx] = face_ind_y1 != -1 ? face_y[face_ind_y1] : 0;
 			__syncthreads();
 
 			//[idy+1][idx]-[idy][idx]
