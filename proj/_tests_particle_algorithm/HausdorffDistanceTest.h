@@ -11,7 +11,7 @@ namespace Meso {
 			Array<Vector1, side> b(2);
 			b[0] = Vector1(3);
 			b[1] = Vector1(6);
-			real result = HausdorffDistance<real,d>(a, b);
+			real result = HausdorffDistance<real,d,side>(a, b);
 			Vector1 b_0 = b[0];
 			Vector1 a_0 = a[0];
 			if (result == (b_0 - a_0).norm()) {
@@ -31,7 +31,7 @@ namespace Meso {
 			b[0] = Vector2(0, 0);
 			b[1] = Vector2(3, 1);
 			b[2] = Vector2(5, 4);
-			real result = HausdorffDistance<real, d>(a,b);
+			real result = HausdorffDistance<real, d,side>(a,b);
 			Vector2 b_2 = b[2];
 			Vector2 a_3 = a[3];
 			if (result == (a_3-b_2).norm()) {
@@ -53,7 +53,7 @@ namespace Meso {
 			b[1] = Vector3(3, 1, 3);
 			b[2] = Vector3(5, 4, 1);
 
-			real result = HausdorffDistance<real, d>(a, b);
+			real result = HausdorffDistance<real, d,side>(a, b);
 			Vector3 b_2 = b[2];
 			Vector3 a_3 = a[3];
 			if (result == (a_3 - b_2).norm()) {
