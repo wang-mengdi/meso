@@ -9,6 +9,8 @@
 #include <thrust/inner_product.h>
 #include <thrust/transform.h>
 #include <thrust/functional.h>
+#include <thrust/extrema.h>
+#include <thrust/execution_policy.h>
 using namespace thrust::placeholders;
 
 namespace Meso {
@@ -299,24 +301,48 @@ namespace Meso {
 			double squared_norm = Dot(a, a);
 			return sqrt(squared_norm);
 		}
-		template<class T>
-		int Largest_Norm_Element(const Array<T>& arr)
+		template<typename T, DataHolder side>
+		int Largest_Element(const Array<T>& arr)
 		{
-			int idx = -1; real max_norm = -1.0;
-			for (int i = 0; i < arr.size(); i++) {
-				real v = arr[i].norm();
-				if (v >= max_norm) {
-					idx = i;
-					max_norm = v;
-				}
+			unsigned int position;
+			if constexpr (side == HOST) {
+				typename thrust::host_vector<T>::const_iterator iter = thrust::max_element(arr.begin(), arr.end());
+				position = iter - arr.begin();
 			}
-			return idx;
+			else {
+				typename thrust::device_vector<T>::const_iterator iter = thrust::max_element(arr.begin(), arr.end());
+				position = iter - arr.begin();
+			}
+			return position;
 		}
-		template<class T> 
-		real Largest_Norm(const Array<T>& arr) {
-			int idx = Largest_Norm_Element<T>(arr);
-			if (idx < 0) return 0;
-			else return arr[idx].norm();
+
+		template<typename VecT, DataHolder side>
+		real Largest_Norm(const Array<VecT, side>& arr) {
+			Array<typename VecT::Scalar, side> arr_norm(arr.size());
+			Unary_Transform(arr, [=]  __host__ __device__(VecT a) -> real { return a.norm(); }, arr_norm);
+			return arr_norm[Largest_Element<real, side>(arr_norm)];
+		}
+
+		template<typename T, DataHolder side>
+		int Smallest_Element(const Array<T,side>& arr)
+		{
+			unsigned int position;
+			if constexpr (side == HOST) {
+				typename thrust::host_vector<T>::const_iterator iter = thrust::min_element(arr.begin(), arr.end());
+				position = iter - arr.begin();
+			}
+			else {
+				typename thrust::device_vector<T>::const_iterator iter = thrust::min_element(arr.begin(), arr.end());
+				position = iter - arr.begin();
+			}
+			return position;
+		}
+
+		template<typename VecT,DataHolder side>
+		real Smallest_Norm(const Array<VecT,side>& arr) {
+			Array<typename VecT::Scalar, side> arr_norm(arr.size());
+			Unary_Transform(arr, [=]  __host__ __device__(VecT a) -> real { return a.norm(); }, arr_norm);
+			return arr_norm[Smallest_Element<real,side>(arr_norm)];
 		}
 
 		template<class T, DataHolder side = HOST>
