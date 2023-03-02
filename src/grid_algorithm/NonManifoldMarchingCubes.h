@@ -7,12 +7,13 @@
 #include "Grid.h"
 #include "Field.h"
 #include "Mesh.h"
+#include <functional>
 
 namespace Meso {
 	using CellType = unsigned char; // support at most 256 types
 	// Input:
 	//		value_field: field that contains value from signed-distance-function
-	//		label_field: field that indicats the label of vertex in filed
+	//		label_field: field that indicates the label of vertex in filed
 	// Output: 
 	//		vertex_matrix: vertices
 	//		element_matrix: edges
@@ -24,10 +25,15 @@ namespace Meso {
 	//		- Optimization: N
 	//		- Support both Device and Host: N
 	//		- Adapative interjunction: OK
+	bool Point_Side(const Vector<real,2>& a, const Vector<real, 2>& b, const Vector<real, 2>& c) {
+		return ((b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x()))<0;
+	}
+
 	template<class T>
 	void Non_Manifold_Marching_Square(
 		VertexMatrix<T, 2>& vertex_matrix,
 		ElementMatrix<2>& element_matrix,
+		Field<std::function<CellType(Vector2)>,2>& find_label,
 		const Field<CellType, 2, HOST>& label_field,
 		const Field<T, 2, HOST>& value_field) 
 	{
@@ -99,7 +105,12 @@ namespace Meso {
 		grid.Exec_Nodes(
 			[&](const Vector2i cell_index) {
 				// go through all cells and generate vertex on each four edges.
-				if ((cell_index - cell_counts).maxCoeff() == 0) return;
+				if ((cell_index - cell_counts).maxCoeff() == 0) {
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return label_field(cell_index);
+					};
+					return;
+				}
 				const CellType& left_down = label_field(cell_index);
 				const CellType& right_down = label_field(cell_index + Vector2i::Unit(0));
 				const CellType& right_up = label_field(cell_index + Vector2i::Ones());
@@ -131,39 +142,98 @@ namespace Meso {
 				const int top_vertex = vertex_index_on_edge[0](cell_index + Vector2i::Unit(1));
 				const int bottom_vertex = vertex_index_on_edge[0](cell_index);
 
-
 				// Important: order: right-top -> left-top -> left-btm -> right-btm
 				switch (Edge_Type(right_up, left_up, left_down, right_down))
 				{
 				// 0 segment
-				case 0: break; case 15: break;
+				case 0:
+				{
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return left_down;
+					};
+					break;
+				}
+				case 15:
+				{
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return left_down;
+					};
+					break;
+				}
 				// 1 segment
-				case 1: elements.push_back(Vector2i(bottom_vertex, right_vertex)); break;
-				case 4: elements.push_back(Vector2i(bottom_vertex, left_vertex)); break;
-				case 5: elements.push_back(Vector2i(left_vertex, right_vertex)); break;
-
-				case 16: elements.push_back(Vector2i(left_vertex, top_vertex)); break;
-				case 20: elements.push_back(Vector2i(top_vertex, bottom_vertex)); break;
-
-				case 21: elements.push_back(Vector2i(top_vertex, right_vertex)); break;
+				case 1: 
+				{
+					elements.push_back(Vector2i(bottom_vertex, right_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return Point_Side(vertices[right_vertex], vertices[bottom_vertex], pos) ? left_down : right_down;
+					};
+					break;
+				}
+				case 4: 
+				{
+					elements.push_back(Vector2i(bottom_vertex, left_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return Point_Side(vertices[left_vertex], vertices[bottom_vertex], pos) ? left_down : right_down;
+					};
+					break;
+				}
+				case 5:
+				{
+					elements.push_back(Vector2i(left_vertex, right_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return Point_Side(vertices[left_vertex], vertices[right_vertex], pos) ? left_down : right_up;
+					};
+					break;
+				}
+				case 16:
+				{
+					elements.push_back(Vector2i(left_vertex, top_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return Point_Side(vertices[top_vertex], vertices[left_vertex], pos) ? left_up : right_down;
+					};
+					break;
+				}
+				case 20: {
+					elements.push_back(Vector2i(top_vertex, bottom_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return Point_Side(vertices[top_vertex], vertices[bottom_vertex], pos) ? left_down : right_down;
+					};
+					break;
+				}
+				case 21: {
+					elements.push_back(Vector2i(top_vertex, right_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return Point_Side(vertices[top_vertex], vertices[right_vertex], pos) ? left_down : right_up;
+					};
+					break;
+				}
 				// 2 segment
 				case 6: 
 				{
 					elements.push_back(Vector2i(left_vertex, center_vertex));
 					elements.push_back(Vector2i(center_vertex, right_vertex));
 					elements.push_back(Vector2i(center_vertex, bottom_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return 0;
+					};
 					break;
 				}
 				case 17: // TODO: solve ambiguous
 				{
 					elements.push_back(Vector2i(left_vertex, top_vertex));
 					elements.push_back(Vector2i(bottom_vertex, right_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return 0;
+					};
 					break;
 				}
 				case 18: 
 				{
 					elements.push_back(Vector2i(left_vertex, top_vertex));
 					elements.push_back(Vector2i(bottom_vertex, right_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return 0;
+					};
 					break;
 				}
 				case 22: 
@@ -171,6 +241,9 @@ namespace Meso {
 					elements.push_back(Vector2i(top_vertex, center_vertex));
 					elements.push_back(Vector2i(center_vertex, bottom_vertex));
 					elements.push_back(Vector2i(center_vertex, right_vertex));
+					find_label(cell_index) = [&](Vector2 pos) -> CellType {
+						return 0;
+					};
 					break;
 				}
 				case 24: 
@@ -178,13 +251,18 @@ namespace Meso {
 					elements.push_back(Vector2i(top_vertex, center_vertex));
 					elements.push_back(Vector2i(center_vertex, bottom_vertex));
 					elements.push_back(Vector2i(center_vertex, left_vertex));
-
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return 0;
+					};
 					break;
 				}
 				case 25: 
 				{
 					elements.push_back(Vector2i(left_vertex, bottom_vertex));
 					elements.push_back(Vector2i(top_vertex, right_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return 0;
+					};
 					break;
 				}
 				case 26:
@@ -192,6 +270,9 @@ namespace Meso {
 					elements.push_back(Vector2i(left_vertex, center_vertex));
 					elements.push_back(Vector2i(center_vertex, right_vertex));
 					elements.push_back(Vector2i(top_vertex, center_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return 0;
+					};
 					break;
 				}
 				case 27:
@@ -200,6 +281,9 @@ namespace Meso {
 					elements.push_back(Vector2i(center_vertex, right_vertex));
 					elements.push_back(Vector2i(top_vertex, center_vertex));
 					elements.push_back(Vector2i(center_vertex, bottom_vertex));
+					find_label(cell_index) = [=](Vector2 pos) -> CellType {
+						return 0;
+					};
 					break;
 				}
 				default:
@@ -216,10 +300,10 @@ namespace Meso {
 	}
 
 	template<class T, int d, DataHolder side>
-	void Non_Manifold_Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& element_matrix, const Field<CellType, d, side>& label, const Field<T, d, side>& value) {
+	void Non_Manifold_Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& element_matrix, Field<std::function<CellType(Vector<T,d>)>,d>& find_label, const Field<CellType, d, side>& label, const Field<T, d, side>& value) {
 		Assert(label.grid.Is_Unpadded(), "marching cubes field.grid {} padding not allowed", label.grid);
 		if constexpr (d == 2) {
-			if constexpr (side == HOST) Non_Manifold_Marching_Square<T>(vertex_matrix, element_matrix, label, value);
+			if constexpr (side == HOST) Non_Manifold_Marching_Square<T>(vertex_matrix, element_matrix, find_label, label, value);
 			else Assert(false, "Marching_Squares not implemented for GPU");
 		}
 		else Assert(false, "Marching_Cubes not implemented for d={}", d);

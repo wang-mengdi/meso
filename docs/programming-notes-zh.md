@@ -28,4 +28,13 @@
 		result_data[grid.Index(cell)] = grad.dot(vel);
 	}
     ```
-
+- Add_Scalar 函数可以用于 Array\<Vector> 的计算，但是HOST和DEVICE会需要一些不同的处理，如直接用在使用HOST时n_a_i，则此函数并无效果。
+``` VectorD a_i = a[i];
+	VectorD n_a_i = -a_i;
+	if constexpr (side == HOST) {
+		ArrayFunc::Add_Scalar(temp_b, -a_i);
+	}
+	else {
+		ArrayFunc::Add_Scalar(temp_b, n_a_i);
+	}
+```

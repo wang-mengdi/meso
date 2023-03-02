@@ -94,7 +94,7 @@ namespace Meso {
 				}
 			);
 
-			VTS_Add_Field(vtk_grid, vf_host, name, false);
+			VTS_Add_Field(vtk_grid, vf_host, name, true);
 		}
 
 		template<class T, int d, DataHolder side>

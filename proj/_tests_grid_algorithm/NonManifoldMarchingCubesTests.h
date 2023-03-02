@@ -14,23 +14,21 @@ namespace Meso {
 
 	template<class T, DataHolder side, int d>
 	void Test_Non_Manifold_Marching_Cubes_Unit(const Field<CellType, d, side>& label, const Field<T, d, side>& field, int test_case, int times, bool verbose) {
-		VertexMatrix<T, d> vertices; ElementMatrix<d> faces; Timer timer; timer.Reset();
+		VertexMatrix<T, d> vertices; ElementMatrix<d> faces;
 		for (size_t i = 0; i < times; i++)
 		{
-			Non_Manifold_Marching_Cubes<T, d, side>(vertices, faces, label,field);
-			double time = timer.Lap_Time(PhysicalUnits::s);
-			double total_time = timer.Total_Time(PhysicalUnits::s);
-			if (verbose) Info("Used time: {:.2f}s/{:.2f}s, ETA {:.2f}s", time, total_time, total_time / (i + 1));
+			Field<std::function<CellType(Vector<T, d>)>, d> find_label(field.grid);
+			Non_Manifold_Marching_Cubes<T, d, side>(vertices, faces, find_label, label,field);
 		}
 		std::stringstream filename;
 		filename << "./non_manifold_marching_" << ((d == 2) ? "square" : "cubes") << "_" << ((side == HOST) ? "CPU" : "GPU") << test_case;
 		OBJFunc::Write_OBJ(filename.str()+".obj", vertices, faces);
 		vtkNew<vtkStructuredGrid> vtk_grid;
-		VTKFunc::VTS_Init_Grid(*vtk_grid,field.grid);
+		VTKFunc::VTS_Init_Grid(*vtk_grid,field.grid.Corner_Grid());
 		VTKFunc::VTS_Add_Field(*vtk_grid,field,"value");
 		VTKFunc::VTS_Add_Field(*vtk_grid, label, "label");
 		VTKFunc::Write_VTS(*vtk_grid, filename.str() +".vts");
-		Pass("Test_Marching_{}[{}] Passed with {} vertices and {} elements", (d == 2) ? "Square" : "Cubes", (side == HOST) ? "CPU" : "GPU", vertices.rows(), faces.rows());
+		Pass("Test_Non_Manifold_Marching_{}[{}] Passed with {} vertices and {} elements", (d == 2) ? "Square" : "Cubes", (side == HOST) ? "CPU" : "GPU", vertices.rows(), faces.rows());
 	}
 
 	template<class T>

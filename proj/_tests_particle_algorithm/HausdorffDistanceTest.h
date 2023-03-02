@@ -15,10 +15,10 @@ namespace Meso {
 			Vector1 b_0 = b[0];
 			Vector1 a_0 = a[0];
 			if (result == (b_0 - a_0).norm()) {
-				Pass("Dimension={}, the hausdorff distance test is passed", d);
+				Pass("Dimension={}, the hausdorff distance test is passed", d, side == HOST ? "CPU" : "GPU");
 			}
 			else {
-				Warn("Dimension={}, the hausdorff distance test is not passed", d);
+				Warn("Dimension={}, the hausdorff distance test is not passed", d, side == HOST ? "CPU" : "GPU");
 			}
 		}
 		else if constexpr (d == 2) {
@@ -35,10 +35,10 @@ namespace Meso {
 			Vector2 b_2 = b[2];
 			Vector2 a_3 = a[3];
 			if (result == (a_3-b_2).norm()) {
-				Pass("Dimension={}, the hausdorff distance test is passed", d);
+				Pass("Dimension={}, the hausdorff distance test is passed", d, side == HOST ? "CPU" : "GPU");
 			}
 			else {
-				Warn("Dimension={}, the hausdorff distance test is not passed", d);
+				Warn("Dimension={}, the hausdorff distance test is not passed", d, side == HOST ? "CPU" : "GPU");
 
 			}
 		}
@@ -57,10 +57,10 @@ namespace Meso {
 			Vector3 b_2 = b[2];
 			Vector3 a_3 = a[3];
 			if (result == (a_3 - b_2).norm()) {
-				Pass("Dimension={}, the hausdorff distance test is passed", d);
+				Pass("Dimension={}, the hausdorff distance test on {} is passed", d, side==HOST?"CPU":"GPU");
 			}
 			else {
-				Warn("Dimension={}, the hausdorff distance test is not passed", d);
+				Warn("Dimension={}, the hausdorff distance test on {} is not passed", d, side == HOST ? "CPU":"GPU");
 			}
 		}
 		else {

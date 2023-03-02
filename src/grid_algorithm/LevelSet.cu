@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 // Level set
-// Copyright (c) (2018-), Bo Zhu, Xingyu Ni
+// Copyright (c) (2018-), Bo Zhu, Xingyu Ni, Fan Feng
 // This file is part of SimpleX, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #include <numeric>
@@ -43,34 +43,6 @@ namespace Meso {
 		Init(_grid);
 	}
 
-
-	//template<int d> real LevelSet<d>::Phi(const VectorD& pos) const
-	//{
-	//	return intp->Interpolate_Centers(phi, pos);
-	//}
-
-	//template<int d> real LevelSet<d>::Curvature(const VectorD& pos) const
-	//{
-	//	real one_over_dx = (real)1 / grid.dx; real one_over_two_dx = (real).5 * one_over_dx; real curvature = (real)0;
-	//	for (int i = 0; i < d; i++) {
-	//		VectorD normal_left = Normal(pos - VectorD::Unit(i) * grid.dx);
-	//		VectorD normal_right = Normal(pos + VectorD::Unit(i) * grid.dx);
-	//		curvature += (normal_right[i] - normal_left[i]) * one_over_two_dx;
-	//	}
-	//	return abs(curvature) < one_over_dx ? curvature : (curvature <= (real)0 ? (real)-1 : (real)1) * one_over_dx;
-
-	//}
-
-	//template<int d> Vector<real, d> LevelSet<d>::Closest_Point_With_Iterations(const VectorD& pos, const int max_iter/*=5*/) const
-	//{
-	//	VectorD intf_pos = pos;
-	//	for (int i = 0; i < max_iter; i++) {
-	//		intf_pos = Closest_Point(intf_pos);
-	//		if (Phi(intf_pos) < (real)0)return intf_pos;
-	//	}
-	//	return intf_pos;
-	//}
-
 	template<int d> real LevelSet<d>::Cell_Fraction(const VectorDi& cell) const
 	{
 		real dx = phi.grid.dx;
@@ -80,92 +52,67 @@ namespace Meso {
 	//////////////////////////////////////////////////////////////////////////
 	////Fast marching method
 
-	template<int d> void LevelSet<d>::Fast_Marching(const real band_width)
+	template<int d> void LevelSet<d>::Fast_Marching(const real band_width, bool reinit_interface)
 	{
-		Grid<d> grid = phi.grid;
-		//Timer timer;
-		//timer.Reset();
-		
+		Grid<d> grid = phi.grid;		
 		Field<real, d> tent(grid, band_width < 0 ? std::numeric_limits<real>::max() : band_width);
-		Array<ushort> done(grid.Memory_Size(), 0);
+		Field<bool, d> done(grid, 0);	//Fan: can change it to a field
 		
 		std::priority_queue<PRI, Array<PRI>, std::greater<PRI> > heaps[2];
 		const int cell_num = grid.Counts().prod();
 		//real far_from_intf_phi_val=grid.dx*(real)5;
 
-		//// Step 1: find interface cells
-#pragma omp parallel for
-		for (int i = 0; i < cell_num; i++) {
-			const VectorDi cell = grid.Coord(i);
-			//if(abs(phi(cell))>far_from_intf_phi_val)continue;		////ATTENTION: this might cause problem if the levelset is badly initialized
-
-			for (int j = 0; j < Grid<d>::Neighbor_Node_Number(); j++) {
-				VectorDi nb = grid.Neighbor_Node(cell, j);
-				if (!grid.Valid(nb))continue;
-				if (Is_Interface(cell, nb)) {
-					done[i] = true; break;
+		//// Step 1: find interface cells and calculate the rough distance to interface
+		grid.Exec_Nodes(
+			[&](const VectorDi cell) {
+				int idx=grid.Index(cell);
+				for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
+					VectorDi nb = grid.Neighbor_Node(cell, i);
+					if (!grid.Valid(nb))continue;
+					if (Is_Interface(cell, nb)) {
+						if(reinit_interface){
+							VectorD correct_phi = VectorD::Ones() * std::numeric_limits<real>::max();
+							VectorDi correct_axis = VectorDi::Zero();
+							for (int j = 0; j < Grid<d>::Neighbor_Node_Number(); j++) {
+								VectorDi nb = grid.Neighbor_Node(cell, j);
+								if (!grid.Valid(nb)) continue;
+								const int nb_idx = grid.Index(nb);
+								if (Is_Interface(cell, nb)) {
+									real c_phi = Theta(phi(cell), phi(nb)) * grid.dx; // always non-negative
+									int axis = grid.Neighbor_Node_Axis(j);
+									correct_axis[axis] = 1;
+									correct_phi[axis] = std::min(correct_phi[axis], c_phi);
+								}
+							}
+							if (correct_axis != VectorDi::Zero()) {
+								real hmnc_mean = (real)0;
+								for (int k = 0; k < d; k++) {
+									if (correct_axis[k] == 0)continue;
+									hmnc_mean += (real)1 / (correct_phi[k] * correct_phi[k]);
+								}
+								hmnc_mean = sqrt((real)1 / hmnc_mean);
+								tent(cell) = hmnc_mean;
+							}
+							else {
+								Error("[Levelset] bad preconditioning");
+							}
+						}
+						else {
+							tent(cell) = abs(phi(cell));
+						}
+	#pragma omp critical
+						{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), idx)); }
+						
+						break;
+					}
 				}
 			}
-		}
-		//if (verbose)timer.Elapse_And_Output_And_Reset("FMM Precond: find interface");
-
-		//// Step 2: calculate initial phi values for interface cells
-#pragma omp parallel for
-		for (int c = 0; c < cell_num; c++) {
-			if (!done[c])continue;		////select interface cells
-			const VectorDi cell = grid.Coord(c);
-
-			VectorD correct_phi = VectorD::Ones() * std::numeric_limits<real>::max();
-			VectorDi correct_axis = VectorDi::Zero();
-			for (int i = 0; i < Grid<d>::Neighbor_Node_Number(); i++) {
-				VectorDi nb = grid.Neighbor_Node(cell, i);
-				if (!grid.Valid(nb)) continue;
-				const int nb_idx = grid.Index(nb);
-				if (done[nb_idx] && Is_Interface(cell, nb)) {
-					real c_phi = Theta(phi(cell), phi(nb)) * grid.dx; // always non-negative
-					int axis = grid.Neighbor_Node_Axis(i);
-					correct_axis[axis] = 1;
-					correct_phi[axis] = std::min(correct_phi[axis], c_phi);
-				}
-			}
-			if (correct_axis != VectorDi::Zero()) {
-				real hmnc_mean = (real)0;
-				for (int i = 0; i < d; i++) {
-					if (correct_axis[i] == 0)continue;
-					hmnc_mean += (real)1 / (correct_phi[i] * correct_phi[i]);
-				}
-				hmnc_mean = sqrt((real)1 / hmnc_mean);
-				tent(cell) = hmnc_mean;
-			}
-			else {
-				Error("[Levelset] bad preconditioning");
-			}
-#pragma omp critical
-			{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), c)); }
-		}
-
-		//// Step 3: perform relaxation on interface cells to fix their values
-		//// NOTE: interface cells will solve Eikonal equation with cells on the other side of the interface,
-		//// with their ABS values instead of actual phi values
-
-#pragma omp parallel for
-		for (int h = 0; h < 2; h++) {
-			Relax_Heap(heaps[h], tent, done, phi, true);
-		}
-
-#pragma omp parallel for
-		for (int i = 0; i < cell_num; i++) {
-			const VectorDi cell = grid.Coord(i);
-			if (done[i]) {
-#pragma omp critical
-				{heaps[MathFunc::Sign(phi(cell)) > 0 ? 0 : 1].push(PRI(tent(cell), i)); }
-			}
-		}
+		);
 		
-		//// Step 4: relax the other part of field
+		//// Step 2: relax the field
 #pragma omp parallel for
 		for (int h = 0; h < 2; h++) {
-			Relax_Heap(heaps[h], tent, done, phi, false);
+			Relax_Heap(heaps[h], tent, done, phi);
 		}
 
 		ArrayFunc::Binary_Transform(

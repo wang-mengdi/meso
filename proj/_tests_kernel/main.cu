@@ -47,19 +47,5 @@ int main() {
     Test_Interpolation<float, 3>(Vector3i(16, 8, 17));
     Test_Interpolation<double, 3>(Vector3i(62, 40, 21));
 
-    //Some out-of-use ones
-    //uncomment those whey they don't rely on pre-saved data
-    //Test_Mesh_Loader_Multiple<TriangleMesh<3>>(); // Can also verify by opening copy-mesh.obj
-    //Test_Mesh_Loader_Single<TriangleMesh<3>>();
-    //Test_Center<float, 2>(Vector2i(328, 92));
-    //Test_Center<float, 3>(Vector3i(36, 28, 478));
-    //Test_Center<double, 2>(Vector2i(74, 22));
-    //Test_Center<double, 3>(Vector3i(381, 7, 32));
-
-    ////Part 2: test sover
-
-    //Test_Sparse_Matrix();
-    //Test_CG_Memory_Safe();
-
-    //Note: dense solver and sparse solver tests are in _tests_dec_system
+    Test_Interpolation_Clamp<double, 2>(Vector2i(32, 32));
 }
