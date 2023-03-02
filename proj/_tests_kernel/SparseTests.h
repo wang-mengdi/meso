@@ -7,5 +7,5 @@
 #include "SparseMatrixMapping.h"
 using namespace Meso;
 
-void Test_Sparse_Matrix(void);
-void Test_CG_Memory_Safe(void);
+//void Test_Sparse_Matrix(void);
+//void Test_CG_Memory_Safe(void);

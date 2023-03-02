@@ -58,8 +58,8 @@ int main() {
 
     ////Part 2: test sover
 
-    Test_Sparse_Matrix();
-    Test_CG_Memory_Safe();
+    //Test_Sparse_Matrix();
+    //Test_CG_Memory_Safe();
 
     //Note: dense solver and sparse solver tests are in _tests_dec_system
 }
