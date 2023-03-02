@@ -27,8 +27,9 @@ def Run_Project(proj_name):
 if __name__=='__main__':
     if len(sys.argv)==1:
         Run_Project("_tests_kernel")
-        Run_Project("_tests_dec_system")
+        Run_Project("_tests_solver")
         Run_Project("_tests_grid_algorithm")
+        Run_Project("_tests_particle_algorithm")
     else:
         print("Run Test {}".format(sys.argv[1]))
         Run_Project(sys.argv[1])
