@@ -22,6 +22,8 @@
 
 #include <igl/writeOBJ.h>
 #include <igl/readOBJ.h>
+#include "tiny_obj_loader.h"
+
 namespace Meso {
 
 	namespace VTKFunc {
@@ -289,12 +291,47 @@ namespace Meso {
 		// `mesh->indice->normal` represents the normal on vetices, which is used for rendering. 
 		// Therefore, we only load vertices and faces from .obj file, then compute normals on each faces.
 
+		template<class T, int d, int ed>
+		bool Read_Obj(const std::string& filename, VertexMatrix<T, d>& vertex_matrix, ElementMatrix<ed>& element_matrix) {
+			MatrixXd vertex_matrix_tmp;
+			bool result;
+			if constexpr (d == 2 && ed==2) {
+				tinyobj::ObjReaderConfig reader_config;
 
-		//template<class T, int d, int ed>
-		//bool Read_Obj(const std::string& filename, const VertexMatrix<T, d>& vertex_matrix, const ElementMatrix<ed>& element_matrix) {
-		//	igl::readOBJ(filename, vertex_matrix, element_matrix);
-		//}
+				tinyobj::ObjReader reader;
+				if (!reader.ParseFromFile(filename , reader_config)) {
+					if (!reader.Error().empty()) {
+						Error("TinyObjReader: {}", reader.Error());
+					}
+				}
+				auto& attrib = reader.GetAttrib();
+				auto& shapes = reader.GetShapes(); //assume that there is only one shape
+				int line_num = shapes[0].lines.num_line_vertices.size();
+				vertex_matrix.resize(line_num, 2);
+				element_matrix.resize(line_num, 2);
 
+				for (size_t l = 0; l < line_num; l++) {
+					size_t lv = size_t(shapes[0].lines.num_line_vertices[l]);
+
+					// Loop over vertices in the face.
+					for (size_t v = 0; v < lv; v++) {
+						// access to vertex
+						tinyobj::index_t idx = shapes[0].lines.indices[v];
+						element_matrix(l , 0) = idx.vertex_index;
+						element_matrix(l , 1) = idx.vertex_index+1;
+						vertex_matrix(l , 0) = attrib.vertices[2 * size_t(idx.vertex_index) + 0];
+						vertex_matrix(l , 1) = attrib.vertices[2 * size_t(idx.vertex_index) + 1];
+					}
+				}
+			}
+			else if constexpr (d==3 && ed==3) {
+				result = igl::readOBJ(filename, vertex_matrix, element_matrix);
+			}
+			else {
+				Error("Demension with d={} and ed={} is not supported yet.", d, ed);
+			}
+			return result;
+		}
 
 		template<class T, int d, int ed>
 		bool Write_OBJ(const std::string& filename, const VertexMatrix<T, d>& vertex_matrix, const ElementMatrix<ed>& element_matrix) {
