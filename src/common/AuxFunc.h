@@ -257,14 +257,13 @@ namespace Meso {
 			for (int i = 0; i < a.size(); i++) if (a[i] != b[i]) return false;
 			return true;
 		}
-		template<class T, DataHolder side = HOST>
+		template<class T, DataHolder side>
 		T Max_Abs(const Array<T, side>& a) {
-			return thrust::reduce(
+			return std::abs(*thrust::max_element(
 				a.begin(),
 				a.end(),
-				(T)0,
-				[=](const T a, const T b) { return std::max(std::abs(a), std::abs(b)); }
-			);
+				[] __host__ __device__(const T a, const T b) { return std::abs(a) < std::abs(b); }
+			));
 		}
 		template<class Array1, class T>
 		void Fill(Array1& a, const T val) {
