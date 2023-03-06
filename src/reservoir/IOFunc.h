@@ -306,22 +306,27 @@ namespace Meso {
 				}
 				auto& attrib = reader.GetAttrib();
 				auto& shapes = reader.GetShapes(); //assume that there is only one shape
+				Assert(shapes.size() == 1, "Read_Obj: Does support not multiple shapes {}",shapes.size());
 				int line_num = shapes[0].lines.num_line_vertices.size();
-				vertex_matrix.resize(line_num, 2);
+				vertex_matrix.resize(attrib.GetVertices().size()/3, 2);
 				element_matrix.resize(line_num, 2);
-
+				size_t index_offset = 0;
 				for (size_t l = 0; l < line_num; l++) {
 					size_t lv = size_t(shapes[0].lines.num_line_vertices[l]);
-
+					Assert(lv == 2); //we know that each segment only has two vertices
 					// Loop over vertices in the face.
 					for (size_t v = 0; v < lv; v++) {
 						// access to vertex
-						tinyobj::index_t idx = shapes[0].lines.indices[v];
-						element_matrix(l , 0) = idx.vertex_index;
-						element_matrix(l , 1) = idx.vertex_index+1;
-						vertex_matrix(l , 0) = attrib.vertices[2 * size_t(idx.vertex_index) + 0];
-						vertex_matrix(l , 1) = attrib.vertices[2 * size_t(idx.vertex_index) + 1];
+						tinyobj::index_t idx = shapes[0].lines.indices[index_offset+v];
+						element_matrix(l , v) = idx.vertex_index;
 					}
+					index_offset += lv;
+				}
+				
+				//there are three dimensions each point
+				for (size_t v = 0; v < attrib.vertices.size()/3; v++) {
+					vertex_matrix(v, 0) = attrib.vertices[v*3];
+					vertex_matrix(v, 1) = attrib.vertices[v*3 + 1];
 				}
 			}
 			else if constexpr (d==3 && ed==3) {
