@@ -308,4 +308,17 @@ namespace Meso {
 		}
 		else Assert(false, "Marching_Cubes not implemented for d={}", d);
 	}
+
+	template<class T, int d, DataHolder side>
+	void Non_Manifold_Marching_Cubes(VertexMatrix<T, d>& vertex_matrix, ElementMatrix<d>& element_matrix, const Field<CellType, d, side>& label, const Field<T, d, side>& value) {
+		Field<std::function<CellType(Vector<T,d>)>, d> find_label;
+		find_label.Init(label.grid);
+
+		Assert(label.grid.Is_Unpadded(), "marching cubes field.grid {} padding not allowed", label.grid);
+		if constexpr (d == 2) {
+			if constexpr (side == HOST) Non_Manifold_Marching_Square<T>(vertex_matrix, element_matrix, find_label, label, value);
+			else Assert(false, "Marching_Squares not implemented for GPU");
+		}
+		else Assert(false, "Marching_Cubes not implemented for d={}", d);
+	}
 }
