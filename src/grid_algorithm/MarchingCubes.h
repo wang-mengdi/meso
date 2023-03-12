@@ -305,7 +305,7 @@ namespace Meso {
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1} };
 
 
-	__device__ bool Has_Edge(const int edge_type, const int edge_index) { return (edge_type & (1 << edge_index)) == 0 ? false : true; }
+	__device__ __forceinline__ bool Has_Edge(const int edge_type, const int edge_index) { return (edge_type & (1 << edge_index)) == 0 ? false : true; }
 
 	template<int d>
 	__device__ void Get_Edge_Vertex_Index(const Vector<int, d> cell_index, int edge_index, Vector<int, d> v1, Vector<int, d> v2)
