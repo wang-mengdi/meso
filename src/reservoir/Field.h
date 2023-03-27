@@ -59,10 +59,9 @@ namespace Meso {
 			data = f1.data;
 		}
 
+		Field<T, d, side>& operator = (const Field<T, d, side>& f1) { Deep_Copy(f1); return *this; }
 		template<DataHolder side1>
 		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
-		template<DataHolder side1>
-		Field<T, d, side>& operator = (Field<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
 		__host__ __device__ inline T& operator()(const VectorDi coord) { return (*data)[grid.Index(coord)]; }
 		__host__ __device__ inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 		const T Get(const VectorDi coord)const { return (*data)[grid.Index(coord)]; }
