@@ -20,8 +20,8 @@ namespace Meso {
 		FaceField() {}
 		FaceField(const Grid<d>& _grid) { Init(_grid); }
 		FaceField(const Grid<d>& _grid, const T value) { Init(_grid);  Fill(value); }
+		FaceField(const FaceField<T, d, side>& f1) { Deep_Copy(f1); }
 		template<DataHolder side1> FaceField(const FaceField<T, d, side1>& f1) { Deep_Copy(f1); }
-		template<DataHolder side1> FaceField(FaceField<T, d, side1>& f1) { Deep_Copy(f1); }
 		void Fill(const T value) { for (int axis = 0; axis < d; axis++) ArrayFunc::Fill(*face_data[axis], value); }
 		void Init(const Grid<d>& _grid, const T value) { Init(_grid); Fill(value); }
 		void Init(const Grid<d>& _grid) {
@@ -54,10 +54,9 @@ namespace Meso {
 			for (int i = 0; i < 3; i++) face_data[i] = f1.face_data[i];
 		}
 
+		FaceField<T, d, side>& operator = (const FaceField<T, d, side>& f1) { Deep_Copy(f1); return *this; }
 		template<DataHolder side1>
 		FaceField<T, d, side>& operator = (const FaceField<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
-		template<DataHolder side1>
-		FaceField<T, d, side>& operator = (FaceField<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
 		inline T& operator()(const int axis, const VectorDi face) { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
 		inline const T& operator()(int axis, const VectorDi face) const { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
 		inline const T Get(int axis, const VectorDi face) const { return (*(face_data[axis]))[grid.Face_Index(axis, face)]; }
