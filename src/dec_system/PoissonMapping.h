@@ -445,7 +445,6 @@ namespace Meso {
 			boundary_tiles.resize(num_boundary_tile);
 			thrust::copy_if(thrust::make_counting_iterator<int>(0), thrust::make_counting_iterator<int>(grid.Memory_Size() / 64), 
 				is_boundary_tile.begin(), boundary_tiles.begin(), thrust::identity<int>());
-			Assert(boundary_tiles.size(), "boundary_tiles empty");
 		}
 
 		const Grid<d>& Grid(void) const {
@@ -468,8 +467,9 @@ namespace Meso {
 
 		void Boundary_Apply(ArrayDv<T>& Ap, const ArrayDv<T>& p)
 		{
-			Poisson_Boundary_Apply_Kernel<T, d> << < boundary_tiles.size(), 64 >> > (vol.grid, ArrayFunc::Data(boundary_tiles),
-				cell_type.Data_Ptr(), ArrayFunc::Data(vol.face_data_ptr), ArrayFunc::Data(p), ArrayFunc::Data(Ap));
+			if (boundary_tiles.size() != 0)
+				Poisson_Boundary_Apply_Kernel<T, d> << < boundary_tiles.size(), 64 >> > (vol.grid, ArrayFunc::Data(boundary_tiles),
+					cell_type.Data_Ptr(), ArrayFunc::Data(vol.face_data_ptr), ArrayFunc::Data(p), ArrayFunc::Data(Ap));
 		}
 	};
 
