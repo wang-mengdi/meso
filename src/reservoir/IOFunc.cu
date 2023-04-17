@@ -17,6 +17,7 @@ namespace Meso {
 		}
 
 		void Write_VTP(vtkPolyData& vtp, std::string file_name) {
+			if (vtp.GetNumberOfPoints() == 0) { Pass("here no points"); return; }
 			// setup VTK
 			vtkNew<vtkXMLPolyDataWriter> writer;
 

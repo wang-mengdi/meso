@@ -222,9 +222,7 @@ namespace Meso {
 
 		template<class T, int d,int ed>
 		void VTP_Init_Mesh(vtkPolyData& vtp, const VertexMatrix<T, d>& vertices, const ElementMatrix<ed>& elements) {
-			if (vertices.rows() == 0) {
-				Warn("VTKFunc::VTP_Init_Mesh: no vertices to output");
-			}
+			if (elements.rows() == 0) { Warn("VTKFunc::VTP_Init_Mesh: no vertices to output"); return; }
 			Typedef_VectorD(d);
 			vtkNew<vtkPoints> points;
 			for (int i = 0; i < vertices.rows();i++)
