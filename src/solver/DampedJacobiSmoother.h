@@ -55,7 +55,6 @@ namespace Meso {
 				GPUFunc::Cwise_Mapping_Wrapper(ArrayFunc::Data(x), ArrayFunc::Data(b), ArrayFunc::Data(x_temp), 
 					ArrayFunc::Data(one_over_diag), func, dof);
 			}
-			checkCudaErrors(cudaGetLastError());
 		}
 		void Boundary_Apply(ArrayDv<T>& x, const ArrayDv<T>& b)
 		{
@@ -66,9 +65,10 @@ namespace Meso {
 				//x+=b-Ax/.diag*.omega
 				const int* _boundary_tiles; const unsigned char* _cell_type; const T* _b;
 				const T* _Ax; const T* _one_over_diag; const T _omega = 0; T* _x;
-				Jacobi_Boundary_Smooth<T> << < poisson->boundary_tiles.size(), 64 >> > (ArrayFunc::Data(poisson->boundary_tiles), 
-					poisson->cell_type.Data_Ptr(), ArrayFunc::Data(b),ArrayFunc::Data(x_temp), 
-					ArrayFunc::Data(one_over_diag), omega, ArrayFunc::Data(x));
+				if (poisson->boundary_tiles.size() != 0)
+					Jacobi_Boundary_Smooth<T> << < poisson->boundary_tiles.size(), 64 >> > (ArrayFunc::Data(poisson->boundary_tiles),
+						poisson->cell_type.Data_Ptr(), ArrayFunc::Data(b), ArrayFunc::Data(x_temp),
+						ArrayFunc::Data(one_over_diag), omega, ArrayFunc::Data(x));
 			}
 		}
 	};

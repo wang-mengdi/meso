@@ -18,6 +18,7 @@
 #include <vtkCellArray.h>
 #include <vtkDoubleArray.h>
 #include <vtkPolyData.h>
+#include <vtkTriangle.h>
 #include <vtkLine.h>
 
 #include <igl/writeOBJ.h>
@@ -96,7 +97,7 @@ namespace Meso {
 				}
 			);
 
-			VTS_Add_Field(vtk_grid, vf_host, name, true);
+			VTS_Add_Field(vtk_grid, vf_host, name, false);
 		}
 
 		template<class T, int d, DataHolder side>
@@ -275,6 +276,50 @@ namespace Meso {
 
 			unstructured_grid->GetPointData()->AddArray(velArray);
 			unstructured_grid->GetPointData()->SetActiveVectors("velocity");
+
+			writer->SetFileName(file_name.c_str());
+			writer->SetInputData(unstructured_grid);
+			writer->Write();
+		}
+
+		template<class T, int d>
+		void Output_Mesh_As_VTU(const VertexMatrix<T, d>& verts, const ElementMatrix<d>& elements, const std::string file_name) {
+			Typedef_VectorD(d);
+
+			// setup VTK
+			vtkNew<vtkXMLUnstructuredGridWriter> writer;
+			vtkNew<vtkUnstructuredGrid> unstructured_grid;
+
+			vtkNew<vtkPoints> nodes;
+			nodes->Allocate(verts.rows());
+			vtkNew<vtkCellArray> cellArray;
+
+			for (int i = 0; i < verts.rows(); i++) {
+				Vector<real, d> pos = verts.row(i).template cast<real>();
+				Vector3 pos3 = MathFunc::V<3>(pos);
+				nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
+			}
+			unstructured_grid->SetPoints(nodes);
+
+			if constexpr (d == 2) {
+				for (int i = 0; i < elements.rows(); i++) {
+					vtkNew<vtkLine> line;
+					line->GetPointIds()->SetId(0, elements(i, 0));
+					line->GetPointIds()->SetId(1, elements(i, 1));
+					cellArray->InsertNextCell(line);
+				}
+				unstructured_grid->SetCells(VTK_LINE, cellArray);
+			}
+			else if constexpr (d == 3) {
+				for (int i = 0; i < elements.rows(); i++) {
+					vtkNew<vtkTriangle> triangle;
+					triangle->GetPointIds()->SetId(0, elements(i, 0));
+					triangle->GetPointIds()->SetId(1, elements(i, 1));
+					triangle->GetPointIds()->SetId(2, elements(i, 2));
+					cellArray->InsertNextCell(triangle);
+				}
+				unstructured_grid->SetCells(VTK_TRIANGLE, cellArray);
+			}
 
 			writer->SetFileName(file_name.c_str());
 			writer->SetInputData(unstructured_grid);

@@ -19,8 +19,8 @@ namespace Meso {
 		Field(const Grid<d> _grid, std::shared_ptr<Array<T, side>> _data) { grid = _grid; data = _data; }
 		Field(const Grid<d> _grid) { Init(_grid); }
 		Field(const Grid<d> _grid, const T value) { Init(_grid, value); }
+		Field(const Field<T, d, side>& f1) { Deep_Copy(f1); }
 		template<DataHolder side1> Field(const Field<T, d, side1>& f1) { Deep_Copy(f1); }
-		template<DataHolder side1> Field(Field<T, d, side1>& f1) { Deep_Copy(f1); }
 		void Init(const Grid<d> _grid) {
 			grid = _grid;
 			if (data == nullptr) data = std::make_shared<Array<T, side>>(grid.Memory_Size());
@@ -59,10 +59,9 @@ namespace Meso {
 			data = f1.data;
 		}
 
+		Field<T, d, side>& operator = (const Field<T, d, side>& f1) { Deep_Copy(f1); return *this; }
 		template<DataHolder side1>
 		Field<T, d, side>& operator = (const Field<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
-		template<DataHolder side1>
-		Field<T, d, side>& operator = (Field<T, d, side1>& f1) { Deep_Copy(f1); return *this; }
 		__host__ __device__ inline T& operator()(const VectorDi coord) { return (*data)[grid.Index(coord)]; }
 		__host__ __device__ inline const T& operator()(const VectorDi coord) const { return (*data)[grid.Index(coord)]; }
 		const T Get(const VectorDi coord)const { return (*data)[grid.Index(coord)]; }
