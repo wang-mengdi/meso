@@ -16,6 +16,9 @@ namespace Meso {
 	void DriverMetaData::Init(json& j) {
 		output_base_dir = Json::Value(j, "output_base_dir", std::string("output"));
 		base_path = bf::path(output_base_dir);
+		if (base_path.is_relative()) {
+			base_path = bf::current_path() / base_path;
+		}
 
 		output_each_step = Json::Value(j, "output_each_step", false);
 		if (output_each_step) {
