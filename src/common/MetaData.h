@@ -48,6 +48,17 @@ namespace Meso {
 		real Time_At_Frame(int frame);
 		void Init(json& j);
 		void Append_Output_Thread(std::shared_ptr<std::thread> thread_ptr);
+
+		//path of an output .vts file at current frame, for example pressure, velocity
+		bf::path Current_VTS_Path(const std::string identifier);
+		bf::path Current_OBJ_Path(const std::string identifier);
+
+		//snapshot things
+		bool Should_Snapshot(void);
+		bf::path Snapshot_Base_Path(void);
+		bf::path Snapshot_Path(int frame);
+		bf::path Current_Snapshot_Path(void);//snapshot path of current frame
+		int Last_Snapshot_Frame(int start_frame);//last snapshotted frame < start_frame
 	};
 
 	class OptimizerDriverMetaData : public MetaData

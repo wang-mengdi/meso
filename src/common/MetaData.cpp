@@ -47,4 +47,59 @@ namespace Meso {
 		}
 		output_threads.push(thread_ptr);
 	}
+
+	bf::path DriverMetaData::Current_VTS_Path(const std::string identifier)
+	{
+		return base_path / bf::path(fmt::format("{}{:04d}.vts", identifier, current_frame));
+	}
+
+	bf::path DriverMetaData::Current_OBJ_Path(const std::string identifier)
+	{
+		return base_path / bf::path(fmt::format("{}{:04d}.obj", identifier, current_frame));
+	}
+
+	bool DriverMetaData::Should_Snapshot(void)
+	{
+		return current_frame != 0 && snapshot_stride != 0 && current_frame % snapshot_stride == 0;
+	}
+
+	bf::path DriverMetaData::Snapshot_Base_Path(void)
+	{
+		return base_path / bf::path("snapshots");
+	}
+
+	bf::path DriverMetaData::Snapshot_Path(int frame)
+	{
+		return Snapshot_Base_Path() / bf::path(fmt::format("{:04d}", frame));
+	}
+
+	bf::path DriverMetaData::Current_Snapshot_Path(void)
+	{
+		return Snapshot_Path(current_frame);
+	}
+
+	int DriverMetaData::Last_Snapshot_Frame(int start_frame)
+	{
+		bf::path snap_base = Snapshot_Base_Path();
+		if (!bf::is_directory(snap_base)) return 0;//no snapshots are there
+
+		std::vector<int> snapshots;
+		for (bf::directory_iterator itr(snap_base); itr != bf::directory_iterator(); ++itr) {
+			if (bf::is_directory(itr->status())) {
+				std::string filename = itr->path().filename().stem().string();
+				snapshots.push_back(std::stoi(filename));
+			}
+		}
+
+		std::sort(snapshots.begin(), snapshots.end());
+		//find the first element >= start_frame
+		auto it = std::lower_bound(snapshots.begin(), snapshots.end(), start_frame);
+		if (it != snapshots.begin()) {
+			it--;
+			return *it;
+		}
+		else {
+			return 0;//no snapshot is read
+		}
+	}
 }
