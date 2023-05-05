@@ -5,7 +5,7 @@
         "cfl": 1.0,
         "first_frame": 0,
         "fps": 25,
-        "last_frame": 100,
+        "last_frame": 30,
         "min_step_frame_fraction": 0.0,
         "output_base_dir": "droptank"
     },
@@ -16,7 +16,7 @@
             -1.0,
             0.0
         ],
-        "scale": 128,
+        "scale": 64,
         "test": "droptank"
     }
 }

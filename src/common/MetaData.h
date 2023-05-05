@@ -26,6 +26,7 @@ namespace Meso {
 		real total_time;					//total time duration, only used when output_each_step
 		int first_frame;
 		int last_frame;
+		int snapshot_stride = 0;
 		
 		int output_queue_size = 10;
 
@@ -36,6 +37,7 @@ namespace Meso {
 		int current_frame;
 		real current_time;
 		real dt;
+		real running_cfl;//actual cfl number of simulation
 
 		~DriverMetaData() {
 			while (!output_threads.empty()) {
@@ -67,6 +69,7 @@ namespace Meso {
 			}
 
 			first_frame = Json::Value(j, "first_frame", 0);
+			snapshot_stride = Json::Value(j, "snapshot_stride", 0);
 			
 			output_queue_size = Json::Value(j, "queue_size", 10);
 
