@@ -27,8 +27,6 @@ namespace Meso {
 		real cfl = 1.0;
 		real time_per_frame = 0.04;
 		real min_step_frame_fraction = 0;	//if set to 0.1, it means the minimal iteration time is 0.1*time_per_frame
-		bool output_each_step;				//whether or not output each step, ignoring the frame rate, each frame has duration cfl_time
-		real total_time;					//total time duration, only used when output_each_step
 		int first_frame;
 		int last_frame;
 		int snapshot_stride = 0;
