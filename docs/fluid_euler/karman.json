@@ -9,7 +9,7 @@
         "output_base_dir": "karman"
     },
     "scene": {
-        "scale": 256,
+        "scale": 1024,
         "test": "karman"
     }
 }

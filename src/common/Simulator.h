@@ -13,7 +13,11 @@ namespace Meso {
 	public:
 		virtual void Output(DriverMetaData& metadata) = 0;
 		virtual void Advance(DriverMetaData& metadata) = 0;
-		//can return inf
+		virtual void Load_Frame(DriverMetaData& metadata) {//load metadata.current_frame
+			Error("Simulator::Load_Frame() function not implemented");
+		}
+		//return: dt, running cfl
+		//dt can be inf
 		virtual real CFL_Time(const real cfl) = 0;
 	};
 }
