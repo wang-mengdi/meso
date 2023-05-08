@@ -38,6 +38,10 @@
 #define __hostdev__
 #endif
 
+static const char* _cudaGetErrorEnum(cudaError_t error) {
+    return cudaGetErrorName(error);
+}
+
 #define checkCudaErrors(val) check((val), #val, __FILE__, __LINE__)
 template <typename T>
 void check(T result, char const* const func, const char* const file,
@@ -143,10 +147,6 @@ template<class T, int n, int m> using Array2DF = std::array<std::array<T, n>, m>
 ////Other containers
 template<class T> using List = std::list<T>;
 template<class T, class CMP = std::less<T> > using Heap = std::priority_queue<T, std::vector<T>, CMP>;
-
-static const char* _cudaGetErrorEnum(cudaError_t error) {
-    return cudaGetErrorName(error);
-}
 
     void Check_Cuda_Memory(const std::string str = "");
 
