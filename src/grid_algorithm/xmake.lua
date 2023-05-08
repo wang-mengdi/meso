@@ -1,3 +1,4 @@
+set_languages("cxx17")
 includes("./../../src/geometry/xmake.lua")
 includes("./../../src/reservoir/xmake.lua")
 includes("./../../src/solver/xmake.lua")
