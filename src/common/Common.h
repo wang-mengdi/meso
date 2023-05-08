@@ -31,6 +31,13 @@
 
 #include <boost/filesystem.hpp>
 
+#if defined(__CUDACC__) || defined(__HIP__)
+// Only define __hostdev__ when using NVIDIA CUDA or HIP compiler
+#define __hostdev__ __host__ __device__
+#else
+#define __hostdev__
+#endif
+
 namespace Meso {
     namespace bf = boost::filesystem;
 

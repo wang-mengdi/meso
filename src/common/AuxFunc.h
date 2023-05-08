@@ -77,7 +77,7 @@ namespace Meso {
 		template <typename T>  int Sign(T val) { return (T(0) < val) - (val < T(0)); }
 
 		template<class T> __host__ __device__ T Eps(void) { return Eigen::NumTraits<T>::dummy_precision(); }
-		template<class T> __host__ __device__ T Clamp(const T x, const T a, const T b) {
+		template<class T> __hostdev__ T Clamp(const T x, const T a, const T b) {
 			if (x < a) return a;
 			if (x > b) return b;
 			return x;
@@ -88,6 +88,23 @@ namespace Meso {
 		real Power3(const real a);//a^3
 		real Power4(const real a);//a^4
 		real Power5(const real a);//a^5
+
+		template<class T>
+		__hostdev__ void Swap(T& a, T& b) {
+			T tmp = a;
+			a = b;
+			b = tmp;
+		}
+
+		template<class Coord>
+		__hostdev__ Coord Half_Coord(Coord c) {
+			int x = c.x(), y = c.y(), z = c.z();
+			return Coord((x - (x & 1)) / 2, (y - (y & 1)) / 2, (z - (z & 1)) / 2);
+		}
+		template<class Coord>
+		__hostdev__ Coord Double_Coord(Coord c) {
+			return Coord(c.x() * 2, c.y() * 2, c.z() * 2);
+		}
 
 		inline real DegreeToRadian(real degree) { return degree / (real)180 * CommonConstants::pi; }
 
