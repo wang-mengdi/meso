@@ -245,6 +245,63 @@ namespace Meso {
 		constexpr auto Data(Array1& arr)noexcept {
 			return thrust::raw_pointer_cast(arr.data());
 		}
+		template<class ArrayPtr>
+		constexpr auto Ptr_Data(ArrayPtr arr_ptr)noexcept {
+			return arr_ptr == nullptr ? nullptr : thrust::raw_pointer_cast(arr_ptr->data());
+		}
+
+		template<class T>
+		T Linf_Norm(const Array<T>& a) {
+			return thrust::reduce(
+				a.begin(),
+				a.end(),
+				(T)0,
+				[=]__hostdev__(T a, T b)->T {
+				if (a < (T)0) a = -a;
+				if (b < (T)0) b = -b;
+				return a > b ? a : b;
+			}
+			);
+		}
+		template<class T>
+		T Linf_Norm(const ArrayDv<T>& a) {
+			return thrust::reduce(
+				a.begin(),
+				a.end(),
+				(T)0,
+				[=]__hostdev__(T a, T b)->T {
+				if (a < (T)0) a = -a;
+				if (b < (T)0) b = -b;
+				return a > b ? a : b;
+			}
+			);
+		}
+		template<class T>
+		T L1_Norm(const Array<T>& a) {
+			return thrust::reduce(
+				a.begin(),
+				a.end(),
+				(T)0,
+				[=]__hostdev__(T a, T b) {
+				if (a < 0) a = -a;
+				if (b < 0) b = -b;
+				return a + b;
+			}
+			);
+		}
+		template<class T>
+		T L1_Norm(const ArrayDv<T>& a) {
+			return thrust::reduce(
+				a.begin(),
+				a.end(),
+				(T)0,
+				[=]__hostdev__(T a, T b) {
+				if (a < 0) a = -a;
+				if (b < 0) b = -b;
+				return a + b;
+			}
+			);
+		}
 
 		template<class T, DataHolder side>
 		bool Has_Zero(const Array<T, side>& a) {
