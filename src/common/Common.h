@@ -38,6 +38,17 @@
 #define __hostdev__
 #endif
 
+#define checkCudaErrors(val) check((val), #val, __FILE__, __LINE__)
+template <typename T>
+void check(T result, char const* const func, const char* const file,
+    int const line) {
+    if (result) {
+        fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \"%s\" \n", file, line,
+            static_cast<unsigned int>(result), _cudaGetErrorEnum(result), func);
+        exit(EXIT_FAILURE);
+    }
+}
+
 namespace Meso {
     namespace bf = boost::filesystem;
 
@@ -136,16 +147,6 @@ template<class T, class CMP = std::less<T> > using Heap = std::priority_queue<T,
 static const char* _cudaGetErrorEnum(cudaError_t error) {
     return cudaGetErrorName(error);
 }
-#define checkCudaErrors(val) check((val), #val, __FILE__, __LINE__)
-    template <typename T>
-    void check(T result, char const* const func, const char* const file,
-        int const line) {
-        if (result) {
-            fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \"%s\" \n", file, line,
-                static_cast<unsigned int>(result), _cudaGetErrorEnum(result), func);
-            exit(EXIT_FAILURE);
-        }
-    }
 
     void Check_Cuda_Memory(const std::string str = "");
 
