@@ -1,5 +1,5 @@
 add_rules("mode.release","mode.debug")
-set_languages("cxx20")
+--set_languages("cxx20")
 includes("./../../src/grid_algorithm/xmake.lua")
 target("_tests_grid_algorithm")
     add_rules("plugin.vsxmake.autoupdate")
