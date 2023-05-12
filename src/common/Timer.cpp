@@ -72,4 +72,18 @@ namespace Meso {
 		out << str << "\n";
 	}
 
+	void GPUTimer::Start(void)
+	{
+		cudaEventRecord(start);
+	}
+
+	void GPUTimer::Stop(const std::string& output_message)
+	{
+		cudaEventRecord(stop);
+		cudaEventSynchronize(stop);
+		float time;
+		cudaEventElapsedTime(&time, start, stop);
+		fmt::print("{}: {}ms\n", output_message, time);
+	}
+
 }

@@ -8,6 +8,7 @@
 #include <ctime>
 #include "Common.h"
 #include "Constants.h"
+#include <cuda_runtime.h>
 
 namespace Meso {
 	class TimerRecord {
@@ -41,5 +42,22 @@ namespace Meso {
 		void Begin_Loop(void);
 		void Record(const std::string& name, const real unit = PhysicalUnits::s);
 		void Output_Profile(std::ostream& out = std::cout);
+	};
+
+	class GPUTimer {
+	public:
+		cudaEvent_t start, stop;
+
+		GPUTimer() {
+			cudaEventCreate(&start);
+			cudaEventCreate(&stop);
+		}
+		~GPUTimer() {
+			cudaEventDestroy(start);
+			cudaEventDestroy(stop);
+		}
+
+		void Start(void);
+		void Stop(const std::string& output_message);
 	};
 }
