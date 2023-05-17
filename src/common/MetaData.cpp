@@ -44,6 +44,11 @@ namespace Meso {
 		return base_path / bf::path(fmt::format("{}{:04d}.vts", identifier, current_frame));
 	}
 
+	bf::path DriverMetaData::Current_VTU_Path(const std::string identifier)
+	{
+		return base_path / bf::path(fmt::format("{}{:04d}.vtu", identifier, current_frame));
+	}
+
 	bf::path DriverMetaData::Current_OBJ_Path(const std::string identifier)
 	{
 		return base_path / bf::path(fmt::format("{}{:04d}.obj", identifier, current_frame));

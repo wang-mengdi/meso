@@ -49,6 +49,7 @@ namespace Meso {
 
 		//path of an output .vts file at current frame, for example pressure, velocity
 		bf::path Current_VTS_Path(const std::string identifier);
+		bf::path Current_VTU_Path(const std::string identifier);
 		bf::path Current_OBJ_Path(const std::string identifier);
 
 		//snapshot things
