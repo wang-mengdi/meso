@@ -161,6 +161,33 @@ namespace Meso {
 		VectorD Normal(const VectorD pos) const { return (pos - center).normalized(); }	// TODO: fix ellipsoid normal
 	};
 
+	template<int d>
+	class CylinderShape : public ImplicitManifold<d>
+	{
+		Typedef_VectorD(d);
+	public:
+		//axis is segment a--b
+		VectorD a;
+		VectorD ab;//b-a
+		real radius;
+
+		CylinderShape(const VectorD _a = VectorD::Zero(), const VectorD _b = VectorD::Zero(), const real _radius = 1) :a(_a), radius(_radius) {
+			ab = _b - _a;
+		}
+
+		real Phi(const VectorD pos) const {
+			VectorD pa = pos - a;
+			real t = pa.dot(ab) / ab.dot(ab);
+			VectorD c = a + t * ab;
+			real dist_circ = (pos - c).norm() - radius;
+			real y = (abs(t - 0.5) - 0.5) * ab.norm();
+			real outside = Vector2(std::max(dist_circ, 0.), std::max(y, 0.)).norm();
+			real inside = std::min(std::max(dist_circ, y), 0.);
+			return outside + inside;
+		}
+		VectorD Normal(const VectorD pos) const { Error("CylinderShape::Normal() not implemented"); }
+	};
+
 	//template<int d>
 	//class GeometryUnion : public ImplicitGeometry<d> {
 	//public:
@@ -178,4 +205,5 @@ namespace Meso {
 	template<int d> using Plane = ImplicitManifoldShape<d, PlaneShape<d>>;
 	template<int d> using Box = ImplicitManifoldShape<d, BoxShape<d>>;
 	template<int d> using Ellipsoid = ImplicitManifoldShape<d, EllipsoidShape<d>>;
+	template<int d> using Cylinder = ImplicitManifoldShape<d, CylinderShape<d>>;
 }
