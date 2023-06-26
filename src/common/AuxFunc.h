@@ -11,6 +11,7 @@
 #include <thrust/functional.h>
 #include <thrust/extrema.h>
 #include <thrust/execution_policy.h>
+#include <thrust/count.h>
 using namespace thrust::placeholders;
 
 namespace Meso {

@@ -1,7 +1,7 @@
 includes("./../../src/common/xmake.lua")
 -- add_rules("plugin.vsxmake.autoupdate")
 add_requires("nanoflann")
-add_requires("vtk >=9.1.0")
+add_requires("vtk =9.1.0")
 add_requires("libigl >= 2.4.0")
 add_requires("tinyobjloader")
 target("reservoir")
