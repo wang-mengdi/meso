@@ -282,6 +282,35 @@ namespace Meso {
 			writer->Write();
 		}
 
+		template<int d>
+		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const Array<Vector<real, d>>& vel, const bf::path& path) { Write_VTU_Particles<d>(pos, vel, path.string()); }
+
+		template<int d>
+		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const bf::path& path) {
+			//output particles
+			Typedef_VectorD(d);
+			// setup VTK
+			vtkNew<vtkXMLUnstructuredGridWriter> writer;
+			vtkNew<vtkUnstructuredGrid> unstructured_grid;
+
+			vtkNew<vtkPoints> nodes;
+			nodes->Allocate(pos.size());
+			vtkNew<vtkDoubleArray> posArray;
+			posArray->SetName("Position");
+			posArray->SetNumberOfComponents(d);
+
+			for (int i = 0; i < pos.size(); i++) {
+				Vector3 pos3 = MathFunc::V<3>(pos[i]);
+				nodes->InsertNextPoint(pos3[0], pos3[1], pos3[2]);
+			}
+
+			unstructured_grid->SetPoints(nodes);
+
+			writer->SetFileName(path.string().c_str());
+			writer->SetInputData(unstructured_grid);
+			writer->Write();
+		}
+
 		template<class T, int d>
 		void Output_Mesh_As_VTU(const VertexMatrix<T, d>& verts, const ElementMatrix<d>& elements, const std::string file_name) {
 			Typedef_VectorD(d);
