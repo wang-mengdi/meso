@@ -613,6 +613,18 @@ namespace Meso {
 			}
 		}
 
+		template<typename F>
+		__global__ void Cwise_Mapping(F f, int N) {
+			int i = blockIdx.x * blockDim.x + threadIdx.x;
+			if (i >= N) return;
+			f(i);
+		}
+		template<typename F>
+		void Cwise_Mapping_Wrapper(F f, int N, const int BLOCK_SIZE = 64) {
+			Cwise_Mapping << <(N + BLOCK_SIZE - 1) / BLOCK_SIZE, BLOCK_SIZE >> > (f, N);
+		}
+
+
 		template<typename A, typename F>
 		__global__ void Cwise_Mapping(A v1, F f, int N)
 		{
