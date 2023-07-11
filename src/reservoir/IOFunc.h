@@ -354,6 +354,8 @@ namespace Meso {
 			writer->SetInputData(unstructured_grid);
 			writer->Write();
 		}
+
+		template<class T, int d> void Output_Mesh_As_VTU(const VertexMatrix<T, d>& verts, const ElementMatrix<d>& elements, const bf::path& path) { Output_Mesh_As_VTU<T, d>(verts, elements, path.string()); }
 	}
 
 

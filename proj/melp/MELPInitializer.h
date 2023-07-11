@@ -6,7 +6,7 @@
 #pragma once
 
 #include "MELP.h"
-#include "GeometryPrimitives.h"
+//#include "GeometryPrimitives.h"
 #include "Json.h"
 
 namespace Meso {

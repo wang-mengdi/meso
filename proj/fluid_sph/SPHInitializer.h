@@ -6,7 +6,7 @@
 #pragma once
 
 #include "FluidSPH.h"
-#include "ImplicitGeometry.h"
+#include "ImplicitManifold.h"
 #include "AnalyticalBoundary.h"
 #include "Json.h"
 

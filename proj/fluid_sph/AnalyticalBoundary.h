@@ -6,17 +6,17 @@
 #pragma once
 
 #include "Common.h"
-#include "ImplicitGeometry.h"
+#include "ImplicitManifold.h"
 
 namespace Meso {
 	template<int d>
 	class AnalyticalBoundary {
 		Typedef_VectorD(d);
 	public:
-		Array<std::shared_ptr<ImplicitGeometry<d> > > obstacles;//fluid should be outside of ALL of these
-		Array<std::shared_ptr<ImplicitGeometry<d> > > boundaries;//fluid should be inside of ALL of these 
-		void Add_Obstacle(std::shared_ptr<ImplicitGeometry<d> > obj) { obstacles.push_back(obj); }//outside of this
-		void Add_Bounding(std::shared_ptr<ImplicitGeometry<d> > obj) { boundaries.push_back(obj); }//inside of this
+		Array<std::shared_ptr<ImplicitManifold<d> > > obstacles;//fluid should be outside of ALL of these
+		Array<std::shared_ptr<ImplicitManifold<d> > > boundaries;//fluid should be inside of ALL of these 
+		void Add_Obstacle(std::shared_ptr<ImplicitManifold<d> > obj) { obstacles.push_back(obj); }//outside of this
+		void Add_Bounding(std::shared_ptr<ImplicitManifold<d> > obj) { boundaries.push_back(obj); }//inside of this
 		bool Available() const { return (obstacles.size() + boundaries.size() > 0.); } // if some boundary is active
 		bool Get_Nearest_Boundary(const VectorD& pos, real& dis, VectorD& normal) const {
 			bool detected = false;//for further extension. may add a list of "inside" geometries
