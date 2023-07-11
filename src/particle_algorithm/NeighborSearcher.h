@@ -106,8 +106,10 @@ namespace Meso {
 	template<int d>
 	class NeighborKDTree : public NeighborSearcher<d> {
 		//Declare_Eigen_Types(double, d);
-		//using Base = NeighborSearcher<d>;
+		using Base = NeighborSearcher<d>;
 		Typedef_VectorD(d);
+	public:
+		using Base::Find_Nbs;
 	public:
 		const int max_leaf = 10;/* max leaf */
 		PointSetAdapter<d> points;

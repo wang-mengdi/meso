@@ -23,7 +23,7 @@ namespace Meso {
 		SPH_Utils<d> sph;
 		SPHParticles<d> b_particles;
 		AnalyticalBoundary<d> boundary;
-		KernelSPH kernel;
+		Kernel kernel;
 
 		void Init() {
 			Register_Nbs(true);
@@ -31,7 +31,7 @@ namespace Meso {
 
 		virtual real CFL_Time(const real cfl) {
 			real dx = particles.dx;
-			real max_vel = ArrayFunc::Largest_Norm<VectorD>(particles.uRef());
+			real max_vel = ArrayFunc::Largest_Norm<VectorD, HOST>(particles.uRef());
 			return dx * cfl / max_vel;
 		}
 		virtual void Output(DriverMetaData& metadata) {

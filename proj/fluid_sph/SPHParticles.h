@@ -9,10 +9,10 @@
 
 namespace Meso {
 	template<int d>
-	class SPHParticles : public NAParticles<d> {
+	class SPHParticles : public NAParticles<d, NeighborKDTree<d>> {
 		Typedef_VectorD(d); Typedef_MatrixD(d);
 	public:
-		SPHParticles() : NAParticles<d>()  {}
+		SPHParticles() : NAParticles<d, NeighborKDTree<d>>()  {}
 
 		Setup_Attribute(m, real, 1.); //mass
 		Setup_Attribute(p, real, 0.); //pressure
