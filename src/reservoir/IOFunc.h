@@ -196,6 +196,7 @@ namespace Meso {
 			writer->SetDataModeToBinary();
 			writer->Write();
 		}
+		template<class T, int d, DataHolder side> void Write_VTS(const FaceField<T, d, side>& F, const bf::path& path) { Write_VTS<T, d, side>(F, path.string()); }
 		
 		template<class T, int d, DataHolder side>
 		void Write_VTS(const ArrayF<Field<T, d, side>, d>& F, std::string file_name) {
