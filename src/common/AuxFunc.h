@@ -186,6 +186,13 @@ namespace Meso {
 		inline real Distance(const Vector3& p, const  Vector3& p0, const  Vector3& p1) {
 			return ((p - p0).cross(p - p1)).norm() / (p0 - p1).norm();
 		}
+		template<class T, int dim>
+		Vector<T, dim> Projection_On_Segment(const Vector<T, dim>& a, const Vector<T, dim>& b, const Vector<T, dim>& p) {
+			real Lab2 = (b - a).squaredNorm();
+			if (Lab2 == 0) return a;//a point
+			return a + (b - a) * (p - a).dot(b - a) / Lab2;
+		}
+
 
 		template<class T, int dim> inline T Abs_Min(const Vector<T, dim>& v) { T v_min = abs(v[0]); for (int i = 1; i < dim; i++)if (abs(v[i]) < v_min)v_min = v[i]; return v_min; }
 		template<class T, int dim> inline T Abs_Max(const Vector<T, dim>& v) { T v_max = abs(v[0]); for (int i = 1; i < dim; i++)if (abs(v[i]) > v_max)v_max = v[i]; return v_max; }
