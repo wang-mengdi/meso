@@ -277,10 +277,12 @@ struct fmt::formatter<thrust::host_vector<T> > {
         out += '[';
         auto it = std::begin(vec);
         auto end = std::end(vec);
-        out += std::to_string(*it); it++;
-        for (; it != end; ++it) {
-            out += ", ";
-            out += std::to_string(*it);
+        if (it != end) {
+            out += std::to_string(*it); it++;
+            for (; it != end; ++it) {
+                out += ", ";
+                out += std::to_string(*it);
+            }
         }
         out += ']';
         return format_to(ctx.out(), "{}", out);
