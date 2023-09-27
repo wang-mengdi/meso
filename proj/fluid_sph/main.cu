@@ -18,7 +18,7 @@ void Run(json &j) {
 	FluidSPH<d> fluid;
 	SPHInitializer<d> scene;
 	Driver driver;
-	driver.Run(j, scene, fluid);
+	driver.Initialize_And_Run(j, scene, fluid);
 }
 
 int main(int argv, char **argc) {

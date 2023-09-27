@@ -55,8 +55,8 @@ namespace Meso {
 #pragma omp parallel for
 			for (int i = 0; i < particles.Size(); i++) {
 				real r = Radius(i);
-				Array<int> nbs; particles.nbs_searcher->Find_Nbs(particles.x(i), r, nbs);
-				Array<int> b_nbs; b_particles.nbs_searcher->Find_Nbs(particles.x(i), r, b_nbs);
+				Array<int> nbs; particles.nbs_searcher.Find_Nbs(particles.x(i), r, nbs);
+				Array<int> b_nbs; b_particles.nbs_searcher.Find_Nbs(particles.x(i), r, b_nbs);
 				particles.nbs_info[i].set(nbs, b_nbs, r);
 			}
 		}
@@ -72,7 +72,7 @@ namespace Meso {
 
 		void Compute_Pressure_IISPH(const real dt) {
 			real rho_0 = 1.;
-			real max_vel = ArrayFunc::Largest_Norm<VectorD>(particles.uRef());
+			real max_vel = ArrayFunc::Largest_Norm<VectorD, HOST>(particles.uRef());
 			Info("max vel: {}", max_vel);
 			Info("dt is: {}", dt);
 			if (dt < 1.e-8) return; // if dt is 0. then return. Otherwise would be numerically troublesome
