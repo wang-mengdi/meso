@@ -172,10 +172,9 @@ template<class T, class CMP = std::less<T> > using Heap = std::priority_queue<T,
 
     template<typename ...Args>
     void Error(const char* fmt_str, const Args&...args) {
-        fmt::print(fg(fmt::color::red), "#     ");
-        fmt::print(fg(fmt::color::red), fmt_str, args...);
-        fmt::print("\n");
-        exit(-1);
+        std::string msg = "#     " + fmt::format(fmt_str, args...) + "\n";
+        fmt::print(fg(fmt::color::red), msg);
+        throw msg;
     }
     void Error(const std::string& str);
 
@@ -191,7 +190,6 @@ template<class T, class CMP = std::less<T> > using Heap = std::priority_queue<T,
     void Assert(const bool flg, const char* fmt_str = "", const Args &...args) {
         if (!flg) {
             Error(fmt_str, args...);
-            exit(-1);
         }
     }
 }
