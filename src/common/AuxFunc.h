@@ -602,6 +602,7 @@ namespace Meso {
 //		}
 	}
 
+#ifdef __CUDACC__
 	namespace GPUFunc {
 		template<class T> cudaDataType_t Cuda_Real_Type(void)
 		{
@@ -689,5 +690,5 @@ namespace Meso {
 			Cwise_Mapping << <((N + 63) >> 6), 64 >> > (v1, v2, v3, v4, f, N);
 		}
 	}
-
+#endif
 }

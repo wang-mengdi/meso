@@ -180,6 +180,7 @@ namespace Meso {
 			}
 			return std::make_tuple(blocknum, blocksize);
 		}
+#ifdef __CUDACC__
 		//NOTE: WILL EXECUTE ALL THE MEMORY COUNTS INSTEAD OF ONLY VALID CELLS
 		//MUST CHECK IF VALID INSIDE THE KERNEL FUNCTION
 		template<class Func, class ...Args>
@@ -187,6 +188,7 @@ namespace Meso {
 			auto [blocknum, blocksize] = Get_Kernel_Dims();
 			kernel_func << <blocknum, blocksize >> > (args...);
 		}
+#endif
 	};
 
 	template<int d>
