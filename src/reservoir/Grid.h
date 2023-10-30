@@ -200,8 +200,8 @@ namespace Meso {
 	class Grid: public GridIndexer<d> {
 		Typedef_VectorD(d);
 		using Base = GridIndexer<d>;
-    using Base::Dimension;
 	public:
+		using Base::Dimension;
 		VectorD pos_min;
 		real dx;
 		
