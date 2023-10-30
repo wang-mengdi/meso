@@ -19,7 +19,7 @@ namespace Meso {
 
 	void Driver::Advance(Simulator& simulator, DriverMetaData& meta_data) {
 		Timer frame_timer;
-		FileFunc::Create_Directory(meta_data.base_path);
+		FileFunc::Create_Directory(meta_data.Snapshot_Base_Path());
 
 		//try to load snapshot
 		if (meta_data.first_frame != 0) {
