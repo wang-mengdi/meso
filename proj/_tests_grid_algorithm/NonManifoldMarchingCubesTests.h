@@ -129,8 +129,10 @@ namespace Meso {
 			Grid<2> grid(Vector2i(104, 104), 0.01, MathFunc::V<2>(0., 0.), CORNER);
 			Field<T, 2> field_host(grid, 0); 
 			Array<Vector2> points{}; std::unordered_map<int, PlaneShape<2>> planes{};
+			//voronoi vertices
 			for (size_t i = 0; i < count; i++)	
 				points.push_back(Random::Random_VectorXd(2, 0.0, 1.0));
+			//the plane formed by two points
 			for (size_t i = 0; i < count; i++)
 				for (size_t j = 0; j < count; j++)
 				{
@@ -148,7 +150,8 @@ namespace Meso {
 					Vector2 pos = grid.Position(node);
 					T min_distance_to_point = 100.;
 					T min_distance_to_plane = 100.;
-
+					
+					// go through all points in the field and assign the closest label
 					for (size_t i = 0; i < points.size(); i++)
 						if ((pos - points[i]).norm() < min_distance_to_point)
 						{
@@ -156,6 +159,7 @@ namespace Meso {
 							label_host(node) = i;
 						}
 
+					// go through the distances to all planes
 					for (size_t i = 0; i < count; i++)
 						if (i != label_host(node) && abs(planes[label_host(node) * count + i].Phi(pos)) < min_distance_to_plane) {
 							min_distance_to_plane = abs(planes[label_host(node) * count + i].Phi(pos));

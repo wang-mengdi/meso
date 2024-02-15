@@ -22,6 +22,7 @@ namespace Meso{
 		void Output(Optimizer& optimizer, OptimizerDriverMetaData& meta_data) {
 			Info("Output iter {} to {}", meta_data.iter_count, meta_data.base_path.string());
 			optimizer.Output(meta_data);
+			meta_data.data_output.flush();
 		}
 
 		void Advance(Optimizer& optimizer, OptimizerDriverMetaData& meta_data) {
