@@ -120,17 +120,17 @@ namespace Meso {
 		Grid<d> coarse_grid, fine_grid;
 
 		RestrictorSum() {}
-		RestrictorSum(const Grid<d> coarse, const Grid<d> fine) {
-			Init(coarse, fine);
+		RestrictorSum(const FieldDv<unsigned char, d>& coarse_cell_type, const FieldDv<unsigned char, d>& fine_cell_type) {
+			Init(coarse_cell_type, fine_cell_type);
 		}
-		void Init(const Grid<d> _coarse, const Grid<d> _fine) {
-			coarse_grid = _coarse, fine_grid = _fine;
+		void Init(const FieldDv<unsigned char, d>& coarse_cell_type, const FieldDv<unsigned char, d>& fine_cell_type) {
+			coarse_grid = coarse_cell_type.grid, fine_grid = fine_cell_type.grid;
 		}
 
 		//number of cols
-		virtual int XDoF() const { return fine_grid.DoF(); }
+		virtual int XDoF() const { return fine_grid.Valid_Size(); }
 		//number of rows
-		virtual int YDoF() const { return coarse_grid.DoF(); }
+		virtual int YDoF() const { return coarse_grid.Valid_Size(); }
 
 		virtual void Apply(ArrayDv<T>& coarse_data, const ArrayDv<T>& fine_data) {
 			Memory_Check(coarse_data, fine_data, "RestrictorSum::Apply error: not enough space");

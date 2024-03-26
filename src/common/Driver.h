@@ -33,7 +33,7 @@ namespace Meso {
 			Info("Driver::Initialize_And_Run parse json: \n{}", j.dump(2));
 			DriverMetaData meta_data;
 			meta_data.Init(j.at("driver"));
-			scene.Apply(j.at("scene"), simulator);
+			scene.Apply(j, simulator);
 			FileFunc::Create_Directory(meta_data.output_base_dir);
 			bf::path dump_file = bf::path(meta_data.output_base_dir) / bf::path("config.json");
 			std::ofstream dump_output(dump_file.string());

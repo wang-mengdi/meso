@@ -100,16 +100,16 @@ namespace Meso {
 		Grid<d> fine_grid, coarse_grid;
 
 		ProlongatorSum() {}
-		ProlongatorSum(const Grid<d> _fine, const Grid<d> _coarse) { Init(_fine, _coarse); }
-		void Init(const Grid<d> _fine, const Grid<d> _coarse) {
-			fine_grid = _fine;
-			coarse_grid = _coarse;
+		ProlongatorSum(const FieldDv<unsigned char, d>& _fine_cell_type, const FieldDv<unsigned char, d>& _coarse_cell_type) { Init(_fine_cell_type, _coarse_cell_type); }
+		void Init(const FieldDv<unsigned char, d>& _fine_cell_type, const FieldDv<unsigned char, d>& _coarse_cell_type) {
+			fine_grid = _fine_cell_type.grid;
+			coarse_grid = _coarse_cell_type.grid;
 		}
 
 		//number of cols
-		virtual int XDoF() const { return coarse_grid.DoF(); }
+		virtual int XDoF() const { return coarse_grid.Valid_Size(); }
 		//number of rows
-		virtual int YDoF() const { return fine_grid.DoF(); }
+		virtual int YDoF() const { return fine_grid.Valid_Size(); }
 		//input coarse_data, output fine_data
 		virtual void Apply(ArrayDv<T>& fine_data, const ArrayDv<T>& coarse_data) {
 			Memory_Check(fine_data, coarse_data, "ProlongatorSum::Apply error: not enough memory");

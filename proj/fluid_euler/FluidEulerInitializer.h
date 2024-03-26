@@ -197,6 +197,8 @@ namespace Meso {
 			real dx = length / scale;
 			VectorDi grid_size = scale * MathFunc::Vi<d>(2, 1, 1);
 			Grid<d> grid(grid_size, dx, VectorD::Zero(), CENTER);
+
+			Info("grid size: {}", grid_size);
 			
 			////sphere
 			VectorD center;

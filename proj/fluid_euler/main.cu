@@ -37,6 +37,7 @@ int main(int argc, char **argv) {
 			{"scene",json::object()}
 		};
 		if (argc > 1) {
+			Info("Read json file {}", argv[1]);
 			std::ifstream json_input(argv[1]);
 			json_input >> j;
 			json_input.close();

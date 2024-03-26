@@ -13,6 +13,41 @@
 #include "GridEulerFunc.h"
 
 namespace Meso {
+	template <typename Accuracy = std::chrono::milliseconds>
+	class CpuTimer
+	{
+		std::chrono::high_resolution_clock::time_point mStart;
+	public:
+		CpuTimer() {}
+		void start(const std::string& msg, std::ostream& os = std::cerr) {
+			os << msg << " ... " << std::flush;
+			mStart = std::chrono::high_resolution_clock::now();
+		}
+		void restart(const std::string& msg, std::ostream& os = std::cerr) {
+			this->stop();
+			os << msg << " ... " << std::flush;
+			mStart = std::chrono::high_resolution_clock::now();
+		}
+		void stop(std::ostream& os = std::cerr)
+		{
+			auto end = std::chrono::high_resolution_clock::now();
+			auto diff = std::chrono::duration_cast<Accuracy>(end - mStart).count();
+			os << "completed in " << diff;
+			if (std::is_same<Accuracy, std::chrono::microseconds>::value) {// resolved at compile-time
+				os << " microseconds" << std::endl;
+			}
+			else if (std::is_same<Accuracy, std::chrono::milliseconds>::value) {
+				os << " milliseconds" << std::endl;
+			}
+			else if (std::is_same<Accuracy, std::chrono::seconds>::value) {
+				os << " seconds" << std::endl;
+			}
+			else {
+				os << " unknown time unit" << std::endl;
+			}
+		}
+	};// CpuTimer
+
 	template<int d>
 	class FluidEuler : public Simulator {
 		Typedef_VectorD(d);
@@ -71,7 +106,12 @@ namespace Meso {
 			//vel_div=div(velocity)
 			ExteriorDerivativePadding0::Apply(vel_div, velocity);
 
+			GPUTimer timer;
+			timer.Start();
+			CpuTimer<std::chrono::milliseconds> ctimer; ctimer.start("MGPCG Projection");
 			auto [iter, res] = MGPCG.Solve(pressure.Data(), vel_div.Data());
+			ctimer.stop();
+			timer.Stop("Poisson Solve Time");
 			Info("Solve poisson with {} iters and residual {}", iter, res);
 
 			//velocity+=grad(p)
