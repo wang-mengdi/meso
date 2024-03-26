@@ -98,7 +98,7 @@ namespace Meso {
 			//gamma0=dot(r0,z0)
 			double gamma = ArrayFunc::Dot(z, r);
 
-			double residual_norm2;//|r_k|^2
+			double residual_norm2, last_residual_norm2 = rhs_norm2;//|r_k|^2
 			int i = 0;
 			for (i = 0; i < max_iter; i++) {
 				//Ap_k=A*p_k
@@ -117,7 +117,8 @@ namespace Meso {
 
 				residual_norm2 = ArrayFunc::Dot(r, r);
 
-				if (verbose) Info("ConjugateGradient iter {} norm {} against threshold {}", i, sqrt(residual_norm2), sqrt(threshold_norm2));
+				if (verbose) Info("ConjugateGradient iter {} Residual norm {:e}({:e}), Convergence rate {:e}", i, sqrt(residual_norm2), sqrt(residual_norm2 / rhs_norm2), sqrt(residual_norm2 / last_residual_norm2));
+				last_residual_norm2 = residual_norm2;
 				if (residual_norm2 < threshold_norm2) break;
 
 				if (pure_neumann)
