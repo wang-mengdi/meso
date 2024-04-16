@@ -12,7 +12,6 @@
 using namespace Meso;
 
 int main(){
-
     //A visual test
 
     Test_MGPCG_Dirichlet<double>(Vector2i(256, 256), false);

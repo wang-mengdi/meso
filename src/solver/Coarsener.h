@@ -40,6 +40,20 @@ namespace Meso {
 		coarser_data[coarser_grid.Index(coarser_face)] = IntpLinearPadding0::Value(finer_grid, finer_data, finer_face, finer_frac);
 	}
 
+	//for debugging, emulating the cell-type based coarsening method
+	template<class T, int d>
+	__global__ void Coarsen_Fake_Vol_Kernel(const int axis, const GridIndexer<d> coarser_grid, uint8_t* coarser_type, T* coarser_data) {
+		Typedef_VectorD(d);
+		VectorDi coarser_face = GPUFunc::Thread_Coord<d>(blockIdx, threadIdx);
+		VectorDi cell1 = coarser_face;
+		VectorDi cell0 = cell1; cell0[axis]--;
+		T vol = 1;
+		if (coarser_grid.Valid(cell0) && coarser_type[coarser_grid.Index(cell0)] == 2) vol = 0;
+		if (coarser_grid.Valid(cell1) && coarser_type[coarser_grid.Index(cell1)] == 2) vol = 0;
+
+		coarser_data[coarser_grid.Index(coarser_face)] = vol;
+	}
+
 	template<int d>
 	class Coarsener {
 		Typedef_VectorD(d);
@@ -62,7 +76,8 @@ namespace Meso {
 				Grid<d> fine_face_grid = fine_grid.Face_Grid(axis);
 				T* coarse_vol = coarse_poisson.vol.Data_Ptr(axis);
 				const T* fine_vol = fine_poisson.vol.Data_Ptr(axis);
-				coarse_face_grid.Exec_Kernel(&Coarsen_Vol_Kernel<T, d>, axis, coarse_face_grid, coarse_vol, fine_face_grid, fine_vol);
+				//coarse_face_grid.Exec_Kernel(&Coarsen_Vol_Kernel<T, d>, axis, coarse_face_grid, coarse_vol, fine_face_grid, fine_vol);
+				coarse_face_grid.Exec_Kernel(&Coarsen_Fake_Vol_Kernel<T, d>, axis, coarse_face_grid, coarse_cell_type, coarse_vol);
 			}
 			cudaDeviceSynchronize();
 			checkCudaErrors(cudaGetLastError());

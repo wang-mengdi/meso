@@ -170,10 +170,11 @@ namespace Meso {
 
 		//set b
 		Field<T, d> b_host(grid);
-		b_host.Calc_Nodes([&](const VectorDi cell) {
+		b_host.Calc_Nodes([&](const VectorDi cell)->T {
 			T val = 0;
 			for (int axis = 0; axis < d; axis++)
 			{
+				if (cell_type(cell) != 0) return 0;
 				if (cell[axis] == 1)
 					val += 1;
 				if (cell[axis] == grid.Counts()[axis] - 2)
