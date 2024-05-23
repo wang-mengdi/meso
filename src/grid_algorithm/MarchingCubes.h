@@ -4,6 +4,9 @@
 // This file is part of MESO, whose distribution is governed by the LICENSE file.
 //////////////////////////////////////////////////////////////////////////
 #pragma once
+#include <thrust/execution_policy.h>
+#include <thrust/sequence.h>
+
 #include "Grid.h"
 #include "Field.h"
 #include "Mesh.h"
