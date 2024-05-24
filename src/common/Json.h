@@ -7,7 +7,7 @@
 
 #pragma once
 
-//#include "Common.h"
+#include "Common.h"
 #include "Eigen/Dense"
 #include <nlohmann/json.hpp>
 #include <fmt/color.h>
