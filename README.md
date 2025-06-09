@@ -4,24 +4,24 @@
 
 MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.cc.gatech.edu/~bozhu/). It supported the following papers:
 
-<a href="https://wang-mengdi.github.io/proj/triangle-edge-cuts/" target="_blank">
-    <img src="./docs/assets/triangle-edge-cut-repr.png" align="left" width="30%" style="margin: 0% 5% 2.5% 0%">
-</a>
-[**An interface tracking method with triangle edge cuts**](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
-[![webpage](https://img.shields.io/badge/Project-Homepage-green)](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
-[![paper](https://img.shields.io/badge/Paper-Preprint-red)](https://wang-mengdi.github.io/proj/triangle-edge-cuts/resources/preprint.pdf)
-[**Mengdi Wang**](./), [Matthew Cong](https://physbam.stanford.edu/~mdcong/), [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu/)  
-Journal of Computational Physics (Volume 520, 1 January 2025, 113504)
+##### [An interface tracking method with triangle edge cuts](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
+[![Project](https://img.shields.io/badge/Project-Homepage-green)](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
+[![Paper](https://img.shields.io/badge/Paper-Preprint-red)](https://wang-mengdi.github.io/proj/triangle-edge-cuts/resources/preprint.pdf)  
+**Mengdi Wang**, [Matthew Cong](https://physbam.stanford.edu/~mdcong/), [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu/)  
+*Journal of Computational Physics (Volume 520, 1 January 2025, 113504)*  
 
-<a href="https://people.csail.mit.edu/liyifei/publication/anisotropicstokes/" target="_blank">
-    <img src="./docs/assets/topoopt-repr.jpeg" align="left" width="30%" style="margin: 0% 5% 2.5% 0%">
-</a>
-[**Fluidic Topology Optimization with an Anisotropic Mixture Model
-**](https://people.csail.mit.edu/liyifei/publication/anisotropicstokes)
-[![webpage](https://img.shields.io/badge/Project-Homepage-green)](https://people.csail.mit.edu/liyifei/publication/anisotropicstokes)
-[![paper](https://img.shields.io/badge/Paper-Public-red)](chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://people.csail.mit.edu/liyifei/uploads/topostokes.pdf)
-[Yifei Li](https://people.csail.mit.edu/liyifei/), [Tao Du](https://people.iiis.tsinghua.edu.cn/~taodu/), [Sangeetha Grama Srinivasan](https://sanggs.github.io/), [Kui Wu](https://people.csail.mit.edu/kuiwu/), [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu), [Eftychios Sifakis](https://pages.cs.wisc.edu/~sifakis/), and [Wojciech Matusik](https://cdfg.csail.mit.edu/wojciech)
-ACM Transactions on Graphics (SIGGRAPH Asia 2022), Volume 41, Issue 6.
+<img src="docs/assets/triangle-edge-cut-repr.png" width="300">
+
+---
+
+##### [Fluidic Topology Optimization with an Anisotropic Mixture Model](https://people.csail.mit.edu/liyifei/publication/anisotropicstokes)
+[![Project](https://img.shields.io/badge/Project-Homepage-green)](https://people.csail.mit.edu/liyifei/publication/anisotropicstokes)
+[![Paper](https://img.shields.io/badge/Paper-Public-red)](https://people.csail.mit.edu/liyifei/uploads/topostokes.pdf)  
+[Yifei Li](https://people.csail.mit.edu/liyifei/), [Tao Du](https://people.iiis.tsinghua.edu.cn/~taodu/), [Sangeetha Grama Srinivasan](https://sanggs.github.io/), [Kui Wu](https://people.csail.mit.edu/kuiwu/), [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu), [Eftychios Sifakis](https://pages.cs.wisc.edu/~sifakis/), and [Wojciech Matusik](https://cdfg.csail.mit.edu/wojciech)  
+*ACM Transactions on Graphics (SIGGRAPH Asia 2022), Volume 41, Issue 6*  
+
+<img src="docs/assets/topoopt-repr.jpeg" width="300">
+
 
 ## Getting started
 
