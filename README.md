@@ -16,13 +16,13 @@ MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.
 
 ---
 
-##### [Fluidic Topology Optimization with an Anisotropic Mixture Model](https://people.csail.mit.edu/liyifei/publication/anisotropicstokes)
-[![Project](https://img.shields.io/badge/Project-Homepage-green)](https://people.csail.mit.edu/liyifei/publication/anisotropicstokes)
-[![Paper](https://img.shields.io/badge/Paper-Public-red)](https://people.csail.mit.edu/liyifei/uploads/topostokes.pdf)  
-[Yifei Li](https://people.csail.mit.edu/liyifei/), [Tao Du](https://people.iiis.tsinghua.edu.cn/~taodu/), [Sangeetha Grama Srinivasan](https://sanggs.github.io/), [Kui Wu](https://people.csail.mit.edu/kuiwu/), [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu), [Eftychios Sifakis](https://pages.cs.wisc.edu/~sifakis/), and [Wojciech Matusik](https://cdfg.csail.mit.edu/wojciech)  
-*ACM Transactions on Graphics (SIGGRAPH Asia 2022), Volume 41, Issue 6*  
+##### [NeuralFluid: Neural Fluidic System Design and Control with Differentiable Simulation](https://people.csail.mit.edu/liyifei/publication/neuralfluid/)
+[![Project](https://img.shields.io/badge/Project-Homepage-green)](https://people.csail.mit.edu/liyifei/publication/neuralfluid/)
+[![Paper](https://img.shields.io/badge/Paper-Public-red)](https://people.csail.mit.edu/liyifei/uploads/neuralfluid.pdf)  
+[Yifei Li](https://people.csail.mit.edu/liyifei/), [Yuchen Sun](https://yuchen-sun-cg.github.io/), [Pingchuan Ma](https://pingchuan.ma/), [Eftychios Sifakis](https://pages.cs.wisc.edu/~sifakis/), [Tao Du](https://people.iiis.tsinghua.edu.cn/~taodu/), [Bo Zhu](https://cs.dartmouth.edu/~bozhu/), [Wojciech Matusik](https://cdfg.csail.mit.edu/wojciech)  
+*Neural Information Processing Systems (NeurIPS 2024).*  
 
-<img src="docs/assets/topoopt-repr.jpeg" width="300">
+<img src="docs/assets/neural_fluid_repr.png" width="300">
 
 ---
 
