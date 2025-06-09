@@ -6,14 +6,10 @@ MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.
 
 <a href="https://wang-mengdi.github.io/proj/triangle-edge-cuts/" target="_blank">
     <img src="./docs/assets/triangle-edge-cut-repr.png" align="left" width="30%" style="margin: 0% 5% 2.5% 0%">
-</a>
 [**An interface tracking method with triangle edge cuts**](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
-<br />
 [![webpage](https://img.shields.io/badge/Project-Homepage-green)](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
 [![paper](https://img.shields.io/badge/Paper-Preprint-red)](https://wang-mengdi.github.io/proj/triangle-edge-cuts/resources/preprint.pdf)
-<br />
 [**Mengdi Wang**](./), [Matthew Cong](https://physbam.stanford.edu/~mdcong/), [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu/)  
-<br />
 Journal of Computational Physics (Volume 520, 1 January 2025, 113504)
 
 <a href="https://people.csail.mit.edu/liyifei/publication/anisotropicstokes/" target="_blank">
@@ -21,12 +17,9 @@ Journal of Computational Physics (Volume 520, 1 January 2025, 113504)
 </a>
 [**Fluidic Topology Optimization with an Anisotropic Mixture Model
 **](https://people.csail.mit.edu/liyifei/publication/anisotropicstokes)
-<br />
 [![webpage](https://img.shields.io/badge/Project-Homepage-green)](https://people.csail.mit.edu/liyifei/publication/anisotropicstokes)
 [![paper](https://img.shields.io/badge/Paper-Public-red)](chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://people.csail.mit.edu/liyifei/uploads/topostokes.pdf)
-<br />
 [Yifei Li](https://people.csail.mit.edu/liyifei/), [Tao Du](https://people.iiis.tsinghua.edu.cn/~taodu/), [Sangeetha Grama Srinivasan](https://sanggs.github.io/), [Kui Wu](https://people.csail.mit.edu/kuiwu/), [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu), [Eftychios Sifakis](https://pages.cs.wisc.edu/~sifakis/), and [Wojciech Matusik](https://cdfg.csail.mit.edu/wojciech)
-<br />
 ACM Transactions on Graphics (SIGGRAPH Asia 2022), Volume 41, Issue 6.
 
 ## Getting started
