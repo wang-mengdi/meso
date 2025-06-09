@@ -6,6 +6,7 @@ MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.
 
 <a href="https://wang-mengdi.github.io/proj/triangle-edge-cuts/" target="_blank">
     <img src="./docs/assets/triangle-edge-cut-repr.png" align="left" width="30%" style="margin: 0% 5% 2.5% 0%">
+</a>
 [**An interface tracking method with triangle edge cuts**](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
 [![webpage](https://img.shields.io/badge/Project-Homepage-green)](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
 [![paper](https://img.shields.io/badge/Paper-Preprint-red)](https://wang-mengdi.github.io/proj/triangle-edge-cuts/resources/preprint.pdf)
