@@ -78,3 +78,9 @@ Maintainers:
 - Kernel, grid_algorithm, dec_system: Mengdi Wang
 - particle_algorithm: Yitong Deng
 - mesh_algorithm: Fan Feng
+
+## Performance (Test on Nvidia RTX A6000)
+
+| Resolution   | 32^3   | 40^3 | 48^3 | 64^3  |
+| ------- | ------- | ------- | ------- | ------- |
+| Time cost per step | 0.024s | 0.039s | 0.068s | 0.105s |
