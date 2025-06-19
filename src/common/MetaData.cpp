@@ -16,7 +16,7 @@ namespace Meso {
 
 	void DriverMetaData::Init(json& j) {
 		output_base_dir = Json::Value(j, "output_base_dir", std::string("output"));
-		base_path = bf::current_path() / bf::path(output_base_dir);
+		base_path = fs::current_path() / fs::path(output_base_dir);
 
 		fps = Json::Value(j, "fps", 25);
 		cfl = Json::Value(j, "cfl", (real)1.0);
@@ -39,19 +39,19 @@ namespace Meso {
 		output_threads.push(thread_ptr);
 	}
 
-	bf::path DriverMetaData::Current_VTS_Path(const std::string identifier)
+	fs::path DriverMetaData::Current_VTS_Path(const std::string identifier)
 	{
-		return base_path / bf::path(fmt::format("{}{:04d}.vts", identifier, current_frame));
+		return base_path / fs::path(fmt::format("{}{:04d}.vts", identifier, current_frame));
 	}
 
-	bf::path DriverMetaData::Current_VTU_Path(const std::string identifier)
+	fs::path DriverMetaData::Current_VTU_Path(const std::string identifier)
 	{
-		return base_path / bf::path(fmt::format("{}{:04d}.vtu", identifier, current_frame));
+		return base_path / fs::path(fmt::format("{}{:04d}.vtu", identifier, current_frame));
 	}
 
-	bf::path DriverMetaData::Current_OBJ_Path(const std::string identifier)
+	fs::path DriverMetaData::Current_OBJ_Path(const std::string identifier)
 	{
-		return base_path / bf::path(fmt::format("{}{:04d}.obj", identifier, current_frame));
+		return base_path / fs::path(fmt::format("{}{:04d}.obj", identifier, current_frame));
 	}
 
 	bool DriverMetaData::Should_Snapshot(void)
@@ -59,29 +59,29 @@ namespace Meso {
 		return current_frame != 0 && snapshot_stride != 0 && current_frame % snapshot_stride == 0;
 	}
 
-	bf::path DriverMetaData::Snapshot_Base_Path(void)
+	fs::path DriverMetaData::Snapshot_Base_Path(void)
 	{
-		return base_path / bf::path("snapshots");
+		return base_path / fs::path("snapshots");
 	}
 
-	bf::path DriverMetaData::Snapshot_Path(int frame)
+	fs::path DriverMetaData::Snapshot_Path(int frame)
 	{
-		return Snapshot_Base_Path() / bf::path(fmt::format("{:04d}", frame));
+		return Snapshot_Base_Path() / fs::path(fmt::format("{:04d}", frame));
 	}
 
-	bf::path DriverMetaData::Current_Snapshot_Path(void)
+	fs::path DriverMetaData::Current_Snapshot_Path(void)
 	{
 		return Snapshot_Path(current_frame);
 	}
 
 	int DriverMetaData::Last_Snapshot_Frame(int start_frame)
 	{
-		bf::path snap_base = Snapshot_Base_Path();
-		if (!bf::is_directory(snap_base)) return 0;//no snapshots are there
+		fs::path snap_base = Snapshot_Base_Path();
+		if (!fs::is_directory(snap_base)) return 0;//no snapshots are there
 
 		std::vector<int> snapshots;
-		for (bf::directory_iterator itr(snap_base); itr != bf::directory_iterator(); ++itr) {
-			if (bf::is_directory(itr->status())) {
+		for (fs::directory_iterator itr(snap_base); itr != fs::directory_iterator(); ++itr) {
+			if (fs::is_directory(itr->status())) {
 				std::string filename = itr->path().filename().stem().string();
 				snapshots.push_back(std::stoi(filename));
 			}

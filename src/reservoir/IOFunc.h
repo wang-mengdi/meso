@@ -174,7 +174,7 @@ namespace Meso {
 			writer->SetDataModeToBinary();
 			writer->Write();
 		}
-		template<class T, int d, DataHolder side> void Write_VTS(const FaceField<T, d, side>& F, const bf::path& path) { Write_VTS<T, d, side>(F, path.string()); }
+		template<class T, int d, DataHolder side> void Write_VTS(const FaceField<T, d, side>& F, const fs::path& path) { Write_VTS<T, d, side>(F, path.string()); }
 
 		template<class T, int d, DataHolder side>
 		void Write_VTS(const Field<T, d, side>& F, std::string file_name) {
@@ -197,7 +197,7 @@ namespace Meso {
 			writer->SetDataModeToBinary();
 			writer->Write();
 		}
-		template<class T, int d, DataHolder side> void Write_VTS(const Field<T, d, side>& F, const bf::path& path) { Write_VTS<T, d, side>(F, path.string()); }
+		template<class T, int d, DataHolder side> void Write_VTS(const Field<T, d, side>& F, const fs::path& path) { Write_VTS<T, d, side>(F, path.string()); }
 
 		template<class T, int d, DataHolder side>
 		void Write_VTS(const ArrayF<Field<T, d, side>, d>& F, std::string file_name) {
@@ -285,10 +285,10 @@ namespace Meso {
 		}
 
 		template<int d>
-		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const Array<Vector<real, d>>& vel, const bf::path& path) { Write_VTU_Particles<d>(pos, vel, path.string()); }
+		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const Array<Vector<real, d>>& vel, const fs::path& path) { Write_VTU_Particles<d>(pos, vel, path.string()); }
 
 		template<int d>
-		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const bf::path& path) {
+		void Write_VTU_Particles(const Array<Vector<real, d>>& pos, const fs::path& path) {
 			//output particles
 			Typedef_VectorD(d);
 			// setup VTK
@@ -357,7 +357,7 @@ namespace Meso {
 			writer->Write();
 		}
 
-		template<class T, int d> void Output_Mesh_As_VTU(const VertexMatrix<T, d>& verts, const ElementMatrix<d>& elements, const bf::path& path) { Output_Mesh_As_VTU<T, d>(verts, elements, path.string()); }
+		template<class T, int d> void Output_Mesh_As_VTU(const VertexMatrix<T, d>& verts, const ElementMatrix<d>& elements, const fs::path& path) { Output_Mesh_As_VTU<T, d>(verts, elements, path.string()); }
 	}
 
 

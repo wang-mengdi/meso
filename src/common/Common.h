@@ -28,8 +28,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 #if defined(__CUDACC__) || defined(__HIP__)
 // Only define __hostdev__ when using NVIDIA CUDA or HIP compiler
@@ -54,7 +53,7 @@ void check(T result, char const* const func, const char* const file,
 }
 
 namespace Meso {
-    namespace bf = boost::filesystem;
+    namespace fs = std::filesystem;
 
     ////template operations
     template<bool condition, class T1, class T2> struct If { typedef T1 Type; };

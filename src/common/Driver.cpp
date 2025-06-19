@@ -87,7 +87,7 @@ namespace Meso {
 		DriverMetaData meta_data;
 		meta_data.Init(j.at("driver"));
 		FileFunc::Create_Directory(meta_data.base_path.string());
-		bf::path dump_file = meta_data.base_path / bf::path("config.json");
+		fs::path dump_file = meta_data.base_path / fs::path("config.json");
 		std::ofstream dump_output(dump_file.string());
 		dump_output << std::setw(4) << j;
 		dump_output.close();

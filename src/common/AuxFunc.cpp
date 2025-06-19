@@ -146,12 +146,12 @@ namespace Meso {
 	}
 
 	namespace FileFunc {
-		void Create_Directory(const bf::path path)
+		void Create_Directory(const std::filesystem::path path)
 		{
 			//recursively
 			try {
-				if (!boost::filesystem::exists(path))
-					boost::filesystem::create_directories(path);
+				if (!std::filesystem::exists(path))
+					std::filesystem::create_directories(path);
 			}
 			catch (std::exception& e) { // Not using fs::filesystem_error since std::bad_alloc can throw too.
 				std::cout << e.what() << std::endl;

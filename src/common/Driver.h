@@ -35,7 +35,7 @@ namespace Meso {
 			meta_data.Init(j.at("driver"));
 			scene.Apply(j, simulator);
 			FileFunc::Create_Directory(meta_data.output_base_dir);
-			bf::path dump_file = bf::path(meta_data.output_base_dir) / bf::path("config.json");
+			fs::path dump_file = fs::path(meta_data.output_base_dir) / fs::path("config.json");
 			std::ofstream dump_output(dump_file.string());
 			dump_output <<std::setw(4)<< j;
 			dump_output.close();

@@ -15,7 +15,7 @@ namespace Meso {
 	{
 	public:
 		std::string output_base_dir;
-		bf::path base_path;
+		fs::path base_path;
 		std::ofstream data_output;
 	};
 
@@ -48,15 +48,15 @@ namespace Meso {
 		void Append_Output_Thread(std::shared_ptr<std::thread> thread_ptr);
 
 		//path of an output .vts file at current frame, for example pressure, velocity
-		bf::path Current_VTS_Path(const std::string identifier);
-		bf::path Current_VTU_Path(const std::string identifier);
-		bf::path Current_OBJ_Path(const std::string identifier);
+		fs::path Current_VTS_Path(const std::string identifier);
+		fs::path Current_VTU_Path(const std::string identifier);
+		fs::path Current_OBJ_Path(const std::string identifier);
 
 		//snapshot things
 		bool Should_Snapshot(void);
-		bf::path Snapshot_Base_Path(void);
-		bf::path Snapshot_Path(int frame);
-		bf::path Current_Snapshot_Path(void);//snapshot path of current frame
+		fs::path Snapshot_Base_Path(void);
+		fs::path Snapshot_Path(int frame);
+		fs::path Current_Snapshot_Path(void);//snapshot path of current frame
 		int Last_Snapshot_Frame(int start_frame);//last snapshotted frame < start_frame
 	};
 
@@ -74,7 +74,7 @@ namespace Meso {
 			iter_count = Json::Value(j, "first_iter", 0);
 			output_base_dir = Json::Value(j, "output_base_dir", std::string("output"));
 			verbose = Json::Value(j, "verbose", true);
-			base_path = bf::path(output_base_dir);
+			base_path = fs::path(output_base_dir);
 		}
 	};
 }
