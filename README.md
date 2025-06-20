@@ -17,7 +17,7 @@ MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.
 ---
 
 #### [Nonlinear topology optimization on thin shells using a reduced-order elastic shell model](https://shiyingxiong.github.io/proj/ThinShell/ThinShell.pdf)
-[![Paper](https://img.shields.io/badge/Paper-Public-red)](https://shiyingxiong.github.io/proj/ThinShell/ThinShell.pdf)
+[![Paper](https://img.shields.io/badge/Paper-Public-red)](https://shiyingxiong.github.io/proj/ThinShell/ThinShell.pdf) 
 [Fan Feng](https://sking8.github.io/), [Shiying Xiong](https://shiyingxiong.github.io/), Hiroki Kobayashi, Yuqing Zhou, Masato Tanaka, Atsushi Kawamoto, Tsuyoshi Nomura, and [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu/)
 
 <img src="docs/assets/thinshell.png" width="300">
