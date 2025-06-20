@@ -16,7 +16,7 @@
   Built on discrete exterior calculus (DEC), allowing flexible construction of differential operators directly from mathematical definitions.
 
 - **Multi-Physics Support**  
-  Includes fluid solvers, particle systems, and hybrid methods.
+  Includes incompressible fluid solvers, free-surface fluid, particle systems, and hybrid methods.
 
 - **Optimized Poisson Solver**  
   A finely tuned GPU Poisson solver for fast pressure projection and large system solves.
