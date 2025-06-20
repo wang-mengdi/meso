@@ -2,9 +2,42 @@
 
 [Mengdi Wang](https://wang-mengdi.github.io/), [Yuchen Sun](https://yuchen-sun-cg.github.io/), [Yitong Deng](https://yitongdeng.github.io/), [Fan Feng](https://sking8.github.io/)
 
-MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.cc.gatech.edu/~bozhu/). It supported the following papers:
+**MESO** is a high-performance GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.cc.gatech.edu/~bozhu/) at Georgia Tech. Built entirely in modern **C++ and CUDA**, MESO is designed for advanced research and scalable simulation of physically-based phenomena, including fluids, particles, and hybrid systems.
 
----
+## Features
+
+- **Modern C++ Architecture**  
+  Clean, modular design using modern C++ features for ease of use and customization.
+
+- **High-Performance GPU Backend**  
+  Custom CUDA kernels enable efficient large-scale simulations, with significantly lower overhead than Python-based frameworks.
+
+- **Grid-Based Fluids with DEC Operators**  
+  Built on discrete exterior calculus (DEC), allowing flexible construction of differential operators directly from mathematical definitions.
+
+- **Multi-Physics Support**  
+  Includes fluid solvers, particle systems, and hybrid methods.
+
+- **Optimized Poisson Solver**  
+  A finely tuned GPU Poisson solver for fast pressure projection and large system solves.
+
+#### Performance Test on Nvidia RTX A6000
+
+| Resolution   | 32^3   | 40^3 | 48^3 | 64^3  |
+| ------- | ------- | ------- | ------- | ------- |
+| Time cost per step | 0.024s | 0.039s | 0.068s | 0.105s |
+
+
+## Why MESO?
+
+MESO is designed for simulation researchers and developers who need full control over numerical methods, efficient GPU execution, and mathematical expressiveness. Whether you're building new solvers, testing physical models, or optimizing for performance, MESO provides a robust and customizable foundation.
+
+
+
+
+
+
+## Supported Papers
 
 #### [An interface tracking method with triangle edge cuts](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
 [![Project](https://img.shields.io/badge/Project-Homepage-green)](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
@@ -90,8 +123,3 @@ Maintainers:
 - particle_algorithm: Yitong Deng
 - mesh_algorithm: Fan Feng
 
-## Performance (Test on Nvidia RTX A6000)
-
-| Resolution   | 32^3   | 40^3 | 48^3 | 64^3  |
-| ------- | ------- | ------- | ------- | ------- |
-| Time cost per step | 0.024s | 0.039s | 0.068s | 0.105s |
