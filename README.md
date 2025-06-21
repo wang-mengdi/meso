@@ -79,8 +79,12 @@ Maintainers:
 - particle_algorithm: Yitong Deng
 - mesh_algorithm: Fan Feng
 
-## Performance (Test on Nvidia RTX A6000)
+## Performance (Test on Nvidia RTX 4080)
 
-| Resolution   | 32^3   | 40^3 | 48^3 | 64^3  |
-| ------- | ------- | ------- | ------- | ------- |
-| Time cost per step | 0.024s | 0.039s | 0.068s | 0.105s |
+We evaluate the time cost of our MGPCG Poisson solver under various boundary conditions. Additionally, we record the number of CG iterations required to reach a convergence tolerance of 1e-5. 
+
+|    | 128^3 | 256^3 | 512^3 |
+| ------- | ------- | ------- | ------- |
+| Dirichlet | 25 ms, 5 iters | 112 ms, 5 iters | 757 ms, 5 iters |
+| Neumann | 41 ms, 9 iters | 244 ms, 13 iters | 2411 ms, 18 iters |
+|Mixed Dirichlet and Neumann | 71 ms, 17 iters | 451 ms, 24 iters | 4750 ms, 35 iters |
