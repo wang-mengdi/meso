@@ -12,6 +12,7 @@
 #include <thrust/extrema.h>
 #include <thrust/execution_policy.h>
 #include <thrust/count.h>
+
 using namespace thrust::placeholders;
 
 namespace Meso {
@@ -61,7 +62,7 @@ namespace Meso {
 	}
 
 	namespace FileFunc {
-		void Create_Directory(const bf::path path);
+		void Create_Directory(const std::filesystem::path path);
 	}
 
 	namespace OMPFunc {

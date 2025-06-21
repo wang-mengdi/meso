@@ -2,9 +2,42 @@
 
 [Mengdi Wang](https://wang-mengdi.github.io/), [Yuchen Sun](https://yuchen-sun-cg.github.io/), [Yitong Deng](https://yitongdeng.github.io/), [Fan Feng](https://sking8.github.io/)
 
-MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.cc.gatech.edu/~bozhu/). It supported the following papers:
+**MESO** is a high-performance GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.cc.gatech.edu/~bozhu/) at Georgia Tech. Built entirely in modern **C++ and CUDA**, MESO is designed for advanced research and scalable simulation of physically-based phenomena, including fluids, particles, and hybrid systems.
 
----
+## Features
+
+- **Modern C++ Architecture**  
+  Clean, modular design using modern C++ features for ease of use and customization.
+
+- **High-Performance GPU Backend**  
+  Custom CUDA kernels enable efficient large-scale simulations, with significantly lower overhead than Python-based frameworks.
+
+- **Grid-Based Fluids with DEC Operators**  
+  Built on discrete exterior calculus (DEC), allowing flexible construction of differential operators directly from mathematical definitions.
+
+- **Multi-Physics Support**  
+  Includes incompressible fluid solvers, free-surface fluid, particle systems, and hybrid methods.
+
+- **Optimized Poisson Solver**  
+  A finely tuned GPU Poisson solver for fast pressure projection and large system solves.
+
+#### Performance Test on Nvidia RTX A6000
+
+| Resolution         | 32^3   | 40^3   | 48^3   | 64^3   |
+| ------------------ | ------ | ------ | ------ | ------ |
+| Time cost per step | 0.024s | 0.039s | 0.068s | 0.105s |
+
+
+## Why MESO?
+
+MESO is designed for simulation researchers and developers who need full control over numerical methods, efficient GPU execution, and mathematical expressiveness. Whether you're building new solvers, testing physical models, or optimizing for performance, MESO provides a robust and customizable foundation.
+
+
+
+
+
+
+## Supported Papers
 
 #### [An interface tracking method with triangle edge cuts](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
 [![Project](https://img.shields.io/badge/Project-Homepage-green)](https://wang-mengdi.github.io/proj/triangle-edge-cuts)
@@ -16,6 +49,15 @@ MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.
 
 ---
 
+#### [Nonlinear topology optimization on thin shells using a reduced-order elastic shell model](https://shiyingxiong.github.io/proj/ThinShell/ThinShell.pdf)
+[![Paper](https://img.shields.io/badge/Paper-Public-red)](https://shiyingxiong.github.io/proj/ThinShell/ThinShell.pdf)  
+[Fan Feng](https://sking8.github.io/), [Shiying Xiong](https://shiyingxiong.github.io/), Hiroki Kobayashi, Yuqing Zhou, Masato Tanaka, Atsushi Kawamoto, Tsuyoshi Nomura, [Bo Zhu](https://faculty.cc.gatech.edu/~bozhu/)  
+*Thin-Walled Structures, 197, 111566, 2024*
+
+<img src="docs/assets/thinshell.png" width="300">
+
+---
+
 #### [NeuralFluid: Neural Fluidic System Design and Control with Differentiable Simulation](https://people.csail.mit.edu/liyifei/publication/neuralfluid/)
 [![Project](https://img.shields.io/badge/Project-Homepage-green)](https://people.csail.mit.edu/liyifei/publication/neuralfluid/)
 [![Paper](https://img.shields.io/badge/Paper-Public-red)](https://people.csail.mit.edu/liyifei/uploads/neuralfluid.pdf)  
@@ -23,6 +65,8 @@ MESO is a GPU fluid simulator developed by [Prof. Bo Zhu's Lab](https://faculty.
 *Neural Information Processing Systems (NeurIPS 2024).*  
 
 <img src="docs/assets/neural_fluid_repr.png" width="300">
+
+
 
 ---
 
@@ -79,12 +123,13 @@ Maintainers:
 - particle_algorithm: Yitong Deng
 - mesh_algorithm: Fan Feng
 
+
 ## Performance (Test on Nvidia RTX 4080)
 
 We evaluate the time cost of our MGPCG Poisson solver under various boundary conditions. Additionally, we record the number of CG iterations required to reach a convergence tolerance of 1e-5. 
 
-|    | 128^3 | 256^3 | 512^3 |
-| ------- | ------- | ------- | ------- |
-| Dirichlet | 25 ms, 5 iters | 112 ms, 5 iters | 757 ms, 5 iters |
-| Neumann | 41 ms, 9 iters | 244 ms, 13 iters | 2411 ms, 18 iters |
-|Mixed Dirichlet and Neumann | 71 ms, 17 iters | 451 ms, 24 iters | 4750 ms, 35 iters |
+|                             | 128^3           | 256^3            | 512^3             |
+| --------------------------- | --------------- | ---------------- | ----------------- |
+| Dirichlet                   | 25 ms, 5 iters  | 112 ms, 5 iters  | 757 ms, 5 iters   |
+| Neumann                     | 41 ms, 9 iters  | 244 ms, 13 iters | 2411 ms, 18 iters |
+| Mixed Dirichlet and Neumann | 71 ms, 17 iters | 451 ms, 24 iters | 4750 ms, 35 iters |
